@@ -1,0 +1,2184 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/route-b-index-pcr/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Route B's per-well numbers: LevSeq's index PCR - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#route-bs-per-well-numbers-levseqs-index-pcr" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Route B's per-well numbers: LevSeq's index PCR
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-this-note" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read this note
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-sources-and-licences" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Sources and licences
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-per-well-pcr" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. The per-well PCR
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. The per-well PCR">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-goes-into-one-well" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What goes into one well
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-master-mix-as-published" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The master mix, as published
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-one-10-l-reaction-holds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What one 10 µL reaction holds
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-cycling" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The cycling
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-polymerase" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The polymerase
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-primers-and-why-ours-cannot-be-theirs" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The primers, and why ours cannot be theirs
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-pooling-the-indexed-product" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Pooling the indexed product
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-clean-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. The clean-up
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-limit-on-wells-per-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. The limit on wells per run
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-where-the-depth-floor-is-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Where the depth floor is measured
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-where-the-sources-disagree" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Where the sources disagree
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-the-taq-stock-read-on-2026-10-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. The Taq stock, read on 2026-10-08
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. The Taq stock, read on 2026-10-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-earlier-attempts-failed-and-what-worked" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why earlier attempts failed, and what worked
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-note-supplies" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What this note supplies
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="route-bs-per-well-numbers-levseqs-index-pcr">Route B's per-well numbers: LevSeq's index PCR<a class="headerlink" href="#route-bs-per-well-numbers-levseqs-index-pcr" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #298, under #225. It fills the one deliberate omission of
+<code>docs/research/bench-numbers.md</code>, which inventoried every other stage and recorded Route B's
+per-well PCR as never read. Everything below was retrieved on <strong>2026-10-06</strong> unless a row
+carries its own date.</p>
+<p>Sections 2 to 6 answer the five questions #298 asks, in its order.</p>
+<h2 id="how-to-read-this-note">How to read this note<a class="headerlink" href="#how-to-read-this-note" title="Permanent link">&para;</a></h2>
+<p>Two documents carry everything: the article and its Supporting Information. The protocol lives
+in the SI; the article's Materials and Methods restates parts of it in a paragraph. Five
+disagreements turned up: two between the article and the SI, two inside the SI, and one between
+LevSeq and the ONT protocol <code>bench-numbers.md</code> already quotes. Where sources differ, both
+readings are given and neither is picked — section 7 collects them.</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Works</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The article PDF and <code>sb4c00625_si_001.pdf</code>, read as <code>pdftotext -layout</code> dumps</td>
+<td>yes</td>
+<td>every protocol number below</td>
+</tr>
+<tr>
+<td><code>api.crossref.org/works/&lt;doi&gt;</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>the version of record's date, pages and licence policy</td>
+</tr>
+<tr>
+<td><code>ebi.ac.uk/europepmc/.../search?query=DOI:&lt;doi&gt;</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>open-access status</td>
+</tr>
+<tr>
+<td><code>api.figshare.com/v2/articles/28090968</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>the SI file's own licence</td>
+</tr>
+<tr>
+<td><code>api.biorxiv.org/details/biorxiv/&lt;doi&gt;</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>the preprint's licence</td>
+</tr>
+<tr>
+<td><code>pubs.acs.org/doi/&lt;doi&gt;</code></td>
+<td><strong>no</strong>, HTTP 403</td>
+<td>nothing — the licence came from the three APIs instead</td>
+</tr>
+<tr>
+<td><code>neb.com/en/-/media/catalog/specifications/&lt;letter&gt;/&lt;digit&gt;/&lt;catalog&gt;_v&lt;n&gt;.pdf</code></td>
+<td>yes (<code>curl</code>)</td>
+<td>B9004S, and M0267 once the filename names all four pack sizes — section 9</td>
+</tr>
+<tr>
+<td><code>neb.com/en/products/&lt;catalog&gt;-…</code>, the HTML product page</td>
+<td><strong>no</strong>, HTTP 403</td>
+<td>nothing; the <code>/-/media/</code> path above is what answers instead</td>
+</tr>
+</tbody>
+</table>
+<p>A value in a table is quoted from the cited document. A row marked <strong>derived</strong> is arithmetic on
+quoted values, and the arithmetic is shown. Nothing here is from memory, and no number was
+rounded into a cleaner one.</p>
+<h2 id="1-sources-and-licences">1. Sources and licences<a class="headerlink" href="#1-sources-and-licences" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Document or dataset</th>
+<th>Licence</th>
+<th>Can we ship it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Long et al. 2025, <em>ACS Synth. Biol.</em> 14(1), 230–238, version of record</td>
+<td>© ACS. Europe PMC reports <code>isOpenAccess: N</code>; Crossref lists only the ACS article-sharing policies (<code>doi:10.15223/policy-029</code>, <code>-037</code>, <code>-045</code>)</td>
+<td><strong>No</strong> — cite, never mirror</td>
+</tr>
+<tr>
+<td>Supporting Information <code>sb4c00625_si_001.pdf</code>, deposited on ACS figshare as item 28090968</td>
+<td><strong>CC BY-NC 4.0</strong>, from the figshare API on 2026-10-06</td>
+<td><strong>Not as a file or a table.</strong> Non-commercial clashes with this repository's MIT licence, the same verdict Potapov 2018's data got. Single facts are cited and re-entered by hand</td>
+</tr>
+<tr>
+<td>The bioRxiv preprint, <code>doi:10.1101/2024.09.04.611255</code> v1, posted 2024-09-04</td>
+<td><code>cc_by_nc</code> from the bioRxiv API</td>
+<td><strong>No</strong>, same reason</td>
+</tr>
+<tr>
+<td>The 24 nt barcode sequences (SI Tables S1–S4)</td>
+<td>taken by the authors from the ONT native barcoding kit; ONT's own terms were not read here</td>
+<td><strong>No</strong> — and nothing in this note needs them. They stay user-held data, as #260 already decided for Route A's kit</td>
+</tr>
+<tr>
+<td><code>fhalab/LevSeq</code> software</td>
+<td>GPL-3.0 (GitHub licence API, 2026-10-06)</td>
+<td><strong>No</strong> — a copyleft licence this repository cannot take code from</td>
+</tr>
+<tr>
+<td>NEB product specification PS-B9004S v1.0, effective 10 Aug 2016</td>
+<td>© NEB, all rights reserved</td>
+<td><strong>No</strong> — cite, and re-enter single facts by hand, as <code>docs/research/restriction-ligation.md</code> §1 already set</td>
+</tr>
+<tr>
+<td>NEB product specification PS-M0267S/L/X/E v2.0, effective 12 Feb 2020</td>
+<td>© NEB, all rights reserved</td>
+<td><strong>No</strong> — same verdict; section 9 re-enters the one number by hand</td>
+</tr>
+</tbody>
+</table>
+<p>The practical verdict: <strong>every number below may be cited and re-entered by hand; no document,
+table or sequence set from these sources may be shipped as package data.</strong> That is the same line
+the repository already draws for NEB and for Addgene, and it is why the barcode plates stay a
+thing the user holds rather than a file we ship.</p>
+<p>Numbers themselves are facts, not expression. What the non-commercial terms stop is mirroring
+the documents and lifting their tables wholesale, which this note does not do.</p>
+<h2 id="2-the-per-well-pcr">2. The per-well PCR<a class="headerlink" href="#2-the-per-well-pcr" title="Permanent link">&para;</a></h2>
+<p>LevSeq's marking step is one colony PCR per well, straight from overnight culture — no miniprep,
+no lysate step, no template purification. Article, "Colony PCR for generating barcoded
+amplicons"; SI, "LevSeq Library Preparation and Sequencing" steps 1–5.</p>
+<h3 id="what-goes-into-one-well">What goes into one well<a class="headerlink" href="#what-goes-into-one-well" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Volume</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PCR master mix</td>
+<td>7 µL</td>
+<td>SI step 2; article Methods</td>
+</tr>
+<tr>
+<td>Barcode-linked primer mix</td>
+<td>2 µL</td>
+<td>SI step 3; article Methods</td>
+</tr>
+<tr>
+<td>Overnight culture</td>
+<td>1 µL</td>
+<td>SI step 4; article Methods</td>
+</tr>
+<tr>
+<td><strong>Reaction</strong></td>
+<td><strong>10 µL</strong></td>
+<td><strong>derived</strong>: 7 + 2 + 1</td>
+</tr>
+</tbody>
+</table>
+<p>The plate is a half-skirted 96-well PCR plate (USA Scientific 1402-9700, SI step 2). The article
+adds that either a 96-well or a 384-well thermocycler block may be used; everything downstream
+is still laid out and pooled as 96 wells.</p>
+<h3 id="the-master-mix-as-published">The master mix, as published<a class="headerlink" href="#the-master-mix-as-published" title="Permanent link">&para;</a></h3>
+<p>Stated per plate, not per well (SI step 1):</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Amount per plate (µL)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ThermoPol Buffer (NEB B9004L)</td>
+<td>144</td>
+</tr>
+<tr>
+<td>10 mM dNTPs (NEB N0447)</td>
+<td>28.8</td>
+</tr>
+<tr>
+<td>Taq Polymerase (NEB M0267)</td>
+<td>7.2</td>
+</tr>
+<tr>
+<td>Mol-Bio Grade DMSO (mp 194819)</td>
+<td>57.6</td>
+</tr>
+<tr>
+<td>ddH2O</td>
+<td>770</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Derived.</strong> The five rows total 1007.6 µL, and 96 wells at 7 µL consume 672 µL, so the table is
+1.5 times what one full plate needs (672 × 1.5 = 1008). The SI never says what the surplus is
+for, and never says how to scale a part-plate run.</p>
+<h3 id="what-one-10-l-reaction-holds">What one 10 µL reaction holds<a class="headerlink" href="#what-one-10-l-reaction-holds" title="Permanent link">&para;</a></h3>
+<p>Every row is <strong>derived</strong>, by taking each component's share of the 1007.6 µL mix into 7 µL:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Per reaction</th>
+<th>Final in 10 µL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ThermoPol Buffer</td>
+<td>1.0 µL</td>
+<td>1x. NEB PS-B9004S v1.0 gives B9004 as a 10X concentrate: 20 mM Tris-HCl, 10 mM (NH4)2SO4, 10 mM KCl, 2 mM MgSO4, 0.1% Triton X-100, pH 8.8 at 25 °C</td>
+</tr>
+<tr>
+<td>dNTPs</td>
+<td>0.2 µL of 10 mM each</td>
+<td>0.2 mM each</td>
+</tr>
+<tr>
+<td>Taq</td>
+<td>0.05 µL</td>
+<td>0.25 units. <strong>Derived</strong>: NEB PS-M0267S/L/X/E v2.0 gives M0267 as 5,000 units/mL, so 0.05 µL is 0.05 × 5 = 0.25 units, which is 25 units/mL in the well. The same specification's own PCR release assay runs 1.25 units in 50 µL, the same 25 units/mL</td>
+</tr>
+<tr>
+<td>DMSO</td>
+<td>0.4 µL</td>
+<td>4% (v/v)</td>
+</tr>
+<tr>
+<td>ddH2O</td>
+<td>5.35 µL</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Each primer</td>
+<td>2 µL at 1 µM</td>
+<td>0.2 µM, if the 1 µM plate is the one used — see §7</td>
+</tr>
+<tr>
+<td>Template</td>
+<td>1 µL overnight culture</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>The arithmetic is exact: the mix is proportioned so that 7 µL of it carries round numbers.</p>
+<h3 id="the-cycling">The cycling<a class="headerlink" href="#the-cycling" title="Permanent link">&para;</a></h3>
+<p>Quoted from the SI's thermal-cycler table, with its two loop lines spelled out:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Temperature</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>95 °C</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>2</td>
+<td>95 °C</td>
+<td>20 s</td>
+</tr>
+<tr>
+<td>3</td>
+<td>touchdown 68 → 63.5 °C</td>
+<td>20 s</td>
+</tr>
+<tr>
+<td>4</td>
+<td>68 °C</td>
+<td>1 min per kb</td>
+</tr>
+<tr>
+<td>5</td>
+<td>return to 2, 9 times</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6</td>
+<td>95 °C</td>
+<td>20 s</td>
+</tr>
+<tr>
+<td>7</td>
+<td>68 °C</td>
+<td>1 min per kb</td>
+</tr>
+<tr>
+<td>8</td>
+<td>return to 6, 24 times</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>68 °C</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>10</td>
+<td>4 °C</td>
+<td>hold</td>
+</tr>
+</tbody>
+</table>
+<p>The touchdown drops 0.5 °C per cycle, 68 °C to 63.5 °C (SI note 5a). <strong>Derived:</strong> that is ten
+values, which matches steps 2–4 running ten times in all, and the second block runs 25 times, so
+the program is 35 cycles.</p>
+<p>Extension is "minimally 1 minute per kb of gene", and the authors used 2 minutes for genes below
+1 kb while developing the protocol (SI note 5b). The article's Methods restates the 300 s initial
+denaturation and the 1 min/kb rule and refers the rest to the SI.</p>
+<h3 id="the-polymerase">The polymerase<a class="headerlink" href="#the-polymerase" title="Permanent link">&para;</a></h3>
+<p>Taq, NEB M0267. The article states the choice as a result: "PCR protocols are optimized for
+robust amplification of the full-length gene. Best performance is obtained using Taq polymerase
+and a touchdown PCR program." No proofreading enzyme is offered as an alternative, and no
+comparison is reported.</p>
+<h3 id="the-primers-and-why-ours-cannot-be-theirs">The primers, and why ours cannot be theirs<a class="headerlink" href="#the-primers-and-why-ours-cannot-be-theirs" title="Permanent link">&para;</a></h3>
+<p>Each primer is a 24 nt barcode followed by a backbone-specific annealing region; the forward
+barcode names the well and the reverse names the plate (SI, "Primer Design"). The published
+layout is specific to pET-22b(+): the 3' region "binds to the cloning vector near the T7 and T7'
+promotor sites", two universal sites upstream and downstream of the cloning site (SI, "Primer
+Design"; article Methods). The SI says plainly that a user on a different cloning vector "must verify that the primers in the 'Primer
+Design' section would still amplify the desired region", and recommends testing a new primer set
+on a few wells before running it at plate scale.</p>
+<p>For our method that means the sequences in Tables S3 and S4 are not usable as published: they
+anneal to pET-22b(+), not to the working vector. What carries over is the layout — barcode at the
+5' end, vector-specific annealing region at the 3' end — and every reaction number in this
+section, which does not depend on which vector is amplified.</p>
+<h2 id="3-pooling-the-indexed-product">3. Pooling the indexed product<a class="headerlink" href="#3-pooling-the-indexed-product" title="Permanent link">&para;</a></h2>
+<p>Two poolings, by two different rules.</p>
+<p><strong>Within a plate, by equal volume.</strong> 5 µL of each reaction into one tube, "for a total of 480 µL
+of pooled PCR products per plate", one tube per plate (SI step 7). Nothing is normalised at this
+stage: a well that amplified badly contributes a small amount of product in the same 5 µL.</p>
+<p>The SI gives a 12-channel route to the same tube: 5 µL from each well of a column into one
+destination well gives 40 µL per well across a row of 12, then 30 µL from each of those 12 wells
+gives 360 µL in the tube (SI step 7a). <strong>Derived:</strong> 12 × 40 = 480 µL and 12 × 30 = 360 µL, so the
+second route carries three quarters of the pooled volume forward and still holds every well. The
+SI's own words for why it matters: combining 5 µL from every well "improve[s] the evenness" of
+the pool. A liquid handler may do the same job (SI step 7b).</p>
+<p><strong>Across plates, by equimolar amount, after the clean-up.</strong> Each plate's gel-extracted product is
+quantified and the plates are combined "in equimolar concentrations"; where every template is the
+same length, equal mass is equal molarity, so equal nanograms per plate is what the SI instructs
+(step 13). Its worked example: a plate at 20 ng/µL and a plate at 10 ng/µL give 5 µL + 10 µL +
+5 µL water = 20 µL at 10 ng/µL.</p>
+<table>
+<thead>
+<tr>
+<th>Number</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Volume per well into the plate pool</td>
+<td>5 µL</td>
+<td>SI step 7</td>
+</tr>
+<tr>
+<td>Pooled volume per plate</td>
+<td>480 µL, or 360 µL by the 12-channel route</td>
+<td>SI step 7, 7a</td>
+</tr>
+<tr>
+<td>Ratio between plates</td>
+<td>equimolar; equal mass where lengths match</td>
+<td>SI step 13</td>
+</tr>
+<tr>
+<td>Enough material for any prep</td>
+<td>200 ng of pooled DNA per 1 kb of gene</td>
+<td>SI step 13</td>
+</tr>
+<tr>
+<td>Library input</td>
+<td>200 fmol, "which translates to 120 ng for a 1-kb gene"</td>
+<td>SI step 15</td>
+</tr>
+<tr>
+<td>Kit</td>
+<td>ONT SQK-LSK114 on a MinION flow cell, FLO-MIN114</td>
+<td>SI steps 15–16; article Methods</td>
+</tr>
+<tr>
+<td>What follows</td>
+<td>ONT's own ligation protocol, linked and not restated</td>
+<td>SI step 16</td>
+</tr>
+</tbody>
+</table>
+<p>LevSeq stops at one tube of normalised amplicon and hands over to ONT's protocol, exactly as
+Qian's route does. <code>docs/research/bench-numbers.md</code> already carries ONT's end-prep, ligation and
+loading numbers from the published amplicon protocol, and they apply here unchanged with the
+barcode-ligation rows dropped — Route B's barcode is in the primer, so no barcoding kit is used.</p>
+<h2 id="4-the-clean-up">4. The clean-up<a class="headerlink" href="#4-the-clean-up" title="Permanent link">&para;</a></h2>
+<p><strong>There is no bead clean-up in Route B.</strong> The clean-up is a gel: one lane per plate, cut and
+extracted, which is also the quality check.</p>
+<table>
+<thead>
+<tr>
+<th>Number</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gel</td>
+<td>1% agarose with SYBR Gold (Thermo Fisher S11494), cast while the PCR runs</td>
+<td>SI steps 6, 9</td>
+</tr>
+<tr>
+<td>Loaded</td>
+<td>100 µL of the pooled product + 20 µL 6x loading dye (NEB B7025S)</td>
+<td>SI step 8</td>
+</tr>
+<tr>
+<td>The rest of the pool</td>
+<td>stored at −20 °C for future use</td>
+<td>SI step 8</td>
+</tr>
+<tr>
+<td>Ladder</td>
+<td>10 µL of 1 kb ladder in the flanking lanes</td>
+<td>SI step 9</td>
+</tr>
+<tr>
+<td>Band wanted</td>
+<td>the gene plus about 100 bp — barcodes, plus the stretch between the primer sites and the open reading frame</td>
+<td>SI step 10</td>
+</tr>
+<tr>
+<td>Extraction kit</td>
+<td>Zymoclean Gel DNA Recovery Kit, Zymo D4001 (SI) or D4002 (article Methods)</td>
+<td>SI step 11; article Methods</td>
+</tr>
+<tr>
+<td>Elution</td>
+<td>10 µL of ddH2O, explicitly <strong>not</strong> elution buffer</td>
+<td>SI step 11</td>
+</tr>
+<tr>
+<td>Quantification</td>
+<td>ng/µL on a GE NanoVue Plus, per plate</td>
+<td>SI step 12</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What is measured about it: nothing.</strong> No recovery yield, no purity figure, no comparison with a
+bead clean-up, and no statement of how much of the 480 µL pool survives to the 120 ng that is
+loaded. The gel's job is stated as a check — "evaluate … PCR products which should be the size of
+the gene plus about 100 bp" — and the paper's only quantified consequence of skipping that check
+is in the next paragraph.</p>
+<p><strong>What is measured nearby, and is about the PCR rather than the clean-up.</strong> On a ten-plate error-
+prone library run "performed without optimizing PCR procedure", three plates returned under 60%
+of variants sequenced and the other seven over 70% (SI Figure S3). The article attributes that
+shortfall to "improper PCR amplification" and says checking the gel before sequencing mitigates
+it. In the Sanger comparison, one 96-well plate read with two different barcode plates gave 94 of
+94 samples on one plate and 90 on the other, with four wells below 10 reads (article; SI
+Figure S2).</p>
+<h2 id="5-the-limit-on-wells-per-run">5. The limit on wells per run<a class="headerlink" href="#5-the-limit-on-wells-per-run" title="Permanent link">&para;</a></h2>
+<p><strong>9,216 wells, and the barcode set is what sets it.</strong> 96 forward barcodes address the wells of a
+plate and 96 reverse barcodes address the plates, so one flow cell can tell apart 96 × 96 wells.
+The article states it as "theoretically possible to demultiplex and sequence 9,216 variants"; the
+SI states it as a limit, "the throughput is limited to 9,216 samples".</p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Value</th>
+<th>What sets it</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wells per run</td>
+<td>9,216</td>
+<td>the barcode set: 96 forward x 96 reverse</td>
+<td>article; SI, "Alternative Methods"</td>
+</tr>
+<tr>
+<td>Barcode plates actually built</td>
+<td>8 (LevSeq01–08), so 768 wells before more are made</td>
+<td>what the authors ordered</td>
+<td>SI, "Preparation of LevSeq Barcode Primer Mixes"; Tables S5–S12</td>
+</tr>
+<tr>
+<td>Flongle flow cell</td>
+<td>up to 1,600 variants recommended</td>
+<td>flow cell output</td>
+<td>article Methods</td>
+</tr>
+<tr>
+<td>MinION flow cell</td>
+<td>a theoretical 2,500 96-well plates at 1,000 bp</td>
+<td>flow cell output</td>
+<td>article Discussion</td>
+</tr>
+<tr>
+<td>When to stop the run</td>
+<td>0.02 Gb of basecalled bases per plate; 20 plates means 0.4 Gb</td>
+<td>enough depth per well</td>
+<td>SI step 17; article Methods</td>
+</tr>
+<tr>
+<td>Flow cell reuse</td>
+<td>washed and reused until pores fall below 100; skip the storage buffer, which cost about 300 pores</td>
+<td>pore count</td>
+<td>article Methods</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Derived:</strong> 2,500 plates is 240,000 wells, which is 26 times the 9,216 the barcodes can name. On
+a MinION the binding limit is therefore the barcode set, not sequencing output. On a Flongle the
+flow cell binds first, at 1,600 wells — about 17 plates.</p>
+<p><strong>But 9,216 is not what picks this route over barcode ligation (#473).</strong> The ligation route
+addresses more wells, so capacity ranks the two the other way round. What separates them is one
+thermocycled reaction a well against an isothermal one, and a fixed per-run cost that only
+amortises over a large library. <code>docs/research/route-choice.md</code> section 2 has the sources, and
+section 2.4 lists the cost figures that may not be written for this route — LevSeq states none.</p>
+<h2 id="6-where-the-depth-floor-is-measured">6. Where the depth floor is measured<a class="headerlink" href="#6-where-the-depth-floor-is-measured" title="Permanent link">&para;</a></h2>
+<p><strong>Per well, after demultiplexing, and not per pool.</strong> The unit is reads assigned to a well, and
+each read covers the whole amplicon, so there is no per-base depth and no pool-level figure
+anywhere in either document.</p>
+<table>
+<thead>
+<tr>
+<th>Statement</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Quality checklist, per well</td>
+<td>"Alignment Count: Must be &gt;20 for each well"</td>
+<td>SI, "Initial Data Quality Assessment"</td>
+</tr>
+<tr>
+<td>Second per-well criterion</td>
+<td>mean error &lt; 10% for each well</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Recommended minimum depth</td>
+<td>20 reads, "as strand bias may impact calling accuracy"</td>
+<td>article</td>
+</tr>
+<tr>
+<td>Warning threshold in the software</td>
+<td>fewer than 20 reads assigned to a well</td>
+<td>article</td>
+</tr>
+<tr>
+<td>Simulated accuracy</td>
+<td>variants detected at &gt;99% with 10 reads, up to a 20% sequencing error rate</td>
+<td>article; SI Figure S1</td>
+</tr>
+<tr>
+<td>What "low coverage" meant in practice</td>
+<td>fewer than 10 reads; four wells of 94 on one barcode plate</td>
+<td>article; SI Figure S2</td>
+</tr>
+<tr>
+<td>Mixed-well detection</td>
+<td>at 20 reads the false-negative rate is high; below 10 reads true positives are not detected at all</td>
+<td>SI Figure S1E</td>
+</tr>
+</tbody>
+</table>
+<p>So #260's reading — twenty wanted, ten tolerable — is what the two documents support, and both
+numbers are per well.</p>
+<p><strong>Against what read length: none is stated, and the simulation says length does not matter.</strong>
+Varying the simulated sequence length showed "no trend … so gene length does not affect our
+software's variant calling ability" (SI Figure S1C). The only place a length enters is the
+sequencing budget, which assumes 1,000 bp. The amplicon itself is the gene plus about 100 bp.</p>
+<p><strong>Derived</strong>, and worth knowing because it says how much headroom the stop rule leaves: 0.02 Gb
+over 96 wells is about 208 kb per well, which at a 1.1 kb amplicon is about 190 reads per well —
+roughly ten times the 20-read floor. The gap is what covers uneven amplification across wells.</p>
+<h2 id="7-where-the-sources-disagree">7. Where the sources disagree<a class="headerlink" href="#7-where-the-sources-disagree" title="Permanent link">&para;</a></h2>
+<p>Each of these is a real disagreement in the published material, not a reading difficulty.</p>
+<ol>
+<li><strong>Primer concentration, by a factor of ten.</strong> The SI's plate preparation ends by diluting the
+   1 µM stock tenfold into "1X reaction-ready barcode plates … 0.1 µM for both forward and
+   reverse" (step 5). But the library protocol stamps "2 µL of the 1-µM barcode-linked primer
+   mix" (step 3), and the article's Methods agrees: "2 µL of 1 µM each barcoded primer mix". Two
+   of three places say 1 µM, giving 0.2 µM in the reaction, which is the conventional figure and
+   the one NEB's own ThermoPol specification assays at. The 0.1 µM plate would give 0.02 µM. This
+   note records 0.2 µM as what two sources state and flags the third.</li>
+<li><strong>The boundary at exactly 20 reads.</strong> The SI's checklist requires an alignment count <strong>above</strong>
+   20 and routes a well at exactly 20 into the suboptimal branch. The article says a warning is
+   issued when <strong>fewer than</strong> 20 reads are assigned, which passes a well at exactly 20. One well in
+   many will land exactly on the line; the two documents judge it differently.
+   <strong>Settled by #310: the SI governs</strong>, because its checklist decides whether a well's data may be
+   used — the question <code>synbio.dmx.depth_check</code> answers — while the article's number is
+   where its software warns. Where that leaves the boundary still contested, the stricter reading
+   stands: a well wrongly failed is re-sequenced, a well wrongly passed contaminates a result.
+   So a well at exactly 20 is called and warns instead of passing, which is where the SI's own
+   suboptimal branch puts it ("Alignment Count is ≤20 … still proceed with data collection", with
+   IGV validation).
+   <strong>Settled again by #317 at the lower mark: 10 is inside the tolerated band.</strong> The SI's <code>≤20</code>
+   proceed-branch and Figure S1E's "at less than 10 reads we can't detect true positives" both
+   put 10 there, and the tie-break above does not reach a mark below which nothing is called at
+   all: a thin well carries no verdict rather than a fail, so strictness there only costs rework.
+   <code>Route</code> therefore carries no per-route flag; the wanted mark is exceeded and the tolerable one
+   reached, by what each mark means.</li>
+<li><strong>200 fmol in nanograms.</strong> LevSeq says 200 fmol "translates to 120 ng for a 1-kb gene" (SI
+   step 15). ONT's own amplicon protocol, quoted in <code>docs/research/bench-numbers.md</code>, gives the
+   same 200 fmol as 130 ng for a 1 kb amplicon. Both are conversions of the same molar figure, so
+   the molar number is the one to carry.</li>
+<li><strong>The gel kit's catalogue number.</strong> Zymo D4001 in the SI, D4002 in the article's Methods —
+   the same Zymoclean kit in two pack sizes. Which was used is not stated.</li>
+<li><strong>The SI's own step cross-references slip by one</strong> near the gel: its step 9 says "each tube
+   made in step 9" where it means step 8, and "the agarose gel prepared in step 7" where it means
+   step 6. Anyone following the printed order hits this.</li>
+</ol>
+<p>Nothing here contradicts <code>docs/research/bench-numbers.md</code>, which recorded this stage as unread.
+Point 3 is the only place the two notes meet, and they meet on the same 200 fmol.</p>
+<h2 id="8-open-gaps">8. Open gaps<a class="headerlink" href="#8-open-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li>~~<strong>Units of Taq per reaction.</strong>~~ <strong>Closed on 2026-10-08</strong> by section 9, which reads NEB's own
+  specification: 5,000 units/mL, so 0.05 µL is 0.25 units.</li>
+<li><strong>Gel-extraction recovery.</strong> Not measured, so how much of a plate's pool reaches the flow cell
+  is unknown.</li>
+<li><strong>Scaling a part-plate run.</strong> The master mix is 1.5 times what 96 wells need and the SI does not
+  say why, nor what to do for fewer wells.</li>
+<li><strong>Thermocycler detail.</strong> No ramp rate, no lid temperature, no block requirement beyond "96-well
+  or 384-well".</li>
+<li><strong>Storage and stability.</strong> "Store at −20 °C for future use" is all that is said about the
+  leftover pool; no hold time is given, for it or for the gel-extracted product.</li>
+<li><strong>Plate format other than 96.</strong> A 384-well block is named for cycling only. Every barcode,
+  pooling and plate-map number in both documents is 96-well, so Route B at 384 wells per plate is
+  not published. <strong>This no longer has to be answered (#313):</strong> the method picks into 384 and
+  samples each picked plate into 96-well plates, so nothing of LevSeq's runs at any other format.
+  The 384-well block LevSeq allows is not used.</li>
+<li><strong>Primers for our vector.</strong> ~~None exist.~~ <strong>Closed by <code>docs/research/route-b-index-primers.md</code>
+  (#312)</strong>, which found the premise wrong: Route B reads the DMX vector, not the working vector,
+  and the DMX vector is pET-derived, so LevSeq's own annealing regions bind it verbatim.</li>
+<li><strong>Whether the 24 nt barcodes may be re-ordered as oligos.</strong> They come from the ONT native
+  barcoding kit; ONT's terms were not read for this note.</li>
+<li><strong>The mean-error criterion.</strong> "Probability Value: Mean error &lt;10% for each well" is the second
+  half of the SI's per-well checklist, and the checklist defines neither the quantity nor how it is
+  estimated. The article's Methods define what its software computes: "for each well we calculate
+  the error rate as the mean rate of non-reference nucleic acids per position", used as the null
+  rate of a per-position binomial test whose default is 10%. Whether the checklist's number is that
+  same rate is never said. <strong>#310 named this a hole rather than modelling it</strong>: a well reaches this
+  package as a read count and a consensus call, and the per-position base counts that rate is a
+  mean over are never among them, so <code>synbio.dmx</code> would have to invent the input before it
+  could judge the criterion. A well that passes <code>depth_check</code> may still fail LevSeq's second test.</li>
+<li><strong>The preprint's SI was not compared with the published SI.</strong> Only the version-of-record SI was
+  read. If a number ever has to be redistributed rather than cited, the CC BY-NC preprint is where
+  to check first.</li>
+</ul>
+<h2 id="9-the-taq-stock-read-on-2026-10-08">9. The Taq stock, read on 2026-10-08<a class="headerlink" href="#9-the-taq-stock-read-on-2026-10-08" title="Permanent link">&para;</a></h2>
+<p>LevSeq never states what its 0.05 µL of Taq is worth, so the number has to come from the
+supplier. <strong>NEB's Product Specification PS-M0267S/L/X/E v2.0, effective 12 Feb 2020, states
+<code>Concentration: 5,000 units/ml</code>.</strong> Quoted from the PDF, which was downloaded and read as a
+<code>pdftotext -layout</code> dump, not from a search result or a product page.</p>
+<table>
+<thead>
+<tr>
+<th>Fact</th>
+<th>Value</th>
+<th>Where in the document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Concentration</td>
+<td>5,000 units/ml</td>
+<td>the specification's header block</td>
+</tr>
+<tr>
+<td>Unit definition</td>
+<td>the enzyme incorporating 15 nmol of dNTP into acid-insoluble material in 30 min at 75 °C</td>
+<td>the same block</td>
+</tr>
+<tr>
+<td>PCR release assay</td>
+<td>1.25 units in a 50 µL reaction</td>
+<td>"PCR Amplification (5.0 kb Lambda DNA)"</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>-20 °C, 24-month shelf life</td>
+<td>the same block</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Derived:</strong> 0.05 µL × 5,000 units/mL = 0.25 units a reaction, which is 25 units/mL in the 10 µL
+well — the same enzyme loading the specification's own PCR assay runs.</p>
+<p>Two further NEB documents corroborate it and neither was needed for the number. v1.0 of the same
+specification (effective 02 Dec 2015) gives the same 5,000 units/ml, and the certificate of
+analysis for lot 10089003 of M0267L gives <code>5,000 U/ml</code> against <code>Specification Version:
+PS-M0267S/L/X/E v2.0</code>.</p>
+<h3 id="why-earlier-attempts-failed-and-what-worked">Why earlier attempts failed, and what worked<a class="headerlink" href="#why-earlier-attempts-failed-and-what-worked" title="Permanent link">&para;</a></h3>
+<p>The earlier pass tried seven spellings under <code>neb.com/en/-/media/catalog/specifications/m/0/</code>
+and every one 404'd, because all of them named a subset of the pack sizes. The specification
+covers four pack sizes at once and its filename spells out all four:</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.../specifications/m/0/m0267s_l_x_e_v2.pdf</code>, plain <code>curl</code> with a browser user-agent</td>
+<td><strong>200, 1,517,781 bytes of PDF</strong> — the document quoted above</td>
+</tr>
+<tr>
+<td><code>.../specifications/m/0/m0267s_l_x_e_v1.pdf</code></td>
+<td>200; v1.0, same concentration</td>
+</tr>
+<tr>
+<td><code>.../certificates-of-analysis/m/0/m0267l_v2_10089003.pdf</code></td>
+<td>200; one lot's certificate</td>
+</tr>
+<tr>
+<td><code>m0267_v1</code>, <code>m0267s_v1</code>, <code>m0267l_v1</code>, <code>m0267s_l_v1</code>, <code>m0267sl_v1</code>, <code>m0267s-l_v1</code>, <code>m0267e_v1</code>, and each with <code>_v2</code>, <code>_v3</code>, <code>_v1_0</code></td>
+<td>302 to <code>/Error/404</code></td>
+</tr>
+<tr>
+<td><code>neb.com/en/products/m0267-…</code>, any locale, with or without full browser headers</td>
+<td><strong>HTTP 403</strong> — the HTML pages are bot-blocked; the <code>/-/media/</code> path is not</td>
+</tr>
+<tr>
+<td><code>.../files/manuals/manualm0267.pdf</code></td>
+<td>302 to <code>/Error/404</code></td>
+</tr>
+</tbody>
+</table>
+<p>So the lesson for the next NEB number: the HTML product page stays closed, the <code>/-/media/</code> path
+stays open, and a specification filename names <strong>every</strong> pack size the document covers.</p>
+<h2 id="what-this-note-supplies">What this note supplies<a class="headerlink" href="#what-this-note-supplies" title="Permanent link">&para;</a></h2>
+<p>The reaction Route B has been missing: a 10 µL colony PCR of 7 µL master mix, 2 µL barcoded
+primer mix and 1 µL overnight culture, cycled 35 times with a ten-cycle touchdown from 68 °C to
+63.5 °C and 1 min/kb extension; pooled 5 µL a well into one tube a plate; gel-purified per plate;
+combined between plates by equal mass; and read to 20 reads a well. Every value above carries its
+citation, and the three that are disagreements carry both readings.</p>
+<p>It supplies no primer sequences. The one number it supplies to <code>src/</code> is the Taq stock of
+section 9, which <code>synbio.dmx.method.TAQ_STOCK_UNITS_UL</code> carries.</p>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Long, Y.; Mora, A.; Li, F.-Z.; Gürsoy, E.; Johnston, K. E.; Arnold, F. H. LevSeq: Rapid
+  Generation of Sequence-Function Data for Directed Evolution and Machine Learning. <em>ACS Synth.
+  Biol.</em> <strong>2025</strong>, <em>14</em> (1), 230–238.
+  <a href="https://doi.org/10.1021/acssynbio.4c00625">doi:10.1021/acssynbio.4c00625</a>. Published online
+  2024-12-24; read 2026-10-06.</li>
+<li>Long, Y. et al. Supporting Information for the above, <code>sb4c00625_si_001.pdf</code>, ACS figshare item
+  28090968, CC BY-NC 4.0, deposited 2024-12-24; read 2026-10-06. Sections "Oligonucleotide
+  Design", "Supplementary Protocols" and "LevSeq Post Data Analysis Workflow and Interpretation";
+  Figures S1–S3.</li>
+<li>Long, Y. et al., preprint, <em>bioRxiv</em> 2024.09.04.611255 v1, posted 2024-09-04, CC BY-NC.
+  <a href="https://doi.org/10.1101/2024.09.04.611255">doi:10.1101/2024.09.04.611255</a>. Licence read from
+  the bioRxiv API 2026-10-06; the text was not used.</li>
+<li>New England Biolabs, <em>Product Specification: ThermoPol Reaction Buffer Pack</em>, B9004S,
+  PS-B9004S v1.0, effective 10 Aug 2016. Read 2026-10-06 from
+  <code>neb.com/en/-/media/catalog/specifications/b/9/b9004s_v1.pdf</code>.</li>
+<li>New England Biolabs, <em>Product Specification: Taq DNA Polymerase with ThermoPol Buffer</em>,
+  M0267S/L/X/E, PS-M0267S/L/X/E v2.0, effective 12 Feb 2020. Read 2026-10-08 from
+  <code>neb.com/en/-/media/catalog/specifications/m/0/m0267s_l_x_e_v2.pdf</code>. v1.0 of the same
+  specification, effective 02 Dec 2015, and the certificate of analysis for M0267L lot 10089003
+  were read the same day and agree.</li>
+<li><code>docs/research/bench-numbers.md</code> (issue #233) for every other stage, for the ONT library
+  numbers this stage hands over to, and for the omission this note fills.</li>
+<li><code>docs/research/synthesis-and-assembly-materials.md</code> (issue #225) for the plate maps and primer
+  plates already inventoried.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

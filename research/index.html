@@ -1,0 +1,1608 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Research notes - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#research-notes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Research notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#shipped-data-and-where-it-came-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Shipped data and where it came from
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cloning-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Cloning methods
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#primers-pcr-and-barcodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Primers, PCR and barcodes
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-a-vector-tolerates-and-whether-it-survived" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What a vector tolerates, and whether it survived
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-library-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The library method
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-a-library-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading a library back
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#judging-a-sequencing-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Judging a sequencing read
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drawing-a-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Drawing a record
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-for-the-bench" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Writing for the bench
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#surveys-whose-answer-was-no" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Surveys whose answer was no
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#four-notes-that-belong-under-two-headings" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Four notes that belong under two headings
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="research-notes">Research notes<a class="headerlink" href="#research-notes" title="Permanent link">&para;</a></h1>
+<p>A note is added to this index in the commit that writes the note. Nothing checks that, so it is
+on you.</p>
+<p>Every note here is agent-facing: out of the site navigation, excluded from search, and exempt
+from the jargon and readability rules a published page is held to. A human-facing page never
+links to one. Where a bench reader needs a fact a note holds, the fact is restated on a page
+they can reach.</p>
+<p>The directory is flat and stays flat. A note is cited by full path from <code>src/</code>, <code>tests/</code>,
+<code>scripts/</code> and the committed example corpus, so moving one is expensive; and the obvious tree,
+one directory per method, would file the evidence <code>mbio.ligase</code> and <code>mbio.overhangs</code> cite under
+a method's name, which inverts the package boundary. The grouping belongs in this index, where a
+note can sit under two headings at once. Within the directory, a note in a family takes the
+family's name as a prefix, so <code>ls</code> clusters it at no cost.</p>
+<p>Forty notes, under ten headings. Four of them earn a second heading, listed at the end.</p>
+<h2 id="shipped-data-and-where-it-came-from">Shipped data and where it came from<a class="headerlink" href="#shipped-data-and-where-it-came-from" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="codon-usage/"><code>codon-usage.md</code></a></td>
+<td>where the shipped codon tables come from, which published tables were refused, and why these are counted from sequence</td>
+</tr>
+<tr>
+<td><a href="restriction-enzyme-data/"><code>restriction-enzyme-data.md</code></a></td>
+<td>where the shipped enzyme records come from, what each source allows, and which value is read from whom</td>
+</tr>
+<tr>
+<td><a href="ligation-fidelity/"><code>ligation-fidelity.md</code></a></td>
+<td>the fidelity matrices' source and licence, which way round a matrix reads, and the rules applied where no measurement covers an enzyme</td>
+</tr>
+<tr>
+<td><a href="fonts/"><code>fonts.md</code></a></td>
+<td>the DejaVu release behind the shipped faces, what its licence asks, and how closely the measured tables match a browser</td>
+</tr>
+<tr>
+<td><a href="dmx-destination/"><code>dmx-destination.md</code></a></td>
+<td>what the build script does to DMX0001, why each step is there, and what the result measures</td>
+</tr>
+<tr>
+<td><a href="working-vector-plvx-tetone/"><code>working-vector-plvx-tetone.md</code></a></td>
+<td>pLVX-TetOne-Puro-GFP measured against the four requirements a lentiviral parent has to meet</td>
+</tr>
+<tr>
+<td><a href="synthesis-and-assembly-barcode-kit/"><code>synthesis-and-assembly-barcode-kit.md</code></a></td>
+<td>the 96 barcodes, their four groups, the overhangs they chain on, the two universal primers, and the accession range</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cloning-methods">Cloning methods<a class="headerlink" href="#cloning-methods" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="golden-gate-assembly/"><code>golden-gate-assembly.md</code></a></td>
+<td>NEBridge's reaction and cycling, overhang fidelity, and how the other assembly methods compare</td>
+</tr>
+<tr>
+<td><a href="gibson-assembly/"><code>gibson-assembly.md</code></a></td>
+<td>the assembly products, the two oligo routes, and every number the Gibson pipeline carries</td>
+</tr>
+<tr>
+<td><a href="restriction-ligation/"><code>restriction-ligation.md</code></a></td>
+<td>the digests, the buffers, what each source allows, and what nobody stated</td>
+</tr>
+<tr>
+<td><a href="gateway-cloning/"><code>gateway-cloning.md</code></a></td>
+<td>the att sites, the BP and LR reactions, and which sequences may ship</td>
+</tr>
+<tr>
+<td><a href="dad-split/"><code>dad-split.md</code></a></td>
+<td>what DAD is, what the two existing implementations do, and where the line falls between them and this package</td>
+</tr>
+</tbody>
+</table>
+<h2 id="primers-pcr-and-barcodes">Primers, PCR and barcodes<a class="headerlink" href="#primers-pcr-and-barcodes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="primer-design-and-pcr/"><code>primer-design-and-pcr.md</code></a></td>
+<td>primer design, how Tm is computed, and what validates a colony by PCR</td>
+</tr>
+<tr>
+<td><a href="oligo-pool-pcr-cycles/"><code>oligo-pool-pcr-cycles.md</code></a></td>
+<td>the cycle counts for the two oligo-pool PCRs, which had looked sourced and were not</td>
+</tr>
+<tr>
+<td><a href="bench-numbers/"><code>bench-numbers.md</code></a></td>
+<td>every number the generated protocol carries and cannot compute, stage by stage</td>
+</tr>
+<tr>
+<td><a href="barcode-design/"><code>barcode-design.md</code></a></td>
+<td>whether a barcode set needs a GC band and a homopolymer cap beyond distance and site freedom</td>
+</tr>
+<tr>
+<td><a href="heat-inactivation-order/"><code>heat-inactivation-order.md</code></a></td>
+<td>whether one 80 °C hold inactivates an enzyme the supplier lists at 65 °C, or the tube needs both</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-a-vector-tolerates-and-whether-it-survived">What a vector tolerates, and whether it survived<a class="headerlink" href="#what-a-vector-tolerates-and-whether-it-survived" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="domestication-methods/"><code>domestication-methods.md</code></a></td>
+<td>which route domesticates a working vector, and when each one is the right one</td>
+</tr>
+<tr>
+<td><a href="lentiviral-tolerance/"><code>lentiviral-tolerance.md</code></a></td>
+<td>which parts of a third-generation lentiviral transfer plasmid may be changed at all, and what each change costs</td>
+</tr>
+<tr>
+<td><a href="promoter-readthrough-lentivirus/"><code>promoter-readthrough-lentivirus.md</code></a></td>
+<td>what a primary source measures when a constitutive promoter sits upstream of an inducible one inside the LTRs</td>
+</tr>
+<tr>
+<td><a href="vector-qc-panel/"><code>vector-qc-panel.md</code></a></td>
+<td>how you find out whether a domestication broke the vector: which assay per failure mode, and how small a change it catches</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-library-method">The library method<a class="headerlink" href="#the-library-method" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="synthesis-and-assembly/"><code>synthesis-and-assembly.md</code></a></td>
+<td>the evidence behind the iGGA method, every source and when it was read, and the method as specified</td>
+</tr>
+<tr>
+<td><a href="synthesis-and-assembly-departures/"><code>synthesis-and-assembly-departures.md</code></a></td>
+<td>every way our design differs from the paper, what forced each change, and whether the reason survives checking</td>
+</tr>
+<tr>
+<td><a href="synthesis-and-assembly-materials/"><code>synthesis-and-assembly-materials.md</code></a></td>
+<td>what you need for each step, by the process that uses it</td>
+</tr>
+<tr>
+<td><a href="protein-library-assembly/"><code>protein-library-assembly.md</code></a></td>
+<td>the published method behind the pipeline, its numbers measured from the supplement, and its licence</td>
+</tr>
+<tr>
+<td><a href="ap1-demo-project/"><code>ap1-demo-project.md</code></a></td>
+<td>one real build specified end to end, so the pipeline had something concrete to build toward</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reading-a-library-back">Reading a library back<a class="headerlink" href="#reading-a-library-back" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="route-choice/"><code>route-choice.md</code></a></td>
+<td>how a reader picks between barcode ligation and index PCR, or neither, and what a run that reads nothing back holds</td>
+</tr>
+<tr>
+<td><a href="route-b-index-pcr/"><code>route-b-index-pcr.md</code></a></td>
+<td>the per-well numbers of LevSeq's index PCR, the one stage the bench-numbers inventory left out</td>
+</tr>
+<tr>
+<td><a href="route-b-index-primers/"><code>route-b-index-primers.md</code></a></td>
+<td>where the index primers bind and what marks a well, against a premise that turned out wrong</td>
+</tr>
+</tbody>
+</table>
+<h2 id="judging-a-sequencing-read">Judging a sequencing read<a class="headerlink" href="#judging-a-sequencing-read" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="sequencing-read-packages/"><code>sequencing-read-packages.md</code></a></td>
+<td>which packages could align a read to its product and judge it, measured against Biopython; none gives a verdict, so add no dependency</td>
+</tr>
+<tr>
+<td><a href="sequencing-read-evidence/"><code>sequencing-read-evidence.md</code></a></td>
+<td>what a Sanger trace, a whole-plasmid result and a DMX well hold, what makes a base trustworthy, what owners call a confirmed clone, and which public files can test a reader</td>
+</tr>
+</tbody>
+</table>
+<h2 id="drawing-a-record">Drawing a record<a class="headerlink" href="#drawing-a-record" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="plasmid-map-packages/"><code>plasmid-map-packages.md</code></a></td>
+<td>which Python packages draw a map, and how close each comes to SnapGene. The answer was none, which is why <code>plot/</code> exists</td>
+</tr>
+<tr>
+<td><a href="label-placement/"><code>label-placement.md</code></a></td>
+<td>the one rule that keeps every label clear of every other label and of the drawing, on all three layouts</td>
+</tr>
+<tr>
+<td><a href="feature-colours/"><code>feature-colours.md</code></a></td>
+<td>where a default colour for a feature type can come from under a licence this package may ship</td>
+</tr>
+<tr>
+<td><a href="figure-sources/"><code>figure-sources.md</code></a></td>
+<td>what four published figures show, and what ours has to vary</td>
+</tr>
+<tr>
+<td><a href="offline-html-maps/"><code>offline-html-maps.md</code></a></td>
+<td>the ways to write a record as one HTML file that opens offline, and what each costs</td>
+</tr>
+<tr>
+<td><a href="offline-navigation/"><code>offline-navigation.md</code></a></td>
+<td>how an offline document navigates with no server, measured in a browser</td>
+</tr>
+</tbody>
+</table>
+<h2 id="writing-for-the-bench">Writing for the bench<a class="headerlink" href="#writing-for-the-bench" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="bench-facing-documentation/"><code>bench-facing-documentation.md</code></a></td>
+<td>how five comparable tools document themselves for a wet-lab reader, and which page shape to take from each</td>
+</tr>
+</tbody>
+</table>
+<h2 id="surveys-whose-answer-was-no">Surveys whose answer was no<a class="headerlink" href="#surveys-whose-answer-was-no" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>What it settled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="dnachisel-evaluation/"><code>dnachisel-evaluation.md</code></a></td>
+<td>what DnaChisel and the Edinburgh Genome Foundry stack would replace here, and why little of it is worth adopting</td>
+</tr>
+<tr>
+<td><a href="gantt-conventions/"><code>gantt-conventions.md</code></a></td>
+<td>whether a ready convention charts a protocol whose durations are mostly unknown</td>
+</tr>
+</tbody>
+</table>
+<h2 id="four-notes-that-belong-under-two-headings">Four notes that belong under two headings<a class="headerlink" href="#four-notes-that-belong-under-two-headings" title="Permanent link">&para;</a></h2>
+<p>This is the reason the directory has no subdirectories: a tree makes you pick one, and an index
+lists a note twice for nothing.</p>
+<ul>
+<li><a href="fonts/"><code>fonts.md</code></a> is shipped data, and it is also how a map draws text.</li>
+<li><a href="ligation-fidelity/"><code>ligation-fidelity.md</code></a> is shipped data, and it is also what makes a
+  Golden Gate overhang set choosable.</li>
+<li><a href="synthesis-and-assembly-barcode-kit/"><code>synthesis-and-assembly-barcode-kit.md</code></a> is shipped
+  data, and it is also how a well is marked for reading back.</li>
+<li><a href="figure-sources/"><code>figure-sources.md</code></a> is about drawing, and it is also about the library.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":[],"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

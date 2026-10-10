@@ -1,0 +1,1702 @@
+{
+  "title": "Golden Gate assembly: GFP into pUC19",
+  "key": "ce16dbdff3e81a3e",
+  "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
+  "overview": {
+    "Vector": "pUC19, 2686 bp",
+    "Insert": "GFP, 717 bp",
+    "Enzyme": "BbsI-HF (R3539) at 37 °C",
+    "Fragments": "2 in one reaction",
+    "Overhangs": "ATGA and TGGC",
+    "Fidelity": "100%, measured",
+    "Product": "pUC19-GFP, 3347 bp",
+    "Selection": "ampicillin or carbenicillin"
+  },
+  "highlights": [
+    "One reaction joins 2 fragments: pUC19 backbone (2630 bp) and GFP (717 bp).",
+    "GFP reads on the opposite strand from lac promoter, 61 bp away, so that promoter does not transcribe it.",
+    "There is no ribosome binding site annotated ahead of GFP, so the clone is not expected to make its protein.",
+    "The insertion interrupts lacZα, so correct clones are white and empty vector is blue on X-gal and IPTG."
+  ],
+  "background": [],
+  "checks": [
+    {
+      "name": "sites",
+      "status": "pass",
+      "detail": "BbsI no longer cuts the product"
+    },
+    {
+      "name": "pUC19 backbone",
+      "status": "pass",
+      "detail": "2630 bases, whole and once"
+    },
+    {
+      "name": "GFP",
+      "status": "pass",
+      "detail": "717 bases, whole and once"
+    },
+    {
+      "name": "junctions",
+      "status": "pass",
+      "detail": "ATGA at 396, TGGC at 1113"
+    },
+    {
+      "name": "primers",
+      "status": "warn",
+      "detail": "9 designed, 2 with a warning, 0 failing: GC on 1, Tm on 1; not judged: full-primer Tm, 3' end stability"
+    }
+  ],
+  "choice": "",
+  "consumes": [],
+  "produces": [],
+  "materials": [
+    {
+      "name": "pUC19 plasmid",
+      "supplier": "",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "",
+      "note": "PCR template",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "GFP template",
+      "supplier": "",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "",
+      "note": "PCR template",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "Q5 DNA Polymerase and its reaction buffer",
+      "supplier": "New England Biolabs",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "dNTP mix",
+      "supplier": "",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "",
+      "note": "10 mM of each base",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "DpnI",
+      "supplier": "New England Biolabs",
+      "catalog": "",
+      "storage": "-20 °C",
+      "amount": "20 units per PCR",
+      "note": "cuts the methylated plasmid template only",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "Monarch Spin PCR & DNA Cleanup Kit",
+      "supplier": "New England Biolabs",
+      "catalog": "T1130",
+      "storage": "",
+      "amount": "",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "NEBridge Ligase Master Mix",
+      "supplier": "New England Biolabs",
+      "catalog": "M1100",
+      "storage": "-20 °C",
+      "amount": "5 µL per reaction",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "BbsI-HF",
+      "supplier": "New England Biolabs",
+      "catalog": "R3539",
+      "storage": "-20 °C",
+      "amount": "1 µL per reaction",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "NEB 5-alpha Competent E. coli",
+      "supplier": "New England Biolabs",
+      "catalog": "C2987",
+      "storage": "-80 °C",
+      "amount": "50 µL per transformation",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "SOC or NEB 10-beta/Stable Outgrowth Medium",
+      "supplier": "",
+      "catalog": "",
+      "storage": "",
+      "amount": "950 µL per transformation",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "LB agar plates with ampicillin or carbenicillin, 80 µg/mL X-gal and 200 µM IPTG",
+      "supplier": "",
+      "catalog": "",
+      "storage": "",
+      "amount": "one plate per transformation",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": {
+        "source": "potapov-2018",
+        "locator": "methods"
+      }
+    },
+    {
+      "name": "Plasmid miniprep kit",
+      "supplier": "",
+      "catalog": "",
+      "storage": "",
+      "amount": "",
+      "note": "for the clones that go to sequencing",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "OneTaq Quick-Load 2X Master Mix with Standard Buffer",
+      "supplier": "New England Biolabs",
+      "catalog": "M0486",
+      "storage": "-20 °C",
+      "amount": "12.5 µL per reaction",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "Agarose and 1X TAE or TBE",
+      "supplier": "",
+      "catalog": "",
+      "storage": "",
+      "amount": "",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "NEB 1 kb Plus DNA Ladder",
+      "supplier": "New England Biolabs",
+      "catalog": "N3200",
+      "storage": "",
+      "amount": "",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": {
+        "source": "N3200",
+        "locator": "band sizes"
+      }
+    },
+    {
+      "name": "NEB 100 bp DNA Ladder",
+      "supplier": "New England Biolabs",
+      "catalog": "N3231",
+      "storage": "",
+      "amount": "",
+      "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": {
+        "source": "N3231",
+        "locator": "band sizes"
+      }
+    }
+  ],
+  "oligos": [
+    {
+      "name": "pUC19 backbone forward",
+      "sequence": "AAACACGAAGACAATGGCGTAATCATGGTCATAGCTGTTTCC",
+      "purpose": "Amplify pUC19 backbone",
+      "tm_c": 63.0,
+      "stock": "10 µM",
+      "note": "",
+      "status": "pass",
+      "checks": []
+    },
+    {
+      "name": "pUC19 backbone reverse",
+      "sequence": "AAACACGAAGACAATCATACTGGCCGTCGTTTTACA",
+      "purpose": "Amplify pUC19 backbone",
+      "tm_c": 64.1,
+      "stock": "10 µM",
+      "note": "",
+      "status": "warn",
+      "checks": [
+        {
+          "name": "Tm",
+          "status": "warn",
+          "detail": "64.1 °C (band 60-64)"
+        }
+      ]
+    },
+    {
+      "name": "GFP forward",
+      "sequence": "AAACACGAAGACAAATGAGTAAAGGAGAAGAACTTTTCACTGG",
+      "purpose": "Amplify GFP",
+      "tm_c": 63.0,
+      "stock": "10 µM",
+      "note": "",
+      "status": "pass",
+      "checks": []
+    },
+    {
+      "name": "GFP reverse",
+      "sequence": "AAACACGAAGACAAGCCACTATTTGTATAGTTCATCCATGCCAT",
+      "purpose": "Amplify GFP",
+      "tm_c": 62.0,
+      "stock": "10 µM",
+      "note": "",
+      "status": "warn",
+      "checks": [
+        {
+          "name": "GC",
+          "status": "warn",
+          "detail": "35% (band 40-60)"
+        }
+      ]
+    },
+    {
+      "name": "Colony PCR forward",
+      "sequence": "TGGGTAACGCCAGGGTTTTCC",
+      "purpose": "Screen colonies by PCR",
+      "tm_c": 61.9,
+      "stock": "10 µM",
+      "note": "",
+      "status": "pass",
+      "checks": []
+    },
+    {
+      "name": "Colony PCR reverse",
+      "sequence": "CGTATGTTGTGTGGAATTGTGAGCGGAT",
+      "purpose": "Screen colonies by PCR",
+      "tm_c": 62.2,
+      "stock": "10 µM",
+      "note": "",
+      "status": "pass",
+      "checks": []
+    },
+    {
+      "name": "Junction reverse",
+      "sequence": "CATCACCTTCACCCTCTCCACTGA",
+      "purpose": "Screen colonies by PCR",
+      "tm_c": 62.0,
+      "stock": "10 µM",
+      "note": "",
+      "status": "pass",
+      "checks": []
+    },
+    {
+      "name": "Sequencing forward",
+      "sequence": "GCGCAACTGTTGGGAA",
+      "purpose": "Confirm the clone by sequencing",
+      "tm_c": 63.3,
+      "stock": "10 µM",
+      "note": "",
+      "status": "pass",
+      "checks": []
+    },
+    {
+      "name": "Sequencing reverse",
+      "sequence": "CGCAACGCAATTAATGTGAG",
+      "purpose": "Confirm the clone by sequencing",
+      "tm_c": 62.2,
+      "stock": "10 µM",
+      "note": "",
+      "status": "pass",
+      "checks": []
+    }
+  ],
+  "order_sheet": "primers.tsv",
+  "files": [
+    "primers.tsv",
+    "product.dna"
+  ],
+  "equipment": [
+    "Thermocycler with a heated lid",
+    "Agarose gel rig and power supply",
+    "Microcentrifuge",
+    "Spectrophotometer (NanoDrop) or fluorometer (Qubit)",
+    "Heat block or water bath at 42 °C",
+    "Shaking incubator and a plate incubator at 37 °C"
+  ],
+  "vessels": [],
+  "plates": [],
+  "steps": [
+    {
+      "title": "Amplify pUC19 backbone",
+      "key": "pcr-puc19-backbone",
+      "section": "Make the fragments",
+      "instructions": [
+        "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
+        "Mix the master mix, dispense it into each tube, then add the pUC19 template.",
+        "Run the program below: 64 °C annealing and 60 s extension for a 2662 bp product."
+      ],
+      "cautions": [
+        "Keep the polymerase on ice."
+      ],
+      "notes": [
+        "The cycle count is the fewest enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors."
+      ],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "Q5 Reaction Buffer",
+              "volume_ul": 10.0,
+              "stock": "5X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "dNTP mix",
+              "volume_ul": 1.0,
+              "stock": "10 mM each",
+              "final": "200 µM each",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Forward primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Reverse primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Template DNA",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "",
+              "master_mix": false,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Q5 DNA Polymerase",
+              "volume_ul": 0.5,
+              "stock": "2 U/µL",
+              "final": "1 unit",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 32.5,
+              "stock": "",
+              "final": "to 50 µL",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            }
+          ],
+          "title": "pUC19 backbone PCR",
+          "reactions": 1,
+          "overage": 0.1
+        }
+      ],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Initial denaturation",
+                  "temperature_c": 98.0,
+                  "seconds": 30,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 98.0,
+                  "seconds": 10,
+                  "delta_c": null,
+                  "citation": null
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 64.0,
+                  "seconds": 20,
+                  "delta_c": null,
+                  "citation": null
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 72.0,
+                  "seconds": 60,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 20,
+              "citation": {
+                "source": "E1601",
+                "locator": "FAQ 11"
+              }
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Final extension",
+                  "temperature_c": 72.0,
+                  "seconds": 120,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Hold",
+                  "temperature_c": 4.0,
+                  "seconds": null,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "pUC19 backbone PCR",
+          "lid_temperature_c": null
+        }
+      ],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [
+        {
+          "records": [
+            "puc19-backbone-amplicon.dna"
+          ],
+          "caption": "The pUC19 backbone amplicon's forward end: the BbsI site its tail carries, and the TGGC overhang the cut leaves. The reverse end leaves ATGA.",
+          "span": [
+            0,
+            48
+          ],
+          "linear": true,
+          "sequence_view": true,
+          "enzymes": [
+            "BbsI"
+          ],
+          "highlight": [
+            "pUC19 backbone forward",
+            "BbsI",
+            "BbsI site",
+            "TGGC overhang"
+          ],
+          "citation": null
+        }
+      ],
+      "gels": [],
+      "expected": [
+        "One band at 2662 bp."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "No band",
+          "solution": "Drop the annealing temperature by 3 °C and check the pUC19 template is there.",
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
+        },
+        {
+          "problem": "Several bands",
+          "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Amplify GFP",
+      "key": "pcr-gfp",
+      "section": "Make the fragments",
+      "instructions": [
+        "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
+        "Mix the master mix, dispense it into each tube, then add the GFP template.",
+        "Run the program below: 63 °C annealing and 20 s extension for a 749 bp product."
+      ],
+      "cautions": [
+        "Keep the polymerase on ice."
+      ],
+      "notes": [
+        "The cycle count is the fewest enough for an amplicon going into an assembly; fewer cycles means fewer PCR errors."
+      ],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "Q5 Reaction Buffer",
+              "volume_ul": 10.0,
+              "stock": "5X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "dNTP mix",
+              "volume_ul": 1.0,
+              "stock": "10 mM each",
+              "final": "200 µM each",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Forward primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Reverse primer",
+              "volume_ul": 2.5,
+              "stock": "10 µM",
+              "final": "500 nM",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Template DNA",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "",
+              "master_mix": false,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Q5 DNA Polymerase",
+              "volume_ul": 0.5,
+              "stock": "2 U/µL",
+              "final": "1 unit",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 32.5,
+              "stock": "",
+              "final": "to 50 µL",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            }
+          ],
+          "title": "GFP PCR",
+          "reactions": 1,
+          "overage": 0.1
+        }
+      ],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Initial denaturation",
+                  "temperature_c": 98.0,
+                  "seconds": 30,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 98.0,
+                  "seconds": 10,
+                  "delta_c": null,
+                  "citation": null
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 63.0,
+                  "seconds": 20,
+                  "delta_c": null,
+                  "citation": null
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 72.0,
+                  "seconds": 20,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 20,
+              "citation": {
+                "source": "E1601",
+                "locator": "FAQ 11"
+              }
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Final extension",
+                  "temperature_c": 72.0,
+                  "seconds": 120,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Hold",
+                  "temperature_c": 4.0,
+                  "seconds": null,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "GFP PCR",
+          "lid_temperature_c": null
+        }
+      ],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [
+        {
+          "records": [
+            "gfp-amplicon.dna"
+          ],
+          "caption": "The GFP amplicon's forward end: the BbsI site its tail carries, and the ATGA overhang the cut leaves. The reverse end leaves TGGC.",
+          "span": [
+            0,
+            49
+          ],
+          "linear": true,
+          "sequence_view": true,
+          "enzymes": [
+            "BbsI"
+          ],
+          "highlight": [
+            "GFP forward",
+            "BbsI",
+            "BbsI site",
+            "ATGA overhang"
+          ],
+          "citation": null
+        }
+      ],
+      "gels": [],
+      "expected": [
+        "One band at 749 bp."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "No band",
+          "solution": "Drop the annealing temperature by 3 °C and check the GFP template is there.",
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
+        },
+        {
+          "problem": "Several bands",
+          "solution": "Raise the annealing temperature, or gel-purify the band of the right size.",
+          "citation": {
+            "source": "M0491",
+            "locator": "annealing temperature"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Check the PCRs on a gel",
+      "key": "pcr-gel",
+      "section": "Make the fragments",
+      "instructions": [
+        "Use a 1% agarose gel.",
+        "Load 5 µL of each reaction beside the ladder.",
+        "Run until the dye front is two thirds down the gel."
+      ],
+      "cautions": [],
+      "notes": [
+        {
+          "text": "1% agarose resolves bands of these sizes.",
+          "citation": {
+            "source": "agarose-resolution",
+            "locator": "optimum resolution for linear DNA"
+          }
+        }
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [
+        {
+          "ladder": {
+            "name": "NEB 1 kb Plus DNA Ladder (N3200)",
+            "bands_bp": [
+              100,
+              200,
+              300,
+              400,
+              500,
+              600,
+              700,
+              800,
+              900,
+              1000,
+              1200,
+              1517,
+              2017,
+              3001,
+              4001,
+              5001,
+              6001,
+              8001,
+              10002
+            ]
+          },
+          "lanes": [
+            {
+              "label": "pUC19 backbone",
+              "bands_bp": [
+                2662
+              ]
+            },
+            {
+              "label": "GFP",
+              "bands_bp": [
+                749
+              ]
+            }
+          ],
+          "title": "PCR products"
+        }
+      ],
+      "expected": [
+        "pUC19 backbone: one band at 2662 bp.",
+        "GFP: one band at 749 bp."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "A smear or an extra band",
+          "solution": "Gel-purify the band of the right size; a wrong template in the assembly gives wrong clones.",
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "colonies contain the wrong construct"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Digest the plasmid template with DpnI",
+      "key": "dpni-digest",
+      "section": "Make the fragments",
+      "instructions": [
+        "Add 20 units of DpnI to the pUC19 backbone PCR and mix.",
+        "Incubate at 37 °C for 60 minutes."
+      ],
+      "cautions": [],
+      "notes": [
+        {
+          "text": "DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (15 Dam sites) and leaves the PCR product, which carries no methylation.",
+          "citation": {
+            "source": "REBASE-DpnI",
+            "locator": "DpnI"
+          }
+        },
+        {
+          "text": "The kit's own protocol has no step for a methylated template, so the incubation is this package's choice.",
+          "citation": {
+            "source": "E1601",
+            "locator": ""
+          }
+        }
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [
+        {
+          "label": "DpnI digest",
+          "seconds": 3600
+        }
+      ],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "Nothing visible. The digest shows up later as fewer colonies carrying the template plasmid."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "Many colonies on the no-insert control",
+          "solution": "The template survived: digest longer, or use more DpnI.",
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "colonies contain the wrong construct"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Purify every amplicon",
+      "key": "purify-amplicons",
+      "section": "Make the fragments",
+      "instructions": [
+        "Run each reaction over a Monarch Spin PCR & DNA Cleanup column and elute in the smallest volume the kit allows."
+      ],
+      "cautions": [],
+      "notes": [
+        {
+          "text": "The reaction takes purified amplicons: polymerase carried over from the PCR fills in the four-base overhangs, which blunts the ends and mis-assembles them.",
+          "citation": {
+            "source": "E1601",
+            "locator": ""
+          }
+        }
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "Clean DNA, free of polymerase, primers and dNTPs."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "Low recovery",
+          "solution": "Elute in a larger volume and leave the buffer on the column longer.",
+          "citation": {
+            "source": "T1130",
+            "locator": "troubleshooting, low DNA yield"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Measure every concentration",
+      "key": "quantify",
+      "section": "Make the fragments",
+      "instructions": [
+        "Measure each purified amplicon by A260 (NanoDrop) or with a fluorometer (Qubit).",
+        "Enter each concentration in the next table's Stock column."
+      ],
+      "cautions": [],
+      "notes": [],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "pUC19 backbone: 0.05 pmol is 81.98 ng, so 82 ng/µL or more fits in 1 µL.",
+        "GFP: 0.05 pmol is 23.07 ng, so 23 ng/µL or more fits in 1 µL."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "Too dilute to fit in the reaction",
+          "solution": "Concentrate the amplicon, or scale the reaction up.",
+          "citation": null
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Set up the Golden Gate reaction",
+      "key": "set-up-assembly",
+      "section": "Assemble",
+      "instructions": [
+        "Thaw the master mix on ice and mix it well; it is viscous.",
+        "Pipette the volume that gives each fragment its picomoles, and make the difference up with water.",
+        "Pipette the DNA into the tube first, then the rest.",
+        "Mix gently and spin down."
+      ],
+      "cautions": [],
+      "notes": [],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "pUC19 backbone",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (81.98 ng)",
+              "master_mix": false,
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": {
+                "nanograms": 81.98,
+                "made_up_by": "Nuclease-free water",
+                "too_dilute": "Too dilute to fit in the reaction",
+                "least_ul": null,
+                "too_concentrated": ""
+              }
+            },
+            {
+              "name": "GFP",
+              "volume_ul": 1.0,
+              "stock": "",
+              "final": "0.05 pmol (23.07 ng)",
+              "master_mix": false,
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": {
+                "nanograms": 23.07,
+                "made_up_by": "Nuclease-free water",
+                "too_dilute": "Too dilute to fit in the reaction",
+                "least_ul": null,
+                "too_concentrated": ""
+              }
+            },
+            {
+              "name": "NEBridge Ligase Master Mix",
+              "volume_ul": 5.0,
+              "stock": "3X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": {
+                "source": "M1100",
+                "locator": "reaction"
+              },
+              "calculator": null
+            },
+            {
+              "name": "BbsI-HF (R3539)",
+              "volume_ul": 1.0,
+              "stock": "20 U/µL",
+              "final": "20 units",
+              "master_mix": true,
+              "citation": {
+                "source": "M1100",
+                "locator": "enzyme amounts"
+              },
+              "calculator": null
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 7.0,
+              "stock": "",
+              "final": "to 15 µL",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            }
+          ],
+          "title": "Golden Gate assembly, NEBridge Ligase Master Mix (M1100)",
+          "reactions": 1,
+          "overage": 0.1
+        }
+      ],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "A 15 µL reaction holding every fragment."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "The DNA does not fit the reaction volume",
+          "solution": "Concentrate the fragments, or scale the whole reaction up.",
+          "citation": {
+            "source": "E1601",
+            "locator": "assembly reaction, note 6"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Run the Golden Gate program",
+      "key": "run-assembly",
+      "section": "Assemble",
+      "instructions": [
+        "Put the tube in the thermocycler and run the program below."
+      ],
+      "cautions": [],
+      "notes": [
+        {
+          "text": "The fidelity this design was scored on is read from measured ligation counts.",
+          "citation": {
+            "source": "pryor-2020",
+            "locator": "Pryor 2020 S4 Table, measured with BbsI-HF"
+          }
+        },
+        "Junction positions are 1-based, on the product."
+      ],
+      "tables": [],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Assembly",
+                  "temperature_c": 37.0,
+                  "seconds": 900,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": {
+                "source": "M1100",
+                "locator": "cycling"
+              }
+            },
+            {
+              "incubations": [
+                {
+                  "label": "End soak",
+                  "temperature_c": 60.0,
+                  "seconds": 300,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": {
+                "source": "M1100",
+                "locator": "cycling"
+              }
+            }
+          ],
+          "title": "Golden Gate assembly",
+          "lid_temperature_c": null
+        },
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Heat inactivation",
+                  "temperature_c": 65.0,
+                  "seconds": 1200,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "BbsI heat inactivation",
+          "lid_temperature_c": null
+        }
+      ],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [
+        {
+          "records": [
+            "product.dna"
+          ],
+          "caption": "pUC19-GFP as the reaction closes it: the ATGA and TGGC junctions it spells, and every BbsI site left on it.",
+          "span": null,
+          "linear": false,
+          "sequence_view": false,
+          "enzymes": [
+            "BbsI"
+          ],
+          "highlight": [
+            "ATGA junction",
+            "TGGC junction"
+          ],
+          "citation": null
+        }
+      ],
+      "gels": [],
+      "expected": [
+        "Nothing visible. The 60 °C soak at the end is a digest, not heat inactivation: it cuts vector that never opened or has closed again, so fewer empty colonies grow.",
+        "The product carries ATGA at 396, joining pUC19 backbone to GFP.",
+        "The product carries TGGC at 1113, joining GFP to pUC19 backbone."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "Mostly empty vector later",
+          "solution": "Keep the 60 °C soak, and check the template was digested with DpnI.",
+          "citation": {
+            "source": "E1601",
+            "locator": "FAQ 10"
+          }
+        },
+        {
+          "problem": "Few colonies later",
+          "solution": "Raise the cycle count, or plate more of the outgrowth.",
+          "citation": {
+            "source": "E1601",
+            "locator": "FAQ 14"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Transform and plate",
+      "key": "transform",
+      "section": "Transform and screen",
+      "instructions": [
+        "Thaw 50 µL of NEB 5-alpha Competent E. coli (C2987) on ice for 10 minutes.",
+        "Add 2 µL of the assembly and flick the tube four or five times.",
+        "Hold on ice for 30 minutes.",
+        "Heat shock at 42 °C for 30 seconds.",
+        "Return to ice for 5 minutes.",
+        "Add 950 µL of outgrowth medium and shake at 37 °C for 60 minutes at 250 rpm.",
+        "Spread 50 µL of a 1:5 dilution on a warmed plate and grow overnight at 37 °C."
+      ],
+      "cautions": [
+        "Competent cells die if they warm up; keep them on ice until the shock."
+      ],
+      "notes": [
+        "The plate reads colour only with an alpha-complementing host, such as NEB 5-alpha Competent E. coli (C2987). A host that cannot complement gives white colonies whatever the clone carries.",
+        "The clone is not expected to make GFP: it reads on the opposite strand from lac promoter and no ribosome binding site is annotated ahead of it."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [
+        {
+          "label": "Thaw",
+          "seconds": 600
+        },
+        {
+          "label": "On ice",
+          "seconds": 1800
+        },
+        {
+          "label": "Heat shock",
+          "seconds": 30
+        },
+        {
+          "label": "Back on ice",
+          "seconds": 300
+        },
+        {
+          "label": "Outgrowth",
+          "seconds": 3600
+        }
+      ],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "Hundreds of colonies; NEB counts about 687 correct ones from a single-insert assembly with 2.5 µL of the outgrowth plated.",
+        "Correct clones are white and empty vector is blue: the insertion interrupts lacZα, which is then not there to complete the host's own."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "No colonies",
+          "solution": "Check the antibiotic and the cells' efficiency, and plate the rest of the outgrowth.",
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "few or no transformants"
+          }
+        },
+        {
+          "problem": "A lawn",
+          "solution": "Plate a smaller volume or a greater dilution next time.",
+          "citation": null
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Screen colonies by PCR",
+      "key": "colony-pcr",
+      "section": "Transform and screen",
+      "instructions": [
+        "Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.",
+        "Streak the same toothpick onto a numbered plate, so the clone survives the PCR.",
+        "Run the program below and load 5 µL on a 2% gel."
+      ],
+      "cautions": [],
+      "notes": [
+        "The long first step at 94 °C lyses the cells; there is no purified template."
+      ],
+      "tables": [
+        {
+          "components": [
+            {
+              "name": "OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)",
+              "volume_ul": 12.5,
+              "stock": "2X",
+              "final": "1X",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Forward primer",
+              "volume_ul": 0.5,
+              "stock": "10 µM",
+              "final": "200 nM",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Reverse primer",
+              "volume_ul": 0.5,
+              "stock": "10 µM",
+              "final": "200 nM",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            },
+            {
+              "name": "Nuclease-free water",
+              "volume_ul": 11.5,
+              "stock": "",
+              "final": "to 25 µL",
+              "master_mix": true,
+              "citation": null,
+              "calculator": null
+            }
+          ],
+          "title": "Colony PCR",
+          "reactions": 1,
+          "overage": 0.1
+        }
+      ],
+      "programs": [
+        {
+          "stages": [
+            {
+              "incubations": [
+                {
+                  "label": "Lysis",
+                  "temperature_c": 94.0,
+                  "seconds": 300,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Denature",
+                  "temperature_c": 94.0,
+                  "seconds": 30,
+                  "delta_c": null,
+                  "citation": null
+                },
+                {
+                  "label": "Anneal",
+                  "temperature_c": 56.9,
+                  "seconds": 30,
+                  "delta_c": null,
+                  "citation": null
+                },
+                {
+                  "label": "Extend",
+                  "temperature_c": 68.0,
+                  "seconds": 60,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 30,
+              "citation": {
+                "source": "M0480",
+                "locator": "thermocycling conditions"
+              }
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Final extension",
+                  "temperature_c": 68.0,
+                  "seconds": 300,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            },
+            {
+              "incubations": [
+                {
+                  "label": "Hold",
+                  "temperature_c": 10.0,
+                  "seconds": null,
+                  "delta_c": null,
+                  "citation": null
+                }
+              ],
+              "cycles": 1,
+              "citation": null
+            }
+          ],
+          "title": "Colony PCR",
+          "lid_temperature_c": null
+        }
+      ],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [
+        {
+          "ladder": {
+            "name": "NEB 100 bp DNA Ladder (N3231)",
+            "bands_bp": [
+              100,
+              200,
+              300,
+              400,
+              500,
+              600,
+              700,
+              800,
+              900,
+              1000,
+              1200,
+              1517
+            ]
+          },
+          "lanes": [
+            {
+              "label": "Correct clone",
+              "bands_bp": [
+                160,
+                838
+              ]
+            },
+            {
+              "label": "Empty vector",
+              "bands_bp": [
+                177
+              ]
+            }
+          ],
+          "title": "Colony PCR"
+        }
+      ],
+      "expected": [
+        "Each of the 2 junctions is read: the flanking pair crosses them all, and each junction primer stops inside its own insert.",
+        "Correct clone: 160 bp, 838 bp.",
+        "Empty vector: 177 bp."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "No band in any lane",
+          "solution": "The colony was too much material: touch a smaller one, or dilute it.",
+          "citation": {
+            "source": "colony-pcr",
+            "locator": "template"
+          }
+        },
+        {
+          "problem": "Every colony reads as empty vector",
+          "solution": "The template survived the DpnI digest, or the vector re-closed; check the 60 °C soak ran.",
+          "citation": {
+            "source": "E1601",
+            "locator": "FAQ 10"
+          }
+        }
+      ],
+      "holes": []
+    },
+    {
+      "title": "Confirm the clone by sequencing",
+      "key": "sequencing",
+      "section": "Transform and screen",
+      "instructions": [
+        "Miniprep two or three colonies that read as correct.",
+        "Send each miniprep with both sequencing primers.",
+        "Check each read against product.dna; keep a clone only when every junction and insert reads true."
+      ],
+      "cautions": [],
+      "notes": [
+        "Only a read across the junctions confirms the assembly, whatever the screen said.",
+        "A provider whose read is shorter than the lengths above needs a further primer inside the inserts."
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "Sequencing forward anneals 123 bp from its own junction and has to read 840 bp to cover the far one.",
+        "Sequencing reverse anneals 119 bp from its own junction and has to read 836 bp to cover the far one.",
+        "The junctions read as ATGA and TGGC, and the parts match GFP."
+      ],
+      "calculator": null,
+      "troubleshooting": [
+        {
+          "problem": "The read starts too close to the junction",
+          "solution": "Move the primer further out; the first bases after a primer are unreadable.",
+          "citation": {
+            "source": "genewiz-sanger",
+            "locator": "sequencing primer design"
+          }
+        }
+      ],
+      "holes": []
+    }
+  ],
+  "sources": {
+    "NEBioCalculator": {
+      "document": "New England Biolabs NEBioCalculator",
+      "edition": "script main-6f3020c533.js, capture 2026-08-28",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "N3200": {
+      "document": "New England Biolabs #N3200 1 kb Plus DNA Ladder product page",
+      "edition": "capture 2026-03-07",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "N3231": {
+      "document": "New England Biolabs #N3231 100 bp DNA Ladder product page",
+      "edition": "capture 2025-10-31",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "agarose-resolution": {
+      "document": "New England Biolabs, Agarose Gel Resolution",
+      "edition": "capture 2024-09-18",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "T1130": {
+      "document": "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+      "edition": "version 1.0 06.24",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "M0491": {
+      "document": "New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page",
+      "edition": "capture 2024-08-04",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "2026-09-12",
+      "note": ""
+    },
+    "NEB-cloning": {
+      "document": "New England Biolabs, Troubleshooting Guide for Cloning",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "colony-pcr": {
+      "document": "New England Biolabs application note, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes",
+      "edition": "Y. Xu, 11/13",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "genewiz-sanger": {
+      "document": "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
+      "edition": "",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "REBASE-DpnI": {
+      "document": "REBASE enzyme record for DpnI",
+      "edition": "",
+      "url": "http://rebase.neb.com/rebase/rebase.html",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/golden-gate-assembly.md"
+    },
+    "potapov-2018": {
+      "document": "Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674",
+      "edition": "",
+      "url": "https://doi.org/10.1021/acssynbio.8b00333",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/golden-gate-assembly.md"
+    },
+    "M0480": {
+      "document": "New England Biolabs #M0480 OneTaq DNA Polymerase protocol",
+      "edition": "protocols.io version 2, 2022-02-21",
+      "url": "https://dx.doi.org/10.17504/protocols.io.bd24i8gw",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": ""
+    },
+    "E1601": {
+      "document": "New England Biolabs #E1601S/L NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual",
+      "edition": "version 5.0_6/26",
+      "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
+      "read_as": "",
+      "date": "2026-09-12",
+      "note": ""
+    },
+    "M1100": {
+      "document": "New England Biolabs, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
+      "edition": "capture 2023-03-31",
+      "url": "https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/golden-gate-assembly.md"
+    },
+    "pryor-2020": {
+      "document": "Pryor, J.M., Potapov, V., Kucera, R.B., Bilotti, K., Cantor, E.J. and Lohman, G.J.S. (2020) Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly design. PLoS One 15(9): e0238592.",
+      "edition": "",
+      "url": "https://doi.org/10.1371/journal.pone.0238592",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/ligation-fidelity.md"
+    }
+  },
+  "holes": [],
+  "bill": null
+}

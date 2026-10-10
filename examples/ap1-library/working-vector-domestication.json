@@ -1,0 +1,329 @@
+{
+  "title": "Domesticating the working vector",
+  "key": "d889630ec1a8e2a4",
+  "summary": "The library's working vector is pLVX-TetOne-Puro-GFP, which reads 6 BsaI and 2 BsmBI sites. This orders the same plasmid with all 8 taken out and confirms what arrives. It is a sitting of its own: the library run opens with the record it leaves behind.",
+  "overview": {
+    "Parent": "pLVX-TetOne-Puro-GFP, Addgene 171123",
+    "Plasmid": "9,895 bp circular",
+    "Sites taken out": "6 BsaI, 2 BsmBI",
+    "Bases changed": "8",
+    "Route": "the whole plasmid, ordered already changed",
+    "Protein changed": "none"
+  },
+  "highlights": [
+    "Two sites sit at the same offset in the two long terminal repeats, and 610 bases around each one are identical between the copies. No primer, assembly overlap or Type IIS overhang is unique to one copy, so mutagenesis and assembly both fail at those two.",
+    "Leaving those two standing would make this a cheaper job. They are changed here because a published vector carries the change, and changing them is what puts the whole plasmid on the order form rather than a fragment of it.",
+    "3 of the sites sit in a coding sequence, where a synonymous codon takes the site away: PuroR and AmpR read exactly as the parent reads them.",
+    "The other 5 cost a stated base each. A published vector already carries the change made in both repeats, and another carries the change made at the BsaI site of the hPGK promoter. Neither group measured what the change cost, so neither number is stated here.",
+    "The BsmBI site in the hPGK promoter has no precedent anywhere. The base chosen neither makes nor breaks a CpG, which is the most this run can say for it.",
+    "Only BsaI and BsmBI were taken out. The result still reads BbsI 3, SapI 2, so an assembly whose own enzyme is one of those meets those sites unchanged."
+  ],
+  "background": [],
+  "checks": [
+    {
+      "name": "sites",
+      "status": "pass",
+      "detail": "no BsaI and no BsmBI site is left in 9,895 bases"
+    },
+    {
+      "name": "protein",
+      "status": "pass",
+      "detail": "PuroR and AmpR translate as the parent translates them, across 3 changed codons"
+    },
+    {
+      "name": "other enzymes",
+      "status": "warn",
+      "detail": "BbsI reads 3 sites, SapI reads 2 sites; neither was in this job"
+    }
+  ],
+  "choice": "",
+  "consumes": [
+    {
+      "name": "pLVX-TetOne-Puro-GFP",
+      "what": "The parent plasmid, ordered from Addgene as deposit 171123",
+      "spec": [
+        "circular, 9,895 bp"
+      ],
+      "storage": "-20 °C",
+      "rules": []
+    }
+  ],
+  "produces": [
+    {
+      "name": "domesticated working vector",
+      "what": "The same plasmid with no BsaI and no BsmBI site, which the library run opens with",
+      "spec": [
+        "circular, 9,895 bp",
+        "no BsaI or BsmBI site"
+      ],
+      "storage": "-20 °C",
+      "rules": []
+    }
+  ],
+  "materials": [
+    {
+      "name": "BsaI-HFv2",
+      "supplier": "New England Biolabs",
+      "catalog": "R3733",
+      "storage": "-20 °C",
+      "amount": "10 units a digest",
+      "note": "reads nothing in the result",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "BsmBI-v2",
+      "supplier": "New England Biolabs",
+      "catalog": "R0739",
+      "storage": "-20 °C",
+      "amount": "10 units a digest",
+      "note": "reads nothing in the result",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    },
+    {
+      "name": "BamHI-HF",
+      "supplier": "New England Biolabs",
+      "catalog": "R3136",
+      "storage": "-20 °C",
+      "amount": "10 units a digest",
+      "note": "the control lane, one cut",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": null
+    }
+  ],
+  "oligos": [],
+  "order_sheet": "",
+  "files": [
+    "working-vector.gb"
+  ],
+  "equipment": [
+    "Heat block or thermocycler holding 37 °C and 55 °C",
+    "Agarose gel rig and a transilluminator"
+  ],
+  "vessels": [],
+  "plates": [],
+  "steps": [
+    {
+      "title": "Order the domesticated plasmid",
+      "key": "order",
+      "section": "Order the plasmid",
+      "instructions": [
+        "Send working-vector.gb to a supplier that builds whole plasmids, as one clonal construct of 9,895 bp.",
+        "Declare the two 634 bp direct repeats on the order form.",
+        "Ask for the plasmid verified over its whole sequence."
+      ],
+      "cautions": [
+        "A supplier whose clonal genes stop at 7 kb cannot build this plasmid; ask for a long-construct quote before ordering."
+      ],
+      "notes": [
+        {
+          "text": "A direct repeat longer than 200 bases is a high-complexity sequence, which is priced and scheduled apart from the rest, so declaring it up front saves a rejected order.",
+          "citation": {
+            "source": "twist-synthesis",
+            "locator": "sequence complexity"
+          }
+        },
+        {
+          "text": "The change at transcript position +4 goes into both repeats because a vector whose two repeats differ there changes what reverse transcription copies; the published vector made the same change in both.",
+          "citation": {
+            "source": "haellman-2021",
+            "locator": "vector construction"
+          }
+        },
+        {
+          "text": "The change at the hPGK promoter's BsaI site is the one a published vector already carries at the same base.",
+          "citation": {
+            "source": "peterman-2025",
+            "locator": "Addgene 239691"
+          }
+        },
+        {
+          "text": "working-vector.gb is the depositor's own verified sequence with the changes above made on it.",
+          "citation": {
+            "source": "addgene-171123",
+            "locator": "full sequence"
+          }
+        }
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "The supplier accepts the sequence and quotes a build."
+      ],
+      "calculator": null,
+      "troubleshooting": [],
+      "holes": []
+    },
+    {
+      "title": "Transform and pick a colony",
+      "key": "transform",
+      "section": "Confirm what arrives",
+      "instructions": [
+        "Transform 1 µL of the plasmid into a recombination-deficient cloning strain.",
+        "Plate on LB with 100 µg/mL carbenicillin and grow overnight at 30 °C.",
+        "Pick one colony into 5 mL of LB with carbenicillin, grow overnight at 30 °C, and miniprep it."
+      ],
+      "cautions": [
+        "Use a recombination-deficient strain and a 5 mL culture; a larger one is not worth the deletions it returns."
+      ],
+      "notes": [],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "Colonies by the next morning at the latest, and a miniprep of a few micrograms."
+      ],
+      "calculator": null,
+      "troubleshooting": [],
+      "holes": []
+    },
+    {
+      "title": "Show that neither enzyme cuts",
+      "key": "confirm-digest",
+      "section": "Confirm what arrives",
+      "instructions": [
+        "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for 60 minutes at 37 °C.",
+        "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 60 minutes at 55 °C.",
+        "Digest a third 1 µg with 10 units of BamHI-HF.",
+        "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel."
+      ],
+      "cautions": [],
+      "notes": [
+        {
+          "text": "An enzyme that did not cut and an enzyme nobody added look the same on a gel, which is what the control lane tells apart. The dose is 10 units an hour for one microgram.",
+          "citation": {
+            "source": "NEB-single-digest",
+            "locator": "reaction setup"
+          }
+        }
+      ],
+      "tables": [],
+      "programs": [],
+      "timers": [
+        {
+          "label": "BsaI-HFv2 digest",
+          "seconds": 3600
+        },
+        {
+          "label": "BsmBI-v2 digest",
+          "seconds": 3600
+        }
+      ],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "The BsaI and BsmBI lanes look like the undigested lane.",
+        "The control lane is one band at about 9,895 bp."
+      ],
+      "calculator": null,
+      "troubleshooting": [],
+      "holes": []
+    },
+    {
+      "title": "Read both repeats",
+      "key": "confirm-sequence",
+      "section": "Confirm what arrives",
+      "instructions": [
+        "Send 500 ng of the miniprep for whole-plasmid sequencing, and ask for the whole plasmid assembled rather than reads from primers.",
+        "Compare the assembled consensus with working-vector.gb base by base.",
+        "Confirm that both long terminal repeats carry their change, one at a time."
+      ],
+      "cautions": [],
+      "notes": [],
+      "tables": [],
+      "programs": [],
+      "timers": [],
+      "waits": [],
+      "hands_on_seconds": null,
+      "transfers": [],
+      "figures": [],
+      "gels": [],
+      "expected": [
+        "The consensus matches working-vector.gb at every base, both repeats included."
+      ],
+      "calculator": null,
+      "troubleshooting": [],
+      "holes": []
+    }
+  ],
+  "sources": {
+    "addgene-171123": {
+      "document": "Addgene 171123, pLVX-TetOne-Puro-GFP",
+      "edition": "",
+      "url": "https://www.addgene.org/171123/",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/working-vector-plvx-tetone.md"
+    },
+    "haellman-2021": {
+      "document": "Haellman, V. et al. (2021) Mammalian synthetic biology platform VAMSyB. Metabolic Engineering 66, 41-50",
+      "edition": "",
+      "url": "https://doi.org/10.1016/j.ymben.2021.04.003",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/working-vector-plvx-tetone.md"
+    },
+    "peterman-2025": {
+      "document": "Peterman, N. et al. (2025) Nucleic Acids Research 53, gkaf528",
+      "edition": "",
+      "url": "https://doi.org/10.1093/nar/gkaf528",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/working-vector-plvx-tetone.md"
+    },
+    "NEB-single-digest": {
+      "document": "New England Biolabs, Protocol for a single restriction enzyme digest",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/protocols/0001/01/01/optimizing-restriction-enzyme-reactions",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/working-vector-plvx-tetone.md"
+    },
+    "twist-synthesis": {
+      "document": "Twist Bioscience, gene synthesis sequence acceptance criteria",
+      "edition": "",
+      "url": "https://www.twistbioscience.com/faq/gene-synthesis",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/working-vector-plvx-tetone.md"
+    }
+  },
+  "holes": [
+    {
+      "id": "H33",
+      "missing": "no titre for a lentiviral vector whose transcript start has been changed",
+      "kind": "undecided",
+      "where": "the change at transcript position +4 in both long terminal repeats",
+      "filled_by": "one packaging run titring this vector beside the parent it was built from"
+    },
+    {
+      "id": "H34",
+      "missing": "no expression figure for either changed base of the hPGK promoter",
+      "kind": "undecided",
+      "where": "the two changes in the promoter driving the transactivator",
+      "filled_by": "a reporter assay reading this promoter beside the parent's"
+    }
+  ],
+  "bill": null
+}

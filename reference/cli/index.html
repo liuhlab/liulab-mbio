@@ -1,0 +1,2455 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/reference/cli/">
+      
+      
+        <link rel="prev" href="../../projects/dmx/">
+      
+      
+        <link rel="next" href="../python/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Command line - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#command-line" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Command line
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-each-command-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What each command does
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-positions-are-written" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How positions are written
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#write-a-protein-as-dna" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Write a protein as DNA
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-a-set-of-barcodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Design a set of barcodes
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plan-a-cloning-experiment" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Plan a cloning experiment
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Plan a cloning experiment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#golden-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Golden Gate
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gibson" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gibson
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restriction-and-ligation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Restriction and ligation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gateway
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turn-protocol-data-back-into-a-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Turn protocol data back into a page
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#draw-a-record-as-a-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Draw a record as a map
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-a-primer-pair" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Design a primer pair
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check-a-clones-sequencing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Check a clone's sequencing
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#read-designs-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Read designs back
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plan-a-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Plan a library
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Environment variables
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-each-command-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What each command does
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-positions-are-written" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How positions are written
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#write-a-protein-as-dna" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Write a protein as DNA
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-a-set-of-barcodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Design a set of barcodes
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plan-a-cloning-experiment" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Plan a cloning experiment
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Plan a cloning experiment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#golden-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Golden Gate
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gibson" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gibson
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restriction-and-ligation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Restriction and ligation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gateway
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turn-protocol-data-back-into-a-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Turn protocol data back into a page
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#draw-a-record-as-a-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Draw a record as a map
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-a-primer-pair" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Design a primer pair
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check-a-clones-sequencing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Check a clone's sequencing
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#read-designs-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Read designs back
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plan-a-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Plan a library
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Environment variables
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="command-line">Command line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h1>
+<p>One install gives two commands. <code>mbio</code> is the toolkit: sequence files, enzymes, primers and
+cloning. <code>synbio</code> holds the methods this lab named. Every command on this site starts with one
+of those two words.</p>
+<p>Run them through pixi, from a checkout of the repo:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>version
+pixi<span class="w"> </span>run<span class="w"> </span>synbio<span class="w"> </span>version
+</code></pre></div>
+<p>Both print the same number, because one install ships both.</p>
+<p>Words in capitals are yours to fill in. <code>DIR</code> is a folder, <code>VECTOR</code> is a sequence file, and so
+on. Every command below appears once as a line in a <code>bash</code> block, and a test keeps that list
+and the commands in step. Each command also wraps a function you can call yourself, which
+<a href="../python/">the Python reference</a> covers.</p>
+<h2 id="what-each-command-does">What each command does<a class="headerlink" href="#what-each-command-does" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mbio version</code></td>
+<td>Print the installed version</td>
+</tr>
+<tr>
+<td><code>mbio codon-optimize</code></td>
+<td>Write a protein as DNA for a host, free of named sites</td>
+</tr>
+<tr>
+<td><code>mbio barcode-design</code></td>
+<td>Draw a set of barcodes, each far enough from the rest</td>
+</tr>
+<tr>
+<td><code>mbio cloning goldengate plan</code></td>
+<td>Plan a Golden Gate assembly</td>
+</tr>
+<tr>
+<td><code>mbio cloning gibson plan</code></td>
+<td>Plan a Gibson assembly</td>
+</tr>
+<tr>
+<td><code>mbio cloning restriction plan</code></td>
+<td>Plan restriction and ligation cloning</td>
+</tr>
+<tr>
+<td><code>mbio cloning gateway plan</code></td>
+<td>Plan the BP and LR reactions of a Gateway cloning</td>
+</tr>
+<tr>
+<td><code>mbio protocol render</code></td>
+<td>Turn protocol data back into a page</td>
+</tr>
+<tr>
+<td><code>mbio plot map</code></td>
+<td>Draw a record as a map</td>
+</tr>
+<tr>
+<td><code>mbio primers design</code></td>
+<td>Design a PCR primer pair</td>
+</tr>
+<tr>
+<td><code>mbio sequence-verify</code></td>
+<td>Check one clone's sequencing results against the plasmid it should be</td>
+</tr>
+<tr>
+<td><code>synbio version</code></td>
+<td>Print the installed version</td>
+</tr>
+<tr>
+<td><code>synbio dmx plan</code></td>
+<td>Plan a read-back of designs the lab already holds</td>
+</tr>
+<tr>
+<td><code>synbio igga plan</code></td>
+<td>Plan a barcoded combinatorial library</td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-positions-are-written">How positions are written<a class="headerlink" href="#how-positions-are-written" title="Permanent link">&para;</a></h2>
+<p>Two spellings, and they count differently.</p>
+<p><code>--site</code> and <code>--working-site</code> take <code>START-END</code> counted from 0, with the end one base past the
+last base replaced. <code>--region</code>, on <code>plot map</code> and on <code>primers design</code>, takes <code>START..END</code>
+counted from 1 with both ends included. That is how a map prints a position, so you can read a
+span off a map and type it straight back in.</p>
+<h2 id="write-a-protein-as-dna">Write a protein as DNA<a class="headerlink" href="#write-a-protein-as-dna" title="Permanent link">&para;</a></h2>
+<p><code>mbio codon-optimize</code> writes a protein as DNA in the codons a host uses most often. Hand it DNA
+instead and it checks the coding sequence you already have. Either way it clears out any site
+you forbid, by swapping a codon for one that reads as the same amino acid.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>codon-optimize<span class="w"> </span>SEQUENCE<span class="w"> </span>--kind<span class="w"> </span>protein<span class="w"> </span>--host<span class="w"> </span>e-coli-k12<span class="w"> </span>--forbid<span class="w"> </span>BsaI<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument or option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SEQUENCE</code></td>
+<td>required</td>
+<td>The protein or the coding sequence, as letters</td>
+</tr>
+<tr>
+<td><code>--kind</code></td>
+<td>required</td>
+<td>What <code>SEQUENCE</code> is: <code>protein</code> or <code>dna</code></td>
+</tr>
+<tr>
+<td><code>--host</code></td>
+<td>required</td>
+<td>Codon usage table to write for: <code>e-coli-k12</code>, <code>human</code> or <code>mouse</code></td>
+</tr>
+<tr>
+<td><code>--forbid</code></td>
+<td>none</td>
+<td>An enzyme whose site must not appear. Repeat it once per enzyme</td>
+</tr>
+<tr>
+<td><code>--name</code></td>
+<td><code>coding sequence</code></td>
+<td>What to call the sequence</td>
+</tr>
+<tr>
+<td><code>--out</code>, <code>-o</code></td>
+<td>none</td>
+<td>Folder to write into</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>--out</code> it writes two files: <code>coding-sequence.dna</code>, and <code>codon-changes.tsv</code> listing every
+codon it moved. Without <code>--out</code> it prints the changes and the bases instead.</p>
+<p>The enzymes and the codon usage tables this package ships are listed in
+<a href="../data/">the shipped data</a>.</p>
+<h2 id="design-a-set-of-barcodes">Design a set of barcodes<a class="headerlink" href="#design-a-set-of-barcodes" title="Permanent link">&para;</a></h2>
+<p><code>mbio barcode-design</code> draws barcodes that stand far enough apart that no two read as each other.
+It keeps them free of the sites you name, scar included, and off a stop codon wherever the
+construct reads through them.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>barcode-design<span class="w"> </span>COUNT<span class="w"> </span>--length<span class="w"> </span><span class="m">10</span><span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument or option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>COUNT</code></td>
+<td>required</td>
+<td>How many barcodes the part list needs</td>
+</tr>
+<tr>
+<td><code>--length</code></td>
+<td>required</td>
+<td>How many bases name one part</td>
+</tr>
+<tr>
+<td><code>--out</code>, <code>-o</code></td>
+<td>required</td>
+<td>Folder to write into</td>
+</tr>
+<tr>
+<td><code>--scar</code></td>
+<td>none</td>
+<td>The cloning scar joining one barcode to the next</td>
+</tr>
+<tr>
+<td><code>--phase</code></td>
+<td><code>0</code></td>
+<td>Bases of the barcode's first codon read before it: 0, 1 or 2</td>
+</tr>
+<tr>
+<td><code>--untranslated</code></td>
+<td>off</td>
+<td>The construct never reads the barcode, so drop the frame rules</td>
+</tr>
+<tr>
+<td><code>--forbid</code></td>
+<td>none</td>
+<td>An enzyme whose site must not appear. Repeat it once per enzyme</td>
+</tr>
+<tr>
+<td><code>--distance</code></td>
+<td><code>3</code></td>
+<td>The fewest units two barcodes stand apart</td>
+</tr>
+<tr>
+<td><code>--metric</code></td>
+<td><code>sequence-levenshtein</code></td>
+<td>How a distance is counted. Also <code>hamming</code></td>
+</tr>
+<tr>
+<td><code>--max-homopolymer</code></td>
+<td><code>5</code></td>
+<td>The longest run of one base allowed. <code>0</code> lifts the cap</td>
+</tr>
+<tr>
+<td><code>--gc-band</code></td>
+<td>none</td>
+<td>The share of G and C allowed, as <code>LOW-HIGH</code>, each a share of 1</td>
+</tr>
+<tr>
+<td><code>--seed</code></td>
+<td><code>0</code></td>
+<td>The seed the draw is made with</td>
+</tr>
+</tbody>
+</table>
+<p>It writes the set as <code>barcodes.tsv</code> and its verdicts as <code>checks.tsv</code>. The same seed and the same
+rules draw the same set again.</p>
+<h2 id="plan-a-cloning-experiment">Plan a cloning experiment<a class="headerlink" href="#plan-a-cloning-experiment" title="Permanent link">&para;</a></h2>
+<p>Four methods, one command each, all under <code>mbio cloning</code>. Each reads SnapGene <code>.dna</code>, GenBank or
+FASTA files, and writes five files into <code>--out</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>product.dna</code></td>
+<td>the plasmid the design makes, annotated</td>
+</tr>
+<tr>
+<td><code>primers.tsv</code></td>
+<td>the oligos to order</td>
+</tr>
+<tr>
+<td><code>protocol.json</code></td>
+<td>the bench protocol as data you can edit</td>
+</tr>
+<tr>
+<td><code>product-map.html</code></td>
+<td>the product as a map you can explore, which the page's figure opens</td>
+</tr>
+<tr>
+<td><code>protocol.html</code></td>
+<td>that protocol as one page, which opens offline</td>
+</tr>
+</tbody>
+</table>
+<p>Gateway also writes <code>entry-clone.dna</code> and its map, <code>entry-clone-map.html</code>, where it plans a BP
+reaction. Golden Gate also writes each amplicon, <code>NAME-amplicon.dna</code>, and its map, which the
+PCR step's figure opens.</p>
+<p>Every one of the four prints a summary line, then each file it wrote. Five options are shared:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--out</code>, <code>-o</code></td>
+<td>required</td>
+<td>Folder to write into</td>
+</tr>
+<tr>
+<td><code>--polymerase</code></td>
+<td><code>Q5</code></td>
+<td>Polymerase for the PCRs. Also <code>Phusion</code>, <code>Taq</code> and <code>OneTaq</code></td>
+</tr>
+<tr>
+<td><code>--host</code></td>
+<td><code>NEB 5-alpha Competent E. coli (C2987)</code></td>
+<td>Strain the protocol names</td>
+</tr>
+<tr>
+<td><code>--cleanup-kit</code></td>
+<td><code>T1130</code> (Monarch Spin PCR &amp; DNA Cleanup Kit)</td>
+<td>Spin-column kit the protocol names, by catalogue number or by name</td>
+</tr>
+<tr>
+<td><code>--name</code></td>
+<td>the parts' names, joined</td>
+<td>What to call the product</td>
+</tr>
+</tbody>
+</table>
+<p>Gateway's <code>--host</code> starts at <code>TOP10 chemically competent E. coli</code> instead. A strain it
+recognises also gets its ccdB selection checked.</p>
+<p><code>--cleanup-kit</code> takes a catalogue number the package knows — <code>T1130</code>, the Monarch Spin PCR &amp;
+DNA Cleanup Kit, or <code>D4003</code>, Zymo Research's DNA Clean &amp; Concentrator-5 — or any other kit's own
+name, which the page then names with no catalogue number beside it.</p>
+<h3 id="golden-gate">Golden Gate<a class="headerlink" href="#golden-gate" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>cloning<span class="w"> </span>goldengate<span class="w"> </span>plan<span class="w"> </span>VECTOR<span class="w"> </span>INSERT<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<p>Name as many insert files as you like. They go round the product in the order you give them.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--site</code></td>
+<td>the vector's <code>MCS</code> feature</td>
+<td>Feature name, or <code>START-END</code>, that the inserts replace</td>
+</tr>
+<tr>
+<td><code>--orientation</code></td>
+<td><code>forward</code></td>
+<td>Which way round an insert goes: <code>forward</code> or <code>reverse</code>. Once per insert, or once for all of them</td>
+</tr>
+<tr>
+<td><code>--in-frame</code></td>
+<td>off</td>
+<td>Hold every junction on a codon boundary</td>
+</tr>
+<tr>
+<td><code>--enzyme</code></td>
+<td>the best free one</td>
+<td>Type IIS enzyme to use</td>
+</tr>
+<tr>
+<td><code>--codon-table</code></td>
+<td><code>e-coli-k12</code></td>
+<td>Whose codon usage a proposed domestication picks from</td>
+</tr>
+<tr>
+<td><code>--ligase-matrix</code></td>
+<td>none</td>
+<td>A ligase fidelity file you hold, to score the overhangs of an enzyme nobody has measured</td>
+</tr>
+<tr>
+<td><code>--prefer-ligase-matrix</code></td>
+<td>off</td>
+<td>Score with that file even where the enzyme has a measured one</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gibson">Gibson<a class="headerlink" href="#gibson" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>cloning<span class="w"> </span>gibson<span class="w"> </span>plan<span class="w"> </span>VECTOR<span class="w"> </span>INSERT<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--site</code></td>
+<td>the vector's <code>MCS</code> feature</td>
+<td>Feature name, or <code>START-END</code>, that the inserts replace</td>
+</tr>
+<tr>
+<td><code>--orientation</code></td>
+<td><code>forward</code></td>
+<td><code>forward</code> or <code>reverse</code>. Once per insert, or once for all of them</td>
+</tr>
+<tr>
+<td><code>--route</code></td>
+<td><code>amplify</code></td>
+<td>How an insert is made: <code>amplify</code> or <code>stitch</code>. Once per insert</td>
+</tr>
+<tr>
+<td><code>--bridge</code></td>
+<td>none</td>
+<td>A junction joined by one oligo, written <code>BEFORE:AFTER</code>. Once per junction</td>
+</tr>
+<tr>
+<td><code>--product</code></td>
+<td><code>NEBuilder HiFi DNA Assembly Master Mix</code></td>
+<td>The assembly product on the bench</td>
+</tr>
+</tbody>
+</table>
+<p>The other two products are <code>Gibson Assembly Master Mix</code> and
+<code>In-Fusion Snap Assembly Master Mix</code>.</p>
+<h3 id="restriction-and-ligation">Restriction and ligation<a class="headerlink" href="#restriction-and-ligation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>cloning<span class="w"> </span>restriction<span class="w"> </span>plan<span class="w"> </span>VECTOR<span class="w"> </span>INSERT<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<p>The second file is the insert, or the plasmid it is cut out of.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--enzyme</code></td>
+<td>chosen for you</td>
+<td>An enzyme both digests use. Name it at most twice</td>
+</tr>
+</tbody>
+</table>
+<p>Name no enzyme and the plan weighs the pairs itself, then says in its summary how many it turned
+down.</p>
+<h3 id="gateway">Gateway<a class="headerlink" href="#gateway" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>cloning<span class="w"> </span>gateway<span class="w"> </span>plan<span class="w"> </span>CARRIER<span class="w"> </span>DESTINATION<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<p><code>CARRIER</code> is the entry clone. Add <code>--donor</code> and it is the insert instead, and the plan then
+covers the BP reaction that makes the entry clone.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--donor</code></td>
+<td>none</td>
+<td>Donor vector, to plan the BP reaction</td>
+</tr>
+<tr>
+<td><code>--amplify</code> / <code>--no-amplify</code></td>
+<td><code>--no-amplify</code></td>
+<td>Design attB primers for an insert carrying no att site, and amplify it</td>
+</tr>
+<tr>
+<td><code>--fusion</code></td>
+<td><code>none</code></td>
+<td>Tag the insert is read into: <code>none</code>, <code>N-terminal</code>, <code>C-terminal</code> or <code>both</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="turn-protocol-data-back-into-a-page">Turn protocol data back into a page<a class="headerlink" href="#turn-protocol-data-back-into-a-page" title="Permanent link">&para;</a></h2>
+<p>Every plan writes its protocol twice: as data, and as the page rendered from it. Edit the data,
+then render it again with <code>mbio protocol render</code>. The page hands the bench back the check marks
+it had already ticked.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>protocol<span class="w"> </span>render<span class="w"> </span>SOURCE
+</code></pre></div>
+<p><code>SOURCE</code> is one <code>protocol.json</code> file, or a folder holding a <code>project.json</code>. A single file is
+written beside itself with an <code>.html</code> suffix, or wherever <code>--output</code> says. A folder is rendered
+in place: the index, one page per protocol, and the reagents and references pages. Those pages
+link each other, so they have to stay together, and <code>--output</code> is refused for a folder.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--output</code>, <code>-o</code></td>
+<td><code>SOURCE</code> with <code>.html</code></td>
+<td>HTML file to write. Not allowed for a folder</td>
+</tr>
+</tbody>
+</table>
+<h2 id="draw-a-record-as-a-map">Draw a record as a map<a class="headerlink" href="#draw-a-record-as-a-map" title="Permanent link">&para;</a></h2>
+<p><code>mbio plot map</code> draws a record the way SnapGene shows one: a circle or a line, with features,
+primers and cut sites labelled so no label sits on another.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>plot<span class="w"> </span>map<span class="w"> </span>RECORD<span class="w"> </span>--output<span class="w"> </span>map.html
+</code></pre></div>
+<p>The suffix picks the format. Use <code>.html</code> for a page to look through, <code>.png</code> or <code>.pdf</code> for a
+figure. Repeat <code>--output</code> to write several at once.</p>
+<table>
+<thead>
+<tr>
+<th>Argument or option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RECORD</code></td>
+<td>required</td>
+<td>Sequence file: <code>.dna</code>, GenBank or FASTA</td>
+</tr>
+<tr>
+<td><code>--output</code>, <code>-o</code></td>
+<td>required</td>
+<td>File to write. Repeat it to write several</td>
+</tr>
+<tr>
+<td><code>--region</code></td>
+<td>the whole record</td>
+<td>A feature's name, or <code>START..END</code>. An end before the start runs across the origin</td>
+</tr>
+<tr>
+<td><code>--linear</code></td>
+<td>off</td>
+<td>Open a circular record out as a line</td>
+</tr>
+<tr>
+<td><code>--sequence-view</code></td>
+<td>off</td>
+<td>Show the bases with the map, at most 100,000 of them</td>
+</tr>
+<tr>
+<td><code>--no-features</code></td>
+<td>off</td>
+<td>Leave the features out</td>
+</tr>
+<tr>
+<td><code>--no-primers</code></td>
+<td>off</td>
+<td>Leave the primers out</td>
+</tr>
+<tr>
+<td><code>--no-cut-sites</code></td>
+<td>off</td>
+<td>Leave the cut sites out</td>
+</tr>
+<tr>
+<td><code>--enzyme</code></td>
+<td>the shipped enzymes that cut once</td>
+<td>An enzyme whose every cut site to draw. Once per enzyme</td>
+</tr>
+<tr>
+<td><code>--hide-type</code></td>
+<td>none</td>
+<td>A feature type to leave out. Once per type</td>
+</tr>
+<tr>
+<td><code>--source</code></td>
+<td>off</td>
+<td>Show the source feature</td>
+</tr>
+<tr>
+<td><code>--bases-per-row</code></td>
+<td><code>60</code></td>
+<td>How many bases a row of the sequence view holds</td>
+</tr>
+<tr>
+<td><code>--one-strand</code></td>
+<td>off</td>
+<td>Leave the bottom strand out of the sequence view</td>
+</tr>
+<tr>
+<td><code>--dpi</code></td>
+<td><code>300</code></td>
+<td>Resolution of a PNG, in dots per inch</td>
+</tr>
+</tbody>
+</table>
+<p>It prints each file it wrote. If any label had to be hidden for want of room, it says how many.
+A page keeps whatever you switched off behind its own switches; a PNG or a PDF leaves it out.</p>
+<h2 id="design-a-primer-pair">Design a primer pair<a class="headerlink" href="#design-a-primer-pair" title="Permanent link">&para;</a></h2>
+<p><code>mbio primers design</code> picks a pair over a region, judges it, and writes the sheet you order
+from.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>primers<span class="w"> </span>design<span class="w"> </span>TEMPLATE<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument or option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TEMPLATE</code></td>
+<td>required</td>
+<td>A <code>.dna</code>, GenBank or FASTA record, or an indexed genome FASTA</td>
+</tr>
+<tr>
+<td><code>--out</code>, <code>-o</code></td>
+<td>required</td>
+<td>Folder to write into</td>
+</tr>
+<tr>
+<td><code>--region</code></td>
+<td>the whole record</td>
+<td>The amplicon, as <code>START..END</code>, or <code>NAME:START..END</code> on a genome, where it is required</td>
+</tr>
+<tr>
+<td><code>--assembly</code></td>
+<td>none</td>
+<td>The genome's name, such as <code>hg38</code></td>
+</tr>
+<tr>
+<td><code>--flank</code></td>
+<td><code>200</code></td>
+<td>How far either side of a genome region a primer may lie</td>
+</tr>
+<tr>
+<td><code>--forward-tail</code></td>
+<td>none</td>
+<td>Bases joined to the forward primer's 5' end</td>
+</tr>
+<tr>
+<td><code>--reverse-tail</code></td>
+<td>none</td>
+<td>Bases joined to the reverse primer's 5' end</td>
+</tr>
+<tr>
+<td><code>--forward-name</code></td>
+<td><code>forward</code></td>
+<td>What to order the forward primer under</td>
+</tr>
+<tr>
+<td><code>--reverse-name</code></td>
+<td><code>reverse</code></td>
+<td>What to order the reverse primer under</td>
+</tr>
+<tr>
+<td><code>--target-tm</code></td>
+<td><code>62</code></td>
+<td>The melting temperature the design aims for, in °C</td>
+</tr>
+<tr>
+<td><code>--polymerase</code></td>
+<td><code>Q5</code></td>
+<td>Polymerase whose rules judge the pair</td>
+</tr>
+</tbody>
+</table>
+<p>Give <code>--assembly</code> and <code>TEMPLATE</code> is read as that genome's FASTA. Name <code>--region</code> too, as
+<code>NAME:START..END</code>, because a whole genome is no amplicon. The pair is then searched against the
+genome itself and moved off any off-target amplicon.</p>
+<p>It writes <code>primers.tsv</code>. On a genome it writes <code>genome.tsv</code> too, holding every amplicon the pair
+makes there, the intended one first.</p>
+<h2 id="check-a-clones-sequencing">Check a clone's sequencing<a class="headerlink" href="#check-a-clones-sequencing" title="Permanent link">&para;</a></h2>
+<p><code>mbio sequence-verify</code> holds one clone's sequencing results against the plasmid it should be,
+and gives each junction and each insert a verdict.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>sequence-verify<span class="w"> </span>PRODUCT<span class="w"> </span>RESULT<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument or option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PRODUCT</code></td>
+<td>required</td>
+<td>The plasmid the clone should be, such as the <code>product.dna</code> a plan wrote</td>
+</tr>
+<tr>
+<td><code>RESULT</code></td>
+<td>required</td>
+<td>A Sanger read as <code>.ab1</code> or <code>.abi</code>, or a whole-plasmid consensus as FASTA, GenBank or <code>.dna</code>. Give one or more</td>
+</tr>
+<tr>
+<td><code>--feature</code></td>
+<td>none</td>
+<td>A feature to judge, in place of the junctions and inserts. Repeat it once per feature</td>
+</tr>
+<tr>
+<td><code>--out</code></td>
+<td>none</td>
+<td>A folder to write the clone's page into, as <code>verification.html</code></td>
+</tr>
+</tbody>
+</table>
+<p>A cloning plan marks each junction in the product it writes, so the command finds the junctions
+and the inserts between them on its own. It marks the junction the vector's own bases follow,
+so the vector itself is left out. On a plasmid no plan wrote, name what to judge with
+<code>--feature</code>.</p>
+<p>It prints one line for each junction and insert, with its verdict: pass, fail, warn or no
+verdict. Any difference outside them is listed with the feature it falls in, and judges nothing.
+Then comes a line for each result, and last the clone's line, <code>verified</code> or <code>not verified</code>.</p>
+<p>A consensus can't show a mixed sample: the plasmid read most becomes the consensus, so each one
+says so. A result where more than a tenth of the bases it trusts disagree, or fail to line up,
+prints one line, that it does not read as this plasmid, and nothing else. The vendor's table of
+reads at each base is not read yet, so give the consensus file rather than the folder.</p>
+<p>With <code>--out</code>, it also writes a page to read the result by, and prints its path last. The page
+gives the verdict and the same table, then a map of the plasmid with each result and each
+difference on it, and a close-up of every difference. Under a Sanger read's bases it draws the
+trace.</p>
+<p>The command exits with 1 when the clone is not verified, so a script can stop on it.</p>
+<h2 id="read-designs-back">Read designs back<a class="headerlink" href="#read-designs-back" title="Permanent link">&para;</a></h2>
+<p><code>synbio dmx plan</code> plans a read-back: clonal stock taken to one well per design, each well marked
+so sequencing says which well it came from.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>synbio<span class="w"> </span>dmx<span class="w"> </span>plan<span class="w"> </span>BUILD<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<p><code>BUILD</code> is a JSON file. It names the run, the sheet of designs, the plate of clonal stock they
+are spotted from, which of the two marking routes to use, and the fragment count at or above
+which a design is read back.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--out</code>, <code>-o</code></td>
+<td>required</td>
+<td>Folder to write into</td>
+</tr>
+</tbody>
+</table>
+<p>A read-back is one sitting, so the folder gets one page and its data: <code>protocol.html</code> and
+<code>protocol.json</code>. There is no sequence file and no order sheet, because a design is read back as
+a name and a count of its pieces rather than as bases.</p>
+<p>The two routes are <code>barcode ligation</code> and <code>index PCR</code>. Barcode ligation uses the lab's own
+barcode kit, whose sequences this package does not ship.
+<a href="../dmx-barcode-kit/">The DMX barcode kit</a> says what that file holds.</p>
+<h2 id="plan-a-library">Plan a library<a class="headerlink" href="#plan-a-library" title="Permanent link">&para;</a></h2>
+<p><code>synbio igga plan</code> plans a barcoded combinatorial library: lists of parts joined round by round,
+every part carrying a barcode that names it.</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>synbio<span class="w"> </span>igga<span class="w"> </span>plan<span class="w"> </span>BUILD<span class="w"> </span>--out<span class="w"> </span>DIR
+</code></pre></div>
+<p><code>BUILD</code> is a JSON file naming the positions, the part and vector files, and what one run
+chooses.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--out</code>, <code>-o</code></td>
+<td>required</td>
+<td>Folder to write into</td>
+</tr>
+<tr>
+<td><code>--kind</code></td>
+<td><code>protein</code></td>
+<td>What the parts FASTA holds: <code>protein</code> or <code>dna</code></td>
+</tr>
+<tr>
+<td><code>--site</code></td>
+<td>none</td>
+<td>Feature name, or <code>START-END</code>, to put an internal stuffer at, where the vector carries none</td>
+</tr>
+<tr>
+<td><code>--working-site</code></td>
+<td>none</td>
+<td>Feature name, or <code>START-END</code>, to put the ccdB cassette at, where the working vector carries none</td>
+</tr>
+<tr>
+<td><code>--pattern</code></td>
+<td>matches the position's name on a word boundary</td>
+<td>Regular expression matching a record name, with <code>{position}</code> for a position</td>
+</tr>
+<tr>
+<td><code>--prices</code></td>
+<td>none</td>
+<td>A banded price record you hold, as <code>.csv</code>, to cost the bill</td>
+</tr>
+<tr>
+<td><code>--ligase-matrix</code></td>
+<td>none</td>
+<td>A ligase fidelity file you hold, to report how often the ligase joins each round's overhangs</td>
+</tr>
+<tr>
+<td><code>--ligase-sheet</code></td>
+<td>the only sheet</td>
+<td>Which sheet of that file to read, for a workbook holding several</td>
+</tr>
+</tbody>
+</table>
+<p>Without <code>--prices</code> the quantities still compute, and every money cell is left as a hole naming
+what went unpriced, because nothing here is ever estimated. Nothing is designed on the ligase
+file either: it only reports.</p>
+<p>It writes the sheets, a record per round, and the run's protocols as a folder:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parts.tsv</code></td>
+<td>the synthesis order sheet, every block with its barcode on the same row</td>
+</tr>
+<tr>
+<td><code>barcodes.tsv</code></td>
+<td>which barcode names which part, and where it sits in the block</td>
+</tr>
+<tr>
+<td><code>changes.tsv</code></td>
+<td>every amino acid the overhang standard moved, wild type beside synthesised</td>
+</tr>
+<tr>
+<td><code>round-N.dna</code></td>
+<td>one record per round, up to the last</td>
+</tr>
+<tr>
+<td><code>product.dna</code></td>
+<td>the last round's product, the construct that stands for the library</td>
+</tr>
+<tr>
+<td><code>block-vector-N.dna</code></td>
+<td>one block vector per position</td>
+</tr>
+<tr>
+<td><code>working-vector-ccdb.dna</code></td>
+<td>the working vector the final assembly opens, cassette and all</td>
+</tr>
+<tr>
+<td><code>pool.tsv</code>, <code>pool-primers.tsv</code>, <code>oligo.dna</code></td>
+<td>the oligo pool to order, the primers that amplify it, and one oligo drawn as a record</td>
+</tr>
+<tr>
+<td><code>library-read-primers.tsv</code></td>
+<td>the pairs that read the finished library back</td>
+</tr>
+<tr>
+<td><code>protocol/</code></td>
+<td>the run as a folder of linked pages, one per protocol</td>
+</tr>
+</tbody>
+</table>
+<p>The block vectors, the pool and the oligo record are written only where the build names a primer
+set. Without one, each block is ordered whole and needs no vector to supply its stuffers. The
+working vector is written only where the build names one.</p>
+<h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>What it stands in for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LIULAB_MBIO_LIGASE_MATRIX</code></td>
+<td><code>--ligase-matrix</code>, on <code>cloning goldengate plan</code> and on <code>igga plan</code></td>
+</tr>
+<tr>
+<td><code>LIULAB_MBIO_PRICES</code></td>
+<td><code>--prices</code>, on <code>igga plan</code></td>
+</tr>
+</tbody>
+</table>
+<p>A path typed on the command line wins over the variable. Neither file is shipped, and both are
+read from a copy you hold. <a href="../ligation-fidelity/">Ligation fidelity</a> says what a ligase matrix
+is and where one comes from.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

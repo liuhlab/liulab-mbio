@@ -1,0 +1,2157 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/vector-qc-panel/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Did the domestication break it? A QC panel, by failure mode - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#did-the-domestication-break-it-a-qc-panel-by-failure-mode" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Did the domestication break it? A QC panel, by failure mode
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-if-you-read-nothing-else" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        0. If you read nothing else
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-precedent-is-absent-and-the-absence-is-the-finding" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The precedent is absent, and the absence is the finding
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-spine-two-cheap-numbers-from-one-harvest" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. The spine: two cheap numbers from one harvest
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-panel-by-failure-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. The panel, by failure mode
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. The panel, by failure mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-lost-titre" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 Lost titre
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-truncated-or-mis-ended-genome" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.2 Truncated or mis-ended genome
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-silent-provirus" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.3 Silent provirus
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-lost-or-skewed-expression" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.4 Lost or skewed expression
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-skewed-representation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.5 Skewed representation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-packaging-and-dimerisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.6 Packaging and dimerisation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-recombination-and-repeat-instability" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.7 Recombination and repeat instability
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#38-a-ccdb-cassette-that-stopped-killing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.8 A ccdB cassette that stopped killing
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-each-assay-is-blind-to-in-one-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What each assay is blind to, in one table
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-why-that-column-is-the-point-titre-and-rna-come-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Why that column is the point: titre and RNA come apart
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-panel-cheapest-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. The panel, cheapest first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-if-you-can-afford-exactly-one-assay" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. If you can afford exactly one assay
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-does-a-quiet-titre-loss-actually-skew-a-pooled-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Does a quiet titre loss actually skew a pooled library?
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-what-nothing-measures-and-the-experiment-that-closes-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. What nothing measures, and the experiment that closes it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-sources-and-what-was-left-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Sources, and what was left out
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-what-this-note-did-not-settle" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. What this note did not settle
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="did-the-domestication-break-it-a-qc-panel-by-failure-mode">Did the domestication break it? A QC panel, by failure mode<a class="headerlink" href="#did-the-domestication-break-it-a-qc-panel-by-failure-mode" title="Permanent link">&para;</a></h1>
+<p>Issue #271, under the AP-1 demo spec #225, carrying #250 forward. This is the companion to
+<code>lentiviral-tolerance.md</code>. That note says <strong>what a working vector tolerates</strong>. This one says
+<strong>how you find out whether the change broke anything</strong> — which assay, how small a change it can
+see, and, for each one, <strong>what it would not catch</strong>. The last of those three is the reason the
+note exists.</p>
+<p>It is written for the next working vector, whichever backbone that is. Nothing below depends on
+pLVX, on BsaI, or on this lab's library.</p>
+<p>Claims are marked, as in the companion note, and one mark is new:</p>
+<ul>
+<li><strong>Measured</strong> — a primary source changed the thing and reported a number.</li>
+<li><strong>Figure-only</strong> — the number exists only in a plot, because the paper's text states none. The
+  value was read off the figure here, is approximate, and says so each time.</li>
+<li><strong>Calculated</strong> — arithmetic done here on published values. Not a measurement.</li>
+<li><strong>Inferred</strong> — a chain of reasoning from something measured.</li>
+<li><strong>Nothing measures this</strong> — followed by what would close it.</li>
+</ul>
+<p>Every source was read <strong>2026-10-06</strong>. Downloads are under
+<code>reference_docs/synthesis_and_assembly/lentiviral-tolerance/</code>.</p>
+<h2 id="0-if-you-read-nothing-else">0. If you read nothing else<a class="headerlink" href="#0-if-you-read-nothing-else" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>The edit has a published precedent. The check does not.</strong> One paper removed BsaI and BsmBI
+   sites from lentiviral LTRs and the WPRE, and wrote in its own methods that it did not test the
+   mutations for function. Section 1.</li>
+<li><strong>"Silent" is not safe.</strong> A two-base substitution in the HIV-1 5' UTR, in no reading frame,
+   lowered genome packaging — and <strong>neither base alone did anything</strong>. Section 3.6.</li>
+<li><strong>Run p24 and functional titre on the same harvest, and look at the ratio.</strong> Across one
+   published panel p24 varied 1.2-fold while titre spanned about 3,900-fold. Section 2.</li>
+</ol>
+<h2 id="1-the-precedent-is-absent-and-the-absence-is-the-finding">1. The precedent is absent, and the absence is the finding<a class="headerlink" href="#1-the-precedent-is-absent-and-the-absence-is-the-finding" title="Permanent link">&para;</a></h2>
+<p><strong>No published account exists of anyone removing Type IIS sites from a lentiviral transfer vector
+and reporting what they checked afterwards.</strong> The companion note searched for this five ways —
+for a BsaI-domesticated transfer vector, for a mutated <code>GGTCTC</code> in an LTR, through the mammalian
+Golden Gate toolkits that ship lentiviral backbones, through the CRISPR-screen vector lineage,
+and through the MoClo kits — and found the edit nowhere and the measurement nowhere.</p>
+<p>Then it found the edit, and the edit makes the point sharper than the absence did.</p>
+<p><strong>Haellman, V. <em>et al.</em> A versatile plasmid architecture for mammalian synthetic biology.
+<em>Metab. Eng.</em> </strong>66<strong>, 41–50 (2021). PMID 33857582,
+<a href="https://doi.org/10.1016/j.ymben.2021.04.003">doi:10.1016/j.ymben.2021.04.003</a>.</strong> Its Tier-3
+lentiviral vectors were, in the paper's words, "mutated to remove BsaI and BsmBI cut sites within
+the LTRs' and WPRE enhancer". The same sentence continues:</p>
+<blockquote>
+<p>However, HindIII cut sites are too abundant to be easily removed, and <strong>we refrained from
+testing all mutations for functionality.</strong></p>
+</blockquote>
+<p><strong>The word "titer" does not appear anywhere in the paper.</strong> Neither does "titre". There is no
+transduction number for the domesticated backbone, against the parent or against anything else.</p>
+<p>The sequence scan under <code>toolkits/VAMSyB-tier3-LTR-scan.txt</code>, run for #262 against the
+Addgene-verified sequence of pTS1106_Tier3(Lenti) (Addgene 169661), says what was changed. Both
+LTR copies carry two single-base substitutions relative to HXB2, R-relative positions <strong>+4</strong> and
+<strong>+80</strong>: <code>GGTCTC</code> at R+1 becomes <code>GGTTTC</code>, which is the BsaI site gone, and <code>ATAAAGCTTGCCT</code> at
+R+74 becomes <code>ATAAAGTTTGCCT</code>. <strong>Measured</strong>, from the sequence. The second change sits a couple of
+bases past the R-region <code>AATAAA</code> hexamer and takes out a HindIII site — <strong>inferred</strong> from the
+window the scan prints, not from any statement by the authors.</p>
+<p><strong>So the state of the literature is: one group made a domestication-sized edit in the most
+conserved part of a lentiviral vector, in both LTR copies, next to the poly(A) signal, and said
+plainly that it did not test it.</strong> Everything below is assembled from adjacent work — psi
+mutagenesis, clinical-vector release assays, silencing studies, pooled-screen methodology — and
+none of it was done on a domesticated vector.</p>
+<h2 id="2-the-spine-two-cheap-numbers-from-one-harvest">2. The spine: two cheap numbers from one harvest<a class="headerlink" href="#2-the-spine-two-cheap-numbers-from-one-harvest" title="Permanent link">&para;</a></h2>
+<p><strong>Kim, S. H., Jun, H. J., Jang, S. I. &amp; You, J. C.</strong> The determination of importance of sequences
+neighboring the psi sequence in lentiviral vector transduction and packaging efficiency.
+<em>PLoS One</em> <strong>7</strong>, e50148 (2012). PMID 23185560, PMC3503997,
+<a href="https://doi.org/10.1371/journal.pone.0050148">doi:10.1371/journal.pone.0050148</a>.</p>
+<p>They inserted restriction sites around psi in a lentiviral transfer vector — the closest published
+thing to a domestication edit — and measured particle output and function side by side. Table 1,
+<strong>measured</strong>, quoted whole:</p>
+<table>
+<thead>
+<tr>
+<th>Construct</th>
+<th>p24 (ng/mL)</th>
+<th>HT1080 colonies (CFU/mL)</th>
+<th>Transduction, % of parent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EGFP (parent)</td>
+<td>298 ± 12</td>
+<td>235,000</td>
+<td>100</td>
+</tr>
+<tr>
+<td>ES2.psi</td>
+<td>252 ± 3</td>
+<td>41,333</td>
+<td>18</td>
+</tr>
+<tr>
+<td>ES3.psi</td>
+<td>293 ± 8</td>
+<td>215,000</td>
+<td>91</td>
+</tr>
+<tr>
+<td>PMM1.psi</td>
+<td>284 ± 6</td>
+<td>215,000</td>
+<td>91</td>
+</tr>
+<tr>
+<td>PBS.MAp</td>
+<td>282 ± 13</td>
+<td>60</td>
+<td>0.03</td>
+</tr>
+</tbody>
+</table>
+<p><strong>p24 spans 1.18-fold across this panel. Functional titre spans about 3,900-fold.</strong> That ratio is
+<strong>calculated</strong> here from the table; the paper does not state it.</p>
+<p>Three things follow, and they are the whole argument for the panel.</p>
+<p><strong>p24 alone would have told them nothing.</strong> Every construct made particles. One of them made 60
+colonies per millilitre.</p>
+<p><strong>The ratio localises the failure.</strong> Normal particle output with collapsed infectivity is a
+genome, packaging or reverse-transcription failure — something wrong with what is inside the
+particle, or with what it does after entry. Low p24 <em>and</em> low titre is a production failure, and
+you go and look at the transfection. One pair of numbers from one harvest splits the lifecycle in
+half.</p>
+<p><strong>Position matters at a resolution of a few bases.</strong> ES2 put an EcoRV site at the 5' end of psi
+and reached 18% of parent. ES3 left the 5' end intact, used the same 3' site, and reached 91%.
+ES1 and ES2 differ from each other by <strong>three nucleotides</strong> at that 5' junction and both land near
+20% of control (body text, MT4 transduction, <strong>measured</strong>). PMM1 and PMM2, at HXB2 positions 203
+and 197, were both tolerated. <strong>A few bases decide it, and nothing about the sequence told them
+which few.</strong></p>
+<h2 id="3-the-panel-by-failure-mode">3. The panel, by failure mode<a class="headerlink" href="#3-the-panel-by-failure-mode" title="Permanent link">&para;</a></h2>
+<p>Each entry gives the assay, what it has been measured to resolve, and what it is blind to.</p>
+<h3 id="31-lost-titre">3.1 Lost titre<a class="headerlink" href="#31-lost-titre" title="Permanent link">&para;</a></h3>
+<p>Lost titre is the failure everyone tests for and the one that hides best in a pooled library. You
+transduce the planned number of cells, get fewer transductants than you think, and believe you are
+at 500-fold coverage when you are at 100-fold.</p>
+<p><strong>The assay.</strong> Functional titre on the same harvest as p24. Flow cytometry if the vector carries a
+marker; otherwise ddPCR on genomic DNA from transduced cells. <strong>Kandell, J., Milian, S., Snyder,
+R. &amp; Lakshmipathy, U.</strong> <em>Mol. Ther. Methods Clin. Dev.</em> <strong>31</strong>, 101120 (2023). PMID 37841416,
+PMC10568280, <a href="https://doi.org/10.1016/j.omtm.2023.101120">doi:10.1016/j.omtm.2023.101120</a> —
+targets <strong>RRE</strong> duplexed with GAPDH, so one assay serves every member of a library regardless of
+transgene.</p>
+<p><strong>Measured sensitivity.</strong> LLOQ <strong>1.16 copies/µL</strong>, which the paper converts to 12 copies per µg of
+genomic DNA; linear range 1.16 to 1.11 × 10³ copies/µL; %CV 5 to 17 across that range (Table 1,
+three independent runs). Against the NIST single-copy reference it read <strong>0.89 copies per cell,
+3.6% CV, n = 3</strong>, an 11% accuracy difference. For vector copy number, <strong>Corre, G. <em>et al.</em></strong>
+<em>Gene Ther.</em> <strong>29</strong>, 536–543 (2022). PMID 35194185, PMC9482878,
+<a href="https://doi.org/10.1038/s41434-022-00315-8">doi:10.1038/s41434-022-00315-8</a> — against clonal
+standards at VCN 1, 2 and 3, <strong>ddPCR CV 4–8% against qPCR 10–15%</strong>, LOD <strong>0.005 VCN</strong>, LOQ
+<strong>0.01 VCN</strong> at 20–40 ng of genomic DNA per reaction. A 2-fold change is resolvable at n = 2.</p>
+<p><strong>What it would not catch.</strong></p>
+<ul>
+<li><strong>Truncation, silencing or barcode linkage.</strong> None of them changes titre by definition, and
+  section 4 has a case where titre moved 10–30% while the RNA measurement moved 70%.</li>
+<li><strong>Which half of the lifecycle broke</strong> — not without p24 beside it.</li>
+<li><strong>Carried-over transfer plasmid.</strong> Corre showed directly that a psi-targeting assay amplifies
+  the transfer plasmid as well as the provirus, "as confirmed by a positive PCR result". Their
+  provirus-specific design puts the probe across the <strong>U5-to-vector junction that only exists
+  after reverse transcription duplicates the LTR</strong>, and matched the psi assay's precision.
+  Kandell's RRE assay is <strong>not</strong> described as provirus-specific and the paper states no
+  carry-over caveat. <strong>Wu, X. <em>et al.</em></strong> <em>Heliyon</em> <strong>10</strong>, e38512 (2024). PMID 39498040,
+  PMC11532291, <a href="https://doi.org/10.1016/j.heliyon.2024.e38512">doi:10.1016/j.heliyon.2024.e38512</a>
+  handles the same problem at the bench instead: 100 U/mL Benzonase for 1.5 h drove spiked
+  transfer-plasmid copies to zero.</li>
+<li><strong>Agreement with flow is not guaranteed.</strong> Kandell reports ddPCR "generally within 30%" of flow,
+  but its own Table 2 holds one sample at <strong>181% difference</strong> (attributed to a flow staining
+  reagent). Wu reports ddPCR titres <strong>4–5-fold higher than FACS</strong> (p &lt; 0.05, n = 3) and treats
+  that as expected, not as error. <strong>Two titre methods are not interchangeable; pick one and keep
+  it.</strong></li>
+</ul>
+<h3 id="32-truncated-or-mis-ended-genome">3.2 Truncated or mis-ended genome<a class="headerlink" href="#32-truncated-or-mis-ended-genome" title="Permanent link">&para;</a></h3>
+<p>A fraction of the RNA packaged into particles is not full length. This is silent in every bulk
+assay, including titre.</p>
+<p><strong>The assay.</strong> Nanopore direct RNA sequencing of RNA extracted from purified virions. Every read's
+3' terminus is the RNA's own 3' end, so truncation and cryptic polyadenylation sites fall out
+directly rather than being inferred.</p>
+<p><strong>Zeglinski, K. <em>et al.</em></strong> An optimized protocol for quality control of gene therapy vectors using
+nanopore direct RNA sequencing. <em>Genome Res.</em> <strong>34</strong>, 1966–1975 (2024). PMID 39467647,
+PMC11610601, <a href="https://doi.org/10.1101/gr.279405.124">doi:10.1101/gr.279405.124</a>.</p>
+<blockquote>
+<p>The file holding this paper is named <code>fm2-pal2024-...</code>. <strong>The first author is Zeglinski.</strong> The
+filename is wrong and the citation above is read off the article itself.</p>
+</blockquote>
+<p><strong>Measured sensitivity.</strong> On clinical WAS vectors, about <strong>80%</strong> of reads ended at the expected
+3' end and about <strong>10%</strong> ended at roughly 4,600 bp, at a non-canonical <code>ATTACA</code> inside the
+<strong>WPRE</strong>. With the artificial-polyadenylation arm, which recovers RNAs that lost their poly(A)
+tail, one vector resolved: WPRE cryptic poly(A) <strong>4.44%</strong>, a hairpin truncation at about 500 bp
+in the psi stem-loops <strong>11.26%</strong>, a second at about 2,300 bp at an shRNA cassette <strong>8.61%</strong>
+(19.88% together), and spliced reads <strong>1.31%</strong>. <strong>Full-length RNA was only about 60–75% even in a
+working vector.</strong> The smallest species the paper quantifies is around 1–2%, so treat roughly 2% as
+the practical floor — that is <strong>inferred</strong> from what they report, not a stated detection limit.</p>
+<p>The paper's repair attempt is the most useful thing in it for domestication. Mutating <code>ATTACA</code> to
+<code>ATTTCA</code> and removing the shRNA cut the truncation window to <strong>3.39%</strong>, then <strong>2.04%</strong> — but the
+authors write that mutation "did not eliminate premature termination", and the repaired vector
+<strong>gained a new splice event that removed most of the promoter in 19.35% of reads</strong>, which took two
+further base changes to remove. <strong>One deliberate base change created a second defect that only
+this assay could see.</strong></p>
+<p><strong>What it would not catch.</strong></p>
+<ul>
+<li><strong>Function.</strong> No titre was measured. The authors say so.</li>
+<li><strong>Non-polyadenylated truncations</strong>, unless the artificial-polyadenylation arm is run as well.
+  Run both.</li>
+<li><strong>Base-level changes.</strong> SNP calling on RNA002 chemistry is unreliable; errors and modified bases
+  give miscalls and indels. <strong>Do not use this to confirm your edit — sequence the plasmid.</strong></li>
+<li><strong>Anything, cheaply.</strong> Only <strong>1.5–3%</strong> of reads aligned to the vector, and a MinION flow cell
+  yields about <strong>10,000 vector reads</strong>. This is the most expensive assay in the panel.</li>
+</ul>
+<p>Read-through past the 3' LTR is the same failure mode seen from the other end, and for
+domestication it carries a specific warning: <strong>termination and promoter are the same bases.</strong>
+<strong>Yang, Q., Lucas, A., Son, S. &amp; Chang, L.-J.</strong> <em>Retrovirology</em> <strong>4</strong>, 4 (2007). PMID 17241475,
+PMC1802088, <a href="https://doi.org/10.1186/1742-4690-4-4">doi:10.1186/1742-4690-4-4</a> measured it with a
+Cre-loxP reporter line and found that <strong>70–80% of termination activity lives in a 124-nt stretch
+overlapping the NF-κB, Sp1 and TATA sites</strong>, and that deleting NF-κB, NF-κB plus Sp1, or TATA
+alone <strong>each raised read-through</strong>. Inserting alternative terminators — HTLV-1 poly(A), a 3'
+intron, a tRNA motif — restored nothing and made read-through worse.</p>
+<p><strong>Two limits on that number, and they matter here.</strong> The paper's text gives <strong>no absolute
+read-through percentage</strong> for any construct; every value is a bar in a figure, and the 70–80%
+figure appears only as a relative statement in the abstract and discussion. And <strong>every mutation
+Yang made was a block deletion or a block restoration — no base substitution was ever tested.</strong>
+That is exactly the resolution a domestication edit works at, and it is unmeasured.</p>
+<p>For an absolute frequency, use <strong>Koldej, R. M. &amp; Anson, D. S.</strong> <em>BMC Biotechnol.</em> <strong>9</strong>, 86 (2009).
+PMID 19811661, PMC2765960,
+<a href="https://doi.org/10.1186/1472-6750-9-86">doi:10.1186/1472-6750-9-86</a>, whose TaqMan assay reads a
+transcript spanning the 3' LTR poly(A) into the plasmid backbone against total transgene
+transcript. Their Table 1, <strong>measured</strong>, n = 3: the parent vector sits at
+<strong>9.05 ± 0.93 × 10⁻³</strong> — about 0.9% read-through — and the designs that replaced the HIV-1 poly(A)
+with a heterologous one reached <strong>8.7 × 10⁻²</strong>, nearly ten times worse. That is the assay to copy,
+and the result is a warning about "improving" the poly(A) while domesticating near it.</p>
+<p><strong>Zaiss, A. K., Son, S. &amp; Chang, L.-J.</strong> <em>J. Virol.</em> <strong>76</strong>, 7209–7219 (2002). <strong>PMID 12072520</strong>,
+PMC136337,
+<a href="https://doi.org/10.1128/jvi.76.14.7209-7219.2002">doi:10.1128/jvi.76.14.7209-7219.2002</a> is the
+source of the method and of the finding that a SIN HIV-1 poly(A) is already as leaky as MLV's.
+<strong>The PMID is corrected here.</strong> An earlier copy of the source file held the abstract of PMID
+12072521 — Lecellier <em>et al.</em>, equine foamy virus, the adjacent article in the same issue. Use
+12072520.</p>
+<h3 id="33-silent-provirus">3.3 Silent provirus<a class="headerlink" href="#33-silent-provirus" title="Permanent link">&para;</a></h3>
+<p>The provirus integrates, the member is in the pool, it amplifies normally in a barcode readout,
+and it contributes no phenotype. <strong>It reads as "this variant is inactive", not "this variant is
+broken".</strong> For a screen this is the worst failure in the note.</p>
+<p><strong>The assay.</strong> Vector copy number and percent expressing, <strong>on the same cells, at four or more
+timepoints</strong>. The gap between them is the signature.</p>
+<p><strong>Herbst, F. <em>et al.</em></strong> <em>Mol. Ther.</em> <strong>20</strong>, 1014–1021 (2012). PMID 22434137, PMC3345972,
+<a href="https://doi.org/10.1038/mt.2012.46">doi:10.1038/mt.2012.46</a>. Vector copy number per cell stayed
+flat at <strong>1.1 ± 0.004 falling to 0.9 ± 0.3</strong> (not significant) while eGFP-positive marrow fell
+from <strong>5.4–17.6% at 4 weeks to 0.0–0.6% at 36 weeks</strong>. Bisulfite sequencing found <strong>18 of 18
+promoter CpGs over 90% methylated</strong> against under 3% in controls, and 5-azacytidine recovered
+expression from 7.9 ± 0.7% to 14.2 ± 0.1%, about 1.8-fold — partial, not full. <strong>Promoter choice
+dominates the problem</strong>: CMV fell 3.6–5.2-fold during differentiation, PGK and EF1α only
+1.5–1.7-fold.</p>
+<p><strong>Baseline, so you know what is normal.</strong> <strong>Jordan, A., Bisgrove, D. &amp; Verdin, E.</strong> <em>EMBO J.</em>
+<strong>22</strong>, 1868–1877 (2003). PMID 12682019, PMC154479,
+<a href="https://doi.org/10.1093/emboj/cdg188">doi:10.1093/emboj/cdg188</a>: productive infection 4% against
+a latent phenotype at 0.06%, so <strong>about 1.5% of integrations — one in 66 — land silent with a
+perfectly good vector</strong>, much of that driven by integration site rather than vector sequence.
+Rescue is the confirmation step, and it is unreliable: TNF-α restored expression in all clones,
+but the HDAC inhibitor trichostatin A worked <strong>only in some</strong>.</p>
+<p><strong>Contreras, X. <em>et al.</em></strong> <em>J. Biol. Chem.</em> <strong>284</strong>, 6782–6789 (2009). PMID 19136668, PMC2652322,
+<a href="https://doi.org/10.1074/jbc.M807898200">doi:10.1074/jbc.M807898200</a> sets the scale of an HDAC
+rescue: <strong>5-fold</strong> in resting primary CD4+ cells, up to <strong>30-fold</strong> in a reporter line, <strong>40-fold</strong>
+in a chronically infected line.</p>
+<blockquote>
+<p><strong>Provenance, marked.</strong> The Herbst, Jordan and Contreras numbers were read from the PMC page
+text of each article, which attributes them to figures that were not opened here. They are
+first-hand from the article text and second-hand from the figures. No OA PDF or full-text XML is
+served for any of the three.</p>
+</blockquote>
+<p><strong>What it would not catch.</strong></p>
+<ul>
+<li><strong>A negative rescue does not prove the provirus is absent.</strong> Trichostatin A fired on only some
+  clones in Jordan's own hands.</li>
+<li><strong>It cannot run on a pool.</strong> Copy number and percent expressing are population averages. A pool
+  in which 5% of members are fully silenced looks like a pool at 95% expression, and so does a
+  pool in which every member is 5% dimmer. Section 5 step 6 has the fix.</li>
+<li><strong>It is slow.</strong> The Herbst signature needed 36 weeks to become obvious. Four timepoints over six
+  weeks is the shortest version worth running, and that is <strong>inferred</strong> from the shape of their
+  curve, not a published minimum.</li>
+</ul>
+<h3 id="34-lost-or-skewed-expression">3.4 Lost or skewed expression<a class="headerlink" href="#34-lost-or-skewed-expression" title="Permanent link">&para;</a></h3>
+<p>For a Tet-on vector, two numbers that must be reported separately: induced level, and leak.</p>
+<p><strong>The assay.</strong> <strong>Loew, R., Heinz, N., Hampf, M., Bujard, H. &amp; Gossen, M.</strong> <em>BMC Biotechnol.</em>
+<strong>10</strong>, 81 (2010). PMID 21106052, PMC3002914,
+<a href="https://doi.org/10.1186/1472-6750-10-81">doi:10.1186/1472-6750-10-81</a> measures the same promoters
+twice — transiently, and after single-copy integration from a SIN vector at MOI 0.06–0.12 — which
+is the comparison a vector lab needs.</p>
+<p><strong>Measured sensitivity.</strong> <strong>Regulation collapses on integration.</strong> Transiently, Ptet-T6 reaches
+about <strong>50,000-fold</strong> regulation, against Ptet-1 at 400-fold and Ptet-14 at 6,200-fold. At single
+integrated copy, Figure 4B gives <strong>4.5 × 10⁴ (± 2.8 × 10³) to 1.6 × 10⁷ (± 4.7 × 10⁵) rlu/µg for
+Ptet-1 and 2.9 × 10³ (± 1.1 × 10²) to 2.3 × 10⁷ (± 3.9 × 10⁵) for Ptet-T6</strong> — about <strong>356-fold</strong>
+and <strong>7,900-fold</strong>, which is <strong>calculated</strong> here from the figure's own values. The body text
+states only "15-fold" lower background and "about 30-fold" wider range.</p>
+<p><strong>Flow cytometry cannot measure the leak, and this is the measurement that proves it.</strong> Figure 4C
+was read off the figure here. <strong>Figure-only</strong>, mean fluorescence of the whole population:</p>
+<table>
+<thead>
+<tr>
+<th>Dox (ng/mL)</th>
+<th>Ptet-1 (mfu)</th>
+<th>Ptet-T6 (mfu)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>2.2</td>
+<td>1.9</td>
+</tr>
+<tr>
+<td>10</td>
+<td>6.9</td>
+<td>4.7</td>
+</tr>
+<tr>
+<td>30</td>
+<td>94</td>
+<td>179</td>
+</tr>
+<tr>
+<td>100</td>
+<td>266</td>
+<td>409</td>
+</tr>
+<tr>
+<td>1000</td>
+<td>402</td>
+<td>520</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The parental GFP-negative background is 1.83.</strong> So the off state of Ptet-1 sits at 1.2-fold
+above background and Ptet-T6 at 1.04-fold above it. The authors state outright that <strong>no
+meaningful conclusion can be drawn</strong> from the GFP data about leakiness. Luciferase on the same
+populations resolved the 15-fold difference immediately. By flow the two promoters look like
+183-fold and 274-fold regulation; by luciferase they are 356-fold and 7,900-fold. <strong>Flow
+understates Ptet-T6's regulation range by roughly 29-fold</strong> — <strong>calculated</strong> here from the figure.</p>
+<p><strong>What it would not catch.</strong></p>
+<ul>
+<li><strong>The leak</strong>, on any cytometer, when the off state is near background. If the leak matters, put
+  a luminescent reporter on the construct.</li>
+<li><strong>Per-cell heterogeneity at partial induction.</strong> All cells responded at 30 ng/mL Dox, but not
+  homogeneously — a population mean hides that, and flow is the only thing that shows it. The two
+  assays are blind to opposite things.</li>
+<li><strong>The smallest fold change a cytometer can resolve.</strong> No source states one; it is instrument-
+  and fluorophore-specific. <strong>Nothing measures this.</strong> <em>Closes it:</em> a 2-fold ladder on the lab's
+  own machine.</li>
+</ul>
+<h3 id="35-skewed-representation">3.5 Skewed representation<a class="headerlink" href="#35-skewed-representation" title="Permanent link">&para;</a></h3>
+<p>The screen runs and the answer is wrong.</p>
+<p><strong>The assay.</strong> Sequence the barcode or guide amplicon at the <strong>plasmid pool</strong>, after transduction,
+and at the endpoint. <strong>Normalise to the plasmid pool, not to the first cell timepoint.</strong></p>
+<p><strong>Imkeller, K., Ambrosi, G., Boutros, M. &amp; Huber, W.</strong> <em>Genome Biol.</em> <strong>21</strong>, 53 (2020). PMID
+32122365, PMC7052974,
+<a href="https://doi.org/10.1186/s13059-020-1939-1">doi:10.1186/s13059-020-1939-1</a> is the source of that
+rule, and gives the reason: guides against essential genes are <strong>already depleted by T0</strong>, up to
+four doublings after transduction, so a T0 reference bakes the effect you are measuring into the
+denominator.</p>
+<p><strong>Measured acceptance bar.</strong> <strong>Joung, J. <em>et al.</em></strong> <em>Nat. Protoc.</em> <strong>12</strong>, 828–863 (2017). PMID
+28333914, PMC5526071, <a href="https://doi.org/10.1038/nprot.2017.016">doi:10.1038/nprot.2017.016</a>:
+"An ideal sgRNA library should have <strong>more than 70% perfectly matching guides, less than 0.5%
+undetected guides, and a skew ratio of less than 10</strong>", where the skew ratio is the 90th to 10th
+percentile abundance ratio, judged at over 100 reads per member. Screen at <strong>over 500 cells per
+member</strong> and <strong>MOI under 0.3</strong>, so most cells take one.</p>
+<p><strong>Coverage against skew.</strong> Imkeller's Table 2 pairs the two, <strong>measured by simulation</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Library width (p90/p10)</th>
+<th>Recommended coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.5</td>
+<td>200</td>
+</tr>
+<tr>
+<td>5</td>
+<td>300</td>
+</tr>
+<tr>
+<td>7.5</td>
+<td>300</td>
+</tr>
+<tr>
+<td>10</td>
+<td>400</td>
+</tr>
+<tr>
+<td>17</td>
+<td>400</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Heo, S.-J. <em>et al.</em></strong> <em>Genome Biol.</em> <strong>25</strong>, 25 (2024). PMID 38243310, PMC10797759,
+<a href="https://doi.org/10.1186/s13059-023-03132-3">doi:10.1186/s13059-023-03132-3</a> pushes it further: a
+library with a 90/10 skew ratio <strong>under 2</strong> screened at 100-fold coverage matched a 1,000-fold
+screen (phenotype-score r² = 0.900; BAGEL2 AUC 0.949 against 0.937), and the paper concludes that
+<strong>50-fold cell coverage</strong> suffices for such a library. <strong>Its coverage titration at 200, 100, 50
+and 10-fold is described only qualitatively in the text — the per-coverage skew numbers live in
+Fig. 4B/C and Table S5, which are not in the gathered file and are therefore not quoted here.</strong></p>
+<p><strong>What it would not catch.</strong></p>
+<ul>
+<li><strong>A silenced member.</strong> It amplifies from genomic DNA exactly as a working one does. Barcode
+  abundance is a count of integrations, not of function.</li>
+<li><strong>A quiet titre loss.</strong> Section 7 works the arithmetic: a 2-fold titre loss is invisible in the
+  skew metric. Imkeller measured the same thing from the other side — reducing <strong>cell-splitting</strong>
+  coverage pushed up to <strong>20%</strong> of guides below an LFC of −1, while the same reduction in
+  <strong>transduction</strong> coverage moved only <strong>3%</strong>. Transduction is not where screens lose their
+  representation.</li>
+<li><strong>Barcode-to-part linkage.</strong> Nothing in an amplicon readout says the barcode still names what it
+  was designed to name. Only long-read sequencing of the plasmid pool says that.</li>
+</ul>
+<h3 id="36-packaging-and-dimerisation">3.6 Packaging and dimerisation<a class="headerlink" href="#36-packaging-and-dimerisation" title="Permanent link">&para;</a></h3>
+<p>This is the section that justifies assaying rather than reasoning, and it is the strongest result
+in the material.</p>
+<p><strong>Sakuragi, S. <em>et al.</em></strong> Identification of a novel cis-acting regulator of HIV-1 genome packaging.
+<em>Int. J. Mol. Sci.</em> <strong>22</strong>, 3435 (2021). PMID 33810482, PMC8036536,
+<a href="https://doi.org/10.3390/ijms22073435">doi:10.3390/ijms22073435</a>.</p>
+<p><strong>The edit.</strong> Two consecutive bases, <strong><code>GA</code> to <code>AC</code> at NL4-3 positions 226 and 227</strong>, inside psi,
+downstream of the primer binding site, in the 5' UTR. Two bases. The paper places them in the 5'
+UTR, so no reading frame covers them — <strong>inferred</strong>, one step, from the paper's own description of
+the region.</p>
+<p><strong>The assay.</strong> A <strong>competitive RT-qPCR packaging ratio</strong>. Each mutant is co-transfected with a
+control genome that differs only by silent changes in CA, and the measurement is the mutant-to-
+control ratio in virions normalised to the mutant-to-control ratio in the cytoplasm. Transfection
+efficiency and RNA recovery cancel. n = 3, SEM.</p>
+<p><strong>Measured — but the magnitude is figure-only.</strong> The paper's text gives <strong>no fold number at all</strong>,
+calling the effect "low packaging ability" and "moderate rather than lethal". Figure 3 was fetched
+and read here. Relative packaging efficiency, approximate values read off the plot:</p>
+<table>
+<thead>
+<tr>
+<th>Construct</th>
+<th>Bases changed</th>
+<th>Relative packaging</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NLAINh (parent)</td>
+<td>none</td>
+<td>~0.95</td>
+</tr>
+<tr>
+<td>#8-1</td>
+<td>one of the two critical bases</td>
+<td>~1.05</td>
+</tr>
+<tr>
+<td>#8-8</td>
+<td>the other critical base, in a four-base block</td>
+<td>~1.35</td>
+</tr>
+<tr>
+<td><strong>#8-2</strong></td>
+<td><strong>both, <code>GA</code> to <code>AC</code></strong></td>
+<td><strong>~0.80</strong></td>
+</tr>
+<tr>
+<td>#8</td>
+<td>all five discordant bases</td>
+<td>~0.60</td>
+</tr>
+</tbody>
+</table>
+<p>Panel 3C, same reading: the segment carrying them drops to <strong>~0.47</strong> against a parent at <strong>~0.88</strong>.</p>
+<p><strong>The finding.</strong> The two-base change lowers packaging. <strong>Neither single base alone does
+anything</strong> — the paper says it twice, in the results and in the discussion: "neither single-base
+changes lead to phenotype conversion" and "There was no difference in packaging ability when only
+one base was substituted." <strong>A domestication edit that changes two adjacent bases is not two
+single-base edits, and testing them one at a time would have found nothing.</strong></p>
+<p><strong>Dimerisation is the second assay, and it is not the same assay.</strong> <strong>Clever, J. L. &amp; Parslow,
+T. G.</strong> <em>J. Virol.</em> <strong>71</strong>, 3407–3414 (1997). PMID 9094610, PMC191485: SL1 loop mutants that block
+dimerisation <em>in vitro</em> have <strong>impaired infectivity at normal virion RNA content</strong>. A packaging
+ratio alone would call those vectors fine. The separating assay is a <strong>non-denaturing-gel
+Northern</strong> on virion RNA. Clever also found that the <strong>structures, not the sequences</strong>, of the SL1
+and SL3 stems are what packaging needs — which is what makes a compensating change thinkable at
+all.</p>
+<p><strong>What it would not catch.</strong></p>
+<ul>
+<li><strong>A dimerisation defect</strong>, if only the packaging ratio is run. Clever is the counter-example.</li>
+<li><strong>A packaging defect</strong>, if only the gel is run. Sakuragi measured no dimerisation change for the
+  subtype swap and never ran the gel on the 226/227 mutants themselves.</li>
+<li><strong>Function.</strong> Sakuragi reports <strong>no infectivity or titre number</strong> for these mutants; p24 was used
+  only to normalise input. A packaging drop of this size has never been converted into a titre.
+  <strong>Nothing measures this.</strong></li>
+</ul>
+<h3 id="37-recombination-and-repeat-instability">3.7 Recombination and repeat instability<a class="headerlink" href="#37-recombination-and-repeat-instability" title="Permanent link">&para;</a></h3>
+<p>Two different failures share this heading and they want different responses.</p>
+<p><strong>Between the LTRs, in the plasmid prep.</strong> <strong>Rhode, B. W., Emerman, M. &amp; Temin, H. M.</strong> <em>J. Virol.</em>
+<strong>61</strong>, 925–927 (1987). PMID 3806800, PMC254040: direct repeats of 0.85–1.3 kb deleted at high
+frequency during virus replication, whether tandem or separated. <strong>The paper states no rate</strong>, it
+is MLV-based, and it is the only primary measurement in the material. The assay is whole-plasmid
+sequencing of the prep you are about to use — not of the design.</p>
+<p><strong>During reverse transcription, between co-packaged genomes.</strong> <strong>Levy, D. N., Aldrovandi, G. M.,
+Kutsch, O. &amp; Shaw, G. M.</strong> <em>PNAS</em> <strong>101</strong>, 4204–4209 (2004). PMID 15010526, PMC384719,
+<a href="https://doi.org/10.1073/pnas.0306764101">doi:10.1073/pnas.0306764101</a>: <strong>an average of nine
+recombination events per virus</strong> in a single round in T lymphocytes, and about <strong>30 crossovers</strong>
+in macrophages. <strong>But recombination requires two different genomes in one particle, so it scales
+as the square of the infection rate</strong> — with MOI and pooling, not with your edits. <strong>The
+mitigation is low MOI, not sequence design.</strong></p>
+<p><strong>SIN repair is the case where sequence design does not help either.</strong> Koldej &amp; Anson measured it
+by marker rescue and colony PCR, Table 2, <strong>measured</strong>: the parent repaired its 5' LTR in <strong>17 of
+17</strong> colonies; a vector with U3 homology cut to the 19 bp att repaired in <strong>13 of 22</strong> with 18%
+still SIN; a vector with <strong>zero U3-to-U3 homology</strong> still repaired completely in <strong>2 of 11</strong>, with
+another 42% partial. In their words, "repair still occurred in the absence of any homology between
+the U3 regions". <strong>Reducing homology is not a cure.</strong> That paper is also the closest thing in the
+literature to the QC panel this note is describing — titre at n = 18, read-through by TaqMan across
+the vector-to-flank junction, SIN repair by colony PCR — and it is worth copying wholesale. It is
+<strong>not</strong>, as is sometimes said, a codon recoding: the changes were splice-donor mutations, a U3
+deletion, a heterologous poly(A) and a 76 bp <em>gag</em> deletion.</p>
+<p><strong>What it would not catch.</strong> Whole-plasmid sequencing of the prep sees a deletion that already
+happened in <em>E. coli</em>; it says nothing about what reverse transcription will do in the target
+cells. Nothing in the panel measures per-library recombination rate for a modern SIN transfer
+plasmid. <strong>Nothing measures this.</strong></p>
+<h3 id="38-a-ccdb-cassette-that-stopped-killing">3.8 A ccdB cassette that stopped killing<a class="headerlink" href="#38-a-ccdb-cassette-that-stopped-killing" title="Permanent link">&para;</a></h3>
+<p>This one is not a domestication failure. It is a propagation failure, in the same prep, found the
+same way — the vector arrives intact by sequence and dead as a counter-selection.</p>
+<p><strong>Scholz <em>et al.</em></strong> <em>BMC Biotechnol.</em> <strong>13</strong>, 12 (2013).
+<a href="https://doi.org/10.1186/1472-6750-13-12">doi:10.1186/1472-6750-13-12</a> observed ccdB inactivation
+during propagation in ccdB Survival cells "under high selective pressure such as plasmids with
+high copy number", and concluded that killing activity has to be verified for every single batch
+of vector DNA. A lentiviral transfer plasmid on a high-copy origin is that case.</p>
+<p><strong>The assay.</strong> Transform a ccdB-sensitive strain with the vector stock and plate it. Near-zero
+colonies means the cassette still kills. Per batch, before the stock is used.</p>
+<p><strong>What it would not catch.</strong> A minority of escape mutants, which is the population that matters:
+the assembly's own selection enriches exactly the molecules this plate failed to see. It also says
+nothing about the rest of the vector — a stock can kill and still carry a broken LTR.</p>
+<h3 id="what-each-assay-is-blind-to-in-one-table">What each assay is blind to, in one table<a class="headerlink" href="#what-each-assay-is-blind-to-in-one-table" title="Permanent link">&para;</a></h3>
+<p>The point of the panel is this column, so here it is alone.</p>
+<table>
+<thead>
+<tr>
+<th>Assay</th>
+<th>Blind to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>p24 ELISA</td>
+<td>Everything that happens after the particle leaves the cell. Across Kim's panel it varied 1.2-fold while titre varied 3,900-fold</td>
+</tr>
+<tr>
+<td>Functional titre</td>
+<td>Truncation, silencing, barcode linkage, dimerisation, read-through. And a 10–30% titre change can hide a 70% RNA change (section 4)</td>
+</tr>
+<tr>
+<td>ddPCR copy number</td>
+<td>Whether the copies express. With a psi-targeting design, also whether they are provirus or carried-over plasmid</td>
+</tr>
+<tr>
+<td>Nanopore direct RNA sequencing</td>
+<td>Function; non-polyadenylated truncations without the second arm; base-level edits</td>
+</tr>
+<tr>
+<td>Read-through TaqMan</td>
+<td>Substitutions — every published dissection used block deletions</td>
+</tr>
+<tr>
+<td>VCN against percent expressing</td>
+<td>Which member of a pool went silent. Needs sorting</td>
+</tr>
+<tr>
+<td>Barcode or guide NGS</td>
+<td>Silenced members, and whether a barcode still names its part</td>
+</tr>
+<tr>
+<td>Packaging ratio</td>
+<td>A dimerisation defect at normal RNA content</td>
+</tr>
+<tr>
+<td>Non-denaturing Northern</td>
+<td>A packaging defect</td>
+</tr>
+<tr>
+<td>Whole-plasmid sequencing</td>
+<td>Anything that happens during reverse transcription</td>
+</tr>
+<tr>
+<td>ccdB killing on a sensitive strain</td>
+<td>A minority of escape mutants in the stock, and everything about the vector other than the toxin</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-why-that-column-is-the-point-titre-and-rna-come-apart">4. Why that column is the point: titre and RNA come apart<a class="headerlink" href="#4-why-that-column-is-the-point-titre-and-rna-come-apart" title="Permanent link">&para;</a></h2>
+<p><strong>Cui, Y., Iwakuma, T. &amp; Chang, L.-J.</strong> Contributions of viral splice sites and cis-regulatory
+elements to lentivirus vector function. <em>J. Virol.</em> <strong>73</strong>, 6171–6176 (1999). PMID 10364378, PMC112687,
+<a href="https://doi.org/10.1128/jvi.73.7.6171-6176.1999">doi:10.1128/jvi.73.7.6171-6176.1999</a>.</p>
+<p>They mutated the major splice donor from <code>GGTG</code> to <code>GCAG</code> or <code>GGGG</code>. <strong>Measured</strong>, and quoted:</p>
+<blockquote>
+<p>Mutations of SD from GGTG to GCAG (SD1) or to GGGG (SD2) resulted in <strong>a moderate decrease (10
+to 30%) in vector titer</strong>. […] mutations of SD <strong>reduced expression of cytoplasmic full-length
+RNA by more than 70%</strong> compared with wild-type vector. […] The decline in genomic RNA expression
+(70%), however, did not correlate with the reduction in vector titer (10 to 30%).</p>
+</blockquote>
+<p>Titre averaged 4 to 7 independent experiments. <strong>A four-base change cost almost nothing in titre
+and most of the full-length cytoplasmic RNA.</strong> If titre were the only assay, that vector passes.</p>
+<p>Three more decouplings, all above, all pointing the same way: Zeglinski's working clinical vectors
+carry only 60–75% full-length genome and titre never said so; Loew's cytometer could not see a
+15-fold difference in promoter leak that a luminometer read off the same cells; Sanjana's
+lentiCRISPRv2 gained roughly 10-fold in functional titre over v1 and lentiGuide-Puro roughly
+100-fold (<strong>Sanjana, N. E., Shalem, O. &amp; Zhang, F.</strong> <em>Nat. Methods</em> <strong>11</strong>, 783–784 (2014). PMID
+25075903, <a href="https://doi.org/10.1038/nmeth.3047">doi:10.1038/nmeth.3047</a>) — a vector-design change
+whose entire published characterisation is a titre.</p>
+<p><strong>One assay answers one question. The panel exists because the questions are not nested.</strong></p>
+<h2 id="5-the-panel-cheapest-first">5. The panel, cheapest first<a class="headerlink" href="#5-the-panel-cheapest-first" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Whole-plasmid sequencing of the new prep and of the parent.</strong> Catches every unintended edit
+   and any rearrangement between the LTRs, before a cent is spent on virus. It is also the only
+   step that catches an element that has reverted in the prep. <strong>Sequence the prep, not the
+   design.</strong></li>
+<li><strong>One paired packaging run — parent and domesticated, same day, same mix, n ≥ 3 — giving p24
+   and functional titre from the same harvest.</strong> Two numbers; their ratio splits the lifecycle in
+   half. This is the step that would have caught every effect in Kim's table.</li>
+<li><strong>ddPCR vector copy number on transduced cells, provirus-specific.</strong> Resolves a 2-fold change
+   at n = 2 (Corre: CV 4–8%). Use a design that cannot read the transfer plasmid, or digest the
+   plasmid away as Wu does.</li>
+<li><strong>Flow for expression. For a Tet vector, induction and leak as separate numbers — and a
+   luminescent reporter if the leak matters</strong>, because Loew measured that flow cannot see it.</li>
+<li><strong>Percent expressing divided by copy number, at four or more timepoints over six weeks</strong>, for
+   silencing. Baseline: about 1 integration in 66 goes silent with a good vector.</li>
+<li><strong>For a library, always: barcode NGS at the plasmid pool and after transduction, normalised to
+   the plasmid pool.</strong> Plus one cheap addition that closes the pooled blind spot in section 3.3 —
+   <strong>sort expressing from non-expressing cells out of the same pool and sequence barcodes from
+   both.</strong> A member enriched in the non-expressing fraction at unchanged total abundance is
+   silenced, not lost. No source does this; it follows from Herbst's signature applied to a pool.</li>
+<li><strong>Conditional on where the edits landed.</strong> The packaging ratio if anything sits in the 5' UTR
+   or psi. Direct RNA sequencing if anything sits in WPRE, psi, or near a splice site. Read-through
+   TaqMan if anything sits in U3. A non-denaturing Northern if anything sits in SL1.</li>
+</ol>
+<p><strong>The design rule that outranks the panel: keep every comparison paired and same-day against the
+undomesticated parent.</strong> Every effect in this literature is a ratio to a parent, and batch
+variance in lentiviral packaging is larger than any of these assays' CV.</p>
+<h2 id="6-if-you-can-afford-exactly-one-assay">6. If you can afford exactly one assay<a class="headerlink" href="#6-if-you-can-afford-exactly-one-assay" title="Permanent link">&para;</a></h2>
+<p><strong>Run step 2 — p24 and functional titre from one paired harvest — and nothing else.</strong></p>
+<p>Not because it is the most informative. It is not: it would have missed Cui's splice donor, every
+one of Zeglinski's truncations, and all of Herbst's silencing. Run it because it is the only
+single assay that <strong>both</strong> detects a large class of failures <strong>and</strong> tells you where to look next.
+A titre loss with normal p24 sends you to sections 3.2 and 3.6. A loss in both sends you back to
+the transfection. Any other single assay returns a number with nowhere to go.</p>
+<p><strong>And if you cannot afford that</strong>, run step 1 instead and do not make virus. A prep that is not
+the sequence you designed makes every later number meaningless, and sequencing is the cheapest
+thing here.</p>
+<h2 id="7-does-a-quiet-titre-loss-actually-skew-a-pooled-library">7. Does a quiet titre loss actually skew a pooled library?<a class="headerlink" href="#7-does-a-quiet-titre-loss-actually-skew-a-pooled-library" title="Permanent link">&para;</a></h2>
+<p>Less than instinct suggests. <strong>Calculated, not measured.</strong> Titre enters a pooled library only
+through coverage, and counts are Poisson, so at 500-fold coverage the sampling contribution to the
+90/10 skew ratio is about <strong>1.12</strong>; at 250-fold — a 2-fold titre loss — about <strong>1.18</strong>; at 50-fold
+about <strong>1.44</strong>. Against a cloning-derived skew of 2 to 10, <strong>a 2-fold titre loss is invisible in
+the skew metric.</strong> The Poisson floor starts to dominate only below roughly 10 to 25-fold, which is
+a 20- to 50-fold titre loss.</p>
+<p>Two independent results agree with it. Heo's library held its skew from 200-fold down to 50-fold
+coverage. Imkeller's simulations found that cell splitting, not transduction, is the dominant bias
+term — 20% of guides below LFC −1 from reduced splitting coverage against 3% from the same
+reduction at transduction.</p>
+<p><strong>So the risk from a quiet titre loss is operational, not statistical.</strong> You do not see it in the
+skew. You see it as believing you were at 500-fold when you were at 100-fold, and then the
+split-and-grow bottleneck — which <em>is</em> the dominant term — acts on a smaller population than
+planned. <strong>Measure the titre; the skew will not tell you.</strong></p>
+<h2 id="8-what-nothing-measures-and-the-experiment-that-closes-it">8. What nothing measures, and the experiment that closes it<a class="headerlink" href="#8-what-nothing-measures-and-the-experiment-that-closes-it" title="Permanent link">&para;</a></h2>
+<p><strong>Nothing in the literature says what a domestication-sized edit costs a lentiviral vector.</strong> Not
+one number. The nearest approaches are Kim's restriction-site insertions around psi, Sakuragi's
+two bases, and Cui's four — none of them framed as domestication, none in an LTR, and the one
+group that did edit the LTRs stated that it did not test them.</p>
+<p><strong>The experiment that would answer it</strong>, and it is one packaging run:</p>
+<p>Build the domesticated vector <strong>and each single-site intermediate</strong> — one plasmid per removed
+site, each carrying that change alone against the parent backbone. Produce them in <strong>one particle
+pool</strong>, same day, same mix, n ≥ 3, with the undomesticated parent in the same run. Measure the
+cheap assays only: p24, functional titre, and provirus-specific copy number on transduced cells.</p>
+<p><strong>The intermediates are the experiment.</strong> The full domesticate alone gives one number and no
+attribution: if titre drops 3-fold you know nothing about which of six changes did it, and
+Sakuragi's result says you cannot reason your way to the answer either. The intermediates convert
+one number into a per-site cost, which is reusable on the next backbone — and they are the only
+design that distinguishes "this site is expensive" from "these two changes interact", which is the
+specific failure mode section 3.6 documents.</p>
+<p><strong>Two things to decide before running it.</strong> Each single-site intermediate costs a synthesis and a
+prep, so the panel is as large as the site count — which is the argument from the companion note's
+section 1 for <strong>choosing the enzyme before choosing the edit</strong>. And edits that fall in the same
+element should be built both separately and together, because the two-base result says the
+combination is not the sum.</p>
+<p><strong>Other things nothing measures here.</strong></p>
+<ul>
+<li><strong>The per-base sensitivity of 3'-LTR read-through.</strong> Yang measured block deletions. A
+  substitution has never been tested. <em>Closes it:</em> substitute, do not delete, and run Koldej's
+  TaqMan ratio.</li>
+<li><strong>A 5'-to-3' RT-qPCR ratio on packaged RNA.</strong> No primary source defines it, calibrates it, or
+  states a limit. <em>Closes it:</em> spike a 3'-truncated transcript into full-length RNA at 0, 5, 10,
+  25 and 50% and find the smallest distinguishable fraction.</li>
+<li><strong>The smallest fold change a cytometer resolves.</strong> Instrument-specific; no source states one.</li>
+<li><strong>How a silenced member behaves in a pooled barcode readout.</strong> Nobody measured it. The sort in
+  step 6 would.</li>
+<li><strong>Plasmid-level recombination frequency for a modern SIN transfer plasmid.</strong> The only primary
+  measurement is from 1987, MLV-based, at kilobase scale, and states no rate.</li>
+<li><strong>What a packaging-ratio drop costs in titre.</strong> Sakuragi never titred the mutants.</li>
+</ul>
+<h2 id="9-sources-and-what-was-left-out">9. Sources, and what was left out<a class="headerlink" href="#9-sources-and-what-was-left-out" title="Permanent link">&para;</a></h2>
+<p>Twenty-eight files were gathered under
+<code>reference_docs/synthesis_and_assembly/lentiviral-tolerance/assays/</code> and all twenty-eight were
+read first-hand for this note. Every citation above but one is read off the article text, not
+recalled; the exception is named below.
+Two sources outside that directory are cited and were read the same way: Cui 1999 from
+<code>elements/</code>, and Haellman 2021 with its sequence scan from <code>toolkits/</code>.</p>
+<p><strong>Where the gathered material is weaker than it looks, stated plainly:</strong></p>
+<ul>
+<li><strong>Three sources are PMC page text with figure-referenced numbers.</strong> Herbst 2012, Jordan 2003 and
+  Contreras 2009 serve no OA PDF or full-text XML. Their numbers are marked where used.</li>
+<li><strong>One paper's numbers live only in its figures.</strong> Sakuragi 2021 states no fold change anywhere
+  in its text. Figure 3 was fetched from PMC and read here, and every value taken from it is
+  marked figure-only and approximate.</li>
+<li><strong>One figure set was read directly rather than quoted.</strong> Loew 2010's Figure 4 was rendered from
+  the saved OA PDF and read, which is where the mfu table in section 3.4 comes from.</li>
+<li><strong>Four of the pooled-screen files define no skew metric at all</strong> — Doench 2016, Hart 2017,
+  Shalem 2014 and Cross 2016 — and are used here only for coverage and MOI. Their supplements,
+  which hold the methods, are not in the gathered files.</li>
+<li><strong>Heo 2024's per-coverage skew numbers are in supplementary tables that were not gathered.</strong> The
+  coverage titration is reported here only as the paper's own qualitative statement.</li>
+<li><strong>Wu 2024's precision tables are empty in the extracted text</strong>, so only the stated bound
+  (CV ≤ 25%) is quoted. The same file states a titre range whose two endpoints disagree by a
+  factor of 100; neither endpoint is used here.</li>
+<li><strong>Yang 2007 states no absolute read-through percentage.</strong> Every value is a bar. Section 3.2 uses
+  Koldej's TaqMan ratio for an absolute number instead.</li>
+<li><strong>One source was not read here.</strong> Scholz 2013, in section 3.8, is not among the gathered files.
+  It is quoted as #287 cites it, and wants reading first-hand before anything else is drawn from it.</li>
+<li><strong>One PMID is corrected.</strong> Zaiss <em>et al.</em> 2002 is <strong>PMID 12072520</strong>, not 12072521 — which is
+  Lecellier <em>et al.</em>, equine foamy virus, the adjacent article in the same issue. An earlier copy
+  of the source file held the wrong abstract.</li>
+<li><strong>One filename is wrong.</strong> <code>fm2-pal2024-nanopore-drs-vector-rna-integrity.txt</code> holds Zeglinski
+  <em>et al.</em> 2024. The file was not renamed; the citation here is correct.</li>
+<li><strong>No vendor material enters this note.</strong> The search-snippet files under
+  <code>domestication-methods/verification-and-repeats/</code> — Thermo Stbl2 and Stbl3, NEB Stable,
+  Plasmidsaurus, Eurofins, Twist and GenScript — are labelled unverified in their own text and are
+  excluded by name by their own README. Nothing above cites one for a value. Where they would have
+  supplied a number, section 8 records a hole instead.</li>
+</ul>
+<h2 id="10-what-this-note-did-not-settle">10. What this note did not settle<a class="headerlink" href="#10-what-this-note-did-not-settle" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Whether VAMSyB's domesticated LTRs work.</strong> The paper says it did not test them. The plasmids
+  are on Addgene. <em>Closes it:</em> make virus from pTS1106_Tier3(Lenti) and its parent in one paired
+  run and titre both — which is step 2 of section 5, and would be the first published number of
+  its kind.</li>
+<li><strong>Whether the R+80 change next to the poly(A) hexamer is free.</strong> It sits in the element Yang and
+  Zaiss both show is leaky already. Nobody has measured a substitution there.</li>
+<li><strong>What any of these assays cost.</strong> No price, instrument time or hands-on time appears here,
+  because none of it is in the sources and a measurement made on one site is not a fact about
+  another. The ordering in section 5 is by rough cost class, not by a number.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>
