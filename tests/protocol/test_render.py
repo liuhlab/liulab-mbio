@@ -406,6 +406,7 @@ def test_a_counted_plate_opens_at_the_floor_it_is_read_against() -> None:
     count = CountToNet(
         183,
         counted="round 1 titre",
+        counting="colonies",
         control="round 1 no-donor control",
         below_floor="Fewer net colonies",
     )

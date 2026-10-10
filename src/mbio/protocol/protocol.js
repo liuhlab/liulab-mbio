@@ -427,7 +427,8 @@
     function draw() {
       var total = (counted.value() - (control ? control.value() : 0)) * dilution.value();
       var clears = total >= floor;
-      shown.textContent = number(total);
+      // A count is a number of things, so however many there are it is written out in full.
+      shown.textContent = total.toLocaleString("en-US", { maximumFractionDigits: 2 });
       verdict.textContent = net.getAttribute(clears ? "data-clears" : "data-short");
       net.classList.toggle("is-short", !clears);
       all(".calc-warning", block).forEach(function (warning) { warning.hidden = clears; });

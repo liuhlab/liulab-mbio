@@ -487,10 +487,10 @@ class CountToNet:
         the page only compares.
     counted
         What the plate is called, in the step's own words.
+    counting
+        What is counted, such as colonies, for the line that states the net.
     control
         What the control plate is called, whose count comes off. Empty where a step plates none.
-    counting
-        What is counted, for the line that states the net.
     below_floor
         The `Troubleshooting.problem` the page shows once the net is short of the floor, read
         from the step's own entries or else another step's.
@@ -499,8 +499,8 @@ class CountToNet:
     floor: int
     _: KW_ONLY
     counted: str
+    counting: str
     control: str = ""
-    counting: str = "colonies"
     below_floor: str = ""
 
     def __post_init__(self) -> None:

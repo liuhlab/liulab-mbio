@@ -645,8 +645,9 @@ def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(proto
         in final.expected[0]
     )
     # The count the reader works out is read against the same floor, on both steps.
-    assert [one.calculator and one.calculator.floor for one in (growth, final)] == [51, 51]
     assert growth.calculator is not None
+    assert final.calculator is not None
+    assert (growth.calculator.floor, final.calculator.floor) == (51, 51)
     assert growth.calculator.counted == "round 3 titre"
 
 

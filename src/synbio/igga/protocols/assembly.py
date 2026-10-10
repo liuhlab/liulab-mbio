@@ -87,10 +87,6 @@ from synbio.igga.rounds import Round
 #: What the page is headed and what the chain names it by.
 ASSEMBLY = "Library assembly in rounds"
 
-#: What a round that did not clear its floor is called, by the entry and by the count reading
-#: against it. Reword one and the other stops finding it.
-SHORT_OF_THE_FLOOR = "Fewer net colonies than the count above"
-
 
 class Assembly(Protocol):
     """Pool each part list, run every round, and read linkage and representation back."""
@@ -592,8 +588,9 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
         calculator=CountToNet(
             coverage.colonies,
             counted=dilution.name,
+            counting="colonies",
             control=control.name,
-            below_floor=SHORT_OF_THE_FLOOR,
+            below_floor=stages.SHORT_OF_THE_FLOOR,
         ),
         notes=(
             f"Both steps run at {GROWTH_CELSIUS:g} °C and not at 37 °C. That is a library "
@@ -613,7 +610,7 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
         ),
         troubleshooting=(
             Troubleshooting(
-                SHORT_OF_THE_FLOOR,
+                stages.SHORT_OF_THE_FLOOR,
                 "The round has lost library members and no later round can put them back. "
                 "Electroporate more of the ligation, or run the round again.",
             ),

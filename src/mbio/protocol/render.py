@@ -2508,29 +2508,30 @@ def _reader_number(
     label: str = "",
     unit: str = "",
     before: str = "",
-    least: float | None = None,
     part: str = "",
     held: bool = True,
+    counts: bool = False,
 ) -> str:
     """Return a field the reader types a number over, opening at the protocol's `plan`.
 
     `protocol.js` keeps what they type under `key` and offers `plan` back, so every calculator's
     input is this one. `before` and `unit` are what the field reads between, `label` what names
-    it to a reader who cannot see where it sits, `least` what it takes below the smallest
-    positive number, and `part` what its own calculator calls it.
+    it to a reader who cannot see where it sits, and `part` what its own calculator calls it.
 
     `held` is for a number the bench pipettes against: the step's ticks hold the field still,
-    and the word beside it says so. A reading the step only records is left open.
+    and the word beside it says so. A reading the step only records is left open. `counts` is
+    for a number of things rather than a measurement: none of them is a reading of its own, and
+    however many there are they are written out in full.
     """
-    shown = number(plan)
-    said = ", ".join(text for text in (label or before, unit) if text)
+    shown = f"{plan:,.0f}" if counts else number(plan)
+    aria = ", ".join(text for text in (label or before, unit) if text)
     return (
         f'<span class="calc{" " + part if part else ""}">'
         f"<label>{escape(before) + ' ' if before else ''}"
         f'<input type="text" class="calc-value" inputmode="decimal" value="{shown}"'
         f' data-plan="{plan!r}" data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
-        + (f' data-least="{least!r}"' if least is not None else "")
-        + f' aria-label="{escape(said)}">'
+        + (' data-least="0"' if counts else "")
+        + f' aria-label="{escape(aria)}">'
         + (f" {escape(unit)}" if unit else "")
         + "</label>"
         '<button type="button" class="calc-plan" title="What the protocol gives" hidden>'
@@ -2595,13 +2596,13 @@ def _net_count(key: str, count: CountToNet, trouble: Sequence[Troubleshooting]) 
     plan until the bench types. `protocol.js` does the subtraction, the scaling and the
     comparison; the two verdicts and the floor are written here.
     """
-    floor = number(count.floor)
+    floor = f"{count.floor:,}"
     clears = f"at least the floor of {floor}"
     plates = [(f"{key}.counted", count.floor, f"Counted on {count.counted}", "counted")]
     if count.control:
         plates.append((f"{key}.control", 0, f"less {count.control}", "control"))
     fields = [
-        _reader_number(at, plan, before=before, least=0, part=f"net-{part}", held=False)
+        _reader_number(at, plan, before=before, part=f"net-{part}", held=False, counts=True)
         for at, plan, before, part in plates
     ]
     fields.append(

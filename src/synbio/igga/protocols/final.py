@@ -76,9 +76,9 @@ from synbio.igga.vector import Working, released_cargo
 #: What the page is headed and what the chain names it by.
 FINAL = "Final cargo ligation"
 
-#: What a library that did not clear its floor is called, by the entry and by the count reading
-#: against it. Reword one and the other stops finding it.
-SHORT_OF_THE_FLOOR = "Fewer net colonies than the count above"
+#: What the plates beside the library's own are called, by the expected result and by the count
+#: that takes them off.
+NO_CARGO_CONTROL = "the no-cargo control"
 
 
 class FinalLigation(Protocol):
@@ -447,14 +447,15 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
             "equally represented.",
             f"At that count the chance a named member is missing is "
             f"{number(absent_probability(constructs, colonies))}.",
-            "Near-empty plates from a no-cargo control beside it; what grows there is working "
-            "vector that kept its ccdB cassette.",
+            f"Near-empty plates from {NO_CARGO_CONTROL} beside it; what grows there is "
+            "working vector that kept its ccdB cassette.",
         ),
         calculator=CountToNet(
             colonies,
             counted="the plates",
-            control="the no-cargo control",
-            below_floor=SHORT_OF_THE_FLOOR,
+            counting="colonies",
+            control=NO_CARGO_CONTROL,
+            below_floor=stages.SHORT_OF_THE_FLOOR,
         ),
         notes=(
             "This is a bottleneck like a round's, and the library can only lose members here. "
@@ -472,7 +473,7 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
         ),
         troubleshooting=(
             Troubleshooting(
-                SHORT_OF_THE_FLOOR,
+                stages.SHORT_OF_THE_FLOOR,
                 "The library has lost members in the transfer. Nothing downstream puts them "
                 "back; repeat the assembly from more of the released cargo.",
             ),

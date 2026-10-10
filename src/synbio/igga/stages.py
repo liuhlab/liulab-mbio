@@ -176,6 +176,12 @@ PCR2_CYCLES = Hole(
 )
 
 
+#: What a plated count short of its floor is called, by the troubleshooting entry that says
+#: what to do and by the calculator that reads the count against the floor. Reword it and the
+#: calculator stops finding its entry.
+SHORT_OF_THE_FLOOR = "Fewer net colonies than the count above"
+
+
 def titre_plates(number: int) -> tuple[Vessel, Vessel]:
     """Return the two plates one round is bounded by: a dilution, and the no-donor control.
 
