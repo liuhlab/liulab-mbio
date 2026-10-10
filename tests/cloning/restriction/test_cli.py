@@ -76,7 +76,7 @@ def test_the_cli_writes_the_outputs_with_every_option_it_was_handed(
     assert "DNA Clean & Concentrator-5" in materials
     assert "Monarch Spin DNA Gel Extraction Kit" in materials
     # Nothing on the page quotes the NEB column's recovery, so its manual is not cited.
-    cited = " ".join(one.text for one in read_protocol(out / "protocol.json").references)
+    cited = " ".join(one.document for one in read_protocol(out / "protocol.json").sources.values())
     assert "PCR & DNA Cleanup Kit" not in cited
 
 

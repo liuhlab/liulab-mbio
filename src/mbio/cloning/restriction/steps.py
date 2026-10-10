@@ -17,9 +17,8 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 
 from mbio import checks as judged
-from mbio.bench import REFERENCES as BENCH_REFERENCES
 from mbio.bench.amounts import Amount
-from mbio.bench.gels import agarose_percent, choose_ladder
+from mbio.bench.gels import RESOLUTION_CITATION, agarose_percent, choose_ladder
 from mbio.bench.inactivation import heat_inactivation
 from mbio.bench.materials import kit
 from mbio.bench.oligos import oligo_row
@@ -34,17 +33,13 @@ from mbio.bench.phenotype import Phenotype
 from mbio.bench.steps import (
     CELLS_UL,
     COLONY_PCR_TITLE,
-    DPNI_REFERENCE,
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
-    IPTG_UM,
     MINIPREP_KIT,
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
-    PLATE_REFERENCE,
     QUANTIFY_EQUIPMENT,
     SEQUENCING_TITLE,
-    XGAL_UG_ML,
     badges,
     card,
     catalogued,
@@ -59,6 +54,7 @@ from mbio.bench.steps import (
     pcr_step,
     pcr_title,
     phenotype_sentences,
+    plate_material,
     quantify_step,
     sequencing_step,
     transform_step,
@@ -75,11 +71,10 @@ from mbio.cloning.restriction.amplify import Amplicon
 from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
     BUFFER_FINDER,
-    CLEAVAGE_REFERENCE,
     COHESIVE_SECONDS,
     COLUMN_RECOVERY,
-    COLUMN_REFERENCE,
     CONTROLS,
+    CONTROLS_CITATION,
     DIGEST_SECONDS,
     ELUATE_CAUTION,
     HIGH_LIGASE_UNITS_UL,
@@ -91,9 +86,7 @@ from mbio.cloning.restriction.bench import (
     PHOSPHATASE_CELSIUS,
     PHOSPHATASE_KILL_CELSIUS,
     PHOSPHATASE_KILL_SECONDS,
-    PHOSPHATASE_REFERENCE,
     PHOSPHATASE_SECONDS,
-    REFERENCES,
     ROOM_CELSIUS,
     SALT_CAUTION,
     STAR_ACTIVITY,
@@ -124,7 +117,6 @@ from mbio.protocol.model import (
     Material,
     Note,
     Protocol,
-    Reference,
     Source,
     Step,
     Timer,
@@ -172,6 +164,14 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
         "NEB-cleavage": Source(
             "New England Biolabs usage guideline, Cleavage Close to the End of DNA Fragments",
             url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-heat-inactivation": Source(
+            "New England Biolabs usage guideline, Heat Inactivation",
+            url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation",
+            edition="capture 2021-04-20",
+            read_as="Wayback Machine",
             date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
@@ -290,9 +290,6 @@ def protocol(
             polymerase=polymerase,
             dephosphorylate=dephosphorylate,
             cleanup_kit=cleanup_kit,
-        ),
-        references=_references(
-            amplicon, phenotype, dephosphorylate=dephosphorylate, cleanup_kit=cleanup_kit
         ),
         sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
@@ -503,7 +500,7 @@ def _materials(
             "SOC or NEB 10-beta/Stable Outgrowth Medium",
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
-        Material(_plate(phenotype), amount="one plate per transformation"),
+        plate_material(phenotype),
         MINIPREP_KIT,
         catalogued(
             COLONY_PCR_MASTER_MIX,
@@ -571,17 +568,6 @@ def _buffer_material(enzymes: Sequence[Enzyme]) -> Material:
     )
 
 
-def _plate(phenotype: Phenotype) -> str:
-    """Return what to pour the selection plates with."""
-    antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
-    if phenotype.blue_white:
-        return (
-            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
-            f"and {IPTG_UM} µM IPTG"
-        )
-    return f"{phenotype.medium} agar plates with {antibiotic}"
-
-
 def _steps(
     *,
     vector: SequenceRecord,
@@ -639,6 +625,13 @@ def _steps(
                 colonies="No supplier states a colony count for this method, so run the controls "
                 "below and read the plate against them rather than against a number.",
                 expected=CONTROLS,
+                notes=(
+                    Note(
+                        "Each control is read against the others: what they promise is a ratio "
+                        "of colonies, not a count.",
+                        citation=CONTROLS_CITATION,
+                    ),
+                ),
             ),
             colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
             _diagnostic_step(diagnostic, product=ligation.product),
@@ -683,6 +676,9 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
         notes=(
             "The junctions put both recognition sites back, so the pair that made the clone is "
             "what cuts the insert out of it again.",
+            Note(
+                f"{percent:g}% agarose resolves bands of these sizes.", citation=RESOLUTION_CITATION
+            ),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -740,8 +736,12 @@ def _phosphatase_steps(
                 f"{backbone.name} is cut to {said_ends(backbone)}, which anneal to each other, "
                 "so without this the vector closes on itself and the plate fills with empty "
                 "vector.",
-                "rSAP is active in every restriction enzyme buffer, so it goes into the digest "
-                "as it stands; one unit takes the phosphates off one picomole of DNA ends.",
+                Note(
+                    "rSAP is active in every restriction enzyme buffer, so it goes into the "
+                    "digest as it stands; one unit takes the phosphates off one picomole of DNA "
+                    "ends.",
+                    citation=Citation("M0371", "dephosphorylation of 5'-ends"),
+                ),
                 Note(
                     "The heat step takes the restriction enzymes with it, which is what the "
                     "protocol asks for; the gel purification is what stops any of them heat "
@@ -994,8 +994,14 @@ def _purify_step(
         notes=(
             "A gel is what separates the two pieces of each digest from one another, so a piece "
             "that is not wanted cannot religate into the backbone.",
-            "It also takes the enzymes away, so nothing has to be heat inactivated before the "
-            f"ligation.{_heat(vector_pieces, source_pieces)}",
+            Note(
+                "It also takes the enzymes away, so nothing has to be heat inactivated before "
+                f"the ligation.{_heat(vector_pieces, source_pieces)}",
+                citation=Citation("NEB-heat-inactivation", "enzymes heat does not inactivate"),
+            ),
+            Note(
+                f"{percent:g}% agarose resolves bands of these sizes.", citation=RESOLUTION_CITATION
+            ),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -1130,25 +1136,3 @@ def _blunt_cost(ligation: Ligation) -> tuple[str, ...]:
         f"{HIGH_LIGASE_UNITS_UL:g} U/µL ligase in place of the {LIGASE_UNITS_UL:g} U/µL one. "
         "The time is the only cost any supplier states for it.",
     )
-
-
-def _references(
-    amplicon: Amplicon | None,
-    phenotype: Phenotype,
-    *,
-    dephosphorylate: bool,
-    cleanup_kit: Material,
-) -> tuple[Reference, ...]:
-    """Where the numbers come from: the column's manual only where `_recovery_note` quotes it."""
-    items = [*REFERENCES, *BENCH_REFERENCES]
-    if dephosphorylate:
-        items.append(PHOSPHATASE_REFERENCE)
-    if amplicon is not None:
-        items.append(CLEAVAGE_REFERENCE)
-        if _recovery_note(cleanup_kit):
-            items.append(COLUMN_REFERENCE)
-        if amplicon.dpni:
-            items.append(DPNI_REFERENCE)
-    if phenotype.blue_white:
-        items.append(PLATE_REFERENCE)
-    return tuple(items)

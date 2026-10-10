@@ -226,7 +226,7 @@ def test_no_reversed_lane_is_invented_where_the_insert_cannot_go_in_backwards(ma
 
 
 def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):
-    citations = " ".join(reference.text for reference in made.protocol().references)
+    citations = " ".join(source.document for source in made.protocol().sources.values())
     assert "Optimizing Restriction Endonuclease Reactions" in citations
     assert "T4 DNA Ligase" in citations
     assert "Monarch Spin DNA Gel Extraction Kit" in citations
@@ -331,7 +331,7 @@ def test_one_enzyme_leaves_a_backbone_that_closes_on_itself_and_the_plan_dephosp
         PHOSPHATASE_SECONDS,
         PHOSPHATASE_KILL_SECONDS,
     ]
-    assert any("rSAP" in one.text for one in protocol.references)
+    assert any("rSAP" in one.document for one in protocol.sources.values())
     # The page says the risk plainly, not only in the badge.
     assert "closes on itself with no insert" in " ".join(protocol.highlights)
     assert blunt.status == "pass"
@@ -400,7 +400,7 @@ def test_the_protocol_gains_the_pcr_its_program_the_amplicon_gel_and_the_templat
     assert [lane.bands_bp for lane in gel.gels[0].lanes] == [(tailed.amplicon.length,)]
     # A linear template neither transforms nor ligates, so the column is what takes it away.
     assert "take GFP away" in " ".join(n.text for n in cleanup.noted)
-    assert any("PCR & DNA Cleanup Kit" in one.text for one in protocol.references)
+    assert any("PCR & DNA Cleanup Kit" in one.document for one in protocol.sources.values())
     assert [row.purpose for row in protocol.oligos][:2] == ["Amplify GFP"] * 2
     said = " ".join(protocol.highlights)
     assert "forward primer, 6 spacer bases and the EcoRI site" in said
