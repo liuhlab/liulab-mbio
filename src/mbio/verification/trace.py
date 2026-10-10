@@ -1,13 +1,17 @@
-"""Read a Sanger trace, an ``.ab1`` file, into a sequencing result.
+"""Read a Sanger trace, an ``.ab1`` file, into a sequencing result, and into the signal behind it.
 
 Only what the basecaller wrote is read, never a person's edits: ``PBAS2`` the bases, ``PCON2``
 their Phred qualities, ``PLOC2`` the scan at each base's peak, and the analysed channels
-``DATA9`` to ``DATA12``, which hold the four bases in ``FWO_1``'s order.
+``DATA9`` to ``DATA12``, which hold the four bases in ``FWO_1``'s order. `read_trace` reads what
+a verification judges, and `read_signal` what a page draws under the bases, so a sequencing
+result carries nothing only a trace has.
 """
 
 import os
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from mbio.sequence import IUPAC_BASES
 from mbio.verification.result import SequencingResult
@@ -52,13 +56,7 @@ def read_trace(path: str | os.PathLike[str]) -> SequencingResult:
     ValueError
         If the file lacks the bases, qualities, peak positions or analysed channels.
     """
-    from Bio import SeqIO
-
-    raw = SeqIO.read(path, "abi").annotations["abif_raw"]
-    if missing := [
-        tag for tag in ("PBAS2", "PCON2", "PLOC2", "FWO_1", *_CHANNELS) if tag not in raw
-    ]:
-        raise ValueError(f"{path} is not a base-called trace: it holds no {', '.join(missing)}")
+    raw = _tags(path)
     called = raw["PBAS2"].decode("ascii").upper()
     quality = tuple(raw["PCON2"])
     channels = dict(zip(raw["FWO_1"].decode("ascii"), (raw[tag] for tag in _CHANNELS), strict=True))
@@ -68,6 +66,52 @@ def read_trace(path: str | os.PathLike[str]) -> SequencingResult:
     )
     trusted = _mott(quality) if any(quality) else (0, 0)
     return SequencingResult(Path(path).stem, bases, quality=quality, trusted=trusted)
+
+
+@dataclass(frozen=True, slots=True)
+class Signal:
+    """What a trace's bases were called from, for a page to draw under them.
+
+    Parameters
+    ----------
+    channels
+        Each base's analysed signal, one value a scan, by the base: A, C, G and T.
+    peaks
+        The scan at each base's peak, one for each base `read_trace` reads from the same file.
+    """
+
+    channels: Mapping[str, tuple[int, ...]]
+    peaks: tuple[int, ...]
+
+
+def read_signal(path: str | os.PathLike[str]) -> Signal:
+    """Read an ``.ab1`` trace's four channels and the scan at each base's peak.
+
+    A page takes it keyed by the name of the result `read_trace` reads from the same file.
+
+    Raises
+    ------
+    ValueError
+        As `read_trace` raises.
+    """
+    raw = _tags(path)
+    channels = {
+        base: tuple(raw[tag])
+        for base, tag in zip(raw["FWO_1"].decode("ascii"), _CHANNELS, strict=True)
+    }
+    return Signal(channels, tuple(raw["PLOC2"]))
+
+
+def _tags(path: str | os.PathLike[str]) -> Mapping[str, Any]:
+    """Return a trace's tags, refusing one that lacks a tag either reader takes."""
+    from Bio import SeqIO
+
+    raw = SeqIO.read(path, "abi").annotations["abif_raw"]
+    if missing := [
+        tag for tag in ("PBAS2", "PCON2", "PLOC2", "FWO_1", *_CHANNELS) if tag not in raw
+    ]:
+        raise ValueError(f"{path} is not a base-called trace: it holds no {', '.join(missing)}")
+    return raw
 
 
 def _read_base(

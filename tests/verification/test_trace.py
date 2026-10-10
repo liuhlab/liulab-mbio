@@ -7,7 +7,7 @@ import pytest
 from mbio.sequence import Feature, Segment, SequenceRecord
 from mbio.verification.judge import verify
 from mbio.verification.result import SequencingResult
-from mbio.verification.trace import read_trace
+from mbio.verification.trace import read_signal, read_trace
 
 
 @pytest.fixture(scope="module")
@@ -54,3 +54,15 @@ def test_a_trace_verifies_against_its_own_bases_until_a_substitution_is_planted(
         ("substitution", 500, 501)
     ]
     assert found.checks[0].status == "fail"
+
+
+def test_the_signal_holds_four_channels_and_a_peak_under_each_base(data_dir: Path) -> None:
+    """Each base's peak lies in the channels, in the order the bases were called."""
+    path = data_dir / "3730.ab1"
+    signal = read_signal(path)
+    assert sorted(signal.channels) == ["A", "C", "G", "T"]
+    assert len({len(channel) for channel in signal.channels.values()}) == 1
+    assert len(signal.peaks) == len(read_trace(path).bases)
+    assert list(signal.peaks) == sorted(signal.peaks)
+    assert signal.peaks[0] >= 0
+    assert signal.peaks[-1] < len(signal.channels["A"])
