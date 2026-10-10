@@ -1,7 +1,7 @@
 """A clone's sequencing results held against its record: what each region and each result comes to.
 
-Every record here is a short synthetic product, a vector holding one insert between two
-junctions, so each alignment runs in milliseconds.
+Every record here is a short synthetic product: a vector holding one insert between two
+junctions.
 """
 
 import random
@@ -115,6 +115,17 @@ def test_an_unrelated_read_is_gated_and_shows_nothing():
     assert found.placements[0].span is None
 
 
+def test_trusted_bases_that_place_nowhere_are_gated():
+    """No stretch of a read made only of G and T scores above zero on a record of A and C."""
+    record = SequenceRecord("".join(random.Random(3).choice("AC") for _ in range(300)))
+    read = "".join(random.Random(4).choice("GT") for _ in range(100))
+    found = verify(record, (SequencingResult("r", read),), ())
+    assert found.result_checks[0].detail.endswith(
+        "100 of 100 trusted bases disagree or do not line up"
+    )
+    assert found.placements[0].span is None
+
+
 def test_a_different_version_of_the_insert_is_gated():
     """About three bases in four agree, as two versions of one domain might."""
     changes = {position: other(position) for position in range(205, 895, 4)}
@@ -147,6 +158,7 @@ def test_an_empty_vector_read_fails_the_missing_insert():
         (SequencingResult("r", "ACGT", quality=(0, 0, 0, 0), trusted=(0, 0)), "no quality values"),
         (SequencingResult("r", "ACGT", trusted=(2, 2)), "the trimmed span is empty"),
         (SequencingResult("r", "ACGT", quality=(40, 12, 15, 40), trusted=(1, 3)), "quality 20"),
+        (SequencingResult("r", "NNNN"), "is called"),
     ],
 )
 def test_a_result_trusting_no_base_carries_no_verdict(result, detail):
@@ -177,6 +189,21 @@ def test_a_result_refuses_what_does_not_fit_its_bases():
         SequencingResult("r", "ACGT", depth=(30,) * 5)
     with pytest.raises(ValueError, match="outside"):
         SequencingResult("r", "ACGT", trusted=(2, 6))
+
+
+DESIGNED = INSERT[:26]
+WHOLE = Feature("designed region", "misc_feature", (Segment(0, 26),))
+
+
+@pytest.mark.parametrize(
+    ("position", "where"), [(0, "substitution at 1"), (25, "substitution at 26")]
+)
+def test_a_mismatched_end_base_of_a_linear_record_fails_as_a_substitution_there(position, where):
+    """The local alignment's ends are extended without gaps, so an end base is still read."""
+    changed = DESIGNED[:position] + other(200 + position) + DESIGNED[position + 1 :]
+    found = verify(SequenceRecord(DESIGNED), (SequencingResult("r", changed),), (WHOLE,))
+    assert (found.checks[0].status, found.checks[0].detail) == ("fail", where)
+    assert [(one.kind, one.start) for one in found.disagreements] == [("substitution", position)]
 
 
 def test_bases_past_a_linear_record_are_not_listed_and_count_on_neither_side():

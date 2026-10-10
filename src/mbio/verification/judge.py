@@ -22,6 +22,7 @@ from typing import Literal
 
 from mbio.checks import Check, Status, counted, worst_of
 from mbio.sequence import (
+    IUPAC_BASES,
     Feature,
     Segment,
     SequenceRecord,
@@ -44,28 +45,10 @@ DEPTH_FLOOR = 10
 #: consensus, in Plasmidsaurus's and Eurofins' words (section 3.4).
 DEPTH_WANTED = 20
 
-#: The share of its trusted bases a result may misread and still read as this product. The
-#: user's choice: ten times the error a Q20 base allows (section 2.4).
+#: The share of its trusted bases a result may misread and still read as this product, chosen
+#: as ten times the error a Q20 base allows (section 2.4).
 MISREAD_SHARE = 0.1
 
-#: What each IUPAC code on the record agrees with.
-_INCLUDES = {
-    "A": "A",
-    "C": "C",
-    "G": "G",
-    "T": "T",
-    "R": "AG",
-    "Y": "CT",
-    "S": "CG",
-    "W": "AT",
-    "K": "GT",
-    "M": "AC",
-    "B": "CGT",
-    "D": "AGT",
-    "H": "ACT",
-    "V": "ACG",
-    "N": "ACGT",
-}
 
 #: The kinds of disagreement.
 type Kind = Literal["substitution", "insertion", "deletion", "mixed"]
@@ -177,6 +160,8 @@ class _Reading:
 
 
 def _counts(result: SequencingResult, index: int) -> bool:
+    if result.bases[index] == "N":
+        return False
     if result.quality is not None and result.quality[index] < QUALITY_FLOOR:
         return False
     return result.depth is None or result.depth[index] > DEPTH_FLOOR
@@ -189,7 +174,7 @@ def _thin(result: SequencingResult, indices: Sequence[int]) -> bool:
 def _base_kind(read: str, expected: str) -> Kind | None:
     if read not in "ACGT":
         return "mixed"
-    return None if read in _INCLUDES[expected] else "substitution"
+    return None if read in IUPAC_BASES[expected] else "substitution"
 
 
 def _read(expected: SequenceRecord, result: SequencingResult) -> _Reading:
@@ -204,14 +189,13 @@ def _read(expected: SequenceRecord, result: SequencingResult) -> _Reading:
         reading.misread = reading.lined_up = trusted
         return reading
     reading.placement = Placement(result.name, laid.strand, laid.span, result.trusted_span)
-    n = len(expected)
     for column in laid.placed:
-        _count(expected, reading, column, n)
+        _count(expected, reading, column)
     return reading
 
 
-def _count(expected: SequenceRecord, reading: _Reading, column: Column, n: int) -> None:
-    result = reading.result
+def _count(expected: SequenceRecord, reading: _Reading, column: Column) -> None:
+    result, n = reading.result, len(expected)
     counting = [i for i in column.behind if _counts(result, i)]
     if column.start == column.end:
         reading.lined_up += len(counting)
@@ -229,8 +213,6 @@ def _count(expected: SequenceRecord, reading: _Reading, column: Column, n: int) 
     if not counting:
         return
     reading.lined_up += 1
-    if column.bases == "N":
-        return
     position = column.start % n
     reading.read[position] = reading.read.get(position, True) and _thin(result, counting)
     kind = _base_kind(column.bases, expected.sequence[position])
@@ -281,10 +263,12 @@ def _nothing_trusted(result: SequencingResult) -> str:
         if result.quality and not any(result.quality):
             return "the trace carries no quality values"
         return "the trimmed span is empty"
-    quality = result.quality
+    quality, depth = result.quality, result.depth
     if quality is not None and all(one < QUALITY_FLOOR for one in quality[first:last]):
         return f"no base in the trimmed span reaches quality {QUALITY_FLOOR}"
-    return f"no base in the trimmed span is read by more than {DEPTH_FLOOR} reads"
+    if depth is not None and all(one <= DEPTH_FLOOR for one in depth[first:last]):
+        return f"no base in the trimmed span is read by more than {DEPTH_FLOOR} reads"
+    return "no base in the trimmed span is called"
 
 
 def _result_check(reading: _Reading, n: int) -> Check:
@@ -323,13 +307,14 @@ def verify(
 
     A base of a result counts only inside its trusted span, at quality 20 or better where it
     carries a quality, and read by more than 10 reads where it carries a depth: both, where it
-    carries both. An ``N`` reads nothing. A result does not read as this product when more than
-    a tenth of its counted bases are substitutions, mixed bases or bases inserted or left
-    unplaced: ten times the error a Q20 base allows. Bases running past either end of a linear
-    record count on neither side and are not listed. Such a result's check fails, and its disagreements and
-    placement are withheld, so it reads no region; the other results are judged as before. A
-    result carrying a second consensus fails as mixed, and one trusting no base carries no
-    verdict.
+    carries both. An ``N`` reads nothing. Bases running past either end of a linear record are
+    not listed and count for nothing below.
+
+    A result does not read as this product when more than a tenth of its counted bases are
+    substitutions, mixed bases or bases inserted or left unplaced: ten times the error a Q20
+    base allows. Such a result's check fails, and its disagreements and placement are withheld,
+    so it reads no region; the other results are judged as before. A result carrying a second
+    consensus fails as mixed, and one trusting no base carries no verdict.
 
     Raises
     ------

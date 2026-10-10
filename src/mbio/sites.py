@@ -16,7 +16,7 @@ record ends past the record's length.
 """
 
 import re
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable
 from dataclasses import KW_ONLY, dataclass
 from functools import cache
 from itertools import islice, product
@@ -26,7 +26,14 @@ from mbio.codons import CodonUsage, amino_acid, codon_usage
 from mbio.edits import EditReport, insert, replace
 from mbio.enzymes import EndType, Enzyme, get_enzyme
 from mbio.enzymes import enzymes as shipped
-from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
+from mbio.sequence import (
+    IUPAC_BASES,
+    Feature,
+    Segment,
+    SequenceRecord,
+    Strand,
+    reverse_complement,
+)
 
 #: How many bases NEB recommends 5' of a recognition site for an enzyme to cut near an end.
 SPACER_LENGTH = 6
@@ -49,16 +56,6 @@ _TRIES = 4096
 OLIGO_REACH = 100
 
 _RUN = re.compile(r"(.)\1{3}")
-
-#: What each IUPAC code stands for. `mbio.sequence.IUPAC_DNA` names the same fifteen.
-_BASES: Mapping[str, frozenset[str]] = {
-    code: frozenset(bases)
-    for code, bases in {
-        "A": "A", "C": "C", "G": "G", "T": "T",
-        "R": "AG", "Y": "CT", "S": "CG", "W": "AT", "K": "GT", "M": "AC",
-        "B": "CGT", "D": "AGT", "H": "ACT", "V": "ACG", "N": "ACGT",
-    }.items()
-}  # fmt: skip
 
 #: An enzyme, or the name of one the package ships.
 type EnzymeLike = Enzyme | str
@@ -799,7 +796,9 @@ def _pattern(needle: str) -> re.Pattern[str]:
     Wrapped in a lookahead so that sites overlapping one another are all found.
     """
     classes = "".join(
-        "[" + "".join(sorted(code for code, bases in _BASES.items() if bases & _BASES[want])) + "]"
+        "["
+        + "".join(sorted(code for code, bases in IUPAC_BASES.items() if bases & IUPAC_BASES[want]))
+        + "]"
         for want in needle
     )
     return re.compile(f"(?=({classes}))")
@@ -840,6 +839,7 @@ def _hit(
         bottom_cut=bottom,
         overhang=overhang,
         certain=all(
-            _BASES[seen] <= _BASES[want] for seen, want in zip(observed, needle, strict=True)
+            IUPAC_BASES[seen] <= IUPAC_BASES[want]
+            for seen, want in zip(observed, needle, strict=True)
         ),
     )
