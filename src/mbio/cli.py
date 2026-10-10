@@ -4,9 +4,10 @@ Typer, because every lab repo that ships a command line uses it: one `typer.Type
 `app`, `no_args_is_help=True` so a bare invocation prints help instead of nothing, and a
 `version` command. A feature with a package of its own mounts its sub-app here with
 `app.add_typer`, and one cloning method is mounted under the `cloning` group, so
-`cloning --help` lists the methods that exist. A feature that is one flat module -- `translate`
-and `barcodes` -- has its verb here instead, because the command line is the layer that may
-import typer.
+`cloning --help` lists the methods that exist. A package whose command line is one verb, as
+`sequence-verify` is, mounts that verb's function with `app.command`. A feature that is one flat
+module -- `translate` and `barcodes` -- has its verb here instead, because the command line is
+the layer that may import typer.
 
 A verb writing more than one file takes `--out DIR` and prints the summary and then each file
 written, as every pipeline's plan verb does.
@@ -49,6 +50,7 @@ from mbio.translate import (
     optimize_coding_sequence,
     optimize_protein,
 )
+from mbio.verification.cli import sequence_verify
 
 #: What `[project.scripts]` registers. Typer builds the parser from the signatures below, so
 #: a verb is a function and its help is the docstring.
@@ -84,6 +86,7 @@ app.add_typer(_cloning_app, name="cloning")
 app.add_typer(_protocol_app, name="protocol")
 app.add_typer(_plot_app, name="plot")
 app.add_typer(_primers_app, name="primers")
+app.command("sequence-verify")(sequence_verify)
 
 
 @app.command()

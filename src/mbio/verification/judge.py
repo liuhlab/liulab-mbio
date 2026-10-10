@@ -89,6 +89,12 @@ class Disagreement:
     regions: tuple[str, ...] = ()
     features: tuple[str, ...] = ()
 
+    def said(self, length: int) -> str:
+        """Return what it is and where, as a person reads it on a record of `length` bases."""
+        if self.kind == "insertion":
+            return f"insertion after {position_text(self.start - 1, length)}"
+        return f"{self.kind} at {_runs(range(self.start, self.end), length)}"
+
 
 @dataclass(frozen=True, slots=True)
 class Placement:
@@ -255,12 +261,6 @@ def _runs(positions: Sequence[int], n: int) -> str:
     )
 
 
-def _where(one: Disagreement, n: int) -> str:
-    if one.kind == "insertion":
-        return f"insertion after {position_text(one.start - 1, n)}"
-    return f"{one.kind} at {_runs(range(one.start, one.end), n)}"
-
-
 def _nothing_trusted(result: SequencingResult) -> str:
     """Return why a result trusts no base, read off its own fields."""
     first, last = result.trusted_span
@@ -397,13 +397,13 @@ def _region_check(
 ) -> Check:
     positions = _positions(region)
     inside = [(one, shared) for one, touched, shared in found if touched & held]
-    failing = [_where(one, n) for one, shared in inside if shared]
+    failing = [one.said(n) for one, shared in inside if shared]
     failing += [
         f"{one.result.name} is mixed"
         for one in judged
         if one.result.others and held & one.read.keys()
     ]
-    contradicted = [_where(one, n) for one, shared in inside if not shared]
+    contradicted = [one.said(n) for one, shared in inside if not shared]
     unread = [p for p in positions if not any(p % n in one.read for one in judged)]
     thin = [
         p
