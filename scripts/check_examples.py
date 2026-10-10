@@ -267,6 +267,13 @@ GENERATORS: tuple[Generator, ...] = (
         reads=(f"{PUC19}/product.dna",),
         writes=("product-insert.pdf", "product-map.html", "puc19-map.pdf"),
     ),
+    Generator(
+        what="the pUC19-GFP consensus the verification page checks",
+        directory=REPO / PUC19 / "verification",
+        commands=(f"python scripts/build_example_consensus.py --out {OUT}/consensus.fasta",),
+        reads=(f"{PUC19}/product.dna",),
+        writes=("consensus.fasta",),
+    ),
 )
 
 
