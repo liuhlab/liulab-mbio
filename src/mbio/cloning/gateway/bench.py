@@ -13,14 +13,20 @@ from types import MappingProxyType
 from mbio.bench.amounts import DNA_VOLUME_UL, Amount, dna_amount, to_pmol
 from mbio.bench.reactions import dna_components, fits
 from mbio.bench.steps import Transformation
-from mbio.protocol.model import Caution, Citation, Component, ReactionTable, Reference, Source
+from mbio.protocol.model import Caution, Citation, Component, ReactionTable, Source
 
-#: The manual a caution here is read from, so the sentence carries a link and not a vendor's
-#: name. They are declared here rather than in `steps`, which cites them too: `steps` imports
-#: this module, so a source a constant here cites can have no other home. Read through
-#: ``docs/research/gateway-cloning.md`` sections 10 and 11.
+#: The documents a caution or a reaction row here is read from, so the row carries a link and
+#: not a vendor's name. They are declared here rather than in `steps`, which cites them too:
+#: `steps` imports this module, so a source a constant here cites can have no other home. Read
+#: through ``docs/research/gateway-cloning.md`` sections 10 and 11.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
+        "11789": Source(
+            "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
+            edition="11789.II.pps, revision 31 October 2010",
+            date="2026-09-18",
+            note="docs/research/gateway-cloning.md",
+        ),
         "MAN0000470": Source(
             "Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide",
             edition="part 25-0749, revision 2 April 2012",
@@ -200,39 +206,6 @@ LR_TRANSFORMATION = Transformation(
 #: The same transformation after BP; only what goes into the cells is named differently.
 BP_TRANSFORMATION = replace(LR_TRANSFORMATION, source="the BP reaction")
 
-#: Where the numbers above come from, ready for a protocol's reference list.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Invitrogen, Gateway BP Clonase II Enzyme Mix, product sheet 11789.II.pps revision 31 "
-        "October 2010, for the BP reaction, its incubation and how it is stopped"
-    ),
-    Reference(
-        "Invitrogen, Gateway LR Clonase II Enzyme Mix, MAN0001032 revision A.0, for the "
-        "reaction, its incubation and how it is stopped"
-    ),
-    Reference(
-        "Invitrogen, Gateway pDONR Vectors, MAN0000291, revised 29 March 2012, for what an "
-        "entry clone is selected on and grown up from, and for the colony PCR it describes"
-    ),
-    Reference(
-        "Invitrogen, pCR8/GW/TOPO TA Cloning Kit, MAN0000437, for the vendor's own sequencing "
-        "primers and what each of them reads"
-    ),
-    Reference(
-        "Invitrogen, Gateway Technology with Clonase II, MAN0000470, revised 2 April 2012, for "
-        "the transformation, the plating and the strains"
-    ),
-    Reference(
-        "Hartley, J.L., Temple, G.F. and Brasch, M.A. (2000) DNA cloning using in vitro "
-        "site-specific recombination. Genome Res. 10, 1788-1795",
-        url="https://doi.org/10.1101/gr.143000",
-    ),
-    Reference(
-        "Brasch, M., Cheo, D., Hartley, J. and Temple, G., US 7,670,823 B1, FIG. 9, for the "
-        "att site sequences"
-    ),
-)
-
 
 def bp_amounts(substrate: tuple[str, int], donor: tuple[str, int]) -> tuple[Amount, Amount]:
     """Return what the BP reaction takes of the attB substrate and the donor vector.
@@ -296,6 +269,7 @@ def bp_reaction(amounts: Sequence[Amount], *, reactions: int = 1) -> ReactionTab
         title="BP reaction",
         clonase=BP_CLONASE,
         clonase_ul=BP_CLONASE_UL,
+        citation=Citation("11789", "p. 3"),
         te_ul=BP_TE_UL,
         volume_ul=BP_VOLUME_UL,
         reactions=reactions,
@@ -315,6 +289,7 @@ def lr_reaction(amounts: Sequence[Amount], *, reactions: int = 1) -> ReactionTab
         title="LR reaction",
         clonase=LR_CLONASE,
         clonase_ul=LR_CLONASE_UL,
+        citation=Citation("MAN0001032", "p. 3"),
         te_ul=LR_TE_UL,
         volume_ul=LR_VOLUME_UL,
         reactions=reactions,
@@ -327,6 +302,7 @@ def _clonase_reaction(
     title: str,
     clonase: str,
     clonase_ul: float,
+    citation: Citation,
     te_ul: float,
     volume_ul: float,
     reactions: int,
@@ -342,7 +318,7 @@ def _clonase_reaction(
         (
             *dna_components(amounts),
             Component(TE_BUFFER, round(te_ul - used, 2), final=f"to {te_ul:g} µL"),
-            Component(clonase, clonase_ul, final=f"to {volume_ul:g} µL"),
+            Component(clonase, clonase_ul, final=f"to {volume_ul:g} µL", citation=citation),
         ),
         title=title,
         reactions=reactions,

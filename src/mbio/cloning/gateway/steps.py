@@ -13,7 +13,6 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 
 from mbio import checks as judged
-from mbio.bench import REFERENCES as BENCH_REFERENCES
 from mbio.bench.materials import kit
 from mbio.bench.oligos import oligo_row
 from mbio.bench.pcr import (
@@ -79,7 +78,6 @@ from mbio.cloning.gateway.bench import (
     PROPAGATION_HOST,
     PROTEINASE_K_UG_UL,
     PROTEINASE_K_UL,
-    REFERENCES,
     SEQUENCING_MAX_PMOL,
     SEQUENCING_MIN_PMOL,
     SEQUENCING_NG,
@@ -115,17 +113,10 @@ from mbio.protocol.model import (
 from mbio.sequence import SequenceRecord, position_text
 
 #: The documents this method's own rows and notes cite, read into
-#: `docs/research/gateway-cloning.md`, which names where each was fetched from. The two a
-#: caution cites are in `bench`, beside the numbers whose pages they are. The same documents
-#: stand in `REFERENCES`, which lists what a run read rather than what a row names.
+#: `docs/research/gateway-cloning.md`, which names where each was fetched from. Those a caution
+#: or a reaction row cites are in `bench`, beside the numbers whose pages they are.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
-        "11789": Source(
-            "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
-            edition="11789.II.pps, revision 31 October 2010",
-            date="2026-09-18",
-            note="docs/research/gateway-cloning.md",
-        ),
         "MAN0000291": Source(
             "Thermo Fisher Scientific #MAN0000291 Gateway pDONR Vectors user guide",
             edition="part 25-0531, revised 29 March 2012",
@@ -138,7 +129,26 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             date="2026-09-18",
             note="docs/research/gateway-cloning.md",
         ),
+        "hartley-2000": Source(
+            "Hartley, J.L., Temple, G.F. and Brasch, M.A. (2000) DNA cloning using in vitro "
+            "site-specific recombination. Genome Res. 10, 1788-1795",
+            url="https://doi.org/10.1101/gr.143000",
+            note="docs/research/gateway-cloning.md",
+        ),
+        "US7670823": Source(
+            "Brasch, M., Cheo, D., Hartley, J. and Temple, G., US 7,670,823 B1",
+            url="https://patents.google.com/patent/US7670823B1/en",
+            note="docs/research/gateway-cloning.md",
+        ),
     }
+)
+
+#: Why a junction is called by an att site's name: its 25 bp region matches that site's
+#: published sequence, which `att.REGIONS` holds.
+SITES_NOTE = Note(
+    "Each att site is named by matching its 25 bp recombination region to that site's "
+    "published sequence.",
+    citation=Citation("US7670823", "FIG. 9"),
 )
 
 #: What a Gateway plan calls the entry clone BP makes, which is the one file no other method
@@ -201,7 +211,6 @@ def protocol(
             *_lr_steps(lr, host=host),
             *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
         ),
-        references=(*REFERENCES, *BENCH_REFERENCES),
         sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
@@ -565,6 +574,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                     "longer.",
                     citation=Citation("MAN0000470", "p. 23"),
                 ),
+                SITES_NOTE,
                 "Junction positions are 1-based, on the entry clone.",
             ),
             troubleshooting=(
@@ -586,14 +596,18 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
             inserts=[bp.recombination.moved.name or "the insert"],
             colonies=(
                 f"More than {BP_COLONIES:,} colonies where the whole reaction is transformed "
-                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better. What "
-                "fraction of them is correct is not published; Hartley 2000 counted 195 of 197."
+                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better."
             ),
             protocol=BP_TRANSFORMATION,
             notes=(
                 "Unreacted donor vector and the by-product both keep the ccdB gene, which "
                 f"kills {host}, so they do not grow. A strain carrying F' would supply ccdA "
                 "and cancel that.",
+                Note(
+                    "No manual states what fraction of the colonies is correct; the one count "
+                    "published found 195 of 197 correct after BP.",
+                    citation=Citation("hartley-2000", "Results"),
+                ),
             ),
             troubleshooting=(
                 Troubleshooting(
@@ -700,6 +714,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                     "longer.",
                     citation=Citation("MAN0000470", "p. 32"),
                 ),
+                SITES_NOTE,
                 "Junction positions are 1-based, on the expression clone.",
             ),
             troubleshooting=(
@@ -721,14 +736,18 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
             inserts=[lr.recombination.moved.name or "the insert"],
             colonies=(
                 f"More than {LR_COLONIES:,} colonies where the whole reaction is transformed "
-                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better. What "
-                "fraction of them is correct is not published; Hartley 2000 counted 96 of 102."
+                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better."
             ),
             protocol=LR_TRANSFORMATION,
             notes=(
                 "Unreacted destination vector and the by-product both keep the ccdB gene, "
                 f"which kills {host}, so they do not grow. A strain carrying F' would supply "
                 "ccdA and cancel that.",
+                Note(
+                    "No manual states what fraction of the colonies is correct; the one count "
+                    "published found 96 of 102 correct after LR.",
+                    citation=Citation("hartley-2000", "Results"),
+                ),
                 f"The expression clone lost the chloramphenicol cassette with the by-product, so "
                 f"restreaking a colony on {CHLORAMPHENICOL_UG_ML} µg/mL chloramphenicol "
                 "confirms it: a true expression clone does not grow there, and one carrying a "
