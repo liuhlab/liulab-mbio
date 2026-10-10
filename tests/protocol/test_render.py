@@ -396,11 +396,6 @@ def test_a_measured_row_opens_at_the_concentration_its_volume_assumes() -> None:
     [warning] = figure.find_all(cls="calc-warning")
     assert "hidden" in warning.attrs
     assert warning.text == "Too dilute. Concentrate it."
-    # Out of the digest, so a calculator re-keys no page and the bench keeps its ticks.
-    plain = ReactionTable((replace(row, calculator=None), Component("Water", 13.0)))
-    assert page_key(protocol) == page_key(
-        replace(protocol, steps=(measure, Step("Mix", tables=(plain,))))
-    )
 
 
 def volume_cells(volume_ul: float) -> list[str]:

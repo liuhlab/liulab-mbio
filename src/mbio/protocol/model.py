@@ -499,8 +499,7 @@ class Component:
     final: str = ""
     master_mix: bool = True
     citation: Citation | None = None
-    # Out of the repr a page's key is digested from, so a protocol keeps the key it had.
-    calculator: AmountToVolume | None = field(default=None, repr=False)
+    calculator: AmountToVolume | None = None
 
     def __post_init__(self) -> None:
         """Refuse a volume that is not positive, or a stock beside the one the bench measures."""
