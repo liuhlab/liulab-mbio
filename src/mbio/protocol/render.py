@@ -2364,8 +2364,8 @@ def _program(key: str, program: ThermocyclerProgram) -> str:
 def _timer(key: str, timer: Timer) -> str:
     """One timer, keyed so `protocol.js` can give it back its deadline and the reader's time.
 
-    The time is a field the reader may type over; `data-seconds` keeps the plan's, which the
-    page offers back once the two differ.
+    The time is a field the reader may type over; `data-seconds` keeps the protocol's, which
+    the page offers back once the two differ.
     """
     clock = _clock(timer.seconds)
     return (
@@ -2374,8 +2374,8 @@ def _timer(key: str, timer: Timer) -> str:
         f'<input type="text" class="timer-time" value="{clock}" size="8" autocomplete="off"'
         ' spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label>'
         '<button type="button" class="timer-action">Start</button>'
-        '<button type="button" class="timer-plan" hidden>'
-        f"Use the plan's {clock}</button></span>"
+        '<button type="button" class="timer-plan" title="The time the protocol gives" hidden>'
+        f"Back to {clock}</button></span>"
     )
 
 

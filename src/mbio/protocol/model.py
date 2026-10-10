@@ -624,8 +624,7 @@ class ThermocyclerProgram:
         """The countdown the page gives this run, so no step holds a `Timer` for a program.
 
         It counts `duration_seconds`, and is ``None`` where that bounds nothing: a blank cycle
-        count, or a program that is only an open hold. A time stated in words, such as an
-        overnight growth, is in no program, so it never becomes one.
+        count, or a program that is only an open hold.
 
         Examples
         --------
@@ -634,6 +633,8 @@ class ThermocyclerProgram:
         >>> ThermocyclerProgram((ligate, hold), title="Ligation").timer
         Timer(label='Ligation', seconds=600.0)
         >>> ThermocyclerProgram((hold,)).timer is None
+        True
+        >>> ThermocyclerProgram((Stage((ligate.incubations[0],), cycles=None),)).timer is None
         True
         """
         seconds = self.duration_seconds
@@ -1416,7 +1417,7 @@ class Step:
         True
         """
         bounded = [float(timer.seconds) for timer in self.timers]
-        bounded += [p.duration_seconds for p in self.programs if p.duration_seconds is not None]
+        bounded += [p.timer.seconds for p in self.programs if p.timer is not None]
         return sum(bounded) if bounded else None
 
     @property

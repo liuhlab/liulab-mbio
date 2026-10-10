@@ -74,7 +74,8 @@ CLEARED = ("BsaI", "BsmBI")
 NAME = "pLVX-TetOne-dom"
 
 #: How long each enzyme the vector is cleared of digests the miniprep for, to show it no longer
-#: cuts.
+#: cuts: the time New England Biolabs' single enzyme digest protocol gives, which the step's
+#: note cites.
 CONFIRM_DIGEST_SECONDS = 3600
 
 
@@ -455,9 +456,9 @@ def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, 
                 key="confirm-digest",
                 instructions=(
                     "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for "
-                    f"{CONFIRM_DIGEST_SECONDS // 3600} hour at 37 °C.",
+                    f"{CONFIRM_DIGEST_SECONDS // 60} minutes at 37 °C.",
                     "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for "
-                    f"{CONFIRM_DIGEST_SECONDS // 3600} hour at 55 °C.",
+                    f"{CONFIRM_DIGEST_SECONDS // 60} minutes at 55 °C.",
                     f"Digest a third 1 µg with 10 units of {control.commercial_name or control.name}.",
                     "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel.",
                 ),

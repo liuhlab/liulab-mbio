@@ -286,7 +286,7 @@
 
   // What a reader types for a time: h:mm:ss, m:ss, or a bare number of minutes. Null for
   // anything else, or for no time at all, so a slip leaves the timer as it was.
-  function seconds(text) {
+  function parseTime(text) {
     var parts = String(text).trim().split(":");
     if (parts.length > 3) return null;
     var total = 0;
@@ -300,41 +300,41 @@
 
   // A browser lets a page sound only once the reader has touched it, so the alarm plays on a
   // context a touch made or woke; one made when the time runs out can stay silent.
-  var sound = null;
+  var audio = null;
 
   function unlock() {
     try {
       var Context = window.AudioContext || window.webkitAudioContext;
-      if (!sound && Context) sound = new Context();
-      if (sound && sound.state === "suspended") sound.resume();
+      if (!audio && Context) audio = new Context();
+      if (audio && audio.state === "suspended") audio.resume();
     } catch (error) {
-      sound = null;
+      audio = null;
     }
   }
 
   function beep() {
     [0, 0.35, 0.7].forEach(function (offset) {
-      var tone = sound.createOscillator();
-      var gain = sound.createGain();
+      var tone = audio.createOscillator();
+      var gain = audio.createGain();
       tone.frequency.value = 880;
       gain.gain.value = 0.15;
       tone.connect(gain);
-      gain.connect(sound.destination);
-      tone.start(sound.currentTime + offset);
-      tone.stop(sound.currentTime + offset + 0.2);
+      gain.connect(audio.destination);
+      tone.start(audio.currentTime + offset);
+      tone.stop(audio.currentTime + offset + 0.2);
     });
   }
 
   // A context the browser holds back may be let go only at the reader's next touch, which is
-  // no time for an alarm, so a late one stays quiet.
+  // no time for an alarm, so one let go more than two seconds late stays quiet.
   function alarm() {
     try {
       unlock();
       var asked = Date.now();
-      if (sound && sound.state === "running") beep();
-      else if (sound) {
-        Promise.resolve(sound.resume()).then(function () {
-          if (sound.state === "running" && Date.now() - asked < 2000) beep();
+      if (audio && audio.state === "running") beep();
+      else if (audio) {
+        Promise.resolve(audio.resume()).then(function () {
+          if (audio.state === "running" && Date.now() - asked < 2000) beep();
         }, function () {});
       }
     } catch (error) {
@@ -346,12 +346,12 @@
   // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
   // until that timer is reset.
   var title = document.title;
-  var rung = {};
+  var ranOut = {};
 
-  function flag(key, label) {
-    if (label) rung[key] = label;
-    else delete rung[key];
-    var labels = Object.keys(rung).map(function (one) { return rung[one]; });
+  function markTitle(key, label) {
+    if (label) ranOut[key] = label;
+    else delete ranOut[key];
+    var labels = Object.keys(ranOut).map(function (one) { return ranOut[one]; });
     document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
   }
 
@@ -419,7 +419,7 @@
       show("Reset");
       if (sounded) {
         alarm();
-        flag(key, label);
+        markTitle(key, label);
       }
     }
 
@@ -435,7 +435,7 @@
       total = to;
       left = to;
       timer.classList.remove("is-finished");
-      flag(key, null);
+      markTitle(key, null);
       keep();
       show("Start");
     }
@@ -469,7 +469,7 @@
 
     // A typed time is the whole count from here: the timer stands ready at it.
     field.addEventListener("change", function () {
-      var typed = seconds(field.value);
+      var typed = parseTime(field.value);
       if (typed === null || handle !== null) show(action.textContent);
       else ready(typed);
     });

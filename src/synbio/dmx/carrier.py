@@ -54,7 +54,7 @@ REFERENCES: tuple[Reference, ...] = (
     ),
 )
 
-#: How long the reaction stands at room temperature, the user guide's time.
+#: How long the reaction stands at room temperature, as the user guide in `REFERENCES` gives.
 SEAT_SECONDS = 300
 
 #: The head-to-head pair topoisomerase I sits either side of. The enzyme cleaves after 5'-CCCTT
