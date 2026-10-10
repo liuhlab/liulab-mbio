@@ -140,9 +140,9 @@ The run is not one sitting. The `protocol/` folder holds a page for each, in ord
 
 Reading every well back has a page for each route, and the bench does one, never both;
 [DMX](dmx.md) covers that job.
-[The way in](../examples/ap1-library/protocol/index.html) draws the chain, lists the checks and
-names every number with no source: 49 steps, 31 of which hold the bench. Each page names the
-one before and after it, so you can mail one to whoever runs that sitting.
+[The way in](../examples/ap1-library/protocol/index.html) draws the chain, lists the checks,
+names every number with no source, and schedules the run: 49 steps, 19 of which hold the bench.
+Each page names the one before and after it, so you can mail one to whoever runs that sitting.
 
 ## Before you order
 
