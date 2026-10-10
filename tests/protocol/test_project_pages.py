@@ -696,6 +696,10 @@ def test_the_references_page_names_every_protocol_citing_each_document(project: 
         "source-neb": "cited by Order the pool, Build the blocks",
         "source-m0491": "cited by Build the blocks",
     }
+    # Where in each the run cites it moves off the citing pages and onto the entry.
+    assert [
+        at.text for at in main.find_all("section", cls="sources")[0].find_all(cls="cited-at")
+    ] == ["cited at price list", "cited at step 2"]
 
 
 def test_the_references_page_lists_the_record_the_run_bill_cites() -> None:
@@ -789,7 +793,9 @@ def test_a_citation_resolves_on_its_own_page_and_reaches_the_run_list_from_a_pag
     # A number on a page with no list of its own is the run list's, so it lands on that entry.
     run = main_of(parse(render_references(project, folder))).find_all("section", cls="sources")
     listed = [item.attrs["id"] for item in run[0].find_all("li")]
-    for cited in shared.find_all("a", cls="cite"):
+    index = parse(render_index(project, folder)).find_all("a", cls="cite")
+    assert index
+    for cited in (*shared.find_all("a", cls="cite"), *index):
         assert cited.text == f"[{listed.index(cited.attrs['href'].partition('#')[2]) + 1}]"
     one = project.protocols[1]
     for page in (render_html(one), render_html(one, folder=folder, here=folder.pages[1].href)):

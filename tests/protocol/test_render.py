@@ -466,7 +466,7 @@ def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_e
     ]
     # One source behind every row is the program's, so the rows carry no citation of their own.
     assert [cited.attrs["title"] for cited in figure.find_all("a", cls="cite")] == [
-        "LevSeq, thermal cycler table"
+        "LevSeq · thermal cycler table"
     ]
     # A blank count bounds no run, so no timer stands in for one.
     assert not figure.find_all(cls="timer")

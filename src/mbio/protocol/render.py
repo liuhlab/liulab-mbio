@@ -409,10 +409,8 @@ def render_html(
             _holes(protocol),
         ]
     )
-    body, at = _numbered(body, protocol.sources)
-    # The list leads with what the page cites, in the order it first does, so it reads 1, 2, 3.
-    listed = {key: protocol.sources[key] for key in at if key in protocol.sources}
-    body += _sources({**listed, **protocol.sources}, at=at) + _references(protocol.references)
+    body, listed, at = _numbered(body, protocol.sources)
+    body += _sources(listed, at=at) + _references(protocol.references)
     return _page(protocol.title, page_key(protocol), body, folder, here, _within(protocol, keys))
 
 
@@ -465,7 +463,7 @@ def render_index(project: Project, folder: Folder) -> str:
         if block:
             jumps.append((anchor, label))
             parts.append(block)
-    body, _ = _numbered("".join(parts), _merged_sources(project)[0], elsewhere=True)
+    body, _, _ = _numbered("".join(parts), _merged_sources(project).found, elsewhere=True)
     return _page(project.title, page_key(project), body, folder, folder.index, _jumps(jumps))
 
 
@@ -488,9 +486,9 @@ def render_reagents(project: Project, folder: Folder) -> str:
         if jumps
         else "No protocol of this run lists a reagent or an instrument."
     )
-    body, _ = _numbered(
+    body, _, _ = _numbered(
         f"<h1>Reagents and equipment</h1>\n<p>{lead}</p>\n" + "".join(b for _, _, b in blocks),
-        _merged_sources(project)[0],
+        _merged_sources(project).found,
         elsewhere=True,
     )
     return _shared(project, folder, folder.reagents, "Reagents and equipment", body, jumps)
@@ -1085,14 +1083,20 @@ def _merged_references(project: Project) -> tuple[tuple[Reference, ...], tuple[s
     return tuple(holders), tuple(", ".join(dict.fromkeys(n)) for n in holders.values())
 
 
-def _merged_sources(
-    project: Project,
-) -> tuple[dict[str, Source], dict[str, str], dict[str, tuple[str, ...]]]:
+class _RunSources(NamedTuple):
+    """The run's sources list, in the order `_sources` takes it."""
+
+    found: dict[str, Source]
+    citers: dict[str, str]
+    at: dict[str, tuple[str, ...]]
+
+
+def _merged_sources(project: Project) -> _RunSources:
     """Every document a number was read from, once each, with what cites it and where in it.
 
     The run's own come first, each cited by the bill where a row of it cites one;
-    `docs/adr/0018-a-project-chains-protocols.md` says why a run names any source at all. The
-    places cited are the whole run's, as the protocols that cite each are.
+    `docs/adr/0018-a-project-chains-protocols.md` says why a run names any source at all. Where
+    in a document it is cited is gathered over the whole run, as what cites it is.
     """
     billed = project.bill.cited if project.bill else frozenset()
     found: dict[str, Source] = dict(project.sources)
@@ -1107,7 +1111,7 @@ def _merged_sources(
     bill = project.bill.citations if project.bill else ()
     for citation in (*bill, *(one for p in project.protocols for one in p.citations)):
         at.setdefault(citation.source, []).append(citation.locator)
-    return (
+    return _RunSources(
         found,
         {key: ", ".join(dict.fromkeys(names)) for key, names in citers.items()},
         {key: tuple(dict.fromkeys(one for one in places if one)) for key, places in at.items()},
@@ -1804,57 +1808,64 @@ def _oligo_checks(oligos: tuple[Oligo, ...]) -> str:
 
 
 #: A citation as `_cite` leaves it, until `_numbered` reads the whole page and numbers it.
-_CITED = re.compile(r'<a class="cite" href="([^"]*)" data-source="([^"]*)" data-at="([^"]*)"></a>')
+_CITED = re.compile(
+    r'<a class="cite" href="([^"]*)" data-source="([^"]*)" data-at="([^"]*)">[^<]*</a>'
+)
 
 
 def _cite(citation: Citation | None, sources: str = "") -> str:
     """One citation, linked to its source's entry and waiting on the number `_numbered` gives it.
 
+    It reads as its key and locator until then, so a page nothing numbers still cites.
     `sources` is the page the sources list stands on, as `Folder.sources_at` gives it, and is
     empty where that is the page being rendered.
     """
     if citation is None:
         return ""
+    said = " ".join(one for one in (citation.source, citation.locator) if one)
     return (
         f'<a class="cite" href="{escape(sources)}#source-{escape(slug(citation.source))}" '
-        f'data-source="{escape(citation.source)}" data-at="{escape(citation.locator)}"></a>'
+        f'data-source="{escape(citation.source)}" data-at="{escape(citation.locator)}">'
+        f"{escape(said)}</a>"
     )
 
 
 def _after(citation: Citation | None, sources: str = "") -> str:
-    """`_cite` against the text before it, with no space, as a superscript stands."""
+    """`_cite` where the mark follows text; the same mark, meeting the text with no space."""
     return _cite(citation, sources)
 
 
 def _numbered(
     html: str, sources: Mapping[str, Source], *, elsewhere: bool = False
-) -> tuple[str, dict[str, tuple[str, ...]]]:
-    """Return `html` with every citation a bracketed superscript number, and where each cites.
+) -> tuple[str, dict[str, Source], dict[str, tuple[str, ...]]]:
+    """Return `html` with each citation numbered, the list numbered, and where each is cited.
 
-    One number a document, whichever row cites it. A page's own list is numbered in order of
-    first citation on the page; a list standing `elsewhere` is numbered in the order `sources`
-    gives, which is how that page lists it. A key the list lacks shows the key, never a number
-    no entry carries. The second value names, key by key in order of first citation, the
-    locators the page cites each at.
+    A citation becomes a bracketed superscript number: one a document, whichever row cites it,
+    and the number is the document's place in the list handed back. A page's own list leads
+    with what the page cites, in the order it first does, and ends with the rest; a list
+    standing `elsewhere` keeps the order `sources` gives, which is how that page lists it. A key
+    the list lacks shows the key, never a number no entry carries. The last value names, key by
+    key in order of first citation, the locators the page cites it at.
     """
     at: dict[str, list[str]] = {}
     for found in _CITED.finditer(html):
         places = at.setdefault(unescape(found[2]), [])
         if (locator := unescape(found[3])) and locator not in places:
             places.append(locator)
-    listed = sources if elsewhere else [key for key in at if key in sources]
+    cited = {key: sources[key] for key in at if key in sources}
+    listed = dict(sources) if elsewhere else {**cited, **sources}
     numbers = {key: str(n) for n, key in enumerate(listed, 1)}
 
     def number(found: re.Match[str]) -> str:
         key, locator = unescape(found[2]), unescape(found[3])
         source = sources.get(key)
-        said = ", ".join(one for one in (source.document if source else key, locator) if one)
+        said = " · ".join(one for one in (source.document if source else key, locator) if one)
         return (
             f'<a class="cite" href="{found[1]}" title="{escape(said)}">'
             f"<sup>[{escape(numbers.get(key, key))}]</sup></a>"
         )
 
-    return _CITED.sub(number, html), {key: tuple(places) for key, places in at.items()}
+    return _CITED.sub(number, html), listed, {key: tuple(one) for key, one in at.items()}
 
 
 def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
