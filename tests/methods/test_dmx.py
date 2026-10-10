@@ -2,6 +2,7 @@
 
 import pytest
 
+from mbio.bench.readback import reformat
 from mbio.protocol.model import Citation, Step, Well
 from synbio.dmx import kit, method, steps
 
@@ -99,10 +100,11 @@ def test_a_well_too_thin_to_call_is_judged_on_its_depth_alone():
     thin = method.judge_well(
         Well("picked", "A1"), route=method.ROUTE_LIGATION, reads=4, called=(), designed=designed
     )
-    deep = judged(("AGGAATCTTCC",), designed)
+    deep = judged(("AGGAA",), designed)
     assert [one.name for one in thin.checks] == ["reads_per_well"]
     assert thin.called is False
     assert [one.name for one in deep.checks] == ["reads_per_well", "designed region", "picked A2"]
+    assert deep.status == "fail"
 
 
 DESIGNED = "AGGAATGAAACCGTTCCGATTACAGG"
@@ -124,6 +126,19 @@ def test_a_well_passes_on_an_exact_match_and_fails_on_one_mismatch_or_a_mixture(
     assert [one.status for one in mixed.checks] == ["pass", "fail", "fail"]
     nothing = judged(())
     assert [one.status for one in nothing.checks] == ["pass", None]
+    assert reformat((nothing,)) == (nothing,)
+
+
+def test_a_consensus_that_stops_short_of_the_design_fails_the_well():
+    """The call spans the whole amplicon, so a designed base it lacks is missing, not unread."""
+    half = judged((DESIGNED[:13],))
+    region = half.checks[1]
+    assert (region.status, region.detail) == (
+        "fail",
+        "the consensus stops short: 13 bases unread: 14 .. 26",
+    )
+    assert half.status == "fail"
+    assert reformat((half,)) == ()
 
 
 def test_a_soft_masked_consensus_is_read_in_any_case():

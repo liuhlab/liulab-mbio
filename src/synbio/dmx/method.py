@@ -12,7 +12,7 @@ Every number a read-back prints is here, with the document it was read from besi
 """
 
 from collections.abc import Sequence
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 
 from mbio.bench import plates
 from mbio.bench.materials import material
@@ -439,7 +439,10 @@ def judge_well(
     The two questions run in that order, which is why a shallow well is never a failure. The
     first consensus is the well's result and any further one makes it mixed; the whole designed
     region is the one region, so any disagreement in it fails the well, and bases a consensus
-    carries beyond it fail nothing. No consensus at all carries no verdict.
+    carries beyond it fail nothing. A consensus that stops short of a designed base fails too,
+    where a general verification leaves such a base unread: the call spans the well's whole
+    amplicon, so a base it lacks is missing rather than out of reach. No consensus at all
+    carries no verdict.
 
     Raises
     ------
@@ -460,7 +463,15 @@ def judge_well(
         name = f"{well.plate} {well.well}"
         results = (SequencingResult(name, first, reads=reads, others=tuple(others)),)
     verification = verify(record, results, (region,))
-    return WellVerdict(well, (depth, *verification.checks, *verification.result_checks))
+    checks = verification.checks
+    if results and verification.placements[0].span is not None:
+        checks = tuple(
+            replace(one, status="fail", detail=f"the consensus stops short: {one.detail}")
+            if one.status is None
+            else one
+            for one in checks
+        )
+    return WellVerdict(well, (depth, *checks, *verification.result_checks))
 
 
 @dataclass(frozen=True, slots=True)
