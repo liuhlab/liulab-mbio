@@ -17,6 +17,7 @@ from collections.abc import Mapping
 from dataclasses import KW_ONLY, dataclass
 from types import MappingProxyType
 
+from mbio.bench.gels import LADDER_CITATIONS
 from mbio.protocol.model import Citation, Material, Rule, Source
 
 #: Every document the parameters below were read from, keyed as a `Citation` names it. A
@@ -185,9 +186,19 @@ KITS: Mapping[str, tuple[str, str]] = MappingProxyType(
 #: lab that uses another one names it per run; no lab's habit is written in here.
 DEFAULT_CLEANUP_KIT = "T1130"
 
+#: Where a material's own numbers are read, keyed by catalogue number: a ladder's bands.
+CITATIONS: Mapping[str, Citation] = LADDER_CITATIONS
+
 #: Every catalogue number these parameters are keyed by. A number is keyed without its pack
 #: size, because a pack size changes nothing about the thing in the tube.
-_KEYED = ELECTROPORATION.keys() | RULES.keys() | CONTAINS.keys() | CAUTIONS.keys() | KITS.keys()
+_KEYED = (
+    ELECTROPORATION.keys()
+    | RULES.keys()
+    | CONTAINS.keys()
+    | CAUTIONS.keys()
+    | KITS.keys()
+    | CITATIONS.keys()
+)
 
 
 def _key(catalog: str) -> str:
@@ -277,7 +288,8 @@ def material(
     """Return a material carrying its own parameters: what it brings, rules and cautions.
 
     The caller names the thing and what travels with it is looked up, so a material built here
-    cannot reach a protocol without them. One built around this carries none of them.
+    cannot reach a protocol without them. One built around this carries none of them. Where the
+    caller gives no `citation`, the material's own is looked up the same way.
 
     Examples
     --------
@@ -297,5 +309,5 @@ def material(
         contains=contains(catalog),
         rules=rules(catalog),
         cautions=cautions(catalog),
-        citation=citation,
+        citation=citation or CITATIONS.get(_key(catalog)),
     )

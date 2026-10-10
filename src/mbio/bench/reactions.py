@@ -8,7 +8,7 @@ the fix named, and one last line fills the rest.
 from collections.abc import Sequence
 from dataclasses import replace
 
-from mbio.bench.amounts import Amount
+from mbio.bench.amounts import CONVERSION_CITATION, Amount
 from mbio.bench.steps import TOO_DILUTE, listed
 from mbio.protocol.model import AmountToVolume, Component, ReactionTable, number
 
@@ -86,13 +86,17 @@ def reaction_table(
 
 
 def dna_components(amounts: Sequence[Amount]) -> tuple[Component, ...]:
-    """Return one row a DNA, each added to its own tube rather than to the master mix."""
+    """Return one row a DNA, each added to its own tube rather than to the master mix.
+
+    Each row's picomoles are weighed by the conversion `CONVERSION_CITATION` names, so it cites it.
+    """
     return tuple(
         Component(
             amount.name,
             amount.volume_ul,
             final=f"{number(amount.pmol)} pmol ({amount.nanograms:g} ng)",
             master_mix=False,
+            citation=CONVERSION_CITATION,
         )
         for amount in amounts
     )

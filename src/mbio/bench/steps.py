@@ -13,9 +13,15 @@ from dataclasses import KW_ONLY, dataclass, replace
 from types import MappingProxyType
 
 from mbio import checks as judged
-from mbio.bench.amounts import DNA_VOLUME_UL, Amount
-from mbio.bench.gels import agarose_percent, choose_ladder
+from mbio.bench.amounts import (
+    DNA_VOLUME_UL,
+    Amount,
+)
+from mbio.bench.amounts import SOURCES as AMOUNT_SOURCES
+from mbio.bench.gels import RESOLUTION_CITATION, agarose_percent, choose_ladder
+from mbio.bench.gels import SOURCES as GEL_SOURCES
 from mbio.bench.materials import POLYMERASE_ON_ICE, material
+from mbio.bench.materials import SOURCES as MATERIAL_SOURCES
 from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.pcr import (
     colony_pcr_program,
@@ -42,7 +48,6 @@ from mbio.protocol.model import (
     Note,
     Oligo,
     Protocol,
-    Reference,
     Rule,
     Source,
     Step,
@@ -52,12 +57,15 @@ from mbio.protocol.model import (
 )
 from mbio.sequence import SequenceRecord
 
-#: The documents these shared steps read their troubleshooting from. A pipeline building any of
-#: them merges this into its own `sources`, so the keys its rows cite resolve; `citing` drops
-#: the ones that run never named. The polymerase protocol comes with it, because the PCR step's
-#: own rows cite it.
+#: The documents these shared steps and the materials they name are read from. A pipeline
+#: building any of them merges this into its own `sources`, so the keys its rows cite resolve;
+#: `citing` drops the ones that run never named. The polymerase protocol comes with it, because
+#: the PCR step's own rows cite it.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
+        **AMOUNT_SOURCES,
+        **GEL_SOURCES,
+        **MATERIAL_SOURCES,
         "M0491": PCR_SOURCES["M0491"],
         "NEB-cloning": Source(
             "New England Biolabs, Troubleshooting Guide for Cloning",
@@ -82,6 +90,18 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
             date="2026-09-12",
             note="docs/research/primer-design-and-pcr.md",
+        ),
+        "REBASE-DpnI": Source(
+            "REBASE enzyme record for DpnI",
+            url="http://rebase.neb.com/rebase/rebase.html",
+            note="docs/research/golden-gate-assembly.md",
+        ),
+        "potapov-2018": Source(
+            "Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation "
+            "fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, "
+            "2665-2674",
+            url="https://doi.org/10.1021/acssynbio.8b00333",
+            note="docs/research/golden-gate-assembly.md",
         ),
     }
 )
@@ -112,28 +132,15 @@ PLATE_UL = 50.0
 PLATE_DILUTION = 5
 
 #: The indicator plate, from Potapov et al. 2018's recipe (§5): micrograms per millilitre of
-#: X-gal and micromolar IPTG.
+#: X-gal and micromolar IPTG, and where the plate row cites it.
 XGAL_UG_ML = 80
 IPTG_UM = 200
+PLATE_CITATION = Citation("potapov-2018", "methods")
 
 #: The titles of the steps an oligo's row points at, written once so a row and its step cannot
 #: drift. `pcr_title` gives the third.
 COLONY_PCR_TITLE = "Screen colonies by PCR"
 SEQUENCING_TITLE = "Confirm the clone by sequencing"
-
-#: What a protocol cites when it runs the DpnI digest.
-DPNI_REFERENCE = Reference(
-    "REBASE record for DpnI, which cuts G6mATC and so only methylated template",
-    url="http://rebase.neb.com/rebase/rebase.html",
-)
-
-#: What a protocol cites when it pours the indicator plate.
-PLATE_REFERENCE = Reference(
-    "Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by "
-    "T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal "
-    "and IPTG plate",
-    url="https://doi.org/10.1021/acssynbio.8b00333",
-)
 
 
 #: What quantifies a purified fragment, which every method that purifies one needs. The
@@ -319,6 +326,20 @@ def catalogued(
     )
 
 
+def plate_material(phenotype: Phenotype) -> Material:
+    """Return the selection plates, poured as an indicator plate where the plate reads colour."""
+    antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
+    amount = "one plate per transformation"
+    if phenotype.blue_white:
+        return Material(
+            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
+            f"and {IPTG_UM} µM IPTG",
+            amount=amount,
+            citation=PLATE_CITATION,
+        )
+    return Material(f"{phenotype.medium} agar plates with {antibiotic}", amount=amount)
+
+
 def pcr_title(name: str) -> str:
     """Return the title of the step that amplifies `name`, which its oligos name as their purpose."""
     return f"Amplify {name}"
@@ -422,6 +443,11 @@ def gel_step(amplicons: Sequence[tuple[str, int]]) -> Step:
             ),
         ),
         expected=tuple(f"{name}: one band at {length_bp} bp." for name, length_bp in amplicons),
+        notes=(
+            Note(
+                f"{percent:g}% agarose resolves bands of these sizes.", citation=RESOLUTION_CITATION
+            ),
+        ),
         troubleshooting=(
             Troubleshooting(
                 "A smear or an extra band",
@@ -487,8 +513,11 @@ def dpni_step(
             "template plasmid.",
         ),
         notes=(
-            f"DpnI cuts GATC only where Dam has methylated it, so it cuts {counted} and "
-            "leaves the PCR product, which carries no methylation.",
+            Note(
+                f"DpnI cuts GATC only where Dam has methylated it, so it cuts {counted} and "
+                "leaves the PCR product, which carries no methylation.",
+                citation=Citation("REBASE-DpnI", "DpnI"),
+            ),
             *notes,
         ),
         troubleshooting=(

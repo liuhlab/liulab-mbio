@@ -3,9 +3,11 @@
 The conversion is NEBioCalculator's, through ``docs/research/primer-design-and-pcr.md``.
 """
 
+from collections.abc import Mapping
 from dataclasses import KW_ONLY, dataclass
+from types import MappingProxyType
 
-from mbio.protocol.model import Reference
+from mbio.protocol.model import Citation, Source
 
 #: NEBioCalculator's double-stranded DNA weight, g/mol: `_DUPLEX_ENDS + bp * _BASE_PAIR`. NEB's
 #: manuals use 650 Da per base pair instead, which differs by about 5%, so a protocol says which.
@@ -113,7 +115,17 @@ def dna_amount(
     )
 
 
-#: Where the numbers above come from, ready for a protocol's reference list.
-REFERENCES: tuple[Reference, ...] = (
-    Reference("NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion"),
+#: The document the conversion is read from, keyed as a `Citation` names it.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "NEBioCalculator": Source(
+            "New England Biolabs NEBioCalculator",
+            edition="script main-6f3020c533.js, capture 2026-08-28",
+            read_as="Wayback Machine",
+            note="docs/research/primer-design-and-pcr.md",
+        ),
+    }
 )
+
+#: Where the conversion `molecular_weight` makes is read.
+CONVERSION_CITATION = Citation("NEBioCalculator", "dsDNA molecular weight")
