@@ -13,20 +13,13 @@ import typer
 
 from mbio.checks import Check
 from mbio.io import read_record
-from mbio.verification.judge import Verification, regions, verify
+from mbio.verification.judge import CONSENSUS_CAVEAT, Verification, regions, verify
 from mbio.verification.page import draw_page
 from mbio.verification.result import SequencingResult
-from mbio.verification.trace import Signal, read_signal, read_trace
+from mbio.verification.trace import Channels, read_channels, read_trace
 
 #: What `--out` names the clone's page in the directory it is given.
 PAGE = "verification.html"
-
-#: What a consensus with no per-base support cannot show, printed beside each one:
-#: `docs/research/sequencing-read-evidence.md`, section 3.5.
-CONSENSUS_CAVEAT = (
-    "a consensus alone cannot show a mixed sample, because the commonest plasmid becomes the "
-    "consensus"
-)
 
 
 def read_result(path: Path) -> SequencingResult:
@@ -91,22 +84,22 @@ def sequence_verify(
         judged = regions(record, feature or ())
         given = [read_result(one) for one in results]
         made = verify(record, given, judged)
-        signals = _signals(results, given) if out is not None else {}
+        channels = _channels(results, given) if out is not None else {}
     except (KeyError, ValueError, NotImplementedError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
     for line in report(made, given, len(record)):
         typer.echo(line)
     if out is not None:
-        typer.echo(draw_page(record, given, made, signals=signals).write(out / PAGE))
+        typer.echo(draw_page(record, given, made, channels=channels).write(out / PAGE))
     if not made.verified:
         raise typer.Exit(1)
 
 
-def _signals(paths: Sequence[Path], given: Sequence[SequencingResult]) -> dict[str, Signal]:
-    """Return each trace's signal, by the name of the result read from it."""
+def _channels(paths: Sequence[Path], given: Sequence[SequencingResult]) -> dict[str, Channels]:
+    """Return each trace's channels, by the name of the result read from it."""
     return {
-        one.name: read_signal(path)
+        one.name: read_channels(path)
         for path, one in zip(paths, given, strict=True)
         if path.suffix.lower() == ".ab1"
     }

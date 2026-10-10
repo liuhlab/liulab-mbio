@@ -50,6 +50,13 @@ DEPTH_WANTED = 20
 #: as ten times the error a Q20 base allows (section 2.4).
 MISREAD_SHARE = 0.1
 
+#: What a consensus with no per-base support cannot show, said beside each one:
+#: `docs/research/sequencing-read-evidence.md`, section 3.5.
+CONSENSUS_CAVEAT = (
+    "a consensus alone cannot show a mixed sample, because the commonest plasmid becomes the "
+    "consensus"
+)
+
 #: The qualifier each cloning plan writes on the junction features of its product. Its value
 #: names what begins after the junction, reading along the top strand: the part, or the record
 #: a restriction piece was cut from or a Gateway segment moved from.

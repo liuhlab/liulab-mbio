@@ -9,8 +9,8 @@ from typer.testing import CliRunner
 from mbio.cli import app
 from mbio.io import read_record
 from mbio.sequence import Feature, Segment, SequenceRecord
-from mbio.verification.cli import CONSENSUS_CAVEAT, PAGE, read_result, report
-from mbio.verification.judge import verify
+from mbio.verification.cli import PAGE, read_result, report
+from mbio.verification.judge import CONSENSUS_CAVEAT, verify
 from mbio.verification.result import SequencingResult
 
 from ..html import parse

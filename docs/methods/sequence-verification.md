@@ -80,12 +80,13 @@ The page reads from the top:
 
 - The verdict: verified or not verified.
 - The table the command prints. Each junction and insert has a row, and so does each
-  difference outside them.
-- A map of the plasmid. Each read is an arrow over the bases it trusts, and every difference is
-  marked in the colour of its row's verdict.
-- A close-up of each difference, a few dozen bases either side. A read's own differences are
-  marked on its arrow, so where two reads disagree, one is marked and the other is not. Under a
-  Sanger read, the close-up draws its trace, with each peak under its base.
+  difference outside them and each result.
+- A map of the plasmid. Each result is an arrow over the bases it trusts, and every difference
+  is marked in the colour of its row's verdict.
+- A close-up of each difference, a few dozen bases either side, naming the results that show
+  it. A result's changed bases are marked on its arrow, so where two results disagree at a base,
+  one is marked and the other is not. Under a Sanger read, the close-up draws its trace, with
+  each peak under its base.
 
 A result that does not read as this plasmid gets its row, and nothing is drawn for it.
 [The example's page](../examples/pUC19-GFP/verification/verification.html) is the one this run

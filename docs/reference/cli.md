@@ -310,7 +310,7 @@ prints one line, that it does not read as this plasmid, and nothing else. The ve
 reads at each base is not read yet, so give the consensus file rather than the folder.
 
 With `--out`, it also writes a page to read the result by, and prints its path last. The page
-gives the verdict and the same table, then a map of the plasmid with each read and each
+gives the verdict and the same table, then a map of the plasmid with each result and each
 difference on it, and a close-up of every difference. Under a Sanger read's bases it draws the
 trace.
 

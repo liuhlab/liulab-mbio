@@ -140,7 +140,7 @@ judge, and read every difference and where each result landed.
 `read_trace` reads a Sanger `.ab1` file. A whole-plasmid consensus is a `SequencingResult` made
 from its bases. `regions` finds the junctions a cloning plan marked in its product, and the
 inserts between them. `verify` gives each of those a verdict, and the clone one too.
-`draw_page` lays that out as one page to write, and `read_signal` reads a trace's four channels
+`draw_page` lays that out as one page to write, and `read_channels` reads a trace's four channels
 so the page can draw each one under its bases.
 
 ::: mbio.verification.read_trace
@@ -159,7 +159,7 @@ so the page can draw each one under its bases.
 
 ::: mbio.verification.Page
 
-::: mbio.verification.read_signal
+::: mbio.verification.read_channels
 
 ## Design barcodes
 

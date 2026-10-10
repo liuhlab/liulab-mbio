@@ -441,7 +441,7 @@ class _Found:
     mismatches: dict[int, list[int]] = field(default_factory=dict)
     cuts: list[tuple[Item, int, bool]] = field(default_factory=list)
     insertions: list[tuple[Item, int]] = field(default_factory=list)
-    tracks: dict[int, list[list[tuple[int, float]]]] = field(default_factory=dict)
+    sampled: dict[int, list[list[tuple[int, float]]]] = field(default_factory=dict)
 
 
 def layout(
@@ -513,7 +513,7 @@ def layout(
     for index, track in enumerate(tracks):
         for run in _sampled(track, start, end, length):
             for row, cut in _by_row_sampled(run, start, bases_per_row).items():
-                found[row].tracks.setdefault(index, []).append(cut)
+                found[row].sampled.setdefault(index, []).append(cut)
     widest = max(SANS.width(_last(last, length), SMALL_SIZE) for _, last in bounds)
     right = bases_per_row * CELL + _NUMBER_GAP + widest
     rows: list[Row] = []
@@ -530,7 +530,7 @@ def layout(
             right=right,
             width=bases_per_row * CELL,
             both_strands=both_strands,
-            signals=tracks,
+            value_tracks=tracks,
         )
         rows.append(row)
         top = row.extent.y + row.extent.height + _ROW_GAP
@@ -688,7 +688,7 @@ def _row(
     right: float,
     width: float,
     both_strands: bool,
-    signals: Sequence[Track],
+    value_tracks: Sequence[Track],
 ) -> tuple[Row, dict[int, int]]:
     """Lay out the row holding bases `first` to `last`, its top at `top`.
 
@@ -848,7 +848,7 @@ def _row(
         for (item, _), one in zip(anchored, stairs, strict=True)
     )
 
-    strips, painted = _strips(signals, found.tracks, first, at(last), down.bottom + shift)
+    strips, painted = _strips(value_tracks, found.sampled, first, at(last), down.bottom + shift)
     drawn, boxes = _bases_drawn(record, first, last, down, shift, right, both_strands)
     boxes += [
         *(strip.box for strip in strips),

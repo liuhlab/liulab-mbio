@@ -20,7 +20,7 @@ one out, and nothing checks one you invented (`docs/adr/0002-editable-protocols.
 ## Run it
 
 ```bash
-pixi run mbio sequence-verify PRODUCT RESULT... [--feature NAME]
+pixi run mbio sequence-verify PRODUCT RESULT... [--feature NAME] [--out DIR]
 ```
 
 `PRODUCT` is the record the clone should be, such as the `product.dna` a cloning plan wrote.
@@ -34,7 +34,10 @@ A record no plan wrote carries no tag, so name its regions with `--feature`, onc
 feature. With neither, every disagreement is listed and nothing is judged.
 
 It prints one line per region, each disagreement outside them, each result's own check, and
-whether the clone is verified, and exits 1 when it is not. Its positions count from 1.
+whether the clone is verified, and exits 1 when it is not. Its positions count from 1. `--out`
+also writes the clone's page, `verification.html`, and prints its path last: the map and a
+close-up of each disagreement, a trace under each Sanger read. Hand that page over rather than
+describing a trace yourself.
 
 ## From Python
 

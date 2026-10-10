@@ -1,9 +1,9 @@
-"""Read a Sanger trace, an ``.ab1`` file, into a sequencing result, and into the signal behind it.
+"""Read a Sanger trace, an ``.ab1`` file, into a sequencing result, and into its four channels.
 
 Only what the basecaller wrote is read, never a person's edits: ``PBAS2`` the bases, ``PCON2``
 their Phred qualities, ``PLOC2`` the scan at each base's peak, and the analysed channels
 ``DATA9`` to ``DATA12``, which hold the four bases in ``FWO_1``'s order. `read_trace` reads what
-a verification judges, and `read_signal` what a page draws under the bases, so a sequencing
+a verification judges, and `read_channels` what a page draws under the bases, so a sequencing
 result carries nothing only a trace has.
 """
 
@@ -69,22 +69,22 @@ def read_trace(path: str | os.PathLike[str]) -> SequencingResult:
 
 
 @dataclass(frozen=True, slots=True)
-class Signal:
+class Channels:
     """What a trace's bases were called from, for a page to draw under them.
 
     Parameters
     ----------
-    channels
-        Each base's analysed signal, one value a scan, by the base: A, C, G and T.
+    scans
+        Each base's analysed channel, one value a scan, by the base: A, C, G and T.
     peaks
         The scan at each base's peak, one for each base `read_trace` reads from the same file.
     """
 
-    channels: Mapping[str, tuple[int, ...]]
+    scans: Mapping[str, tuple[int, ...]]
     peaks: tuple[int, ...]
 
 
-def read_signal(path: str | os.PathLike[str]) -> Signal:
+def read_channels(path: str | os.PathLike[str]) -> Channels:
     """Read an ``.ab1`` trace's four channels and the scan at each base's peak.
 
     A page takes it keyed by the name of the result `read_trace` reads from the same file.
@@ -95,11 +95,11 @@ def read_signal(path: str | os.PathLike[str]) -> Signal:
         As `read_trace` raises.
     """
     raw = _tags(path)
-    channels = {
+    scans = {
         base: tuple(raw[tag])
         for base, tag in zip(raw["FWO_1"].decode("ascii"), _CHANNELS, strict=True)
     }
-    return Signal(channels, tuple(raw["PLOC2"]))
+    return Channels(scans, tuple(raw["PLOC2"]))
 
 
 def _tags(path: str | os.PathLike[str]) -> Mapping[str, Any]:

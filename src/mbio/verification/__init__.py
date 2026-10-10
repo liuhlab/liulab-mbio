@@ -6,8 +6,8 @@ Every public name in its modules imports from here as well:
   them by. Each reader converts its file into one at its own boundary.
 - `align`: laying one result on a record, on either strand and across a circular record's
   origin.
-- `trace`: `read_trace`, a Sanger trace read into a sequencing result; `read_signal`, its
-  channels and the scan at each base's peak, for a page to draw.
+- `trace`: `read_trace`, a Sanger trace read into a sequencing result; `read_channels`, its
+  four channels and the scan at each base's peak, for a page to draw.
 - `judge`: `verify`, which gives each region the record must read true a verdict, and lists
   every disagreement and where each result landed; `regions`, which reads those regions off
   the junctions a plan tagged with `JUNCTION_TAG`.
@@ -16,6 +16,7 @@ Every public name in its modules imports from here as well:
 
 from mbio.verification.align import Aligned, Column, place
 from mbio.verification.judge import (
+    CONSENSUS_CAVEAT,
     DEPTH_FLOOR,
     DEPTH_WANTED,
     JUNCTION_TAG,
@@ -30,9 +31,10 @@ from mbio.verification.judge import (
 )
 from mbio.verification.page import FLANK, CloseUp, Page, TableRow, draw_page
 from mbio.verification.result import SequencingResult
-from mbio.verification.trace import MIXED_SHARE, Signal, read_signal, read_trace
+from mbio.verification.trace import MIXED_SHARE, Channels, read_channels, read_trace
 
 __all__ = [
+    "CONSENSUS_CAVEAT",
     "DEPTH_FLOOR",
     "DEPTH_WANTED",
     "FLANK",
@@ -41,6 +43,7 @@ __all__ = [
     "MIXED_SHARE",
     "QUALITY_FLOOR",
     "Aligned",
+    "Channels",
     "CloseUp",
     "Column",
     "Disagreement",
@@ -48,12 +51,11 @@ __all__ = [
     "Page",
     "Placement",
     "SequencingResult",
-    "Signal",
     "TableRow",
     "Verification",
     "draw_page",
     "place",
-    "read_signal",
+    "read_channels",
     "read_trace",
     "regions",
     "verify",

@@ -5,12 +5,12 @@ every drawing is the SVG `mbio.plot` lays out, with the fonts it was measured in
 reads top to bottom:
 
 1. whether the clone is verified;
-2. a table: a row per region, one per disagreement outside every region naming the features it
-   falls in, with no verdict, and one per result that judged nothing or failed;
-3. the map: a copy of the record with each read an arrow over the bases it trusts, on its own
+2. the table the command prints: a row per region, one per disagreement outside every region
+   naming the features it falls in, with no verdict, and one per result;
+3. the map: a copy of the record with each result a primer over the bases it trusts, on its own
    strand, and each disagreement a feature coloured by its region's verdict, every one lit;
-4. a close-up of each disagreement: a sequence view a few dozen bases either side, each read's
-   mismatches marked on its arrow, and each Sanger result's trace under the bases.
+4. a close-up of each disagreement: a sequence view a few dozen bases either side, each result's
+   own disagreements marked on its arrow, and each Sanger result's trace under the bases.
 
 A result that does not read as the record has its row and nothing drawn. When no result reads
 as it, the page holds only those rows and the verdict.
@@ -42,9 +42,9 @@ from mbio.sequence import (
     span_text,
 )
 from mbio.verification.align import place
-from mbio.verification.judge import Disagreement, Placement, Verification
+from mbio.verification.judge import CONSENSUS_CAVEAT, Disagreement, Placement, Verification
 from mbio.verification.result import SequencingResult
-from mbio.verification.trace import Signal
+from mbio.verification.trace import Channels
 
 #: How many bases a close-up draws either side of its disagreement.
 FLANK = 30
@@ -146,7 +146,12 @@ class Page:
                 f'<section class="map"><h2>Map</h2><figure>{self.map.element()}</figure></section>'
             )
         if self.close_ups:
-            traced = any(one.drawing.tracks for one in self.close_ups)
+            traced = any(
+                row.strips
+                for one in self.close_ups
+                if one.drawing.sequence_view is not None
+                for row in one.drawing.sequence_view.rows
+            )
             legend = (
                 '<p class="legend">Each trace: '
                 + ", ".join(
@@ -188,7 +193,7 @@ def draw_page(
     results: Sequence[SequencingResult],
     verification: Verification,
     *,
-    signals: Mapping[str, Signal] | None = None,
+    channels: Mapping[str, Channels] | None = None,
 ) -> Page:
     """Lay out the page for one clone's `verification` of `results` against `expected`.
 
@@ -200,7 +205,7 @@ def draw_page(
         The results `verify` was given.
     verification
         What `verify` made of them.
-    signals
+    channels
         Each Sanger result's channels and peaks, by the result's name, drawn under its bases in
         every close-up it reaches.
     """
@@ -208,9 +213,10 @@ def draw_page(
     # Withheld from a result that does not read as the record, and from one that trusts nothing.
     placed = [one for one in verification.placements if one.strand is not None]
     results_rows = tuple(
-        TableRow(check.name, check.status, check.detail)
-        for check in verification.result_checks
-        if check.status != "pass"
+        TableRow(check.name, check.status, _said(check.detail, result, placement))
+        for check, result, placement in zip(
+            verification.result_checks, results, verification.placements, strict=True
+        )
     )
     title = f"{expected.name or 'record'}: {counted(len(results), 'result')}"
     if not placed:
@@ -237,11 +243,15 @@ def draw_page(
         for name, one in named
         if one.kind == "insertion"
     )
-    reads = tuple(_read(expected, one, verification.disagreements) for one in placed)
-    copy = dataclasses.replace(expected, features=(*expected.features, *features), primers=reads)
+    primers = tuple(_primer(expected, one, verification.disagreements) for one in placed)
+    copy = dataclasses.replace(
+        expected,
+        features=(*expected.features, *features),
+        primers=(*expected.primers, *primers),
+    )
     lit = [name for name, _ in named]
     drawn = draw_map(copy, cut_sites=False, insertions=insertions, highlight=lit)
-    tracks = _tracks(expected, results, verification, signals or {})
+    tracks = _tracks(expected, results, verification, channels or {})
     close_ups = []
     for name, one in named:
         start, end = _window(one, expected)
@@ -253,10 +263,17 @@ def draw_page(
             cut_sites=False,
             insertions=insertions,
             tracks=tracks,
-            highlight=[name, *(read.name for read in reads)],
+            highlight=[name, *(primer.name for primer in primers)],
         )
         close_ups.append(CloseUp(one, name, _caption(one, statuses), close))
     return Page(title, verification.verified, rows, drawn, tuple(close_ups))
+
+
+def _said(detail: str, result: SequencingResult, placement: Placement) -> str:
+    """Return a result's row as the command says it: a placed consensus says what it cannot show."""
+    if placement.strand is not None and result.quality is None and result.depth is None:
+        return f"{detail}; {CONSENSUS_CAVEAT}"
+    return detail
 
 
 def _verdict(one: Disagreement, statuses: Mapping[str, Status | None]) -> Status | None:
@@ -272,7 +289,8 @@ def _name(one: Disagreement, record: SequenceRecord) -> str:
     n = len(record)
     if one.kind == "insertion":
         added = one.bases if len(one.bases) <= _SPELLED else counted(len(one.bases), "base")
-        return f"{position_text(one.start - 1, n)}^{position_text(one.start, n)} ins {added}"
+        point = layers.point_text(one.start, n, circular=record.topology == "circular")
+        return f"{point} ins {added}"
     if one.kind == "deletion":
         if one.end - one.start == 1:
             return f"{position_text(one.start, n)} del"
@@ -314,13 +332,13 @@ def _window(one: Disagreement, record: SequenceRecord) -> tuple[int, int]:
     return start, end
 
 
-def _read(
+def _primer(
     record: SequenceRecord, placement: Placement, disagreements: Sequence[Disagreement]
 ) -> Primer:
     """Return a placed result as a primer over its trusted span, its bases those it reads.
 
     Each disagreement it shows is written into the record's bases there, a deleted base as
-    ``N``, so the sequence view marks it on this read's arrow and on no other.
+    ``N``, so the sequence view marks it on this result's arrow and on no other.
     """
     span, strand = placement.span, placement.strand
     assert span is not None
@@ -346,7 +364,7 @@ def _tracks(
     record: SequenceRecord,
     results: Sequence[SequencingResult],
     verification: Verification,
-    signals: Mapping[str, Signal],
+    channels: Mapping[str, Channels],
 ) -> tuple[view.Track, ...]:
     """Return a track of each placed Sanger result's trace, each peak over the base it reads.
 
@@ -356,21 +374,21 @@ def _tracks(
     tracks = []
     n = len(record)
     for result, placement in zip(results, verification.placements, strict=True):
-        signal = signals.get(result.name)
-        if signal is None or placement.strand is None:
+        trace = channels.get(result.name)
+        if trace is None or placement.strand is None:
             continue
         laid = place(record, result)
         if laid is None:
             continue
         peaks = sorted(
-            (signal.peaks[column.behind[0]], column.start % n)
+            (trace.peaks[column.behind[0]], column.start % n)
             for column in laid.placed
             if column.end - column.start == 1 and len(column.behind) == 1
         )
         reverse = laid.strand is Strand.REVERSE
         curves = tuple(
             view.Curve(
-                tuple(signal.channels[reverse_complement(base) if reverse else base]),
+                tuple(trace.scans[reverse_complement(base) if reverse else base]),
                 color,
             )
             for base, color in _BASE_COLORS.items()

@@ -13,9 +13,9 @@ from mbio.plot import sequence_view
 from mbio.sequence import Feature, Segment, SequenceRecord, reverse_complement
 from mbio.verification import page
 from mbio.verification.cli import read_result
-from mbio.verification.judge import Verification, regions, verify
+from mbio.verification.judge import CONSENSUS_CAVEAT, Verification, regions, verify
 from mbio.verification.result import SequencingResult
-from mbio.verification.trace import Signal, read_signal, read_trace
+from mbio.verification.trace import Channels, read_channels, read_trace
 
 from ..html import parse
 
@@ -40,10 +40,10 @@ def offline(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(scope="module")
-def trace(data_dir: Path) -> tuple[SequencingResult, Signal]:
-    """A 3730xl read and the signal its bases were called from."""
+def trace(data_dir: Path) -> tuple[SequencingResult, Channels]:
+    """A 3730xl read and the channels its bases were called from."""
     path = data_dir / "3730.ab1"
-    return read_trace(path), read_signal(path)
+    return read_trace(path), read_channels(path)
 
 
 @pytest.fixture(scope="module")
@@ -67,10 +67,12 @@ def test_the_page_holds_the_verdict_a_row_per_region_and_a_close_up_per_disagree
     assert [row.where for row in laid.rows] == [
         *(one.name for one in judged),
         "AmpR, outside every region",
+        "consensus.fasta",
     ]
     verdicts = {row.where: row.verdict for row in laid.rows}
     assert verdicts[failing] == "fail"
     assert verdicts["AmpR, outside every region"] is None
+    assert laid.rows[-1].detail.endswith(CONSENSUS_CAVEAT)
     assert [one.disagreement for one in laid.close_ups] == [inside, outside]
     # On the map, each disagreement is lit, coloured by its region's verdict, or grey outside.
     assert laid.map is not None
@@ -94,21 +96,21 @@ def _own_bases(result: SequencingResult) -> list[str]:
 
 
 def _laid(
-    record: SequenceRecord, result: SequencingResult, signal: Signal | None = None
+    record: SequenceRecord, result: SequencingResult, channels: Channels | None = None
 ) -> page.Page:
     whole = Feature("read", "misc_feature", (Segment(0, len(record)),))
     verification = verify(record, (result,), (whole,))
-    signals = {result.name: signal} if signal else None
-    return page.draw_page(record, (result,), verification, signals=signals)
+    given = {result.name: channels} if channels else None
+    return page.draw_page(record, (result,), verification, channels=given)
 
 
 def test_a_sanger_close_up_has_its_trace_under_it_each_peak_over_its_base(
-    trace: tuple[SequencingResult, Signal],
+    trace: tuple[SequencingResult, Channels],
 ) -> None:
-    result, signal = trace
+    result, channels = trace
     bases = _own_bases(result)
     bases[PLANTED] = _OTHER[bases[PLANTED]]
-    laid = _laid(SequenceRecord("".join(bases), name="own bases"), result, signal)
+    laid = _laid(SequenceRecord("".join(bases), name="own bases"), result, channels)
 
     assert not laid.verified
     [close] = laid.close_ups
@@ -128,7 +130,7 @@ def test_a_sanger_close_up_has_its_trace_under_it_each_peak_over_its_base(
     # The record is the read's own trusted bases, so the read's base `at` is the record's.
     offset = result.trusted_span[0]
     for at in range(row.start, row.end):
-        x = drawn[signal.peaks[offset + at]].x
+        x = drawn[channels.peaks[offset + at]].x
         assert x == pytest.approx((at - row.start + 0.5) * sequence_view.CELL)
     # The read's arrow is marked at the planted base, and the page writes the strip.
     [mark] = row.mismatches
@@ -138,15 +140,15 @@ def test_a_sanger_close_up_has_its_trace_under_it_each_peak_over_its_base(
 
 @pytest.mark.parametrize("reverse", [False, True])
 def test_each_peak_s_tallest_curve_is_the_one_for_the_top_strand_base_over_it(
-    trace: tuple[SequencingResult, Signal], reverse: bool
+    trace: tuple[SequencingResult, Channels], reverse: bool
 ) -> None:
     """A read along the bottom strand draws each channel as the base it pairs with on the top."""
-    result, signal = trace
+    result, channels = trace
     bases = _own_bases(result)
     bases[PLANTED] = _OTHER[bases[PLANTED]]
     own = "".join(bases)
     record = SequenceRecord(reverse_complement(own) if reverse else own, name="own bases")
-    [close] = _laid(record, result, signal).close_ups
+    [close] = _laid(record, result, channels).close_ups
     view = close.drawing.sequence_view
     assert view is not None
     [row] = view.rows
@@ -159,7 +161,7 @@ def test_each_peak_s_tallest_curve_is_the_one_for_the_top_strand_base_over_it(
 
 
 def test_an_insertion_draws_on_the_map_and_in_its_close_up(
-    trace: tuple[SequencingResult, Signal],
+    trace: tuple[SequencingResult, Channels],
 ) -> None:
     result, _ = trace
     bases = _own_bases(result)
@@ -180,7 +182,7 @@ def test_an_insertion_draws_on_the_map_and_in_its_close_up(
 
 
 def test_a_page_where_every_result_is_gated_holds_only_the_gate_rows_and_not_verified(
-    trace: tuple[SequencingResult, Signal],
+    trace: tuple[SequencingResult, Channels],
 ) -> None:
     result, _ = trace
     rng = random.Random(1)
@@ -198,12 +200,12 @@ def test_a_page_where_every_result_is_gated_holds_only_the_gate_rows_and_not_ver
 
 
 def test_the_page_is_one_file_that_loads_nothing(
-    trace: tuple[SequencingResult, Signal], tmp_path: Path
+    trace: tuple[SequencingResult, Channels], tmp_path: Path
 ) -> None:
-    result, signal = trace
+    result, channels = trace
     bases = _own_bases(result)
     bases[PLANTED] = _OTHER[bases[PLANTED]]
-    laid = _laid(SequenceRecord("".join(bases), name="own bases"), result, signal)
+    laid = _laid(SequenceRecord("".join(bases), name="own bases"), result, channels)
 
     written = laid.write(tmp_path / "made" / "verification.html")
     html = written.read_text(encoding="utf-8")

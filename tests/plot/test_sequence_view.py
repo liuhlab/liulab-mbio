@@ -74,7 +74,7 @@ def _items(
 
 
 def _track(name: str, bases: Iterable[int], *, every: int = 10) -> sequence_view.Track:
-    """A trace whose peaks lie `every` samples apart over `bases`, one channel rising at each."""
+    """A track whose peaks lie `every` samples apart over `bases`, one curve rising at each."""
     peaks = tuple((every * (index + 1), base) for index, base in enumerate(bases))
     count = every * (len(peaks) + 2)
     curves = tuple(

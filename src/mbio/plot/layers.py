@@ -468,8 +468,8 @@ def hiding(item: Item) -> tuple[int, int, int, int]:
 
     An item a highlight leaves unlit hides before every item it lights. Then cut sites hide first,
     those whose enzymes cut most often before the rest, then primers, then features, then
-    insertions, and within each the longest label first. A cut site naming several enzymes hides as late as the one among
-    them that cuts least often.
+    insertions, and within each the longest label first. A cut site naming several enzymes hides as
+    late as the one among them that cuts least often.
 
     Examples
     --------
@@ -531,6 +531,22 @@ def default_color(feature: Feature) -> str:
         if feature.type in types:
             return color.lower()
     return OTHER.lower()
+
+
+def point_text(at: int, length: int, *, circular: bool) -> str:
+    """Return the point between two bases as a person reads it: GenBank's ``before^after``.
+
+    `at` is a 0-based boundary. Across the origin of a circular record, the last base is before
+    the first; a linear record's ends read as ``0^1`` and ``length^length+1``.
+
+    Examples
+    --------
+    >>> point_text(0, 100, circular=True), point_text(0, 100, circular=False)
+    ('100^1', '0^1')
+    """
+    if circular:
+        return f"{(at - 1) % length + 1}^{at % length + 1}"
+    return f"{at}^{at + 1}"
 
 
 def hull(spans: Sequence[Span | Segment], length: int) -> tuple[int, int]:
@@ -723,10 +739,7 @@ def _primer(primer: Primer, site: BindingSite, record: SequenceRecord) -> Item:
 
 
 def _insertion(insertion: Insertion, record: SequenceRecord) -> Item:
-    """Return an insertion's mark: an empty span at its point, labelled with what it adds.
-
-    Its point reads as GenBank writes a site between two bases, the one before ``^`` the one after.
-    """
+    """Return an insertion's mark: an empty span at its point, labelled with what it adds."""
     length = len(record)
     at, added = insertion.at, insertion.length
     if added < 1 or not 0 <= at <= length:
@@ -734,11 +747,9 @@ def _insertion(insertion: Insertion, record: SequenceRecord) -> Item:
             f"insertion {insertion.name!r} of {added} bases at {at} does not lie on "
             f"{record.name!r} of {length} bases: it adds at least one base, at 0 to {length}"
         )
-    if record.topology == "circular":
-        at %= length
-        point = f"{(at - 1) % length + 1}^{at + 1}"
-    else:
-        point = f"{at}^{at + 1}"
+    circular = record.topology == "circular"
+    at = at % length if circular else at
+    point = point_text(at, length, circular=circular)
     hover = {"name": insertion.name, "type": "insertion", "span": point, "length": f"{added} bp"}
     return Item(
         "insertion",
