@@ -20,7 +20,7 @@ a method's name, which inverts the package boundary. The grouping belongs in thi
 note can sit under two headings at once. Within the directory, a note in a family takes the
 family's name as a prefix, so `ls` clusters it at no cost.
 
-Thirty-nine notes, under ten headings. Four of them earn a second heading, listed at the end.
+Forty notes, under ten headings. Four of them earn a second heading, listed at the end.
 
 ## Shipped data and where it came from
 
@@ -86,6 +86,7 @@ Thirty-nine notes, under ten headings. Four of them earn a second heading, liste
 | Note | What it settled |
 | --- | --- |
 | [`sequencing-read-packages.md`](sequencing-read-packages.md) | which packages could align a read to its product and judge it, measured against Biopython; none gives a verdict, so add no dependency |
+| [`sequencing-read-evidence.md`](sequencing-read-evidence.md) | what a Sanger trace, a whole-plasmid result and a DMX well hold, what makes a base trustworthy, what owners call a confirmed clone, and which public files can test a reader |
 
 ## Drawing a record
 
