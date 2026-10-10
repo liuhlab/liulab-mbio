@@ -12,8 +12,11 @@ from mbio.sequence import IUPAC_DNA
 
 def _bases(sequence: str, owner: str) -> str:
     upper = sequence.upper()
-    if bad := set(upper) - IUPAC_DNA:
-        raise ValueError(f"{owner} holds letters that are not IUPAC DNA: {''.join(sorted(bad))}")
+    for index, letter in enumerate(upper):
+        if letter not in IUPAC_DNA:
+            raise ValueError(
+                f"{owner} holds {letter!r} at base {index + 1}, which is not IUPAC DNA"
+            )
     return upper
 
 
@@ -43,8 +46,9 @@ class SequencingResult:
     Raises
     ------
     ValueError
-        If `bases` or one of `others` is not IUPAC DNA, `quality` or `depth` is not one value a
-        base, or `trusted` falls outside the bases.
+        If `bases` or one of `others` is not IUPAC DNA, naming the first letter that is not and
+        its 1-based position; if `quality` or `depth` is not one value a base; or if `trusted`
+        falls outside the bases.
 
     Examples
     --------

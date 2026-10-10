@@ -126,6 +126,17 @@ def test_a_well_passes_on_an_exact_match_and_fails_on_one_mismatch_or_a_mixture(
     assert [one.status for one in nothing.checks] == ["pass", None]
 
 
+def test_a_soft_masked_consensus_is_read_in_any_case():
+    assert judged((DESIGNED.lower(),)).status == "pass"
+    assert judged((DESIGNED[:13].lower() + DESIGNED[13:],)).status == "pass"
+
+
+def test_a_consensus_that_is_not_dna_is_refused_naming_the_well_letter_and_base():
+    """On a plate of 1536 wells, the message has to say which one."""
+    with pytest.raises(ValueError, match=r"'picked A2' holds 'X' at base 13"):
+        judged((DESIGNED[:12] + "X" + DESIGNED[13:],))
+
+
 def test_a_kit_the_user_holds_is_read_and_its_chain_checked(tmp_path):
     """The sequences are not package data, and a file that is not the kit is refused by name."""
     held = kit.read_kit(write_kit(tmp_path, kit_text()))
