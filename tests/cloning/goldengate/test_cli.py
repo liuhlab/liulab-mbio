@@ -63,8 +63,11 @@ def test_one_run_writes_the_outputs_the_options_asked_for(planned) -> None:
     out, output = planned
     summary, *paths = output.splitlines()
     names = ["product.dna", "primers.tsv", "protocol.json", "product-map.html", "protocol.html"]
-    assert paths == [str(out / name) for name in names]
-    assert all((out / name).exists() for name in names)
+    assert [path for path in paths if "-amplicon" not in path] == [str(out / n) for n in names]
+    # An amplicon for each of the four fragments, and the map its figure opens.
+    assert len([path for path in paths if path.endswith("-amplicon.dna")]) == 4
+    assert len([path for path in paths if path.endswith("-amplicon-map.html")]) == 4
+    assert all(Path(path).exists() for path in paths)
     # The span was read as coordinates, the enzyme was taken as given, and the product is the
     # one the plan tests read, under the name this run asked for.
     assert summary.startswith(f"{NAME}: 3645 bp, BbsI, 4 fragments")

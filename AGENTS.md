@@ -43,8 +43,8 @@ One direction, bottom to top — nothing lower imports anything higher.
 
 Each pipeline has one way in. `plan_assembly`, `plan_gibson` and `plan_restriction` each write
 four files and their maps: the product, the primer sheet, `protocol.json` and the
-`protocol.html` rendered from it; `plan_gateway` writes those four plus the entry clone where it
-planned a BP reaction.
+`protocol.html` rendered from it; `plan_assembly` adds each amplicon, and `plan_gateway` the
+entry clone where it planned a BP reaction.
 `synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and amino-acid change
 tables, a record per round, a block vector per position, the product, maps and a `protocol` folder:
 the run as a chain of protocols, one page each. `synbio.dmx.plan_dmx` turns its output directory

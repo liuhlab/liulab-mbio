@@ -45,6 +45,7 @@ from mbio.cloning.plan import (
     PRODUCT_FILE,
     Orientation,
     Site,
+    amplicon_files,
     annotated,
     as_project,
     as_record,
@@ -75,12 +76,14 @@ VECTOR_WINDOW = 6
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The files a plan writes: four, and a map of each record a figure draws.
+    """The files a plan writes: four, each amplicon, and a map of each record a figure draws.
 
     Parameters
     ----------
     product
         The annotated product, as a SnapGene ``.dna`` file.
+    amplicons
+        Each part's amplicon, tails and all, as a SnapGene ``.dna`` file its PCR step draws.
     primers
         Every designed oligo, as a tab-separated sheet to order from.
     protocol_data
@@ -93,6 +96,7 @@ class Files:
     """
 
     product: Path
+    amplicons: tuple[Path, ...]
     primers: Path
     protocol_data: Path
     protocol: Path
@@ -101,7 +105,14 @@ class Files:
     @property
     def paths(self) -> tuple[Path, ...]:
         """Every file, in the order they were written."""
-        return (self.product, self.primers, self.protocol_data, *self.maps, self.protocol)
+        return (
+            self.product,
+            *self.amplicons,
+            self.primers,
+            self.protocol_data,
+            *self.maps,
+            self.protocol,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -226,20 +237,23 @@ class Plan:
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the product, the primer sheet, the protocol, its page and maps into `directory`.
+        """Write the product, the amplicons, the primer sheet, the protocol, its page and maps.
 
-        The directory is made when it is not there. The files are named by `PRODUCT_FILE`
-        and `PRIMER_FILE`, and by `mbio.protocol.render` for the protocol pair, and a
-        second run over the same inputs writes the same bytes.
+        The directory is made when it is not there. The files are named by `PRODUCT_FILE`,
+        `amplicon_files` and `PRIMER_FILE`, and by `mbio.protocol.render` for the protocol
+        pair, and a second run over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
         product = out / PRODUCT_FILE
         write_dna(self.product, product)
+        amplicons = tuple(out / name for name in amplicon_files(one.name for one in self.parts))
+        for part, path in zip(self.parts, amplicons, strict=True):
+            write_dna(part.amplicon, path)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         written = write_run_files(as_project(self.protocol()), out)
-        return Files(product, sheet, written.data, written.page, written.maps)
+        return Files(product, amplicons, sheet, written.data, written.page, written.maps)
 
 
 def plan_assembly(

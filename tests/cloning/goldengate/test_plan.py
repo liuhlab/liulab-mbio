@@ -24,9 +24,10 @@ from mbio.bench import (
 )
 from mbio.bench.goldengate import GOLDEN_GATE_PCR_CYCLES
 from mbio.bench.oligos import primer_sheet
+from mbio.bench.steps import pcr_title
 from mbio.cloning.goldengate import plan_assembly
 from mbio.cloning.goldengate.oligos import DesignedOligo
-from mbio.cloning.plan import PRODUCT_FILE
+from mbio.cloning.plan import PRODUCT_FILE, amplicon_files
 from mbio.edits import rotate
 from mbio.protocol import OVERVIEW_CHARS, Citation, read_protocol, render_html
 from mbio.protocol.render import minted
@@ -134,17 +135,28 @@ def test_the_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, 
     outputs = plan.write(tmp_path / "run")
     assert [(path.parent, path.name) for path in outputs.paths] == [
         (tmp_path / "run", "product.dna"),
+        (tmp_path / "run", "puc19-backbone-amplicon.dna"),
+        (tmp_path / "run", "gfp-amplicon.dna"),
         (tmp_path / "run", "primers.tsv"),
         (tmp_path / "run", "protocol.json"),
+        (tmp_path / "run", "puc19-backbone-amplicon-map.html"),
+        (tmp_path / "run", "gfp-amplicon-map.html"),
         (tmp_path / "run", "product-map.html"),
         (tmp_path / "run", "protocol.html"),
     ]
     assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == plan.product
+    assert [read_dna(path).sequence for path in outputs.amplicons] == [
+        part.amplicon.sequence for part in plan.parts
+    ]
     assert read_protocol(outputs.protocol_data) == minted(plan.protocol())
     page = outputs.protocol.read_text(encoding="utf-8")
-    # The figure of the product opens to the map written beside it.
-    opened = {"product.dna": "product-map.html"}
+    # Each figure's record opens to the map written beside it.
+    opened = {
+        "product.dna": "product-map.html",
+        "puc19-backbone-amplicon.dna": "puc19-backbone-amplicon-map.html",
+        "gfp-amplicon.dna": "gfp-amplicon-map.html",
+    }
     data = read_protocol(outputs.protocol_data)
     assert page == render_html(data, base=tmp_path / "run", maps=opened)
 
@@ -527,11 +539,28 @@ def _sentences(protocol) -> str:
 
 def test_the_assembly_step_shows_the_product_with_every_junction_lit(plan):
     """One figure, on the step that joins the fragments, drawing the file written beside it."""
-    [step] = [one for one in plan.protocol().steps if one.figures]
+    [step] = [one for one in plan.protocol().steps if one.key == "run-assembly"]
     [figure] = step.figures
 
-    assert step.key == "run-assembly"
     assert figure.records == (PRODUCT_FILE,)
     assert figure.enzymes == (plan.assembly.enzyme.name,)
     assert set(figure.highlight) == {one.feature_name for one in plan.assembly.junctions}
     assert set(figure.highlight) <= {one.name for one in plan.product.features}
+
+
+def test_each_pcr_step_shows_its_own_overhang_so_every_junction_is_drawn_once(four):
+    """A part's own overhang is at its forward primer's end; the next part draws the other."""
+    steps = {step.title: step for step in four.protocol().steps}
+    lit = []
+    for part, path in zip(four.parts, amplicon_files(p.name for p in four.parts), strict=True):
+        [figure] = steps[pcr_title(part.name)].figures
+        assert figure.records == (path,)
+        assert figure.sequence_view
+        assert figure.span[0] == 0
+        assert part.left_overhang in figure.caption
+        names = {one.name for one in (*part.amplicon.features, *part.amplicon.primers)}
+        assert set(figure.highlight) - {four.enzyme.name} <= names
+        lit += [name for name in figure.highlight if name.endswith("overhang")]
+    assert sorted(lit) == sorted(f"{one.overhang} overhang" for one in four.assembly.junctions)
+    # The figure says what the note said, so the note is gone.
+    assert "pointing back" not in _sentences(four.protocol())

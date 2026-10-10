@@ -13,7 +13,7 @@ from collections.abc import Iterable
 
 from mbio.plot.sequence_view import LIMIT
 from mbio.protocol.model import Citation, Figure, Source
-from mbio.sequence import SequenceRecord
+from mbio.sequence import SequenceRecord, Strand
 
 #: What a figure of this library cites, and the note it cites.
 SOURCE_KEY = "figure-sources"
@@ -28,6 +28,10 @@ LIGATION_CITATION = Citation(SOURCE_KEY, "section 2, Cargo GGA ligation")
 #: How many bases a ligation figure draws either side of the junction, by default. Enough to
 #: carry each cut's recognition site and the codons around it, and short enough to read.
 LIGATION_CONTEXT = 24
+
+#: How many bases a tail figure draws past the primer's 3' end, by default: enough to show the
+#: template running on past the primer.
+TAIL_CONTEXT = 6
 
 
 def ligation_figure(
@@ -105,6 +109,83 @@ def ligation_figure(
         enzymes=tuple(enzymes),
         highlight=tuple(highlight),
         citation=citation,
+    )
+
+
+def tail_figure(
+    record: SequenceRecord,
+    *,
+    path: str,
+    primer: str,
+    enzymes: Iterable[str],
+    caption: str,
+    highlight: Iterable[str] = (),
+    context: int = TAIL_CONTEXT,
+) -> Figure:
+    """Return the end of an amplicon one primer makes, at base level: its tail and each cut.
+
+    Where a primer's tail carries a recognition site, what `mbio.plot.sequence_view` draws over
+    that end is why the tail is there: the primer with its tail bent off the template, the site,
+    and both strands cut where the enzyme cuts them, so the overhang shows between the cuts. Any
+    method whose primers carry a site reads the same way, so the figure is the package's.
+
+    Parameters
+    ----------
+    record
+        The amplicon, carrying `primer` where it anneals.
+    path
+        What the protocol calls that record, relative to the directory the protocol is read from.
+    primer
+        The primer whose end is drawn: a forward primer's is the record's start, a reverse
+        primer's its end. It is lit.
+    enzymes
+        The enzymes whose cuts are drawn through both strands. They are lit.
+    caption
+        What the figure shows, in the words the step uses.
+    highlight
+        What else the figure points at, such as the overhang. Every other item dims.
+    context
+        How many bases are drawn past the primer's 3' end, as far as the record reaches.
+
+    Raises
+    ------
+    ValueError
+        If `context` is negative, or `record` carries no primer called `primer`.
+
+    Examples
+    --------
+    >>> from mbio.sequence import BindingSite, Primer
+    >>> made = Primer("f", "GGGACGT", binding_sites=(BindingSite(3, 7, Strand.FORWARD),))
+    >>> figure = tail_figure(
+    ...     SequenceRecord("GGGACGTACGTACGT", primers=(made,)),
+    ...     path="amplicon.dna",
+    ...     primer="f",
+    ...     enzymes=["BsaI"],
+    ...     caption="The forward end",
+    ...     context=2,
+    ... )
+    >>> figure.span, figure.highlight
+    ((0, 9), ('f', 'BsaI'))
+    """
+    if context < 0:
+        raise ValueError(f"a tail figure draws 0 or more bases of context, not {context}")
+    sites = [site for one in record.primers if one.name == primer for site in one.binding_sites]
+    if not sites:
+        raise ValueError(f"{record.name or 'the amplicon'} carries no primer called {primer!r}")
+    site = sites[0]
+    if site.strand is Strand.REVERSE:
+        span = (max(0, site.start - context), len(record))
+    else:
+        span = (0, min(len(record), site.end + context))
+    cutting = tuple(enzymes)
+    return Figure(
+        (path,),
+        caption,
+        span=span,
+        linear=True,
+        sequence_view=True,
+        enzymes=cutting,
+        highlight=tuple(dict.fromkeys((primer, *cutting, *highlight))),
     )
 
 

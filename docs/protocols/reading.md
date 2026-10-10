@@ -115,6 +115,8 @@ touched it. After you reload a page with a timer running, click anywhere on it o
 
 A step that makes a molecule shows it as a map, in a box of its own with its caption inside.
 Step 8 draws pUC19-GFP as the reaction closes it: the two junctions in colour, the rest grey.
+Steps 1 and 2 each draw one end of a PCR product base by base: the primer's tail, its BbsI site,
+and the two cuts with the overhang left between them.
 Press `Explore the map` and the whole plasmid opens in its place. Switch features, primers and
 cut sites on and off, zoom in, or show the bases. `Close the map` puts the small one back, and
 `Open it in a new tab` gives the map a window of its own. Paper prints the small map.

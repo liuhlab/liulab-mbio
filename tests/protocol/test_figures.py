@@ -6,8 +6,14 @@ import pytest
 
 from mbio.plot.sequence_view import LIMIT
 from mbio.protocol import Figure, Protocol, Step, render_html
-from mbio.protocol.figures import LIGATION_CITATION, SOURCE, SOURCE_KEY, ligation_figure
-from mbio.sequence import SequenceRecord
+from mbio.protocol.figures import (
+    LIGATION_CITATION,
+    SOURCE,
+    SOURCE_KEY,
+    ligation_figure,
+    tail_figure,
+)
+from mbio.sequence import BindingSite, Primer, SequenceRecord, Strand
 
 from ..html import parse
 
@@ -26,7 +32,7 @@ def _figure(**over: object) -> Figure:
 
 
 def test_a_ligation_figure_draws_the_junction_in_context_with_both_strands() -> None:
-    """The base-level panel: a span, the bases both ways, the cuts through them and the frame."""
+    """The base-level figure: a span, the bases both ways, the cuts through them and the frame."""
     figure = _figure(context=10)
 
     assert figure.records == ("product.dna",)
@@ -101,3 +107,22 @@ def test_the_figure_a_library_chose_renders_like_any_other(data_dir: Path) -> No
 
     [drawn] = page.find_all("figure", cls="map")
     assert drawn.find_all("svg")
+
+
+def test_a_tail_figure_draws_the_end_its_primer_makes_and_lights_the_cut() -> None:
+    """A reverse primer's end is the record's end, and the primer and the enzyme are lit."""
+    forward = Primer("f", "GGTCTCAACGT", binding_sites=(BindingSite(7, 11, Strand.FORWARD),))
+    reverse = Primer("r", "GGTCTCATTGC", binding_sites=(BindingSite(29, 33, Strand.REVERSE),))
+    amplicon = SequenceRecord("A" * 40, name="a", primers=(forward, reverse))
+
+    def drawn(primer: str) -> Figure:
+        return tail_figure(
+            amplicon, path="a.dna", primer=primer, enzymes=["BsaI"], caption="An end", context=3
+        )
+
+    assert drawn("f").span == (0, 14)
+    assert drawn("r").span == (26, 40)
+    assert drawn("r").highlight == ("r", "BsaI")
+    assert drawn("r").sequence_view
+    with pytest.raises(ValueError, match="no primer"):
+        drawn("gone")

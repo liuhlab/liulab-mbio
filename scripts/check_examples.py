@@ -82,7 +82,17 @@ GENERATORS: tuple[Generator, ...] = (
         commands=(
             f"mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out {OUT}",
         ),
-        writes=("primers.tsv", "product-map.html", "product.dna", "protocol.html", "protocol.json"),
+        writes=(
+            "gfp-amplicon-map.html",
+            "gfp-amplicon.dna",
+            "primers.tsv",
+            "product-map.html",
+            "product.dna",
+            "protocol.html",
+            "protocol.json",
+            "puc19-backbone-amplicon-map.html",
+            "puc19-backbone-amplicon.dna",
+        ),
     ),
     Generator(
         what="the iGGA destination",

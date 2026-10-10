@@ -62,7 +62,13 @@ from mbio.bench.steps import (
 )
 from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
-from mbio.cloning.goldengate.assembly import Assembly, Junction, Part
+from mbio.cloning.goldengate.assembly import (
+    Assembly,
+    Junction,
+    Part,
+    overhang_name,
+    site_name,
+)
 from mbio.cloning.goldengate.design import OverhangSet
 from mbio.cloning.goldengate.oligos import DesignedOligo
 from mbio.cloning.plan import (
@@ -70,11 +76,13 @@ from mbio.cloning.plan import (
     MAKE_SECTION,
     PRODUCT_FILE,
     SCREEN_SECTION,
+    amplicon_files,
 )
 from mbio.enzymes import Enzyme
 from mbio.overhangs import FidelityReport
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
+from mbio.protocol.figures import tail_figure
 from mbio.protocol.model import (
     Citation,
     Component,
@@ -353,7 +361,11 @@ def _steps(
     """Return the steps in the order they happen, the shared ones carrying Golden Gate's notes."""
     enzyme = assembly.enzyme
     cut = [part for part in parts if part.dpni]
-    made = [_pcr_step(part, enzyme, polymerase) for part in parts]
+    files = amplicon_files(part.name for part in parts)
+    made = [
+        figured(_pcr_step(part, polymerase), _tail_figure(part, enzyme, path))
+        for part, path in zip(parts, files, strict=True)
+    ]
     made.append(gel_step([(part.name, part.length) for part in parts]))
     if cut:
         made.append(
@@ -425,7 +437,7 @@ def _steps(
     )
 
 
-def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
+def _pcr_step(part: Part, polymerase: Polymerase) -> Step:
     """Amplify one part with the tails that carry the enzyme site."""
     return pcr_step(
         part.name,
@@ -439,9 +451,29 @@ def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
         notes=(
             "The cycle count is the fewest enough for an amplicon going into an assembly; "
             "fewer cycles means fewer PCR errors.",
-            f"The primers carry a {enzyme.name} site pointing back into the part, so "
-            f"cutting the amplicon leaves {part.left_overhang} and {part.right_overhang}.",
         ),
+    )
+
+
+def _tail_figure(part: Part, enzyme: Enzyme, path: str) -> Figure:
+    """Return the end of the part's amplicon its forward primer makes, and what the cut leaves.
+
+    That end's overhang is the part's own, the other belonging to the next part round the
+    circle, so across the parts' steps every junction is drawn once.
+    """
+    left, right = part.left_overhang, part.right_overhang
+    return tail_figure(
+        part.amplicon,
+        path=path,
+        primer=part.forward.name,
+        enzymes=(enzyme.name,),
+        caption=(
+            f"The end of the {part.name} amplicon that {part.forward.name} makes. Its tail "
+            f"carries a {enzyme.name} site pointing into the part, and {enzyme.name} cuts the "
+            f"two strands {len(left)} bases apart, leaving {left} single-stranded. The other "
+            f"end leaves {right} the same way."
+        ),
+        highlight=(site_name(enzyme), overhang_name(left)),
     )
 
 
