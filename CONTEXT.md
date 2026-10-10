@@ -721,6 +721,28 @@ its own junction a band, and it is what separates a reversed insert from a corre
 two flanking vector primers cannot do.
 _Avoid_: internal primer, screening primer
 
+### Sequencing result
+
+What one sample's sequencing comes back as, read into the bases called for it: a Sanger read, a
+whole-plasmid consensus, or the consensus an in-house route calls for one well. Beyond the bases
+it carries whatever the route gave to trust them by: a quality or a read depth at each base, how
+many reads stood behind it, the stretch worth trusting, and any second consensus the same sample
+gave, which makes it mixed. One sample may give several, such as a Sanger read from each side of
+the insert.
+_Avoid_: read (one kind of it), trace (a Sanger file), call
+
+### Verification
+
+Holding one clone's **sequencing results** against the record it should be, and giving each
+junction and each insert a verdict: a pass where every base was read and none disagrees, a
+failure where a base a result trusts disagrees or the sample is mixed, a warning where two
+results disagree with each other, and no verdict where part of it went unread. A clone is
+verified only when every junction and insert passes; nothing failing is not enough. Every
+disagreement is placed on the record. One outside every junction and insert is named with the
+feature it falls in and carries no verdict, because whether it matters is a judgement about
+what that feature does. A **DMX** well's call is a verification of its designed region.
+_Avoid_: validation, confirmation, QC
+
 ### DAD-GGA-DMX
 
 The experiment that makes cargo and reads it back, one design at a time. A gene is split into
