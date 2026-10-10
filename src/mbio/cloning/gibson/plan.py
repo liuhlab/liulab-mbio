@@ -16,11 +16,12 @@ supplier's number behind them is `mbio.cloning.gibson.bench`, through
 import dataclasses
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
 from mbio.bench.amounts import Amount
+from mbio.bench.materials import kit
 from mbio.bench.oligos import OrderedOligo, primer_sheet
 from mbio.bench.phenotype import Phenotype, read_phenotype
 from mbio.bench.validation import (
@@ -81,7 +82,7 @@ from mbio.edits import flipped
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
-from mbio.protocol.model import Protocol
+from mbio.protocol.model import Material, Protocol
 from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord
 from mbio.snapgene import write_dna
@@ -155,6 +156,8 @@ class Plan:
         oligo. Nothing measures one, so its row carries no verdict.
     host, polymerase
         The choices the protocol names.
+    cleanup_kit
+        The spin-column kit the protocol names, as `mbio.bench.materials.kit` resolves it.
     thresholds
         What those oligos were designed and judged by, for each role, so a page prints the band
         beside the value.
@@ -175,6 +178,7 @@ class Plan:
     ordered_oligos: tuple[OrderedOligo, ...]
     host: str
     polymerase: Polymerase
+    cleanup_kit: Material = field(default_factory=kit)
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
@@ -252,6 +256,7 @@ class Plan:
             checks=self.checks,
             host=self.host,
             polymerase=self.polymerase,
+            cleanup_kit=self.cleanup_kit,
             thresholds=self.thresholds,
         )
         return ordered_from_sheet(made)
@@ -283,6 +288,7 @@ def plan_gibson(
     product: AssemblyProduct = NEBUILDER_HIFI,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
+    cleanup_kit: str = "",
     name: str = "",
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Plan:
@@ -329,6 +335,9 @@ def plan_gibson(
         For the PCRs.
     host, name
         The strain the protocol names, and what to call the plasmid.
+    cleanup_kit
+        The spin-column kit the protocol names, by catalogue number or by name, as
+        `mbio.bench.materials.kit` reads it. Empty takes that function's default.
     thresholds
         For each role, what its oligos are designed and judged by in `mbio.primers`.
 
@@ -453,6 +462,7 @@ def plan_gibson(
         _ordered_oligos(parts, bridges),
         host,
         polymerase,
+        kit(cleanup_kit),
         thresholds,
     )
 

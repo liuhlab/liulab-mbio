@@ -58,6 +58,7 @@ the user that before they order, not after they sequence.
 | `--enzyme` | An enzyme both digests use; give it once or twice. Chosen for you when you name none |
 | `--polymerase` | For the insert's PCR, where one runs |
 | `--host` | The strain the protocol names |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
 | `--name` | What to call the product |
 
 ## What carries no verdict

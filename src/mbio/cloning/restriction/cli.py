@@ -45,6 +45,13 @@ def plan(
         str, typer.Option(help="Polymerase for the insert's PCR, where one is run.")
     ] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
+    cleanup_kit: Annotated[
+        str,
+        typer.Option(
+            "--cleanup-kit",
+            help="Spin-column kit the protocol names, by catalogue number or by name.",
+        ),
+    ] = "",
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
     """Ligate an insert into a vector between two sites, and write the plan into OUT."""
@@ -55,6 +62,7 @@ def plan(
             enzymes=tuple(enzyme or ()),
             polymerase=get_polymerase(polymerase),
             host=host,
+            cleanup_kit=cleanup_kit,
             name=name,
         ),
         out,

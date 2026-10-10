@@ -43,6 +43,7 @@ Every option has a default; a vector and one insert are enough on their own.
 | `--product` | The kit on your bench. The start of a name is enough: `nebuilder`, `gibson`, `in-fusion` |
 | `--polymerase` | For the PCRs |
 | `--host` | The strain the protocol names |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
 | `--name` | What to call the product |
 
 ## The kit decides the numbers

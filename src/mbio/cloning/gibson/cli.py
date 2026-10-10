@@ -56,6 +56,13 @@ def plan(
     ] = NEBUILDER_HIFI.name,
     polymerase: Annotated[str, typer.Option(help="Polymerase for the PCRs.")] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
+    cleanup_kit: Annotated[
+        str,
+        typer.Option(
+            "--cleanup-kit",
+            help="Spin-column kit the protocol names, by catalogue number or by name.",
+        ),
+    ] = "",
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
     """Plan an assembly and write the product, the oligo sheet and the protocol into OUT."""
@@ -70,6 +77,7 @@ def plan(
             product=assembly_product(product),
             polymerase=get_polymerase(polymerase),
             host=host,
+            cleanup_kit=cleanup_kit,
             name=name,
         ),
         out,

@@ -15,11 +15,12 @@ own features.
 
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from mbio.bench.amounts import Amount
 from mbio.bench.goldengate import assembly_amounts
+from mbio.bench.materials import kit
 from mbio.bench.oligos import primer_sheet
 from mbio.bench.phenotype import Phenotype, read_phenotype
 from mbio.bench.validation import (
@@ -61,7 +62,7 @@ from mbio.overhangs import Junction
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
-from mbio.protocol.model import Protocol
+from mbio.protocol.model import Material, Protocol
 from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord
 from mbio.sites import EnzymeLike
@@ -138,6 +139,8 @@ class Plan:
         reads.
     host, polymerase
         The choices the protocol names.
+    cleanup_kit
+        The spin-column kit the protocol names, as `mbio.bench.materials.kit` resolves it.
     thresholds
         What those oligos were designed and judged by, for each role, so a page prints the band
         beside the value.
@@ -159,6 +162,7 @@ class Plan:
     designed_oligos: tuple[DesignedOligo, ...]
     host: str
     polymerase: Polymerase
+    cleanup_kit: Material = field(default_factory=kit)
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
@@ -213,6 +217,7 @@ class Plan:
             checks=self.checks,
             host=self.host,
             polymerase=self.polymerase,
+            cleanup_kit=self.cleanup_kit,
             thresholds=self.thresholds,
         )
         return ordered_from_sheet(made)
@@ -246,6 +251,7 @@ def plan_assembly(
     prefer_profile: bool = False,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
+    cleanup_kit: str = "",
     name: str = "",
     window: int = VECTOR_WINDOW,
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
@@ -287,6 +293,9 @@ def plan_assembly(
         For the PCRs. The colony PCR uses OneTaq, which is what NEB's protocol asks for.
     host, name
         The strain the protocol names, and what to call the product.
+    cleanup_kit
+        The spin-column kit the protocol names, by catalogue number or by name, as
+        `mbio.bench.materials.kit` reads it. Empty takes that function's default.
     window
         How far the vector junction may slide.
     thresholds
@@ -410,6 +419,7 @@ def plan_assembly(
         ),
         host,
         polymerase,
+        kit(cleanup_kit),
         thresholds,
     )
 

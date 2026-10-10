@@ -21,7 +21,7 @@ from mbio.bench.coverage import (
 from mbio.bench.materials import material
 from mbio.bench.phenotype import selection_marker
 from mbio.bench.prices import PriceRecord
-from mbio.bench.steps import enzyme_material, listed
+from mbio.bench.steps import QUANTIFY_EQUIPMENT, enzyme_material, listed
 from mbio.enzymes import Enzyme
 from mbio.protocol.model import Item as Handed
 from mbio.protocol.model import Material, Reference
@@ -73,7 +73,7 @@ ROUND_EQUIPMENT: tuple[str, ...] = (
     "Magnetic rack for the bead clean-ups",
     "Electroporator and cuvettes",
     f"Shaking incubator at {GROWTH_CELSIUS:g} °C",
-    "Spectrophotometer or fluorometer",
+    QUANTIFY_EQUIPMENT,
 )
 
 #: What one protocol hands the next, by name. The name is the contract, so the protocol that

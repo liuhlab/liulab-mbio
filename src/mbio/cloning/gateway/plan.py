@@ -17,10 +17,11 @@ cites from `docs/research/gateway-cloning.md`.
 
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from mbio.bench.amounts import Amount
+from mbio.bench.materials import kit
 from mbio.bench.oligos import primer_sheet
 from mbio.bench.phenotype import read_phenotype
 from mbio.bench.validation import (
@@ -55,7 +56,7 @@ from mbio.cloning.plan import (
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
-from mbio.protocol.model import Protocol
+from mbio.protocol.model import Material, Protocol
 from mbio.protocol.render import write_run_files
 from mbio.sequence import SequenceRecord
 from mbio.snapgene import write_dna
@@ -117,6 +118,8 @@ class Plan:
     amplicon
         The attB PCR that made the DNA BP takes, or ``None`` where the insert already carried
         its att sites.
+    cleanup_kit
+        The spin-column kit the protocol names, as `mbio.bench.materials.kit` resolves it.
     fusion
         Which tag the insert is read into, which is what says where a fusion reads through an
         att junction and so where the reading frame is judged.
@@ -132,6 +135,7 @@ class Plan:
     reads: tuple[SangerRead, SangerRead]
     designed_oligos: tuple[DesignedOligo, ...]
     amplicon: Amplicon | None = None
+    cleanup_kit: Material = field(default_factory=kit)
     fusion: Fusion = "none"
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
@@ -207,6 +211,7 @@ class Plan:
             oligos=self.designed_oligos,
             checks=self.checks,
             host=self.host,
+            cleanup_kit=self.cleanup_kit,
             fusion=self.fusion,
             thresholds=self.thresholds,
         )
@@ -243,6 +248,7 @@ def plan_gateway(
     fusion: Fusion = "none",
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
+    cleanup_kit: str = "",
     name: str = "",
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Plan:
@@ -282,6 +288,9 @@ def plan_gateway(
         For the attB PCR.
     host
         The strain the protocol names for selecting each clone.
+    cleanup_kit
+        The spin-column kit the protocol names, by catalogue number or by name, as
+        `mbio.bench.materials.kit` reads it. Empty takes that function's default.
     name
         What to call the expression clone.
     thresholds
@@ -336,7 +345,7 @@ def plan_gateway(
     reads = sanger_primers(lr.product, boundaries, thresholds=thresholds["sequencing"])
     lr = _drawn_on(lr, colony, reads)
     designed = _designed(made, colony, reads, lr.product, thresholds)
-    return Plan(lr, bp, host, colony, reads, designed, made, fusion, thresholds)
+    return Plan(lr, bp, host, colony, reads, designed, made, kit(cleanup_kit), fusion, thresholds)
 
 
 def _drawn_on(

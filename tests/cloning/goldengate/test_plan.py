@@ -218,7 +218,9 @@ def test_a_material_carries_a_catalogue_number_only_where_the_package_knows_one(
     assert materials["NEBridge Ligase Master Mix"].catalog == "M1100"
     # Nothing is invented for a reagent no product name names.
     assert materials["Agarose and 1X TAE or TBE"].catalog == ""
-    assert materials["PCR and gel cleanup spin columns"].supplier == ""
+    assert materials["Plasmid miniprep kit"].supplier == ""
+    # The clean-up kit is the run's own choice, and the default names a product.
+    assert materials["Monarch Spin PCR & DNA Cleanup Kit"].catalog == "T1130"
 
 
 def test_every_cycle_count_cites_the_document_it_came_from(plan):

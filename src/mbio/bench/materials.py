@@ -165,9 +165,29 @@ CAUTIONS: Mapping[str, tuple[str, ...]] = MappingProxyType(
     }
 )
 
+#: The spin-column kits a run may name, keyed by catalogue number: the product's own name and
+#: who sells it. Each is one a note under `docs/research/` already reads a number off, so
+#: nothing here is a product this package met for the first time. A kit the table does not hold
+#: is named as the caller wrote it and carries no number, since nothing invents one.
+KITS: Mapping[str, tuple[str, str]] = MappingProxyType(
+    {
+        # docs/research/restriction-ligation.md, from the two Monarch manuals.
+        "T1120": ("Monarch Spin DNA Gel Extraction Kit", "New England Biolabs"),
+        "T1130": ("Monarch Spin PCR & DNA Cleanup Kit", "New England Biolabs"),
+        # docs/research/bench-numbers.md, from Qian's supplementary protocol.
+        "D4003": ("DNA Clean & Concentrator-5", "Zymo Research"),
+        "D4007": ("Zymoclean Gel DNA Recovery Kit", "Zymo Research"),
+    }
+)
+
+#: The kit a step names where the run names none. It is the one this package already reads its
+#: column recovery from, so the page's numbers and its materials row name the same product. A
+#: lab that uses another one names it per run; no lab's habit is written in here.
+DEFAULT_CLEANUP_KIT = "T1130"
+
 #: Every catalogue number these parameters are keyed by. A number is keyed without its pack
 #: size, because a pack size changes nothing about the thing in the tube.
-_KEYED = ELECTROPORATION.keys() | RULES.keys() | CONTAINS.keys() | CAUTIONS.keys()
+_KEYED = ELECTROPORATION.keys() | RULES.keys() | CONTAINS.keys() | CAUTIONS.keys() | KITS.keys()
 
 
 def _key(catalog: str) -> str:
@@ -215,6 +235,35 @@ def cautions(catalog: str) -> tuple[str, ...]:
     ('Keep the polymerase on ice.',)
     """
     return CAUTIONS.get(_key(catalog), ())
+
+
+def kit(named: str = "", *, amount: str = "", note: str = "") -> Material:
+    """Return the kit a run named, as a material carrying who sells it and its number.
+
+    Parameters
+    ----------
+    named
+        A catalogue number `KITS` holds, or the product's own name. Empty names
+        `DEFAULT_CLEANUP_KIT`.
+    amount, note
+        What one run takes of it, and what it is there for.
+
+    Examples
+    --------
+    >>> kit().name, kit("D4003").supplier
+    ('Monarch Spin PCR & DNA Cleanup Kit', 'Zymo Research')
+    >>> named = kit("Wizard SV Gel and PCR Clean-Up System")
+    >>> named.name, named.supplier, named.catalog
+    ('Wizard SV Gel and PCR Clean-Up System', '', '')
+    """
+    text = (named or DEFAULT_CLEANUP_KIT).strip()
+    found = KITS.get(_key(text))
+    if found is None:
+        return material(text, amount=amount, note=note)
+    sold, supplier = found
+    return material(
+        sold, supplier=supplier, catalog=text.lstrip("#").upper(), amount=amount, note=note
+    )
 
 
 def material(

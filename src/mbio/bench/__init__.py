@@ -50,7 +50,7 @@ from mbio.bench.amounts import (
 )
 from mbio.bench.gels import LADDER_1_KB_PLUS, LADDER_100_BP, agarose_percent, choose_ladder
 from mbio.bench.inactivation import heat_inactivation, heat_inactivations
-from mbio.bench.materials import Electroporation, electroporation, material
+from mbio.bench.materials import Electroporation, electroporation, kit, material
 from mbio.bench.oligos import (
     SHEET_COLUMNS,
     OrderedOligo,
@@ -256,6 +256,7 @@ __all__ = [
     "heat_inactivation",
     "heat_inactivations",
     "identity_check",
+    "kit",
     "listed",
     "material",
     "molecular_weight",

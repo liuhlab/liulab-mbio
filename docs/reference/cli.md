@@ -119,10 +119,15 @@ Every one of the four prints a summary line, then each file it wrote. Four optio
 | `--out`, `-o` | required | Folder to write into |
 | `--polymerase` | `Q5` | Polymerase for the PCRs. Also `Phusion`, `Taq` and `OneTaq` |
 | `--host` | `NEB 5-alpha Competent E. coli (C2987)` | Strain the protocol names |
+| `--cleanup-kit` | `T1130` (Monarch Spin PCR & DNA Cleanup Kit) | Spin-column kit the protocol names, by catalogue number or by name |
 | `--name` | the parts' names, joined | What to call the product |
 
 Gateway's `--host` starts at `TOP10 chemically competent E. coli` instead. A strain it
 recognises also gets its ccdB selection checked.
+
+`--cleanup-kit` takes a catalogue number the package knows — `T1130` or `T1120` from New England
+Biolabs, `D4003` or `D4007` from Zymo Research — or any other kit's own name, which the page then
+names with no catalogue number beside it.
 
 ### Golden Gate
 

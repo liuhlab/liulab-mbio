@@ -16,6 +16,7 @@ from mbio import checks as judged
 from mbio.bench.amounts import DNA_VOLUME_UL, Amount
 from mbio.bench.gels import agarose_percent, choose_ladder
 from mbio.bench.materials import POLYMERASE_ON_ICE, material
+from mbio.bench.materials import kit as cleanup_kit
 from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.pcr import (
     colony_pcr_program,
@@ -135,6 +136,10 @@ PLATE_REFERENCE = Reference(
     url="https://doi.org/10.1021/acssynbio.8b00333",
 )
 
+
+#: What quantifies a purified fragment, which every method that purifies one needs. The
+#: measurement is named first and the instrument a bench says beside it.
+QUANTIFY_EQUIPMENT = "Spectrophotometer (NanoDrop) or fluorometer (Qubit)"
 
 #: Where a plate of primers waits between runs.
 PRIMER_PLATE_STORAGE = "-20 °C"
@@ -355,7 +360,7 @@ def pcr_step(
         key=f"pcr-{name}",
         instructions=(
             "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
-            f"Mix the master mix and put it in each tube, then add the {template} template.",
+            f"Mix the master mix, dispense it into each tube, then add the {template} template.",
             f"Run the program below: {annealing_temperature:g} °C annealing and "
             f"{extension_seconds} s extension for a {length_bp} bp product.",
         ),
@@ -402,7 +407,7 @@ def gel_step(amplicons: Sequence[tuple[str, int]]) -> Step:
         "Check the PCRs on a gel",
         key="pcr-gel",
         instructions=(
-            f"Pour a {percent:g}% agarose gel.",
+            f"Use a {percent:g}% agarose gel.",
             "Load 5 µL of each reaction beside the ladder.",
             "Run until the dye front is two thirds down the gel.",
         ),
@@ -493,19 +498,38 @@ def dpni_step(
     )
 
 
+def column(kit: Material) -> str:
+    """Return what a step at the bench calls one column of this kit.
+
+    Examples
+    --------
+    >>> column(cleanup_kit("T1120"))
+    'Monarch Spin DNA Gel Extraction column'
+    """
+    return f"{kit.name.removesuffix(' Kit')} column"
+
+
 def cleanup_step(
     *,
+    kit: Material | None = None,
     cautions: Sequence[Caution | str] = (),
     notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
-    """Return the spin-column cleanup of every amplicon, carrying the caller's own words."""
+    """Return the spin-column cleanup of every amplicon, carrying the caller's own words.
+
+    `kit` is the product the run cleans up with, which the step names and the protocol's
+    materials list; `mbio.bench.materials.kit` resolves what the caller was told, and the
+    default is that function's.
+    """
+    named = cleanup_kit() if kit is None else kit
     return Step(
         "Purify every amplicon",
         key="purify-amplicons",
         cautions=tuple(cautions),
         instructions=(
-            "Run each reaction over a spin column and elute in the smallest volume the kit allows.",
+            f"Run each reaction over a {column(named)} and elute in the smallest volume the "
+            "kit allows.",
         ),
         expected=("Clean DNA, free of polymerase, primers and dNTPs.",),
         notes=tuple(notes),
@@ -531,7 +555,7 @@ def quantify_step(amounts: Sequence[Amount]) -> Step:
         "Measure every concentration",
         key="quantify",
         instructions=(
-            "Measure each purified amplicon by A260 or with a fluorometer.",
+            "Measure each purified amplicon by A260 (NanoDrop) or with a fluorometer (Qubit).",
             "Work out the volume that carries the picomoles the next table asks for.",
         ),
         expected=wanted,
@@ -753,7 +777,7 @@ def sequencing_step(
         key="sequencing",
         instructions=(
             "Miniprep two or three colonies that read as correct.",
-            "Send each with both sequencing primers.",
+            "Send each miniprep with both sequencing primers.",
             *instructions,
             "Check the read across every junction and the whole of each insert.",
         ),

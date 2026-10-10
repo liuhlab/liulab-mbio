@@ -32,6 +32,7 @@ from mbio.bench.steps import (
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
     PLATE_REFERENCE,
+    QUANTIFY_EQUIPMENT,
     SEQUENCING_TITLE,
     XGAL_UG_ML,
     badges,
@@ -158,7 +159,7 @@ EQUIPMENT: tuple[str, ...] = (
     "Thermocycler with a heated lid",
     "Agarose gel rig and power supply",
     "Microcentrifuge",
-    "Spectrophotometer or fluorometer",
+    QUANTIFY_EQUIPMENT,
     f"Heat block or water bath at {HEAT_SHOCK_CELSIUS:g} °C",
     f"Shaking incubator and a plate incubator at {OUTGROWTH_CELSIUS:g} °C",
 )
@@ -181,6 +182,7 @@ def protocol(
     checks: Sequence[judged.Check],
     host: str,
     polymerase: Polymerase,
+    cleanup_kit: Material,
     thresholds: Mapping[PrimerRole, Thresholds],
 ) -> Protocol:
     """Return the bench protocol for one planned assembly, ready to render.
@@ -224,6 +226,7 @@ def protocol(
             host=host,
             polymerase=polymerase,
             phenotype=phenotype,
+            cleanup_kit=cleanup_kit,
         ),
         oligos=(
             *(
@@ -244,6 +247,7 @@ def protocol(
             phenotype=phenotype,
             host=host,
             polymerase=polymerase,
+            cleanup_kit=cleanup_kit,
         ),
         references=_references(parts, product, phenotype),
         sources={**BENCH_SOURCES, **PCR_SOURCES, **ASSEMBLY_SOURCES, **SCREENING_SOURCES},
@@ -342,6 +346,7 @@ def _materials(
     host: str,
     polymerase: Polymerase,
     phenotype: Phenotype,
+    cleanup_kit: Material,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
     made = tuple(part.length for part in parts if part.amplified)
@@ -372,7 +377,7 @@ def _materials(
             if any(part.dpni for part in parts)
             else ()
         ),
-        Material("PCR and gel cleanup spin columns"),
+        cleanup_kit,
         Material(
             product.name,
             supplier=product.supplier,
@@ -391,6 +396,7 @@ def _materials(
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
         Material(_plate(phenotype), amount="one plate per transformation"),
+        Material("Plasmid miniprep kit", note="for the clones that go for sequencing"),
         catalogued(
             COLONY_PCR_MASTER_MIX,
             supplier=product.supplier,
@@ -432,6 +438,7 @@ def _steps(
     phenotype: Phenotype,
     host: str,
     polymerase: Polymerase,
+    cleanup_kit: Material,
 ) -> tuple[Step, ...]:
     """Return the steps in the order they happen, the shared ones carrying this method's notes.
 
@@ -466,6 +473,7 @@ def _steps(
         )
     made.append(
         cleanup_step(
+            kit=cleanup_kit,
             notes=(
                 Note(
                     f"A column is optional below {CLEANUP_FRAGMENTS} PCR fragments: a product "
@@ -480,7 +488,7 @@ def _steps(
                     "anything but one band is gel-purified whatever the count.",
                     citation=Citation(product.catalog),
                 ),
-            )
+            ),
         )
     )
     made.append(quantify_step(amounts))

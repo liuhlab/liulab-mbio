@@ -56,6 +56,7 @@ Every option below has a default; a vector and one insert are enough on their ow
 | `--codon-table` | Whose codon usage a proposed domestication picks its codons from, such as `human`. Not the strain |
 | `--polymerase` | For the PCRs |
 | `--host` | The strain the protocol names |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
 | `--name` | What to call the product |
 
 ## From Python

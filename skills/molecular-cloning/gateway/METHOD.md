@@ -50,6 +50,7 @@ The command prints a summary line and those paths. The same inputs write the sam
 | `--fusion` | `none`, `N-terminal`, `C-terminal` or `both`: which tag the insert reads into |
 | `--polymerase` | For the attB PCR |
 | `--host` | The strain the protocol names for selecting each clone |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
 | `--name` | What to call the expression clone |
 
 ## The junction is not scarless

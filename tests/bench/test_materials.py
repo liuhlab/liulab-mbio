@@ -61,3 +61,25 @@ def test_a_caution_is_one_sentence_the_catalogue_number_carries(catalog: str, ca
 
 def test_a_material_nothing_cautions_carries_no_caution() -> None:
     assert materials.material("Water").cautions == ()
+
+
+def test_a_kit_named_by_catalogue_number_brings_its_product_name_and_supplier() -> None:
+    named = materials.kit("#T1130S")
+    assert (named.name, named.supplier, named.catalog) == (
+        "Monarch Spin PCR & DNA Cleanup Kit",
+        "New England Biolabs",
+        "T1130S",
+    )
+
+
+def test_a_kit_nobody_here_lists_is_named_as_given_and_invents_no_number() -> None:
+    named = materials.kit("Wizard SV Gel and PCR Clean-Up System")
+    assert (named.name, named.supplier, named.catalog) == (
+        "Wizard SV Gel and PCR Clean-Up System",
+        "",
+        "",
+    )
+
+
+def test_the_default_kit_is_the_one_the_packages_own_numbers_were_read_from() -> None:
+    assert materials.kit().catalog == materials.DEFAULT_CLEANUP_KIT == "T1130"

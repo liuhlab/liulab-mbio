@@ -14,6 +14,7 @@ from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench import REFERENCES as BENCH_REFERENCES
+from mbio.bench.materials import kit
 from mbio.bench.oligos import oligo_row
 from mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
@@ -25,6 +26,7 @@ from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.phenotype import Phenotype
 from mbio.bench.steps import (
     COLONY_PCR_TITLE,
+    QUANTIFY_EQUIPMENT,
     SEQUENCING_TITLE,
     badges,
     card,
@@ -156,7 +158,7 @@ EQUIPMENT: tuple[str, ...] = (
 )
 
 #: What a run amplifying its own insert needs on top of `EQUIPMENT`.
-PCR_EQUIPMENT: tuple[str, ...] = ("Spectrophotometer or fluorometer",)
+PCR_EQUIPMENT: tuple[str, ...] = (QUANTIFY_EQUIPMENT,)
 
 
 def protocol(
@@ -169,6 +171,7 @@ def protocol(
     oligos: Sequence[DesignedOligo],
     checks: Sequence[judged.Check],
     host: str,
+    cleanup_kit: Material | None = None,
     fusion: Fusion = "none",
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Protocol:
@@ -180,17 +183,20 @@ def protocol(
     steps and the miniprep that follows them in front of LR's, an attB PCR puts its own two in
     front of those, and the colony PCR and the sequencing that confirm the clone come last.
     """
+    cleaned = kit() if cleanup_kit is None else cleanup_kit
     one = Protocol(
         _title(lr, bp),
         summary=_summary(lr, bp),
         overview=_overview(lr, bp, amplicon),
         highlights=_highlights(lr, bp, amplicon),
         checks=badges(checks),
-        materials=_materials(lr=lr, bp=bp, amplicon=amplicon, colony=colony, host=host),
+        materials=_materials(
+            lr=lr, bp=bp, amplicon=amplicon, colony=colony, host=host, cleanup_kit=cleaned
+        ),
         oligos=_oligos(oligos, amplicon, thresholds),
         equipment=EQUIPMENT if amplicon is None else (*PCR_EQUIPMENT, *EQUIPMENT),
         steps=(
-            *_pcr_steps(amplicon),
+            *_pcr_steps(amplicon, cleaned),
             *_bp_steps(bp, host=host, entry=_carrier(lr)),
             *_lr_steps(lr, host=host),
             *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
@@ -309,6 +315,7 @@ def _materials(
     amplicon: Amplicon | None,
     colony: ColonyCheck,
     host: str,
+    cleanup_kit: Material,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for, the first reaction's first."""
     entry, destination = _carrier(lr), _acceptor(lr)
@@ -331,7 +338,7 @@ def _materials(
                     "of primer-dimers, so use one",
                     citation=Citation("MAN0000470", "pp. 43-44"),
                 ),
-                Material("PCR and gel cleanup spin columns"),
+                cleanup_kit,
             )
         )
     if bp is not None:
@@ -453,7 +460,7 @@ def _purpose(oligo: DesignedOligo, amplicon: Amplicon | None) -> str:
     return COLONY_PCR_TITLE if oligo.role == "colony PCR" else SEQUENCING_TITLE
 
 
-def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
+def _pcr_steps(amplicon: Amplicon | None, cleanup_kit: Material) -> tuple[Step, ...]:
     """Return the attB PCR and its cleanup, or nothing where the insert arrived attB-flanked."""
     if amplicon is None:
         return ()
@@ -487,6 +494,7 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
             ),
         ),
         cleanup_step(
+            kit=cleanup_kit,
             notes=(
                 Note(
                     "The BP reaction takes purified attB DNA: gel-purifying the product is the "
