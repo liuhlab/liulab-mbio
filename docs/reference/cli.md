@@ -291,7 +291,7 @@ pixi run mbio sequence-verify PRODUCT RESULT --out DIR
 | Argument or option | Default | What it is |
 | --- | --- | --- |
 | `PRODUCT` | required | The plasmid the clone should be, such as the `product.dna` a plan wrote |
-| `RESULT` | required | A Sanger read as `.ab1`, or a whole-plasmid consensus as FASTA, GenBank or `.dna`. Give one or more |
+| `RESULT` | required | A Sanger read as `.ab1` or `.abi`, or a whole-plasmid consensus as FASTA, GenBank or `.dna`. Give one or more |
 | `--feature` | none | A feature to judge, in place of the junctions and inserts. Repeat it once per feature |
 | `--out` | none | A folder to write the clone's page into, as `verification.html` |
 

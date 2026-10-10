@@ -1,13 +1,13 @@
 ---
 name: sequence-verify
 description: >-
-  Check one clone's sequencing results against the plasmid it should be with `mbio`: Sanger
-  `.ab1` reads or a whole-plasmid consensus are placed on the planned product, each junction and
+  Check one clone's sequencing results against the plasmid it should be with `mbio`: Sanger `.ab1`
+  or `.abi` reads or a whole-plasmid consensus are placed on the planned product, each junction and
   each insert gets a verdict, and every disagreement is placed on the record with the feature it
-  falls in. Use whenever someone's sequencing has come back and they want to know whether a
-  clone is right: Sanger reads of a miniprep, a whole-plasmid consensus from a vendor, which
-  colony to keep, whether a mismatch sits in an insert or in the backbone, or a cloning protocol
-  from this package reaching its sequencing step.
+  falls in. Use whenever someone's sequencing has come back and they want to know whether a clone is
+  right: Sanger reads of a miniprep, a whole-plasmid consensus from a vendor, which colony to keep,
+  whether a mismatch sits in an insert or in the backbone, or a cloning protocol from this package
+  reaching its sequencing step.
 ---
 
 # Sequence verification
@@ -24,9 +24,10 @@ pixi run mbio sequence-verify PRODUCT RESULT... [--feature NAME] [--out DIR]
 ```
 
 `PRODUCT` is the record the clone should be, such as the `product.dna` a cloning plan wrote.
-Each `RESULT` is read by its extension: `.ab1` is a Sanger trace, and FASTA, GenBank or `.dna`
-is a whole-plasmid consensus, trusted whole. Give every result one sample gave in one call, such
-as a read from each side of the insert: a base counts as read when any trusted result covers it.
+Each `RESULT` is read by its extension: `.ab1` or `.abi` is a Sanger trace, and FASTA, GenBank
+or `.dna` is a whole-plasmid consensus, trusted whole. Give every result one sample gave in one
+call, such as a read from each side of the insert: a base counts as read when any trusted result
+covers it.
 
 What is judged comes from the product. A plan from this package tags each junction it writes,
 and the inserts are the stretches between them; the junction the vector's bases follow is tagged `backbone`, and the stretch it opens is left out.

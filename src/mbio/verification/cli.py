@@ -21,11 +21,14 @@ from mbio.verification.trace import Channels, read_channels, read_trace
 #: What `--out` names the clone's page in the directory it is given.
 PAGE = "verification.html"
 
+#: The extensions a Sanger trace is written under: both name the one ABIF format.
+TRACE_SUFFIXES = (".ab1", ".abi")
+
 
 def read_result(path: Path) -> SequencingResult:
     """Read one sequencing result by its file's extension, named for the file.
 
-    An ``.ab1`` is a Sanger trace. Any file `mbio.io.read_record` reads, a ``.dna``, GenBank or
+    An ``.ab1`` or ``.abi`` is a Sanger trace. Any file `mbio.io.read_record` reads, a ``.dna``, GenBank or
     FASTA file, is a whole-plasmid consensus, trusted whole.
 
     Raises
@@ -41,7 +44,7 @@ def read_result(path: Path) -> SequencingResult:
             f"{path.name}: the per-base table is not read yet, so give the consensus FASTA or "
             "GenBank file"
         )
-    if suffix == ".ab1":
+    if suffix in TRACE_SUFFIXES:
         return read_trace(path)
     return SequencingResult(path.name, read_record(path).sequence)
 
@@ -58,7 +61,7 @@ def sequence_verify(
         typer.Argument(
             exists=True,
             metavar="RESULT...",
-            help="Its sequencing results: .ab1 traces, or a whole-plasmid consensus.",
+            help="Its sequencing results: .ab1 or .abi traces, or a whole-plasmid consensus.",
         ),
     ],
     feature: Annotated[
@@ -98,7 +101,9 @@ def sequence_verify(
 
 def _channels(paths: Sequence[Path]) -> list[Channels | None]:
     """Return each result's channels in the order given, ``None`` for one that is no trace."""
-    return [read_channels(path) if path.suffix.lower() == ".ab1" else None for path in paths]
+    return [
+        read_channels(path) if path.suffix.lower() in TRACE_SUFFIXES else None for path in paths
+    ]
 
 
 def report(made: Verification, results: Sequence[SequencingResult], length: int) -> list[str]:

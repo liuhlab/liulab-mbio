@@ -20,9 +20,9 @@ stretch between two of them as an insert. The plan tags the junction the vector'
 follow as the backbone, and the stretch after it is left out. See
 [the command line reference](../reference/cli.md#check-a-clones-sequencing).
 
-Every result one sample gave. A Sanger read is its `.ab1` file. A whole-plasmid consensus is the
-FASTA or GenBank file the service sent. Give a read from each side of the insert together, in
-one run: a base counts as read when any one result's trusted bases cover it.
+Every result one sample gave. A Sanger read is its `.ab1` or `.abi` file. A whole-plasmid
+consensus is the FASTA or GenBank file the service sent. Give a read from each side of the insert
+together, in one run: a base counts as read when any one result's trusted bases cover it.
 
 ## Run it
 

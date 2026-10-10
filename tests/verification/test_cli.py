@@ -127,6 +127,22 @@ def test_two_traces_of_one_file_name_draw_without_colliding(data_dir, tmp_path):
     assert len(page.find_all("g", cls="track")) == 1
 
 
+def test_an_abi_file_is_read_as_a_trace_and_draws_its_channels(data_dir, tmp_path):
+    """``.abi`` is the other extension the one trace format is written under."""
+    renamed = tmp_path / "read.abi"
+    renamed.write_bytes((data_dir / "3730.ab1").read_bytes())
+    trace = read_result(renamed)
+    assert (trace.bases, trace.trusted) == (read_result(data_dir / "3730.ab1").bases, (14, 1089))
+    first, last = trace.trusted_span
+    own = trace.bases[first:last]
+    swapped = "A" if own[300] != "A" else "C"
+    product = _consensus(tmp_path / "own.fasta", own[:300] + swapped + own[301:])
+    code, _ = _run(product, renamed, "--out", tmp_path / "made")
+    assert code == 1
+    page = parse((tmp_path / "made" / PAGE).read_text(encoding="utf-8"))
+    assert len(page.find_all("g", cls="track")) == 1
+
+
 @pytest.mark.parametrize("given", ["folder", "calls.tsv"])
 def test_a_per_base_table_is_refused_until_it_is_read(tmp_path, given):
     path = tmp_path / given
