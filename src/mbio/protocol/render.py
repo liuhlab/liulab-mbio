@@ -57,6 +57,7 @@ from mbio.protocol.model import (
     read_project,
     read_protocol,
     slug,
+    stated,
     well_at,
     write_project,
     write_protocol,
@@ -321,7 +322,9 @@ def page_key(value: Protocol | Project) -> str:
     Two pages of one folder never share it, and every `file://` page in a browser shares one
     store, so the key is what keeps one page's marks off another. A key already minted is kept,
     which is what carries the bench's ticks across an agent's edit; everything else is digested,
-    so a re-planned run starts clean.
+    so a re-planned run starts clean. The digest is of the data the page is written from, never
+    of the Python objects, and a field at its default does not count: renaming a class or adding
+    a field leaves every key, and so every tick, where it was.
 
     Examples
     --------
@@ -330,7 +333,7 @@ def page_key(value: Protocol | Project) -> str:
     >>> page_key(Protocol("Demo", key="whichever"))
     'whichever'
     """
-    return value.key or hashlib.sha256(repr(value).encode()).hexdigest()[:16]
+    return value.key or hashlib.sha256(stated(value)).hexdigest()[:16]
 
 
 def minted[T: (Protocol, Project)](value: T) -> T:

@@ -1,5 +1,5 @@
 import re
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -14,6 +14,7 @@ from mbio.protocol import (
     Citation,
     Component,
     CountToNet,
+    Expectation,
     Figure,
     Folder,
     Incubation,
@@ -170,6 +171,25 @@ def test_a_page_remembers_under_the_key_its_protocol_carries() -> None:
     # A protocol nobody has keyed falls back to a digest of its content, which an edit changes.
     unkeyed = [replace(one, key="") for one in (before, after)]
     assert page_key(unkeyed[0]) != page_key(unkeyed[1])
+
+
+def test_renaming_a_model_class_leaves_a_page_key_where_it_was() -> None:
+    class Observation(Expectation):
+        """`Expectation` under another name."""
+
+    def gel(line: Expectation) -> Protocol:
+        return Protocol("Demo", steps=(Step("Run the gel", expected=(line,)),))
+
+    assert page_key(gel(Observation("One band"))) == page_key(gel(Expectation("One band")))
+
+
+def test_a_field_a_class_gains_counts_toward_a_page_key_only_once_it_is_set() -> None:
+    @dataclass(frozen=True, slots=True)
+    class Grown(Protocol):
+        waste: str = ""
+
+    assert page_key(Grown("Demo")) == page_key(Protocol("Demo"))
+    assert page_key(Grown("Demo", waste="Bin the gel")) != page_key(Protocol("Demo"))
 
 
 def test_no_two_marks_of_one_page_are_alike_however_its_steps_are_keyed() -> None:

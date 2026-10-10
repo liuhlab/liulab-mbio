@@ -9,7 +9,7 @@ import math
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, dataclass, field, fields, is_dataclass, replace
+from dataclasses import KW_ONLY, MISSING, Field, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 from types import MappingProxyType
@@ -2127,29 +2127,59 @@ def write_project(project: Project, path: str | os.PathLike[str]) -> Path:
     return _write(project, path)
 
 
+def stated(what: Protocol | Project) -> bytes:
+    """Return what `what` says, for a page's key to be digested from.
+
+    The bytes `write_protocol` writes, less every field still at its default, so no class name
+    is in them and a field a class gains later changes nothing until something sets it.
+
+    Examples
+    --------
+    >>> json.loads(stated(Protocol("Demo")))
+    {'title': 'Demo'}
+    """
+    return _text(_plain(what, defaults=False)).encode()
+
+
 def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     out = Path(path)
-    out.write_text(json.dumps(_plain(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out.write_text(_text(_plain(what)), encoding="utf-8")
     return out
 
 
-def _plain(value: Any) -> Any:
+def _text(data: Any) -> str:
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+
+
+def _plain(value: Any, *, defaults: bool = True) -> Any:
     """Return `value` as JSON data, writing a sentence citing nothing as its text alone.
 
     So the common sentence stays the bare string a hand-edited file writes, and only one
-    carrying a citation grows an object.
+    carrying a citation grows an object. Without `defaults`, a field at its default is left
+    out, which is what `stated` digests and never what a file holds.
     """
     match value:
         case Note(citation=None) | Caution(citation=None) | Expectation(citation=None):
             return value.text
         case _ if is_dataclass(value) and not isinstance(value, type):
-            return {f.name: _plain(getattr(value, f.name)) for f in fields(value)}
+            return {
+                f.name: _plain(getattr(value, f.name), defaults=defaults)
+                for f in fields(value)
+                if defaults or not _at_default(f, getattr(value, f.name))
+            }
         case Mapping():
-            return {key: _plain(item) for key, item in value.items()}
+            return {key: _plain(item, defaults=defaults) for key, item in value.items()}
         case tuple() | list():
-            return [_plain(item) for item in value]
+            return [_plain(item, defaults=defaults) for item in value]
         case _:
             return value
+
+
+def _at_default(f: Field[Any], value: Any) -> bool:
+    """Whether `value` is what field `f` holds when nothing sets it."""
+    if f.default is not MISSING:
+        return value == f.default
+    return f.default_factory is not MISSING and value == f.default_factory()
 
 
 _PROTOCOL = jsonfile.reader(Protocol)
