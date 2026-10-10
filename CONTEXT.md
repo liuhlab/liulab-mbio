@@ -246,6 +246,17 @@ The volumes of one reaction, scaled to a master mix for several reactions plus a
 component marked per-tube, such as template, is added to each tube instead of to the mix.
 _Avoid_: mix table, recipe
 
+### Calculator
+
+A named calculation a step shows: a default the package wrote, a number the reader types over,
+and a result the page works out again from the two. It is a view and never a store: what the
+reader types is the page's to keep, as a timer's time is, and the protocol never holds it. The
+page does arithmetic only over numbers the renderer wrote, never a constant or a package
+formula, and its warning is a troubleshooting entry a step already carries. The kinds are a
+closed set, each named. The first is a reaction row whose DNA the bench measured: it gives the
+volume that carries the row's amount, and another row of the table makes up the difference.
+_Avoid_: widget, formula, converter, panel
+
 ### Thermocycler program
 
 Stages run in order, each a list of incubations repeated for a number of cycles. An incubation

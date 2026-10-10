@@ -8,6 +8,7 @@ from mbio.bench import plates
 from mbio.plot import layers
 from mbio.protocol import (
     OVERVIEW_CHARS,
+    AmountToVolume,
     Caution,
     Check,
     Citation,
@@ -376,6 +377,29 @@ def test_a_reaction_table_opens_scaled_to_its_reaction_count(page: Node) -> None
     ]
     template = next(r for r in table.find_all("tr") if "Template DNA" in r.text)
     assert "each tube" in template.text
+
+
+def test_a_measured_row_opens_at_the_concentration_its_volume_assumes() -> None:
+    """The plan's numbers stand until the reader types; the warning is another step's own entry."""
+    calculator = AmountToVolume(81.98, made_up_by="Water", too_dilute="Too dilute")
+    row = Component("pUC19", 2.0, master_mix=False, calculator=calculator)
+    measure = Step("Measure", troubleshooting=(Troubleshooting("Too dilute", "Concentrate it."),))
+    protocol = Protocol(
+        "t", steps=(measure, Step("Mix", tables=(ReactionTable((row, Component("Water", 13.0))),)))
+    )
+    figure = parse(render_html(protocol)).find_all(cls="reaction")[0]
+
+    [measured] = figure.find_all("tr", cls="measured")
+    assert (measured.attrs["data-ng-ul"], measured.attrs["data-fill"]) == ("40.99", "1")
+    assert measured.find_all("input", cls="calc-value")[0].attrs["value"] == "41"
+    [warning] = figure.find_all(cls="calc-warning")
+    assert "hidden" in warning.attrs
+    assert warning.text == "Too dilute. Concentrate it."
+    # Out of the digest, so a calculator re-keys no page and the bench keeps its ticks.
+    plain = ReactionTable((replace(row, calculator=None), Component("Water", 13.0)))
+    assert page_key(protocol) == page_key(
+        replace(protocol, steps=(measure, Step("Mix", tables=(plain,))))
+    )
 
 
 def volume_cells(volume_ul: float) -> list[str]:

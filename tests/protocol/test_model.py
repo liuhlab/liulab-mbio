@@ -9,6 +9,7 @@ import pytest
 
 from mbio.protocol import (
     OVERVIEW_CHARS,
+    AmountToVolume,
     Caution,
     Check,
     Citation,
@@ -362,6 +363,19 @@ def test_a_wait_cites_its_turnaround_like_any_other_row() -> None:
     assert one.cited == frozenset({"vendor"})
     (check,) = [c for c in one.audit() if c.name == "sources"]
     assert check.status == "fail"
+
+
+def test_a_calculator_round_trips_and_gives_way_only_to_another_row(tmp_path: Path) -> None:
+    row = Component(
+        "pUC19", 1.0, master_mix=False, calculator=AmountToVolume(81.98, made_up_by="Water")
+    )
+    one = Protocol(
+        "t", steps=(Step("Mix", tables=(ReactionTable((row, Component("Water", 14.0))),)),)
+    )
+    assert read_protocol(write_protocol(one, tmp_path / "protocol.json")) == one
+
+    with pytest.raises(ValueError, match="made up by 'Water', which is no other row of it"):
+        ReactionTable((row,))
 
 
 def test_a_steps_time_round_trips_through_json(tmp_path: Path) -> None:

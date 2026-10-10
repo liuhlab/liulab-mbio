@@ -24,10 +24,12 @@ from mbio.plot.drawing import draw_map, draw_plate
 from mbio.plot.fonts import BOLD, MONO, SANS
 from mbio.plot.page import font_face
 from mbio.protocol.model import (
+    AmountToVolume,
     Bill,
     Caution,
     Check,
     Citation,
+    Component,
     Figure,
     Gel,
     Hole,
@@ -48,6 +50,7 @@ from mbio.protocol.model import (
     Timer,
     Topic,
     Transfer,
+    Troubleshooting,
     Wait,
     by_place,
     number,
@@ -2273,7 +2276,8 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
     parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
-    parts += [_table(f"{anchor}.table.{i}", t) for i, t in enumerate(step.tables, 1)]
+    trouble = (*step.troubleshooting, *(t for s in protocol.steps for t in s.troubleshooting))
+    parts += [_table(f"{anchor}.table.{i}", t, trouble) for i, t in enumerate(step.tables, 1)]
     parts += [_program(f"{anchor}.program.{i}", p) for i, p in enumerate(step.programs, 1)]
     parts += [_transfer(t, protocol.plates) for t in step.transfers]
     if step.holes:
@@ -2327,27 +2331,38 @@ def _waits(waits: tuple[Wait, ...], sources: str = "") -> str:
     return f'<ul class="waits" aria-label="Waiting">{items}</ul>\n'
 
 
-def _table(key: str, table: ReactionTable) -> str:
-    stock = any(c.stock for c in table.components)
+def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = ()) -> str:
+    """One reaction table, whose rows go live where a calculator reaches one.
+
+    `trouble` is every troubleshooting entry in the order a calculator's problem is looked up,
+    the step's own before any other step's.
+    """
+    live = any(c.calculator for c in table.components)
+    stock = live or any(c.stock for c in table.components)
     final = any(c.final for c in table.components)
     scale = table.reactions * (1 + table.overage)
+    one = "num one" if live else "num"
     rows = []
-    for component in table.components:
+    for row, component in enumerate(table.components):
         cells = [f"<td>{escape(component.name)}{_after(component.citation)}</td>"]
-        cells += [f"<td>{escape(component.stock)}</td>"] if stock else []
+        if component.calculator is not None:
+            cells.append(_concentration(component.name, component.calculator, component.volume_ul))
+        elif stock:
+            cells.append(f"<td>{escape(component.stock)}</td>")
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
-        cells.append(f'<td class="num">{number(component.volume_ul)}</td>')
+        cells.append(f'<td class="{one}">{number(component.volume_ul)}</td>')
         if component.master_mix:
             # `protocol.js` writes this cell again from `data-ul`, by the same arithmetic.
             mix = number(component.volume_ul * scale)
             cells.append(f'<td class="num mix" data-ul="{component.volume_ul!r}">{mix}</td>')
         else:
             cells.append('<td class="num per-tube">each tube</td>')
-        rows.append(f"<tr>{''.join(cells)}</tr>")
+        marks = _live_row(f"{key}.row.{row}", component, table) if live else ""
+        rows.append(f"<tr{marks}>{''.join(cells)}</tr>")
     blanks = "<td></td>" * (stock + final)
     in_mix = sum(c.volume_ul for c in table.components if c.master_mix)
     total = sum(c.volume_ul for c in table.components)
-    per_tube = [c for c in table.components if not c.master_mix]
+    per_tube = [(i, c) for i, c in enumerate(table.components) if not c.master_mix]
     # One tube takes every component; the mix holds only those the column adds up, so where the
     # two totals count different things the mix total says which it is.
     only = '<br><span class="muted">mix only</span>' if per_tube and in_mix else ""
@@ -2359,17 +2374,21 @@ def _table(key: str, table: ReactionTable) -> str:
         + f'<th class="num">Mix for <span class="rxn-n">{table.reactions}</span> (µL)</th>'
     )
     foot = (
-        f'<tr><th>Total</th>{blanks}<td class="num">{number(total)}</td>'
+        f'<tr><th>Total</th>{blanks}<td class="{one}">{number(total)}</td>'
         f'<td class="num mix"><span data-ul="{in_mix!r}">{number(in_mix * scale)}</span>'
         f"{only}</td></tr>"
     )
     dispense = ""
     if in_mix:
-        then = ", ".join(f"{number(c.volume_ul)} µL {c.name}" for c in per_tube)
-        dispense = f"Put {number(in_mix)} µL of mix in each tube" + (
-            f", then add {then}" if then else ""
+        # A live table marks each volume the sentence says, so `protocol.js` can say it again.
+        each = f'<span class="dispense-mix">{number(in_mix)}</span>' if live else number(in_mix)
+        then = ", ".join(
+            (f'<span data-row="{i}">{number(c.volume_ul)}</span>' if live else number(c.volume_ul))
+            + f" µL {escape(c.name)}"
+            for i, c in per_tube
         )
-        dispense = f'<p class="dispense">{escape(dispense)}.</p>'
+        dispense = f"Put {each} µL of mix in each tube" + (f", then add {then}" if then else "")
+        dispense = f'<p class="dispense">{dispense}.</p>'
     caption = f"<figcaption>{escape(table.title)}</figcaption>" if table.title else ""
     return (
         f'<figure class="reaction" data-overage="{table.overage!r}">{caption}'
@@ -2377,8 +2396,72 @@ def _table(key: str, table: ReactionTable) -> str:
         f' min="1" step="1" inputmode="numeric" value="{table.reactions}" data-key="{key}"></label>'
         f'<span class="muted">mix includes {number(table.overage * 100)}% extra</span>'
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead><tbody>{"".join(rows)}</tbody>'
-        f"<tfoot>{foot}</tfoot></table></div>{dispense}</figure>\n"
+        f"<tfoot>{foot}</tfoot></table></div>{_warnings(table, trouble)}{dispense}</figure>\n"
     )
+
+
+def _concentration(name: str, calculator: AmountToVolume, volume_ul: float) -> str:
+    """Return the stock cell of a row the bench measures, at the concentration the plan assumes.
+
+    The reader types over it; the plan's own goes back on the button beside it.
+    """
+    assumed = number(calculator.nanograms / volume_ul)
+    return (
+        '<td class="calc"><label><input type="text" class="calc-value" inputmode="decimal"'
+        f' value="{assumed}" size="5" autocomplete="off" spellcheck="false"'
+        f' aria-label="{escape(name)}, ng/µL measured"> ng/µL</label>'
+        '<button type="button" class="calc-plan" title="The concentration the plan assumes"'
+        f" hidden>Back to {assumed}</button></td>"
+    )
+
+
+def _live_row(key: str, component: Component, table: ReactionTable) -> str:
+    """Return what `protocol.js` reads off one row of a live table.
+
+    The plan's volume, and for a row a calculator reaches, what it carries, the concentration
+    the plan assumes and the row that gives way.
+    """
+    marks = f' data-rxn-ul="{component.volume_ul!r}"'
+    calculator = component.calculator
+    if calculator is None:
+        return marks
+    fill = [c.name for c in table.components].index(calculator.made_up_by)
+    marks += (
+        f' class="measured" data-key="{key}" data-ng="{calculator.nanograms!r}"'
+        f' data-ng-ul="{calculator.nanograms / component.volume_ul!r}" data-fill="{fill}"'
+    )
+    if calculator.too_dilute:
+        marks += f' data-too-dilute="{escape(calculator.too_dilute)}"'
+    if calculator.least_ul is not None:
+        marks += (
+            f' data-least-ul="{calculator.least_ul!r}"'
+            f' data-too-concentrated="{escape(calculator.too_concentrated)}"'
+        )
+    return marks
+
+
+def _warnings(table: ReactionTable, trouble: Sequence[Troubleshooting]) -> str:
+    """Return the troubleshooting entries a table's calculators fire, hidden until one does.
+
+    Each says the entry's own words, so no calculator writes advice of its own; a problem no
+    step holds is said alone.
+    """
+    problems = dict.fromkeys(
+        problem
+        for c in table.components
+        if c.calculator is not None
+        for problem in (c.calculator.too_dilute, c.calculator.too_concentrated)
+        if problem
+    )
+    out = []
+    for problem in problems:
+        found = next((t for t in trouble if t.problem == problem), None)
+        said = "" if found is None else f" {escape(found.solution)}"
+        out.append(
+            f'<p class="calc-warning" data-problem="{escape(problem)}" role="alert" hidden>'
+            f"<strong>{escape(problem)}.</strong>{said}</p>"
+        )
+    return "".join(out)
 
 
 def _temperature(step: Incubation, cycles: int | None) -> str:

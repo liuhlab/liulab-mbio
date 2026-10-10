@@ -435,6 +435,46 @@ class Oligo:
 
 
 @dataclass(frozen=True, slots=True)
+class AmountToVolume:
+    """A calculator on a reaction row: the volume that carries its DNA at the bench's concentration.
+
+    The row's `volume_ul` is the plan's, and the page offers it at the concentration that volume
+    assumes. The reader types the one they measured, the page divides, and the row it names
+    gives way, so the reaction keeps its volume. What they type is the page's to keep, never
+    the protocol's, as a timer's time is.
+
+    Parameters
+    ----------
+    nanograms
+        What the row has to carry.
+    made_up_by
+        The row of the same table that gives way, such as the water.
+    too_dilute
+        The `Troubleshooting.problem` the page shows once the DNA no longer fits, read from the
+        row's own step or else another step of the protocol.
+    least_ul, too_concentrated
+        The least volume a method lets its row take, and the problem shown below it. Unset,
+        nothing warns of a volume too small.
+    """
+
+    nanograms: float
+    _: KW_ONLY
+    made_up_by: str
+    too_dilute: str = ""
+    least_ul: float | None = None
+    too_concentrated: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse an amount that is not positive, or a least volume without its problem."""
+        _require(self.nanograms > 0, "a calculator's nanograms must be positive")
+        _require(self.least_ul is None or self.least_ul > 0, "a calculator's least_ul is positive")
+        _require(
+            (self.least_ul is None) == (not self.too_concentrated),
+            "a calculator's least_ul and too_concentrated come together",
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class Component:
     """One line of a reaction table.
 
@@ -450,6 +490,9 @@ class Component:
         ``False`` for a component added to each tube separately, such as template.
     citation
         Where the volume was read.
+    calculator
+        Where the bench measures this row's concentration, which the page then takes in place
+        of `stock`.
     """
 
     name: str
@@ -459,10 +502,16 @@ class Component:
     final: str = ""
     master_mix: bool = True
     citation: Citation | None = None
+    # Out of the repr a page's key is digested from, so a protocol keeps the key it had.
+    calculator: AmountToVolume | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
-        """Refuse a volume that is not positive."""
+        """Refuse a volume that is not positive, or a stock beside the one the bench measures."""
         _require(self.volume_ul > 0, f"component {self.name!r}: volume_ul must be positive")
+        _require(
+            self.calculator is None or not self.stock,
+            f"component {self.name!r}: the bench measures its stock, so it states none",
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -488,10 +537,18 @@ class ReactionTable:
     overage: float = 0.1
 
     def __post_init__(self) -> None:
-        """Refuse an empty table, fewer than one reaction, or a negative overage."""
+        """Refuse an empty table, no reaction, a negative overage, or a calculator's stray row."""
         _require(bool(self.components), f"reaction table {self.title!r} has no component")
         _require(self.reactions >= 1, "reactions must be at least 1")
         _require(self.overage >= 0, "overage must not be negative")
+        plain = {c.name for c in self.components if c.calculator is None}
+        for component in self.components:
+            if component.calculator is not None:
+                _require(
+                    component.calculator.made_up_by in plain,
+                    f"reaction table {self.title!r}: {component.name!r} is made up by "
+                    f"{component.calculator.made_up_by!r}, which is no other row of it",
+                )
 
     def mix_volumes(self, reactions: int) -> tuple[float | None, ...]:
         """Return each component's master-mix volume in µL, to 0.01 µL.
