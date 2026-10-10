@@ -434,8 +434,8 @@ def regions(record: SequenceRecord, names: Iterable[str] = ()) -> tuple[Feature,
     These are the junctions tagged with `JUNCTION_TAG`, and the insert between each two
     consecutive ones, named for the part the first one's tag names. The stretch holding base 0
     is the vector's backbone, since a product keeps its vector's origin, and is left out, as is
-    the stretch whose closing junction holds base 0. A name that repeats takes an ordinal. Given `names`, the features of `record` so named are
-    returned instead.
+    the stretch whose closing junction holds base 0. A name that repeats takes an ordinal.
+    Given `names`, the features of `record` so named are returned instead.
 
     Raises
     ------

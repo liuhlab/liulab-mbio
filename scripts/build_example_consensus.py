@@ -48,6 +48,8 @@ def planted(record: SequenceRecord) -> tuple[str, list[tuple[str, int, str, str]
         position = min(segment.start for segment in feature.segments) + offset
         if not any(segment.start <= position < segment.end for segment in feature.segments):
             raise ValueError(f"{position} does not lie inside {name}")
+        # A feature across the origin ends past the record's length (ADR 0001).
+        position %= len(bases)
         before = bases[position]
         bases[position] = TRANSITION[before]
         made.append((name, position, before, bases[position]))

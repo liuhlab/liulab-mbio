@@ -29,8 +29,8 @@ is a whole-plasmid consensus, trusted whole. Give every result one sample gave i
 as a read from each side of the insert: a base counts as read when any trusted result covers it.
 
 What is judged comes from the product. A plan from this package tags each junction it writes,
-and the inserts are the stretches between them; the backbone, the stretch holding base 0, is
-left out. A record no plan wrote carries no tag, so name its regions with `--feature`, once per
+and the inserts are the stretches between them; the backbone, the stretch holding base 0 or
+the one a junction holding base 0 closes, is left out. A record no plan wrote carries no tag, so name its regions with `--feature`, once per
 feature. With neither, every disagreement is listed and nothing is judged.
 
 It prints one line per region, each disagreement outside them, each result's own check, and

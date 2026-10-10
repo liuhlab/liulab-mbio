@@ -2,7 +2,8 @@
 
 A sequencing result tells you what a clone is. This command tells you whether it is the clone
 you planned. It lines up one clone's results against the plasmid it should be, and gives each
-junction and each insert a verdict. Every base that differs is placed on the plasmid's map.
+junction and each insert a verdict. Every base that differs is named with its place on the
+plasmid.
 
 ## When to use it
 
@@ -20,7 +21,7 @@ stretch between two of them as an insert. The vector is left out, and
 
 Every result one sample gave. A Sanger read is its `.ab1` file. A whole-plasmid consensus is the
 FASTA or GenBank file the service sent. Give a read from each side of the insert together, in
-one run: a base counts as read when any result covers it.
+one run: a base counts as read when any one result's trusted bases cover it.
 
 ## Run it
 
@@ -69,7 +70,7 @@ with 1.
 | --- | --- |
 | pass | every base was read, and none differs from the plan |
 | fail | a base differs and every read covering it agrees, or the base or the whole sample is mixed |
-| warn | two reads disagree with each other at one base |
+| warn | two reads disagree with each other at one base, or more than 10 reads but fewer than 20 stand behind one |
 | no verdict | part of it went unread, and nothing failed |
 
 A clone is verified only when every junction and every insert passes. Nothing failing is not
@@ -101,7 +102,8 @@ made by your cloning.
 **A Sanger read** is trusted only in its middle. The first bases after the primer and the tail of
 the read are poor, so each read is trimmed by its own quality scores. Inside what is left, a base
 counts at quality 20 or better, a 1 in 100 chance of a wrong call. A base whose second peak
-reaches a quarter of the first is mixed, and a mixed base fails.
+reaches a quarter of the first is mixed. A mixed base fails, unless another read covering it
+reads it clean, which is a warning.
 
 **A whole-plasmid consensus** is trusted whole. The service has already lined up its reads and
 called each base. But a consensus cannot show a mixed sample, because the commonest plasmid
