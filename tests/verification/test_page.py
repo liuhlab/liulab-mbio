@@ -77,7 +77,8 @@ def test_the_page_holds_the_verdict_a_row_per_region_and_a_close_up_per_disagree
     # On the map, each disagreement is lit, coloured by its region's verdict, or grey outside.
     assert laid.map is not None
     names = [one.name for one in laid.close_ups]
-    assert laid.map.highlight == tuple(names)
+    # Each disagreement and each result is lit; the product's own primers are not.
+    assert laid.map.highlight == (*names, "consensus.fasta")
     colours = {
         arrow.item.name: arrow.span.color
         for arrow in laid.map.layout.arrows

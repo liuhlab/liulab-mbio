@@ -8,7 +8,8 @@ reads top to bottom:
 2. the table the command prints: a row per region, one per disagreement outside every region
    naming the features it falls in, with no verdict, and one per result;
 3. the map: a copy of the record with each result a primer over the bases it trusts, on its own
-   strand, and each disagreement a feature coloured by its region's verdict, every one lit;
+   strand, and each disagreement a feature coloured by its region's verdict, each result and
+   each disagreement lit;
 4. a close-up of each disagreement: a sequence view a few dozen bases either side, each result's
    own disagreements marked on its arrow, and each Sanger result's trace under the bases.
 
@@ -261,7 +262,7 @@ def draw_page(
         features=(*expected.features, *features),
         primers=(*expected.primers, *primers),
     )
-    lit = [name for name, _ in named]
+    lit = [*(name for name, _ in named), *(primer.name for primer in primers)]
     drawn = draw_map(copy, cut_sites=False, insertions=insertions, highlight=lit)
     tracks = _tracks(expected, results, verification, channels or [None] * len(results))
     close_ups = []
