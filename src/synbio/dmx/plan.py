@@ -20,7 +20,6 @@ from mbio.protocol.render import write_run_files
 from synbio.dmx.build import Build, read_build, read_designs
 from synbio.dmx.method import (
     PICKED_PLATE,
-    REFERENCES,
     SOURCES,
     WELL_CALLS,
     Design,
@@ -104,7 +103,6 @@ class ReadBackPlan:
                 equipment=validation_equipment(one),
                 plates=one.plates,
                 steps=validation_steps(one),
-                references=REFERENCES,
                 sources=dict(SOURCES),
             )
         )

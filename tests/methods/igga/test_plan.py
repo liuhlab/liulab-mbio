@@ -305,7 +305,7 @@ def test_the_protocol_carries_the_traps_this_method_has(protocol):
     # because a set designed on mismatches alone leaves a share that is not. Exactly none reads
     # as none; a share merely rounding to 0.0% still prints the figure.
     assert "None of the single-base deletions" in linkage
-    assert "keep the barcodes away from where a primer anneals" in representation
+    assert "Keep the barcodes away from where a primer anneals" in representation
 
 
 def test_the_finished_library_is_read_for_linkage_and_for_representation(protocol):

@@ -37,6 +37,7 @@ from synbio.igga.protocols.run import (
     CUVETTES,
     FINAL_SELECTIVE,
     PREP_KIT,
+    SCHEME_SOURCE_KEY,
     SELECTIVE,
 )
 from synbio.igga.reads import ALLOWANCE, FLANK
@@ -836,35 +837,42 @@ def test_every_reagent_the_rounds_share_lands_on_a_page(plan):
     } <= bought
 
 
-def test_no_page_cites_a_golden_gate_kit_this_run_never_buys(plan):
-    """A round runs the method's own chemistry, so E1601 answers for nobody's reaction here."""
+def test_a_page_cites_only_the_golden_gate_kit_its_own_materials_buy(plan):
+    """A round runs the method's own chemistry, so no kit answers for its reactions."""
     chain = plan.chain()
     for one in chain.protocols:
-        said = " ".join(ref.text for ref in one.references)
-        assert "E1601" not in said, one.title
+        bought = " ".join(f"{m.name} {m.catalog}" for m in one.materials)
+        for kit in ("E1601", "E1602"):
+            assert kit not in one.sources or kit in bought, f"{one.title} cites {kit}"
 
     # The one thing the final protocol borrows from that module is its cycling, and it cites
     # the documents that cycling is read from.
     final = next(one for one in chain.protocols if one.title == FINAL)
-    assert "NEBridge Ligase Master Mix" in " ".join(ref.text for ref in final.references)
+    said = " ".join(source.document for source in final.sources.values())
+    assert "NEBridge Ligase Master Mix" in said
+
+
+def test_every_document_a_page_lists_is_one_a_sentence_on_it_cites(plan):
+    """`citing` keeps the list to what the page points at, so no entry stands unreachable."""
+    for one in plan.chain().protocols:
+        assert set(one.sources) == one.cited, one.title
 
 
 def test_the_ordering_page_cites_only_the_document_its_own_numbers_come_from(plan):
     """Ordering a pool and resuspending it runs no PCR and pours no gel."""
     ordering = next(one for one in plan.chain().protocols if one.title == ORDERING)
-    said = " ".join(ref.text for ref in ordering.references)
 
-    assert "DOC-4060" in said
-    for unused in ("Colony PCR", "DNA Ladder", "Agarose Gel Resolution", "FRM-001034"):
-        assert unused not in said, unused
+    assert "DOC-4060" in ordering.sources
+    for unused in ("colony-pcr", "N3200", "agarose-resolution", "FRM-001034"):
+        assert unused not in ordering.sources, unused
 
 
-def test_the_method_reference_links_the_page_it_names(plan):
-    """A reference list prints a bare path as text, so the method gives its address too."""
-    final = next(one for one in plan.chain().protocols if one.title == FINAL)
-    named = next(one for one in final.references if "The method this build" in one.text)
+def test_the_method_source_links_the_page_it_names(plan):
+    """A sources list prints a bare path as text, so the method gives its address too."""
+    rounds = next(one for one in plan.chain().protocols if one.title == ASSEMBLY)
+    named = rounds.sources[SCHEME_SOURCE_KEY]
 
-    assert "docs/projects/igga.md" in named.text
+    assert "docs/projects/igga.md" in named.document
     assert named.url.startswith("https://")
 
 

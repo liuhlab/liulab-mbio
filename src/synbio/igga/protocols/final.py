@@ -8,11 +8,13 @@ steps, because they are a stage of the method, and what the vector would have fi
 from collections.abc import Sequence
 
 from mbio.bench.coverage import (
+    MARKS_CITATION,
     RepresentationMarks,
     absent_probability,
     colonies_for_completeness,
 )
-from mbio.bench.goldengate import assembly_program, program_references
+from mbio.bench.goldengate import SOURCES as GOLDEN_GATE_SOURCES
+from mbio.bench.goldengate import assembly_program
 from mbio.bench.inactivation import heat_inactivations
 from mbio.bench.steps import listed
 from mbio.cloning.plan import PRODUCT_FILE
@@ -23,7 +25,7 @@ from mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
 from mbio.protocol.model import (
     Figure,
     Incubation,
-    Reference,
+    Note,
     Source,
     Stage,
     Step,
@@ -141,19 +143,19 @@ class FinalLigation(Protocol):
         reads = run.reads
         return round_equipment(None if reads is None else reads.final_representation)
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Where the numbers come from, and where the scheme itself came from.
-
-        This protocol borrows one thing from the Golden Gate kit module and nothing else: the
-        cycling the one-pot assembly runs. It cites that cycling's own documents, so no kit the
-        run never buys is named here.
-        """
-        borrowed = () if run.working is None else program_references(run.working.enzyme)
-        return (*run.round_references, *borrowed)
-
     def sources(self, run: Run) -> dict[str, Source]:
-        """Return what the method's own materials and the junction figure are cited to."""
-        return dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
+        """Return what this protocol's rows, materials and figures are cited to.
+
+        This protocol borrows one thing from the Golden Gate module and nothing else: the
+        cycling the one-pot assembly runs. Each stage of it carries its own citation, so no
+        kit the run never buys is named here.
+        """
+        return (
+            run.round_sources
+            | dict(stages.SOURCES)
+            | dict(GOLDEN_GATE_SOURCES)
+            | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
+        )
 
 
 def _shredders(scheme: Scheme, product: SequenceRecord, span: Segment | None) -> tuple[Enzyme, ...]:
@@ -491,6 +493,10 @@ def _representation_step(
             marks_sentence(constructs, marks, "of what survived the move"),
         ),
         notes=(
+            Note(
+                "The three marks above are a pooled library's acceptance bar.",
+                citation=MARKS_CITATION,
+            ),
             "Linkage is read once, in the library backbone; a barcode still names the same part "
             "after the move, because the move carries the whole cargo in one piece.",
             "The forward anchor is the same retained internal stuffer, which travels with the "

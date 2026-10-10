@@ -13,7 +13,17 @@ from collections.abc import Sequence
 
 from mbio.bench.readback import clean_colony_chance
 from mbio.checks import counted
-from mbio.protocol.model import Figure, Plate, Step, Timer, Transfer, Troubleshooting, sectioned
+from mbio.protocol.model import (
+    Citation,
+    Figure,
+    Note,
+    Plate,
+    Step,
+    Timer,
+    Transfer,
+    Troubleshooting,
+    sectioned,
+)
 from synbio.dmx.kit import GROUPS
 from synbio.dmx.method import (
     BARCODE_UL,
@@ -170,8 +180,11 @@ def _pick_step(one: Validation) -> Step:
             "Every colony of one design sits on one plate.",
         ),
         notes=(
-            f"{one.colonies} colonies a design is Lund's anchor and the only measured one; four "
-            "gave a clean copy of 343 of 458 genes.",
+            Note(
+                f"{one.colonies} colonies a design is the only count measured: four gave a clean "
+                "copy of 343 of 458 genes.",
+                citation=Citation("lund-2024", "colonies screened per gene"),
+            ),
             *chances(one.designs),
             "A quarter at a time is what makes a part-filled plate give full plates downstream, "
             "and what keeps a mark off a plate that is mostly empty.",

@@ -30,8 +30,8 @@ from mbio.protocol.model import (
     Gel,
     Lane,
     Material,
+    Note,
     Plate,
-    Reference,
     Source,
     Step,
     Troubleshooting,
@@ -47,7 +47,8 @@ from synbio.igga.figures import PoolStage, pool_pcr_figure
 from synbio.igga.method import SYNTHESIS_ENZYME, Scheme
 from synbio.igga.protocols.ordering import (
     POOL_POLYMERASE,
-    POOL_REFERENCES,
+    POOL_SOURCES,
+    POOL_UNIFORMITY_CITATION,
     pool_materials,
 )
 from synbio.igga.protocols.primer_plates import working_plate
@@ -70,10 +71,11 @@ PCR2_PLATE = "PCR2 plate"
 #: same three. ``docs/research/oligo-pool-pcr-cycles.md`` section 2.
 POOL_CYCLE_BANDS: tuple[tuple[int, int, int], ...] = ((100, 6, 10), (150, 10, 12), (350, 12, 14))
 
-#: The document PCR1's cycle count is cited to, and where in it the count stands.
+#: The document PCR1's cycle count is cited to, and where in it the count stands. The second
+#: document giving the same bands is `ordering.POOL_SOURCES`, which this page also cites.
 POOL_CYCLE_SOURCE_KEY = "FRM-001034"
 POOL_CYCLE_CITATION = Citation(POOL_CYCLE_SOURCE_KEY, "p. 2, cycle chart")
-POOL_SOURCES: dict[str, Source] = {
+CYCLE_SOURCES: dict[str, Source] = {
     POOL_CYCLE_SOURCE_KEY: Source(
         "Twist Bioscience, Amplifying Twist Oligo Pools",
         edition="REV 8",
@@ -174,13 +176,9 @@ class Creation(Protocol):
         """Return the plate PCR2 runs in, one block a well."""
         return (_pcr2_plate(_pool_of(run)),)
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Return the pool's own references, which the protocol before it printed too."""
-        return POOL_REFERENCES
-
     def sources(self, run: Run) -> dict[str, Source]:
-        """Return the document PCR1's cycle count is cited to."""
-        return POOL_SOURCES
+        """Return the documents this page's reactions, gels and cycle count are cited to."""
+        return dict(POOL_SOURCES) | dict(CYCLE_SOURCES)
 
 
 def pool_cycles(length_nt: int) -> tuple[int, int]:
@@ -288,15 +286,15 @@ def _pcr1_step(
     low, high = annealing
     fewest, most = pool_cycles(length_bp)
     pairs = "; ".join(f"batch {one.number}: {one.forward} with {one.outer}" for one in batches)
-    band = (
-        f"Twist's band for a {length_bp} nt pool is {fewest} to {most} cycles; Twist Oligo "
-        "Pools Amplification Protocol DOC-4060 REV 1.0 gives the same three bands. Its FAQ "
-        "answers that more cycles give worse uniformity"
+    band = Note(
+        f"The band for a {length_bp} nt pool is {fewest} to {most} cycles, and more cycles "
+        "give worse uniformity"
         + (
             f", so {fewest} is what prints."
             if measured is None
             else ", and it is stated against another polymerase."
-        )
+        ),
+        citation=POOL_UNIFORMITY_CITATION,
     )
     return Step(
         f"PCR1: pull {_counted(len(batches), 'batch')} out of the pool",

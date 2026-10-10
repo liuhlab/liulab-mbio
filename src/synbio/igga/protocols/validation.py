@@ -11,7 +11,7 @@ ways of one job: the bench does one of them.
 """
 
 from mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
-from mbio.protocol.model import Citation, Figure, Material, Plate, Reference, Source, Step
+from mbio.protocol.model import Citation, Figure, Material, Plate, Source, Step
 from mbio.protocol.model import Item as Handed
 from mbio.sequence import Segment, SequenceRecord
 from synbio import dmx
@@ -85,13 +85,9 @@ class ReadBack(Protocol):
         """Return the plates the read-back fills, so every well a transfer names has one."""
         return self.validation.plates
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Where the route's own numbers are read from."""
-        return dmx.REFERENCES
-
     def sources(self, run: Run) -> dict[str, Source]:
         """Every document the route could cite."""
-        return dmx.SOURCES
+        return dict(dmx.SOURCES)
 
 
 def _marking_figure(run: Run, validation: dmx.Validation) -> Figure | None:

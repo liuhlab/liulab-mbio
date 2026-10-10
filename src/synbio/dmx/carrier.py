@@ -15,17 +15,19 @@ it.
 """
 
 import dataclasses
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from mbio.bench import plates
 from mbio.checks import counted
 from mbio.edits import EditReport, insert, ordered
 from mbio.protocol.model import (
     FORMATS,
+    Citation,
     Material,
     Plate,
-    Reference,
+    Source,
     Step,
     Timer,
     Troubleshooting,
@@ -46,15 +48,16 @@ CARRIER_KIT = "Zero Blunt TOPO PCR Cloning Kit"
 
 #: Where the reaction's own numbers are read from: the kit's user guide, which
 #: ``docs/research/synthesis-and-assembly.md`` section 6.11 reads the blunt point against.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide, for a vector "
-        "supplied linearised with topoisomerase I bound to each 3' end and a 5 min "
-        "room-temperature reaction"
-    ),
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "zero-blunt-topo": Source(
+            "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide",
+            note="docs/research/synthesis-and-assembly.md",
+        )
+    }
 )
 
-#: How long the reaction stands at room temperature, as the user guide in `REFERENCES` gives.
+#: How long the reaction stands at room temperature, as the user guide in `SOURCES` gives.
 SEAT_SECONDS = 300
 
 #: The head-to-head pair topoisomerase I sits either side of. The enzyme cleaves after 5'-CCCTT
@@ -284,6 +287,7 @@ def materials() -> tuple[Material, ...]:
                 "supplies the carrier already linearised with topoisomerase I bound to each 3' "
                 "end, so the reaction adds no ligase and no other enzyme"
             ),
+            citation=Citation("zero-blunt-topo", "TOPO cloning reaction"),
         ),
     )
 
