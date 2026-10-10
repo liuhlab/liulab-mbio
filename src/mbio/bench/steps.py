@@ -18,8 +18,8 @@ from mbio.bench.amounts import (
     Amount,
 )
 from mbio.bench.amounts import SOURCES as AMOUNT_SOURCES
-from mbio.bench.gels import RESOLUTION_CITATION, agarose_percent, choose_ladder
 from mbio.bench.gels import SOURCES as GEL_SOURCES
+from mbio.bench.gels import agarose_percent, choose_ladder, resolution_note
 from mbio.bench.materials import KIT_SOURCES, POLYMERASE_ON_ICE, kit_citation, material
 from mbio.bench.materials import SOURCES as MATERIAL_SOURCES
 from mbio.bench.pcr import SOURCES as PCR_SOURCES
@@ -438,11 +438,7 @@ def gel_step(amplicons: Sequence[tuple[str, int]]) -> Step:
             ),
         ),
         expected=tuple(f"{name}: one band at {length_bp} bp." for name, length_bp in amplicons),
-        notes=(
-            Note(
-                f"{percent:g}% agarose resolves bands of these sizes.", citation=RESOLUTION_CITATION
-            ),
-        ),
+        notes=(resolution_note(percent),),
         troubleshooting=(
             Troubleshooting(
                 "A smear or an extra band",
@@ -555,8 +551,10 @@ def cleanup_step(
     """Return the spin-column cleanup of every amplicon, carrying the caller's own words.
 
     `kit` is the product the run cleans up with, which the step names and the protocol's
-    materials list it as; `mbio.bench.materials.kit` resolves what the caller was told.
+    materials list it as; `mbio.bench.materials.kit` resolves what the caller was told. The
+    recovery entry shows only for a kit whose own manual gives it, as ADR 0019 asks.
     """
+    recovery = kit_citation(kit, "troubleshooting, low DNA yield")
     return Step(
         "Purify every amplicon",
         key="purify-amplicons",
@@ -568,10 +566,16 @@ def cleanup_step(
         expected=("Clean DNA, free of polymerase, primers and dNTPs.",),
         notes=tuple(notes),
         troubleshooting=(
-            Troubleshooting(
-                "Low recovery",
-                "Elute in a larger volume and leave the buffer on the column longer.",
-                citation=kit_citation(kit, "troubleshooting, low DNA yield"),
+            *(
+                (
+                    Troubleshooting(
+                        "Low recovery",
+                        "Elute in a larger volume and leave the buffer on the column longer.",
+                        citation=recovery,
+                    ),
+                )
+                if recovery
+                else ()
             ),
             *troubleshooting,
         ),

@@ -479,6 +479,7 @@ def _cycling_step(
     fidelity: FidelityReport,
 ) -> Step:
     """Run it, and the heat inactivation the supplier gives."""
+    scored = fidelity_citation(fidelity)
     programs = [assembly_program(enzyme, fragments=fragments)]
     kill = heat_inactivation(enzyme)
     if kill is not None:
@@ -500,10 +501,16 @@ def _cycling_step(
         programs=tuple(programs),
         expected=tuple(expected),
         notes=(
-            Note(
-                "The fidelity this design was scored on is read from ligation counts "
-                "measured for this enzyme.",
-                citation=fidelity_citation(fidelity),
+            *(
+                (
+                    Note(
+                        "The fidelity this design was scored on is read from measured "
+                        "ligation counts.",
+                        citation=scored,
+                    ),
+                )
+                if scored
+                else ()
             ),
             "Junction positions are 1-based, on the product.",
         ),

@@ -18,7 +18,7 @@ from types import MappingProxyType
 
 from mbio import checks as judged
 from mbio.bench.amounts import Amount
-from mbio.bench.gels import RESOLUTION_CITATION, agarose_percent, choose_ladder
+from mbio.bench.gels import agarose_percent, choose_ladder, resolution_note
 from mbio.bench.inactivation import heat_inactivation
 from mbio.bench.materials import kit
 from mbio.bench.oligos import oligo_row
@@ -135,23 +135,11 @@ SUPPLIER = "New England Biolabs"
 #: read into `docs/research/restriction-ligation.md`, which names where it was fetched from.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
-        "T1120": Source(
-            "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
-            edition="version 2.0 10.25",
-            date="2026-09-18",
-            note="docs/research/restriction-ligation.md",
-        ),
         "NEB-background-faq": Source(
             "New England Biolabs FAQ, How can I reduce the number of vector-only background "
             "colonies?",
             edition="capture 2019-11-23",
             read_as="Wayback Machine",
-            date="2026-09-18",
-            note="docs/research/restriction-ligation.md",
-        ),
-        "T1130": Source(
-            "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
-            edition="version 1.0 06.24",
             date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
@@ -676,9 +664,7 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
         notes=(
             "The junctions put both recognition sites back, so the pair that made the clone is "
             "what cuts the insert out of it again.",
-            Note(
-                f"{percent:g}% agarose resolves bands of these sizes.", citation=RESOLUTION_CITATION
-            ),
+            resolution_note(percent),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -999,9 +985,7 @@ def _purify_step(
                 f"the ligation.{_heat(vector_pieces, source_pieces)}",
                 citation=Citation("NEB-heat-inactivation", "enzymes heat does not inactivate"),
             ),
-            Note(
-                f"{percent:g}% agarose resolves bands of these sizes.", citation=RESOLUTION_CITATION
-            ),
+            resolution_note(percent),
         ),
         troubleshooting=(
             Troubleshooting(

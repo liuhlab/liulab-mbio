@@ -203,14 +203,16 @@ PROFILE_KEY = "ligase-profile"
 
 
 def fidelity_sources(report: FidelityReport) -> dict[str, Source]:
-    """Return the documents a fidelity score may be read from: the paper, and the user's file.
+    """Return the document this fidelity score was read from, or nothing where the rules scored it.
 
-    A protocol merges them into its `sources`; `citing` keeps the one `fidelity_citation` names.
+    A protocol merges it into its `sources`, where `fidelity_citation`'s key resolves against it.
     """
-    return {
-        "pryor-2020": SOURCES["pryor-2020"],
-        PROFILE_KEY: Source(f"Ligase profile, {report.source}"),
-    }
+    cited = fidelity_citation(report)
+    if cited is None:
+        return {}
+    if cited.source == PROFILE_KEY:
+        return {PROFILE_KEY: Source(f"Ligase profile, {report.source}")}
+    return {"pryor-2020": SOURCES["pryor-2020"]}
 
 
 def fidelity_citation(report: FidelityReport) -> Citation | None:

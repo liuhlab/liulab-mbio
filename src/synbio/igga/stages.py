@@ -21,7 +21,7 @@ from synbio.igga.bench import DIGEST_SOURCE, DIGEST_SOURCE_KEY
 
 #: The documents a citation in this protocol could resolve against: the ones a material brings
 #: with it, and the specifications a digest's unit count is read from. The round's own numbers
-#: are the paper's and travel as references, not as cited rows.
+#: are the paper's, and the rows resting on them cite it.
 #: Copied whole rather than picked over, because which of them a run cites depends on the steps
 #: it builds; `mbio.protocol.citing` drops the rest before the protocol is returned.
 SOURCES: dict[str, Source] = dict(materials.SOURCES) | {DIGEST_SOURCE_KEY: DIGEST_SOURCE}

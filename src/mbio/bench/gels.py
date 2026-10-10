@@ -6,7 +6,7 @@ Both are NEB's, through ``docs/research/primer-design-and-pcr.md``.
 from collections.abc import Mapping
 from types import MappingProxyType
 
-from mbio.protocol.model import Citation, Ladder, Source
+from mbio.protocol.model import Citation, Ladder, Note, Source
 
 #: NEB's two ladders, each with 500 and 517 counted as the one band NEB counts them as.
 LADDER_100_BP = Ladder(
@@ -97,6 +97,14 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
 
 #: Where `agarose_percent` is read.
 RESOLUTION_CITATION = Citation("agarose-resolution", "optimum resolution for linear DNA")
+
+
+def resolution_note(percent: float) -> Note:
+    """Return the note saying this percentage resolves the bands the step expects."""
+    return Note(
+        f"{percent:g}% agarose resolves bands of these sizes.", citation=RESOLUTION_CITATION
+    )
+
 
 #: Where each ladder's bands are read, keyed by its catalogue number.
 LADDER_CITATIONS: Mapping[str, Citation] = MappingProxyType(

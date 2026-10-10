@@ -78,7 +78,10 @@ error: plan/protocol.json: protocol.steps[3].instructions: expected a list, got 
 ```
 
 Here a list of instructions had been replaced by one string. The render stops and writes
-nothing, so a slip shows up now rather than on the page you carry to the bench.
+nothing, so a slip shows up now rather than on the page you carry to the bench. A file written
+before documents were merged into `sources` carries a `references` list, which is refused the
+same way: give each of those documents a key in `sources` and a `citation` on the row or note
+that rests on it. A source nothing cites is left off the page, so every one needs its citation.
 
 ## Keep it where a rerun will not land on it
 

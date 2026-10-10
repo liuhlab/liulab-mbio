@@ -423,7 +423,7 @@ def _release_step(
             Note(
                 "One tube takes the whole part list: every member carries the same stuffers "
                 "and differs only in its coding bases and its barcode.",
-                citation=Citation(SCHEME_SOURCE_KEY),
+                citation=Citation(SCHEME_SOURCE_KEY) if scheme.source else None,
             ),
             "The amounts are weighed at the pool's mean block length, "
             f"{row.donor_digest.length_bp} bp.",

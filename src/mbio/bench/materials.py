@@ -206,9 +206,6 @@ KIT_SOURCES: Mapping[str, Source] = MappingProxyType(
 #: lab that uses another one names it per run; no lab's habit is written in here.
 DEFAULT_CLEANUP_KIT = "T1130"
 
-#: Where a material's own numbers are read, keyed by catalogue number: a ladder's bands.
-CITATIONS: Mapping[str, Citation] = LADDER_CITATIONS
-
 #: Every catalogue number these parameters are keyed by. A number is keyed without its pack
 #: size, because a pack size changes nothing about the thing in the tube.
 _KEYED = (
@@ -217,7 +214,7 @@ _KEYED = (
     | CONTAINS.keys()
     | CAUTIONS.keys()
     | KITS.keys()
-    | CITATIONS.keys()
+    | LADDER_CITATIONS.keys()
 )
 
 
@@ -342,5 +339,5 @@ def material(
         contains=contains(catalog),
         rules=rules(catalog),
         cautions=cautions(catalog),
-        citation=citation or CITATIONS.get(_key(catalog)),
+        citation=citation or LADDER_CITATIONS.get(_key(catalog)),
     )
