@@ -5,8 +5,8 @@ own files; it picks the enzymes, designs the oligos, builds the plasmid you shou
 writes the bench protocol. One command plans a whole job. Everything it writes is a file you
 can open — a map in SnapGene, a sheet in a spreadsheet, one page in a browser.
 
-One install gives two commands: `mbio` for a job with a standard name, and `synbio` for a
-method this lab named. [Two commands](two-packages.md) says which one a job wants.
+One install gives two commands: `mbio` for a job with a standard name, and `synbio` for this
+lab's own projects, iGGA and DMX. [Two commands](two-packages.md) says which one a job wants.
 
 ```mermaid
 graph LR
@@ -24,16 +24,16 @@ Each row is one job, with a worked run you can repeat. For a cloning job,
 | What you want | Start here |
 | --- | --- |
 | Join fragments in one tube, in the order you choose | [Golden Gate assembly](methods/golden-gate.md) |
-| Join fragments by bases they share, with no enzyme site anywhere | [Gibson assembly](methods/gibson.md) |
-| Cut and paste at a pair of sites both plasmids carry | [Restriction and ligation](methods/restriction-ligation.md) |
-| Move a gene between plasmids that carry att sites | [Gateway cloning](methods/gateway.md) |
+| Join fragments by bases they share, with no enzyme site needed | [Gibson assembly](methods/gibson.md) |
+| Cut and paste at a pair of restriction sites | [Restriction and ligation](methods/restriction-ligation.md) |
+| Move a gene between plasmids by recombining att sites | [Gateway cloning](methods/gateway.md) |
 | A primer pair for a fragment, checked against a whole genome | [Primer design](methods/primers.md) |
 | Barcodes far enough apart that no two can be read as one | [Barcode sets](methods/barcodes.md) |
 | A protein written as DNA for a host, free of the sites you name | [Codon optimisation](methods/codon-optimisation.md) |
 | A plasmid map to look at, or a figure for a paper | [Maps and figures](methods/maps.md) |
 
-The next two are projects rather than single reactions: many plates, and one bench page for
-each sitting.
+The next two are projects, run with `synbio`. Each works across a library or a plate of wells,
+not one plasmid.
 
 | What you want | Start here |
 | --- | --- |
@@ -50,7 +50,7 @@ pixi install
 ```
 
 That reads `pyproject.toml` and builds the environment from the lock file, so you get the
-same versions the tests ran on. Both commands are now on your path.
+same versions the tests ran on. You now have both commands.
 
 ## Run it
 
