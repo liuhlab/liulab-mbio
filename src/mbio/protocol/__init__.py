@@ -33,8 +33,7 @@ fields without a default are required; `write_protocol` writes every field::
                  "destination": {"plate", "well"}}]}],
          "holes": [{"id", "missing", "kind", "where", "filled_by"}],
          "gels": [{"title", "ladder": {"name", "bands_bp"}, "lanes": [{"label", "bands_bp"}]}],
-         "expected": [str], "troubleshooting": [{"problem", "solution"}]}],
-     "references": [{"text", "url"}],
+         "expected": [str], "troubleshooting": [{"problem", "solution", "citation"}]}],
      "sources": {key: {"document", "edition", "url", "read_as", "date", "note"}},
      "holes": [{"id", "missing", "kind", "where", "filled_by"}],
      "bill": {"title", "currency", "total", "record",
@@ -62,10 +61,11 @@ mark, a protocol's names the store those marks are kept in. A pipeline writes bo
 a title costs the bench nothing. Left empty, a step falls back to its title and a page to a
 digest of its content.
 
-A number's provenance is its row's ``"citation"``, whose ``"source"`` keys ``"sources"``. A
-number nobody published is a ``"hole"``: the field it belongs to stays empty and the hole stands
-beside it, so a loader never reads a union and a reader never sees a guess. A rule hangs on the
-material it belongs to, so it follows the material into every step that uses it.
+A claim's provenance is its row's ``"citation"``, whose ``"source"`` keys ``"sources"``; a page
+lists only the sources a citation names. A number nobody published is a ``"hole"``: the field it
+belongs to stays empty and the hole stands beside it, so a loader never reads a union and a
+reader never sees a guess. A rule hangs on the material it belongs to, so it follows the
+material into every step that uses it.
 """
 
 from mbio.protocol.model import (
@@ -93,7 +93,6 @@ from mbio.protocol.model import (
     Project,
     Protocol,
     ReactionTable,
-    Reference,
     Rule,
     Source,
     Stage,
@@ -179,7 +178,6 @@ __all__ = [
     "Protocol",
     "ProtocolFiles",
     "ReactionTable",
-    "Reference",
     "Rule",
     "RunFiles",
     "Source",

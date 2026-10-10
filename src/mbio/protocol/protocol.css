@@ -404,5 +404,4 @@ tfoot .muted { font-weight: 400; }
   .calc-plan { display: none !important; }
   .calc-warning { border: 1px solid var(--line); }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
-  .references a::after { content: none; }
 }

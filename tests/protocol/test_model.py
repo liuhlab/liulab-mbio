@@ -25,7 +25,6 @@ from mbio.protocol import (
     Project,
     Protocol,
     ReactionTable,
-    Reference,
     Source,
     Stage,
     Step,
@@ -166,7 +165,7 @@ def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
         lambda: Oligo(
             "M13 fwd", "GTAAAACG", status="pass", checks=(Check("length", "warn", "17"),)
         ),
-        lambda: Reference("x", url="javascript:alert(1)"),
+        lambda: Source("x", url="javascript:alert(1)"),
         lambda: Figure((), "The product"),
         lambda: Figure(("a.dna",), " "),
         lambda: Figure(("a.dna",), "The product", span=(400, 100)),
@@ -274,7 +273,7 @@ def test_a_protocol_reads_from_its_json_file(data_dir: Path) -> None:
     assert gel.ladder.name == "1 kb ladder"
     assert gel.lanes[1].bands_bp == ()
     assert protocol.steps[2].troubleshooting[0].problem == "No band"
-    assert protocol.references[0].url == "https://example.org/pcr"
+    assert protocol.sources["example"].url == "https://example.org/pcr"
 
 
 def test_a_protocol_written_as_json_reads_back_equal(data_dir: Path, tmp_path: Path) -> None:
@@ -306,7 +305,6 @@ def test_every_field_is_written_in_its_declared_order_even_when_empty(tmp_path: 
             '  "vessels": [],',
             '  "plates": [],',
             '  "steps": [],',
-            '  "references": [],',
             '  "sources": {},',
             '  "holes": [],',
             '  "bill": null',

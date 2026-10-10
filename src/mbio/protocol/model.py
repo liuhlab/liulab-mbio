@@ -125,7 +125,7 @@ def number(value: float) -> str:
 
 @dataclass(frozen=True, slots=True)
 class Source:
-    """A document a number was read from, named once and cited by key.
+    """A document a claim on the page rests on, named once and cited by key.
 
     Parameters
     ----------
@@ -163,11 +163,11 @@ class Source:
 
 @dataclass(frozen=True, slots=True)
 class Citation:
-    """Where in a source one row's number stands.
+    """Where in a source the claim one row or sentence makes stands.
 
     Provenance is per row, not per number: a citation hangs on the component, the incubation,
-    the cycling stage, the material or the bill row that carries the number, and on the
-    troubleshooting entry whose solution it gives.
+    the cycling stage, the material or the bill row that carries the number, and on the note,
+    caution or troubleshooting entry whose sentence it backs.
 
     Parameters
     ----------
@@ -898,22 +898,6 @@ class Troubleshooting:
 
 
 @dataclass(frozen=True, slots=True)
-class Reference:
-    """A citation, with an optional http(s) link."""
-
-    text: str
-    _: KW_ONLY
-    url: str = ""
-
-    def __post_init__(self) -> None:
-        """Refuse a link that is not http or https."""
-        _require(
-            not self.url or self.url.startswith(("http://", "https://")),
-            f"reference url must be http(s), got {self.url!r}",
-        )
-
-
-@dataclass(frozen=True, slots=True)
 class Vessel:
     """Something the bench holds material in whose contents have no positions.
 
@@ -1568,10 +1552,11 @@ class Protocol:
         page declaring what it mentions.
     vessels, plates
         What the run holds material in, and where each thing sits.
-    steps, references
+    steps
         In the order they are shown.
     sources
-        Every document a number was read from, keyed by what a `Citation` names it.
+        Every document a claim on the page rests on, keyed by what a `Citation` names it. A
+        page lists only the ones its citations name.
     holes
         Numbers missing from the run as a whole. One belonging to a step sits on that step.
     bill
@@ -1597,7 +1582,6 @@ class Protocol:
     vessels: tuple[Vessel, ...] = ()
     plates: tuple[Plate, ...] = ()
     steps: tuple[Step, ...] = ()
-    references: tuple[Reference, ...] = ()
     sources: Mapping[str, Source] = field(default_factory=dict, hash=False)
     holes: tuple[Hole, ...] = ()
     bill: Bill | None = None
@@ -2027,8 +2011,8 @@ def citing(protocol: Protocol) -> Protocol:
     """Return `protocol` with the sources its own citations name, and no others.
 
     A builder hands in every document the method might read from; which of them this run cited
-    depends on the steps it built. Dropping the rest is what keeps the reference list to
-    documents the reader can follow back to a row on the page.
+    depends on the steps it built. Dropping the rest keeps the data to documents the reader can
+    follow back to a sentence on the page.
 
     Examples
     --------

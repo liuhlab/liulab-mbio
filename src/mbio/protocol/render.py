@@ -40,7 +40,6 @@ from mbio.protocol.model import (
     Project,
     Protocol,
     ReactionTable,
-    Reference,
     Rule,
     Source,
     Stamp,
@@ -426,7 +425,7 @@ def render_html(
         ]
     )
     body, listed, at = _numbered(body, protocol.sources)
-    body += _sources(listed, at=at) + _references(protocol.references)
+    body += _sources(listed, at=at)
     return _page(protocol.title, page_key(protocol), body, folder, here, _within(protocol, keys))
 
 
@@ -566,20 +565,16 @@ def render_reagents(project: Project, folder: Folder) -> str:
 
 
 def render_references(project: Project, folder: Folder) -> str:
-    """Return every document the run was built from, each naming the protocols that cite it."""
-    blocks = (
-        ("references", "References", _references(*_merged_references(project))),
-        ("sources", "Sources", _sources(*_merged_sources(project))),
-    )
-    jumps = [(anchor, label) for anchor, label, block in blocks if block]
-    empty = "" if jumps else "<p>No protocol of this run cites a document.</p>\n"
+    """Return every document the run cites, each naming the pages that cite it and where."""
+    block = _sources(*_merged_sources(project))
+    empty = "" if block else "<p>No protocol of this run cites a document.</p>\n"
     return _shared(
         project,
         folder,
         folder.references,
         "References",
-        f"<h1>References</h1>\n{empty}" + "".join(block for _, _, block in blocks),
-        jumps,
+        f"<h1>References</h1>\n{empty}{block}",
+        [("sources", "Sources")] if block else [],
     )
 
 
@@ -1145,15 +1140,6 @@ def _kit(project: Project) -> str:
     )
 
 
-def _merged_references(project: Project) -> tuple[tuple[Reference, ...], tuple[str, ...]]:
-    """Every reference the run holds, once each, with the protocols holding it."""
-    holders: dict[Reference, list[str]] = {}
-    for protocol in project.protocols:
-        for reference in protocol.references:
-            holders.setdefault(reference, []).append(protocol.title)
-    return tuple(holders), tuple(", ".join(dict.fromkeys(n)) for n in holders.values())
-
-
 class _RunSources(NamedTuple):
     """The run's sources list, in the order `_sources` takes it."""
 
@@ -1163,27 +1149,28 @@ class _RunSources(NamedTuple):
 
 
 def _merged_sources(project: Project) -> _RunSources:
-    """Every document a number was read from, once each, with what cites it and where in it.
+    """Every document the run cites, once each, with what cites it and where in it.
 
     The run's own come first, each cited by the bill where a row of it cites one;
     `docs/adr/0018-a-project-chains-protocols.md` says why a run names any source at all. Where
-    in a document it is cited is gathered over the whole run, as what cites it is.
+    in a document it is cited is gathered over the whole run, as what cites it is. A document
+    nothing in the run cites is not listed, so no entry is one no mark points at.
     """
     billed = project.bill.cited if project.bill else frozenset()
     found: dict[str, Source] = dict(project.sources)
-    citers: dict[str, list[str]] = {
-        key: [CITED_BY_BILL] for key in project.sources if key in billed
-    }
     for protocol in project.protocols:
         for key, source in protocol.sources.items():
             found.setdefault(key, source)
+    citers: dict[str, list[str]] = {key: [CITED_BY_BILL] for key in found if key in billed}
+    for protocol in project.protocols:
+        for key in (one for one in found if one in protocol.cited):
             citers.setdefault(key, []).append(protocol.title)
     at: dict[str, list[str]] = {}
     bill = project.bill.citations if project.bill else ()
     for citation in (*bill, *(one for p in project.protocols for one in p.citations)):
         at.setdefault(citation.source, []).append(citation.locator)
     return _RunSources(
-        found,
+        {key: source for key, source in found.items() if key in at},
         {key: ", ".join(dict.fromkeys(names)) for key, names in citers.items()},
         {key: tuple(dict.fromkeys(one for one in places if one)) for key, places in at.items()},
     )
@@ -1911,22 +1898,18 @@ def _cite(citation: Citation | None, sources: str = "") -> str:
     )
 
 
-def _after(citation: Citation | None, sources: str = "") -> str:
-    """`_cite` where the mark follows text; the same mark, meeting the text with no space."""
-    return _cite(citation, sources)
-
-
 def _numbered(
     html: str, sources: Mapping[str, Source], *, elsewhere: bool = False
 ) -> tuple[str, dict[str, Source], dict[str, tuple[str, ...]]]:
     """Return `html` with each citation numbered, the list numbered, and where each is cited.
 
     A citation becomes a bracketed superscript number: one a document, whichever row cites it,
-    and the number is the document's place in the list handed back. A page's own list leads
-    with what the page cites, in the order it first does, and ends with the rest; a list
-    standing `elsewhere` keeps the order `sources` gives, which is how that page lists it. A key
-    the list lacks shows the key, never a number no entry carries. The last value names, key by
-    key in order of first citation, the locators the page cites it at.
+    and the number is the document's place in the list handed back. A page's own list holds
+    what the page cites, in the order it first does, and nothing else, so no entry is one no
+    mark points at; a list standing `elsewhere` keeps the order `sources` gives, which is how
+    that page lists it. A key the list lacks shows the key, never a number no entry carries.
+    The last value names, key by key in order of first citation, the locators the page cites
+    it at.
     """
     at: dict[str, list[str]] = {}
     for found in _CITED.finditer(html):
@@ -1934,7 +1917,7 @@ def _numbered(
         if (locator := unescape(found[3])) and locator not in places:
             places.append(locator)
     cited = {key: sources[key] for key in at if key in sources}
-    listed = dict(sources) if elsewhere else {**cited, **sources}
+    listed = dict(sources) if elsewhere else cited
     numbers = {key: str(n) for n, key in enumerate(listed, 1)}
 
     def number(found: re.Match[str]) -> str:
@@ -1958,7 +1941,7 @@ def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
     items = "".join(
         f'<li class="rule is-{rule.kind}"><strong>{escape(carrier)}: '
         f"{escape('never' if rule.kind == 'forbids' else 'always')} "
-        f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_after(rule.citation, sources)}</li>"
+        f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_cite(rule.citation, sources)}</li>"
         for carrier, rule in rules
     )
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
@@ -1972,7 +1955,7 @@ def _cautions(cautions: Iterable[Caution], paths: Sequence[str] = ()) -> str:
     """
     return "".join(
         f'<p class="caution"><strong>Caution:</strong> {_linked(one.text, paths)}'
-        f"{_after(one.citation)}</p>\n"
+        f"{_cite(one.citation)}</p>\n"
         for one in cautions
     )
 
@@ -2126,7 +2109,7 @@ def _figure(figure: Figure, base: Path, where: str, maps: Mapping[str, str]) -> 
     if unlit:
         listed = ", ".join(repr(name) for name in unlit)
         raise ValueError(f"{where}: no record of this figure draws {listed} to highlight")
-    caption = f"<figcaption>{escape(figure.caption)}{_after(figure.citation)}</figcaption>"
+    caption = f"<figcaption>{escape(figure.caption)}{_cite(figure.citation)}</figcaption>"
     openers = [
         _opener(maps.get(named), drawn.record.name)
         for named, drawn in zip(figure.records, rows, strict=True)
@@ -2207,7 +2190,7 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
     meta = _transfer_meta(transfer, stamp)
     return (
         f'<figure class="drawing transfer rows"><figcaption>{escape(transfer.title)} '
-        f'<span class="muted">{escape(meta)}</span>{_after(transfer.citation)}</figcaption>'
+        f'<span class="muted">{escape(meta)}</span>{_cite(transfer.citation)}</figcaption>'
         f'{drawn}<details class="listing"><summary>{_count(len(transfer.moves), "move")}'
         f"</summary>{_moves(transfer)}</details></figure>\n"
     )
@@ -2218,7 +2201,7 @@ def _transfer_table(transfer: Transfer) -> str:
     return (
         f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
         f'<span class="muted">{escape(_transfer_meta(transfer))}</span>'
-        f"{_after(transfer.citation)}</figcaption>{_moves(transfer)}</figure>\n"
+        f"{_cite(transfer.citation)}</figcaption>{_moves(transfer)}</figure>\n"
     )
 
 
@@ -2271,7 +2254,7 @@ def _bill(bill: Bill | None, sources: str = "") -> str:
         charge = (
             f'<span class="hole-none">{NO_NUMBER}</span>'
             if row.hole
-            else escape(row.charge) + _after(row.citation, sources)
+            else escape(row.charge) + _cite(row.citation, sources)
         )
         quantity = (
             f"{number(row.quantity)} {escape(row.unit)}"
@@ -2313,12 +2296,11 @@ def _sources(
     cited: Mapping[str, str] | None = None,
     at: Mapping[str, Sequence[str]] | None = None,
 ) -> str:
-    """Every document a number was read from, numbered as `_numbered` numbers its citations.
+    """Every document the page cites, numbered as `_numbered` numbers its citations.
 
     The list keeps the order `sources` gives, so an entry's number is its place in it. `at`
     names, key by key, the places in each document the page cites; `cited` names what cites
-    each on the page a run shares. A key either leaves out is listed without it, which is what
-    a source nothing cites has.
+    each on the page a run shares. A key either leaves out is listed without it.
     """
     if not sources:
         return ""
@@ -2407,13 +2389,13 @@ def _step(
     if step.troubleshooting:
         entries = "".join(
             f"<dt>{escape(t.problem)}</dt>"
-            f"<dd>{_linked(t.solution, protocol.files)}{_after(t.citation)}</dd>"
+            f"<dd>{_linked(t.solution, protocol.files)}{_cite(t.citation)}</dd>"
             for t in step.troubleshooting
         )
         parts.append(f'<div class="trouble"><h3>Troubleshooting</h3><dl>{entries}</dl></div>\n')
     if step.notes:
         items = "".join(
-            f"<li>{_linked(note.text, protocol.files)}{_after(note.citation)}</li>"
+            f"<li>{_linked(note.text, protocol.files)}{_cite(note.citation)}</li>"
             for note in step.noted
         )
         parts.append(f'<div class="notes"><h3>Notes</h3><ul>{items}</ul></div>\n')
@@ -2436,7 +2418,7 @@ def _waits(waits: tuple[Wait, ...], sources: str = "") -> str:
             if wait.duration
             else f'<span class="hole-none">{NO_NUMBER}</span>'
         )
-        + f"{_after(wait.citation, sources)}</li>"
+        + f"{_cite(wait.citation, sources)}</li>"
         for wait in waits
     )
     return f'<ul class="waits" aria-label="Waiting">{items}</ul>\n'
@@ -2455,7 +2437,7 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
     volume_class = "num one" if live else "num"
     rows = []
     for row, component in enumerate(table.components):
-        cells = [f"<td>{escape(component.name)}{_after(component.citation)}</td>"]
+        cells = [f"<td>{escape(component.name)}{_cite(component.citation)}</td>"]
         if component.calculator is not None:
             assumed = component.calculator.nanograms / component.volume_ul
             field = _reader_number(f"{key}.row.{row}", assumed, "ng/µL", component.name)
@@ -2615,7 +2597,7 @@ def _program(key: str, program: ThermocyclerProgram) -> str:
             else f"×{stage.cycles}"
             if stage.cycles > 1
             else str(stage.cycles)
-        ) + _after(stage.citation)
+        ) + _cite(stage.citation)
         rows = []
         for i, step in enumerate(stage.incubations):
             time = "∞" if step.seconds is None else _duration(step.seconds)
@@ -2623,7 +2605,7 @@ def _program(key: str, program: ThermocyclerProgram) -> str:
                 f'<td class="num" rowspan="{len(stage.incubations)}">{count}</td>' if i == 0 else ""
             )
             rows.append(
-                f"<tr><td>{escape(step.label)}{'' if shared else _after(step.citation)}</td>"
+                f"<tr><td>{escape(step.label)}{'' if shared else _cite(step.citation)}</td>"
                 f'<td class="num">{_temperature(step, stage.cycles)}</td>'
                 f'<td class="num">{time}</td>{cycles}</tr>'
             )
@@ -2631,7 +2613,7 @@ def _program(key: str, program: ThermocyclerProgram) -> str:
     timer = program.timer
     run = "" if timer is None else f'<div class="timers">{_timer(key, timer)}</div>'
     return (
-        f'<figure class="program"><figcaption>{title}{caption}{_after(shared)}</figcaption>'
+        f'<figure class="program"><figcaption>{title}{caption}{_cite(shared)}</figcaption>'
         '<div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th>'
         f'<th class="num">Time</th><th class="num">Cycles</th></tr></thead>{"".join(bodies)}'
         f"</table></div>{run}</figure>\n"
@@ -2705,21 +2687,4 @@ def _gel(gel: Gel) -> str:
     caption = f"<figcaption>{escape(gel.title)}</figcaption>" if gel.title else ""
     return (
         f'<figure class="gel">{caption}{"".join(svg)}<ol class="gel-legend">{legend}</ol></figure>'
-    )
-
-
-def _references(references: tuple[Reference, ...], cited: tuple[str, ...] = ()) -> str:
-    """Return the reading behind the run; `cited` names which protocols hold each of them."""
-    if not references:
-        return ""
-    items = "".join(
-        f"<li>{escape(r.text)}"
-        + (f' <a href="{escape(r.url)}" rel="noreferrer">{escape(r.url)}</a>' if r.url else "")
-        + (f' <span class="cited-by">cited by {escape(cited[i])}</span>' if cited else "")
-        + "</li>"
-        for i, r in enumerate(references)
-    )
-    return (
-        '<section class="block references" id="references">\n<h2>References</h2>\n'
-        f"<ul>{items}</ul>\n</section>\n"
     )

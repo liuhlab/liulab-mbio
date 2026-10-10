@@ -100,12 +100,12 @@
       ],
       "expected": ["One band at 500 bp in the sample lane and none in the no-template lane."],
       "troubleshooting": [
-        {"problem": "No band", "solution": "Check the template and lower the annealing temperature by 3 °C."},
+        {"problem": "No band", "solution": "Check the template and lower the annealing temperature by 3 °C.", "citation": {"source": "example", "locator": "troubleshooting"}},
         {"problem": "Band in the no-template lane", "solution": "Replace the water and primers; the reagents are contaminated."}
       ]
     }
   ],
-  "references": [
-    {"text": "Example reference for the protocol format.", "url": "https://example.org/pcr"}
-  ]
+  "sources": {
+    "example": {"document": "Example source for the protocol format.", "url": "https://example.org/pcr"}
+  }
 }

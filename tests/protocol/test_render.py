@@ -578,7 +578,7 @@ def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:
     assert "59 s" in times
 
 
-def test_expected_results_troubleshooting_and_references_are_shown(page: Node) -> None:
+def test_expected_results_troubleshooting_and_sources_are_shown(page: Node) -> None:
     expected = page.find_all(cls="expected")[0].text
     assert "One band at 500 bp" in expected
     assert "Band in the no-template lane" in page.find_all(cls="trouble")[0].text
@@ -893,7 +893,10 @@ def test_a_note_that_cites_a_document_anchors_it_where_a_troubleshooting_row_doe
 
 
 def test_a_citation_is_one_number_a_document_and_its_entry_names_where_the_page_cites_it() -> None:
-    """Numbered by first citation, so the list reads in order and lands each click on its entry."""
+    """Numbered by first citation, so the list reads in order and lands each click on its entry.
+
+    A document nothing on the page cites is not listed, so no entry is one no mark points at.
+    """
     one = Protocol(
         "Digest",
         sources={"MAN": Source("Kit manual"), "NEB": Source("Guide"), "OLD": Source("Unread")},
@@ -918,7 +921,7 @@ def test_a_citation_is_one_number_a_document_and_its_entry_names_where_the_page_
     assert [
         (item.attrs["id"], [at.text for at in item.find_all(cls="cited-at")])
         for item in listed.find_all("li")
-    ] == [("source-neb", ["cited at §2 · §5"]), ("source-man", []), ("source-old", [])]
+    ] == [("source-neb", ["cited at §2 · §5"]), ("source-man", [])]
 
 
 def test_a_caution_that_cites_a_document_anchors_it_where_a_note_does() -> None:
