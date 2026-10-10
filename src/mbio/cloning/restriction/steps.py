@@ -1011,8 +1011,9 @@ def _purify_step(
             ),
             Troubleshooting(
                 "Little DNA comes off the column",
-                "Elute twice through the same column, and keep the agarose percentage low.",
-                citation=Citation("T1020", "troubleshooting, low DNA yield"),
+                "Elute in a larger volume, leave it on the column longer, and keep the agarose "
+                "percentage low.",
+                citation=Citation(GEL_KIT, "troubleshooting, low DNA yield"),
             ),
         ),
     )

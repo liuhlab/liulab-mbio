@@ -20,7 +20,7 @@ from mbio.bench.amounts import (
 from mbio.bench.amounts import SOURCES as AMOUNT_SOURCES
 from mbio.bench.gels import RESOLUTION_CITATION, agarose_percent, choose_ladder
 from mbio.bench.gels import SOURCES as GEL_SOURCES
-from mbio.bench.materials import POLYMERASE_ON_ICE, material
+from mbio.bench.materials import KIT_SOURCES, POLYMERASE_ON_ICE, kit_citation, material
 from mbio.bench.materials import SOURCES as MATERIAL_SOURCES
 from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.pcr import (
@@ -66,16 +66,11 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
         **AMOUNT_SOURCES,
         **GEL_SOURCES,
         **MATERIAL_SOURCES,
+        **KIT_SOURCES,
         "M0491": PCR_SOURCES["M0491"],
         "NEB-cloning": Source(
             "New England Biolabs, Troubleshooting Guide for Cloning",
             url="https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
-            date="2026-09-18",
-            note="docs/research/restriction-ligation.md",
-        ),
-        "T1020": Source(
-            "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
-            edition="version 2.1_4/21",
             date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
@@ -575,8 +570,8 @@ def cleanup_step(
         troubleshooting=(
             Troubleshooting(
                 "Low recovery",
-                "Elute twice through the same column, or pool two reactions before purifying.",
-                citation=Citation("T1020", "troubleshooting, low DNA yield"),
+                "Elute in a larger volume and leave the buffer on the column longer.",
+                citation=kit_citation(kit, "troubleshooting, low DNA yield"),
             ),
             *troubleshooting,
         ),

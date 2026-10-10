@@ -181,6 +181,26 @@ KITS: Mapping[str, tuple[str, str]] = MappingProxyType(
     }
 )
 
+#: Each kit's own instruction manual, keyed by catalogue number, so a step citing what a column
+#: recovers names the manual of the kit it told the reader to use. Only the kits a note under
+#: `docs/research/` already reads a number off are here.
+KIT_SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "T1120": Source(
+            "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
+            edition="version 2.0 10.25",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "T1130": Source(
+            "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+            edition="version 1.0 06.24",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+    }
+)
+
 #: The kit a step names where the run names none. It is the one this package already reads its
 #: column recovery from, so the page's numbers and its materials row name the same product. A
 #: lab that uses another one names it per run; no lab's habit is written in here.
@@ -246,6 +266,19 @@ def cautions(catalog: str) -> tuple[str, ...]:
     ('Keep the polymerase on ice.',)
     """
     return CAUTIONS.get(_key(catalog), ())
+
+
+def kit_citation(one: Material, locator: str = "") -> Citation | None:
+    """Return where this kit's own manual says what it does, or ``None`` for a kit with none.
+
+    Examples
+    --------
+    >>> kit_citation(kit(), "troubleshooting, low DNA yield").source
+    'T1130'
+    >>> kit_citation(kit("D4003")) is None
+    True
+    """
+    return Citation(_key(one.catalog), locator) if _key(one.catalog) in KIT_SOURCES else None
 
 
 def kit(named: str = "", *, note: str = "") -> Material:
