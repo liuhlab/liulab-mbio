@@ -147,9 +147,9 @@ _Avoid_: validation, rule, test
 ### Protocol
 
 A bench procedure someone can follow without asking anything: summary, materials, numbered
-steps, expected results and references. Rendered as one self-contained HTML page. It declares
-what it consumes and what it produces, and nothing else about the run it belongs to: everything
-else it needs it holds itself.
+steps, expected results and the sources they cite. Rendered as one self-contained HTML page. It
+declares what it consumes and what it produces, and nothing else about the run it belongs to:
+everything else it needs it holds itself.
 _Avoid_: SOP, recipe, method
 
 ### Item
@@ -1022,11 +1022,12 @@ _Avoid_: dispense, reformat
 
 ### Source
 
-A document a number was read from: what it is, its edition, where it was read, how, when, and
-the research note under `docs/research/` it was read into, where it has one. A protocol names
+A document a claim on the page rests on: what it is, its edition, where it was read, how, when,
+and the research note under `docs/research/` it was read into, where it has one. A protocol names
 each one once, and a run names the ones its own shared pages cite, such as the record pricing
-its bill; a **citation** of a source and a locator hangs on the row that carries the number.
-_Avoid_: reference (the protocol's own bibliography entry), provenance
+its bill; a **citation** of a source and a locator hangs on the row or sentence making the claim.
+A page lists only the sources its citations name.
+_Avoid_: reference, bibliography, provenance
 
 ### Store
 

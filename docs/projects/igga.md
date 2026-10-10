@@ -180,9 +180,9 @@ in, so the digest fixes how much meets the vector. The pages label each of those
 own figure. Copy the file without replacing them and you carry someone else's settings.
 
 Volumes, units, times and temperatures are cited step by step inside each page, and
-`references.html` lists every document. Where nothing publishes a number the page prints a
-hole, not a guess: 35 here, four at the bench and 31 prices, since this lab priced nine of the
-bill's 40 rows. Round fidelity is measured ligation data — see
+`references.html` lists every document the run cites. Where nothing publishes a number the page
+prints a hole, not a guess: 35 here, four at the bench and 31 prices, since this lab priced nine
+of the bill's 40 rows. Round fidelity is measured ligation data — see
 [how fidelity is predicted](../reference/ligation-fidelity.md). A **barcode** names a library
 part here, where a barcode-kit member marks a well;
 [barcode sets](../methods/barcodes.md) says how a set is drawn.

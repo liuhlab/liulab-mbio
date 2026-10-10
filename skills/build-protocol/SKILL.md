@@ -84,7 +84,9 @@ Rule 4 of `docs/agents/writing.md` says how each field is worded; read it before
   is a gel, give the gel: band sizes per lane and a named ladder.
 - **Troubleshooting** for what actually goes wrong at that step, each with what to do.
 - **Cautions** before a step, **notes** after it.
-- **References** for numbers you took from a vendor protocol or a paper.
+- **Sources** for what you took from a vendor protocol or a paper: name each document once in
+  `sources`, and put a `citation` naming its key on the row, note, caution or troubleshooting
+  entry that uses it. The page lists only cited sources, so one nothing cites does not show.
 
 ## Change a protocol a pipeline wrote
 
@@ -121,8 +123,8 @@ write_protocol(dataclasses.replace(protocol, steps=steps), "protocol.json")
 - **When a step changes or goes, fix everything that mentions it**: the materials, other steps'
   notes and troubleshooting, and the `oligos` rows only that step used. The loader refuses a
   wrong type, but nothing catches a stale mention.
-- **Cite a written step.** One the user described, or took from a document they named, says
-  where it came from in its notes and in `references`.
+- **Cite a written step.** One taken from a document the user named carries a `citation` on
+  the note that says what the document says, and the document goes in `sources`.
 - **Never produce, from your own knowledge, a number or a verdict the package computes or
   checks.** A value the user gives, such as another amount of DNA, goes in through the package,
   so everything that depends on it follows. When a request needs what the package cannot

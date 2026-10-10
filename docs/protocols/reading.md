@@ -137,11 +137,12 @@ drawing is a prediction, not a photograph.
 
 ## Where the numbers came from
 
-The page closes with two lists. **Sources** names each document a number was read from, with its
-edition and the day it was read. Each is numbered as the bracketed numbers in the text name it,
-and says which parts of the document the page cites, so a number still leads somewhere on paper.
-**References** is the wider reading behind the method. Where the package cannot source a number, it says so rather
-than printing a guess, and a chain collects those in a `Holes` list on its way-in page.
+The page closes with **Sources**: each document a number or a sentence on the page rests on,
+with its edition and the day it was read. Each is numbered as the bracketed numbers in the text
+name it, and says which parts of the document the page cites, so a number still leads somewhere
+on paper. Every document listed is one the page points at; none is there as further reading.
+Where the package cannot source a number, it says so rather than printing a guess, and a chain
+collects those in a `Holes` list on its way-in page.
 
 [Change a protocol](editing.md) says what you may edit here, and what you must leave to the
 package.
