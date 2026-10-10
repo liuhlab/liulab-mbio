@@ -73,7 +73,7 @@ p { margin: 0 0 0.75rem; }
 a { color: var(--accent); overflow-wrap: anywhere; }
 .muted { color: var(--muted); }
 
-.summary { font-size: 1.08rem; color: var(--muted); max-width: 44rem; }
+.summary { font-size: 1.08rem; color: var(--muted); }
 
 /* Short facts only: a card is a few words, so the row stays one height. A sentence is
    .highlights, and the model refuses one here. */
@@ -87,8 +87,12 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
 .handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
 
-.highlights { max-width: 44rem; margin: 0 0 1rem; }
-.highlights p:last-child { margin-bottom: 0; }
+/* The head reads as bands: the sentences, the verdicts and the step count each open under a thin
+   rule rather than in a box, since the facts and the handover above are boxes already. Its prose
+   takes the page's full measure, as a step's does, and no narrower cap of its own. */
+.highlights, .status, .intro .toolbar { border-top: 1px solid var(--line); padding-top: 0.9rem; margin: 1.25rem 0 0; }
+.intro .toolbar { margin-bottom: 1.25rem; }
+.highlights p:last-child, .status > :last-child { margin-bottom: 0; }
 
 .checks { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.6rem; }
 .check { display: inline-flex; align-items: baseline; gap: 0.45rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
@@ -120,12 +124,8 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc { margin: 0 0 1.5rem; }
-.toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-
-/* Both lists of steps — the standalone table of contents and a page's right column — are this
-   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
-   number is in the markup, so no counter here. */
+/* A page's list of steps, in its right column: one group per section, collapsed, so three like
+   rounds read as three rounds. The step's number is in the markup, so no counter here. */
 .step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
 .step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
 .step-group + .step-group { margin-top: 0.45rem; }
@@ -133,9 +133,6 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
 /* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
 .section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
-/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
-.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
 .block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
@@ -191,12 +188,33 @@ button.copy { font-size: 0.75rem; padding: 0.1rem 0.55rem; min-height: 1.6rem; m
 button.is-copied { border-color: var(--accent); color: var(--accent); }
 
 .timers { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-button.timer { display: inline-flex; gap: 0.5rem; align-items: baseline; }
-.timer-time { font-variant-numeric: tabular-nums; font-weight: 700; }
-.timer-action { color: var(--accent); }
-button.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
-button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.program .timers { margin-top: 0.5rem; }
+.timer { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-size: 0.85rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.2rem 0.15rem 0.8rem; }
+.timer label { display: inline-flex; gap: 0.5rem; align-items: baseline; }
+/* The time is typed over in place: a dashed rule marks it as a field until it starts. */
+.timer-time { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.timer-time:read-only { border-bottom-color: transparent; }
+.timer-action { color: var(--accent); min-height: 1.75rem; }
+.timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
+.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
+
+/* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
+   warning is the step's own troubleshooting entry in the caution colours. */
+.calc { white-space: nowrap; }
+.calc-value { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; text-align: right; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.calc-value:read-only { border-bottom-color: transparent; }
+/* The number to beat stands in an uncounted field light, so it never reads as what was counted. */
+.calc-value::placeholder { font-weight: 400; color: var(--muted); opacity: 1; }
+.calc-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
+.calc-held { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; }
+.calc-warning { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0; font-size: 0.9rem; }
+.reaction tr.is-over td, .reaction.is-over tfoot .one { color: var(--caution); font-weight: 700; }
+.net-count { margin-top: 0.6rem; }
+.net-fields { display: flex; flex-wrap: wrap; gap: 0.1rem 1.1rem; margin: 0 0 0.3rem; }
+.net-sum { margin: 0; }
+.net-sum.is-short { color: var(--caution); }
 
 /* A gel is taller than it is wide, so its height is what has to fit on the screen. */
 .gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
@@ -246,7 +264,39 @@ tfoot .muted { font-weight: 400; }
 .listing { font-size: 0.9rem; margin-top: 0.6rem; }
 .listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
-.cite { color: var(--muted); font-size: 0.85em; }
+
+/* A citation: a bracketed number that lands on its entry in the sources list. The padding is a
+   finger's target, the negative margin keeps the text from shifting, and a line height of
+   nothing keeps the raised number from opening the line. */
+.cite { text-decoration: none; padding: 0.35em 0.2em; margin: 0 -0.2em; border-radius: 4px; }
+.cite:hover { text-decoration: underline; }
+.cite:focus-visible { outline-offset: 0; }
+.cite sup { font-size: 0.72em; line-height: 0; font-variant-numeric: tabular-nums; }
+.sources ol { padding-left: 1.8rem; }
+.sources li { margin-bottom: 0.4rem; scroll-margin-top: calc(var(--bar) + 1rem); }
+.sources li:target { background: var(--accent-soft); outline: 4px solid var(--accent-soft); border-radius: 2px; }
+.sources .cited-at, .sources .cited-by { display: block; color: var(--muted); font-size: 0.9em; }
+
+/* A step's figure stands in a box of its own with its caption inside, so it never reads as one
+   of the instructions. Its drawing is drawn small; the control under it opens the record's map in
+   place, whole and to explore, and takes the small drawing's place until closed. */
+.drawing.map { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 0.75rem; }
+.drawing.map:not(.rows), .drawing.map .row { display: flex; flex-direction: column; }
+.drawing.map .opener[open] { order: -1; margin-top: 0; }
+.drawing.map .row-name { order: -2; font-weight: 600; }
+.drawing.map:has(> .opener[open]) > svg, .row:has(> .opener[open]) > svg { display: none; }
+.drawing.map svg { max-height: 24rem; width: auto; margin-inline: auto; border-radius: 6px; }
+.drawing.map figcaption { font-weight: 400; font-size: 0.92rem; margin: 0.6rem 0 0; }
+.opener { margin-top: 0.6rem; }
+.opener > summary { display: inline-flex; align-items: center; gap: 0.4rem; list-style: none; cursor: pointer; font-size: 0.85rem; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 2rem; }
+.opener > summary::-webkit-details-marker { display: none; }
+.opener > summary::before { content: "\2922"; font-size: 0.95em; }
+.opener[open] > summary::before { content: "\2715"; }
+.opener > summary:hover { border-color: var(--accent); }
+.opener[open] .to-open, .opener:not([open]) .to-close { display: none; }
+/* Tall enough for the map and its switches, and no taller than a phone's width needs. */
+.opener iframe { display: block; width: 100%; height: min(78vh, 42rem, calc(60vw + 14rem)); margin: 0.6rem 0 0.3rem; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
+.new-tab { font-size: 0.85rem; }
 
 /* A project folder: the run's nav bar across the top, a column either side of the page. */
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -254,6 +304,10 @@ tfoot .muted { font-weight: 400; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
 .frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
+/* A page outside a run has no bar and no run to list: the page, and its steps beside it. No
+   more specific than .frame, so the narrow layout below folds it as it folds a run's page. */
+.frame:where(.alone) { --bar: 0rem; grid-template-columns: minmax(0, 1fr) 12rem; max-width: calc(54rem + 1.6rem + 12rem); }
+.frame:where(.alone) .page { padding-block: 2rem 4rem; }
 .column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
@@ -311,12 +365,14 @@ tfoot .muted { font-weight: 400; }
 .kit-list .vessels { display: grid; gap: 0.3rem; }
 .hole a { white-space: nowrap; }
 
-/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+/* Too narrow for columns: each list wraps into rows above the page. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
   /* A flex item sizes to its content, so without this the widest table widens the page. */
-  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
+  .frame .page { order: 1; width: 100%; padding-block: 1.2rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  /* The last list above the page closes under a rule, so the title opens a block of its own. */
+  .column.within { align-self: stretch; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
   .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
   .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
@@ -341,7 +397,9 @@ tfoot .muted { font-weight: 400; }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
-  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
+  /* A figure prints small whether or not its map was open on screen. */
+  .drawing.map svg { display: block !important; }
   .frame { display: block; max-width: none; }
   .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
@@ -352,17 +410,21 @@ tfoot .muted { font-weight: 400; }
   /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
   .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
   .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
-  button.timer { border: 1px solid var(--line); animation: none; }
+  .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
+  .timer-time { border: none; }
+  .timer-plan { display: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
+  .calc-value { border: none; }
+  .calc-plan, .calc-held { display: none !important; }
+  .calc-warning { border: 1px solid var(--line); }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
-  .references a::after { content: none; }
 }
 </style>
 </head>
-<body data-protocol="5df991ae6ad146a5">
+<body data-protocol="0f35f4735f9390c0">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="07-final-cargo-ligation.html" aria-current="page">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-part-carrier.html">Part carrier</a></li><li><a href="02-primer-plates.html">Primer plates</a></li><li><a href="03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="04-cargo-creation.html">Cargo creation</a></li><li class="chain-choice"><span class="choice-job">Read every well back</span><ul class="chain-ways"><li><a href="05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></li><li><a href="05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li></ul></li><li><a href="06-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li class="is-here"><a href="07-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
@@ -375,7 +437,7 @@ tfoot .muted { font-weight: 400; }
 </header>
 <section class="block materials" id="materials">
 <h2>Materials</h2>
-<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th><th>Source</th></tr></thead><tbody><tr><td>pLVX-TetOne-dom vector</td><td></td><td></td><td>-20 °C</td><td></td><td>the library&#x27;s final home; PaqCI releases its ccdB cassette to admit the cargo</td><td></td></tr><tr><td>PaqCI</td><td>New England Biolabs</td><td>R0745</td><td>-20 °C</td><td>2.5 µL per digest</td><td>admits the finished cargo to the working vector</td><td></td></tr><tr><td>BsaI-HFv2</td><td>New England Biolabs</td><td>R3733</td><td>-20 °C</td><td>2.5 µL per digest</td><td>releases a part from its own block</td><td></td></tr><tr><td>PmeI</td><td>New England Biolabs</td><td>R0560</td><td>-20 °C</td><td>2.5 µL per digest</td><td>cuts the donor backbone, so it cannot ligate back</td><td></td></tr><tr><td>CutSmart Buffer</td><td></td><td></td><td>-20 °C</td><td></td><td>both digests run in it</td><td></td></tr><tr><td>T7 DNA Ligase</td><td>NEB</td><td>#M0318L</td><td>-20 °C</td><td></td><td>3,000,000 U/mL. Refuses blunt ends, which is what removes escapees.</td><td><a class="cite" href="#source-m0318">M0318 reaction conditions</a></td></tr><tr><td>StickTogether DNA Ligase Buffer</td><td>NEB</td><td>#B0535S</td><td>-20 °C</td><td></td><td>Supplied 2x. 1x is 7.5% PEG 6000, well under the 20% that would force blunt ligation.</td><td><a class="cite" href="#source-m0318">M0318 reaction conditions</a></td></tr><tr><td>SPRI paramagnetic beads</td><td></td><td></td><td></td><td>2 volumes after a digest, 1 after a ligation</td><td>the two ratios differ; both elute in water</td><td></td></tr><tr><td>Endura ElectroCompetent Cells</td><td>Lucigen</td><td>60242-2</td><td>-80 °C</td><td>4 aliquots, one a pulse, 25 µL each</td><td>pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette</td><td><a class="cite" href="#source-ma133">MA133 p. 4-5</a></td></tr><tr><td>Selective plates for the final transfer</td><td></td><td></td><td></td><td></td><td>LB with 100 µg/mL carbenicillin, the working vector&#x27;s own marker (AmpR)</td><td></td></tr><tr><td>Plasmid prep kit</td><td></td><td></td><td></td><td>one prep per round</td><td></td><td></td></tr><tr><td>Electroporation cuvettes</td><td></td><td></td><td></td><td>4, one a pulse</td><td></td><td></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> Incubator or heat block at 37 °C, Magnetic rack for the bead clean-ups, Electroporator and cuvettes, Shaking incubator at 30 °C, Spectrophotometer or fluorometer, Short-read sequencer, for the final representation read of the finished library</p><ul class="rules" aria-label="Rules"><li class="rule is-forbids"><strong>T7 DNA Ligase: never PEG</strong> Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more. <a class="cite" href="#source-m0318">M0318 reaction conditions</a></li><li class="rule is-forbids"><strong>T7 DNA Ligase: never heat inactivation</strong> Do not heat-inactivate T7 DNA ligase in PEG: transformation will be inhibited. Go from the ligation straight to the clean-up. <a class="cite" href="#source-m0318">M0318 note 4</a></li></ul>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th><th>Source</th></tr></thead><tbody><tr><td>pLVX-TetOne-dom vector</td><td></td><td></td><td>-20 °C</td><td></td><td>the library&#x27;s final home; PaqCI releases its ccdB cassette to admit the cargo</td><td></td></tr><tr><td>PaqCI</td><td>New England Biolabs</td><td>R0745</td><td>-20 °C</td><td>2.5 µL per digest</td><td>admits the finished cargo to the working vector</td><td></td></tr><tr><td>BsaI-HFv2</td><td>New England Biolabs</td><td>R3733</td><td>-20 °C</td><td>2.5 µL per digest</td><td>releases a part from its own block</td><td></td></tr><tr><td>PmeI</td><td>New England Biolabs</td><td>R0560</td><td>-20 °C</td><td>2.5 µL per digest</td><td>cuts the donor backbone, so it cannot ligate back</td><td></td></tr><tr><td>CutSmart Buffer</td><td></td><td></td><td>-20 °C</td><td></td><td>both digests run in it</td><td></td></tr><tr><td>T7 DNA Ligase</td><td>NEB</td><td>#M0318L</td><td>-20 °C</td><td></td><td>3,000,000 U/mL. Refuses blunt ends, which is what removes escapees.</td><td><a class="cite" href="#source-m0318" title="New England Biolabs #M0318 T7 DNA Ligase product page · reaction conditions"><sup>[1]</sup></a></td></tr><tr><td>StickTogether DNA Ligase Buffer</td><td>NEB</td><td>#B0535S</td><td>-20 °C</td><td></td><td>Supplied 2x. 1x is 7.5% PEG 6000, well under the 20% that would force blunt ligation.</td><td><a class="cite" href="#source-m0318" title="New England Biolabs #M0318 T7 DNA Ligase product page · reaction conditions"><sup>[1]</sup></a></td></tr><tr><td>SPRI paramagnetic beads</td><td></td><td></td><td></td><td>2 volumes after a digest, 1 after a ligation</td><td>the two ratios differ; both elute in water</td><td></td></tr><tr><td>Endura ElectroCompetent Cells</td><td>Lucigen</td><td>60242-2</td><td>-80 °C</td><td>4 aliquots, one a pulse, 25 µL each</td><td>pulsed at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette</td><td><a class="cite" href="#source-ma133" title="Endura Competent Cells manual, Lucigen / Biosearch Technologies · p. 4-5"><sup>[2]</sup></a></td></tr><tr><td>Selective plates for the final transfer</td><td></td><td></td><td></td><td></td><td>LB with 100 µg/mL carbenicillin, the working vector&#x27;s own marker (AmpR)</td><td></td></tr><tr><td>Plasmid prep kit</td><td></td><td></td><td></td><td>one prep per round</td><td></td><td></td></tr><tr><td>Electroporation cuvettes</td><td></td><td></td><td></td><td>4, one a pulse</td><td></td><td></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> Incubator or heat block at 37 °C, Magnetic rack for the bead clean-ups, Electroporator and cuvettes, Shaking incubator at 30 °C, Spectrophotometer (NanoDrop) or fluorometer (Qubit), Short-read sequencer, for the final representation read of the finished library</p><ul class="rules" aria-label="Rules"><li class="rule is-forbids"><strong>T7 DNA Ligase: never PEG</strong> Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more.<a class="cite" href="#source-m0318" title="New England Biolabs #M0318 T7 DNA Ligase product page · reaction conditions"><sup>[1]</sup></a></li><li class="rule is-forbids"><strong>T7 DNA Ligase: never heat inactivation</strong> Do not heat-inactivate T7 DNA ligase in PEG: transformation will be inhibited. Go from the ligation straight to the clean-up.<a class="cite" href="#source-m0318" title="New England Biolabs #M0318 T7 DNA Ligase product page · note 4"><sup>[1]</sup></a></li></ul>
 <p class="caution"><strong>Caution:</strong> Keep the cells and the cuvette on ice; a warm cuvette arcs.</p>
 
 </section>
@@ -391,21 +453,21 @@ tfoot .muted { font-weight: 400; }
 <section class="step" id="step-release-cargo">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-release-cargo"><span class="step-n">2</span><span>Release the cargo with BsaI and PmeI</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-release-cargo.1"><span>Digest the library the rounds built with BsaI and PmeI at 37 °C.</span></label></li><li><label><input type="checkbox" data-key="step-release-cargo.2"><span>Heat-kill, then leave the tube alone: nothing is purified between the two stages.</span></label></li></ol>
-<figure class="reaction" data-overage="0.1"><figcaption>Digest with BsaI and PmeI</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-release-cargo.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>AP-1 DESynR round 3</td><td></td><td>0.252 pmol (1000 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>BsaI-HFv2 (R3733) <a class="cite" href="#source-neb-specifications">NEB specifications #R3733L, concentration</a></td><td>R3733L, 20 U/µL</td><td>50 units</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>PmeI (R0560) <a class="cite" href="#source-neb-specifications">NEB specifications #R0560L, concentration</a></td><td>R0560L, 10 U/µL</td><td>25 units</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>CutSmart Buffer and nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">44</td><td class="num mix" data-ul="44.0">48.4</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix"><span data-ul="49.0">53.9</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL AP-1 DESynR round 3.</p></figure>
-<figure class="program"><figcaption>Digest with BsaI and PmeI <span class="muted">· 1 h</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>BsaI and PmeI</td><td class="num">37 °C</td><td class="num">1 h</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
-<figure class="program"><figcaption>BsaI heat inactivation <span class="muted">· 20 min</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Heat inactivation</td><td class="num">80 °C</td><td class="num">20 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
-<figure class="program"><figcaption>PmeI heat inactivation <span class="muted">· 20 min</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Heat inactivation</td><td class="num">65 °C</td><td class="num">20 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>Digest with BsaI and PmeI</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-release-cargo.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>AP-1 DESynR round 3<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[3]</sup></a></td><td></td><td>0.252 pmol (1000 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>BsaI-HFv2 (R3733)<a class="cite" href="#source-neb-specifications" title="New England Biolabs product specification sheets · #R3733L, concentration"><sup>[4]</sup></a></td><td>R3733L, 20 U/µL</td><td>50 units</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>PmeI (R0560)<a class="cite" href="#source-neb-specifications" title="New England Biolabs product specification sheets · #R0560L, concentration"><sup>[4]</sup></a></td><td>R0560L, 10 U/µL</td><td>25 units</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>CutSmart Buffer and nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">44</td><td class="num mix" data-ul="44.0">48.4</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix"><span data-ul="49.0">53.9</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL AP-1 DESynR round 3.</p></figure>
+<figure class="program"><figcaption>Digest with BsaI and PmeI <span class="muted">· 1 h</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>BsaI and PmeI</td><td class="num">37 °C</td><td class="num">1 h</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-release-cargo.program.1" data-seconds="3600.0"><label><span class="timer-label">Digest with BsaI and PmeI</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div></figure>
+<figure class="program"><figcaption>BsaI heat inactivation <span class="muted">· 20 min</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Heat inactivation</td><td class="num">80 °C</td><td class="num">20 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-release-cargo.program.2" data-seconds="1200.0"><label><span class="timer-label">BsaI heat inactivation</span><input type="text" class="timer-time" value="20:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 20:00</button></span></div></figure>
+<figure class="program"><figcaption>PmeI heat inactivation <span class="muted">· 20 min</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Heat inactivation</td><td class="num">65 °C</td><td class="num">20 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-release-cargo.program.3" data-seconds="1200.0"><label><span class="timer-label">PmeI heat inactivation</span><input type="text" class="timer-time" value="20:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 20:00</button></span></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>The whole 1076 bp cargo free, on AGGA and TTCC, out of 6435 bp of library.</li><li>PmeI cuts the backbone it came out of, so that backbone cannot close again.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>The library backbone survives the assembly</dt><dd>The blunt enzyme missed, or the heat kill was short. Both show up as colonies carrying the round&#x27;s own vector rather than the working one.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>One tube, two stages. Killing the releasing enzymes before the working vector goes in is what keeps them off its backbone.</li></ul></div>
 </section>
 <section class="step" id="step-assemble-into-working-vector">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-assemble-into-working-vector"><span class="step-n">3</span><span>Assemble the cargo into pLVX-TetOne-dom with PaqCI</span></label></h2>
-<ul class="rules" aria-label="Rules"><li class="rule is-forbids"><strong>T7 DNA Ligase: never PEG</strong> Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more. <a class="cite" href="#source-m0318">M0318 reaction conditions</a></li></ul>
+<ul class="rules" aria-label="Rules"><li class="rule is-forbids"><strong>T7 DNA Ligase: never PEG</strong> Never add PEG to a T7 ligase reaction. Blunt-end ligation is forced above 20% (w/v) PEG 6000, and StickTogether buffer already carries 7.5%; the refusal that removes escapees holds only while nothing adds more.<a class="cite" href="#source-m0318" title="New England Biolabs #M0318 T7 DNA Ligase product page · reaction conditions"><sup>[1]</sup></a></li></ul>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-assemble-into-working-vector.1"><span>Add 75 ng of working vector, PaqCI (R0745) and T7 DNA Ligase in StickTogether DNA Ligase Buffer to the release tube.</span></label></li><li><label><input type="checkbox" data-key="step-assemble-into-working-vector.2"><span>Run the cycling below without purifying anything first.</span></label></li></ol>
-<figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-36.8 -42.69 793.6 361.58" width="793.6" height="361.58"><line x1="0" y1="0" x2="720" y2="0" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="3.8" x2="720" y2="3.8" fill="none" stroke="#252525" stroke-width="2.6"/><g class="ends"><circle cx="-7" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-13" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-19" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="727" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="733" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="739" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/></g><g class="scale"><line x1="55.38" y1="5.1" x2="55.38" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="45.36" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350</text><line x1="193.85" y1="5.1" x2="193.85" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="183.83" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">360</text><line x1="332.31" y1="5.1" x2="332.31" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="322.29" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">370</text><line x1="470.77" y1="5.1" x2="470.77" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="460.75" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">380</text><line x1="609.23" y1="5.1" x2="609.23" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="599.21" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">390</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M55.38 33.32L154.15 33.32L154.15 29.32L166.15 40.82L154.15 52.32L154.15 48.32L55.38 48.32Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="90.47 97.4 108.6 115.68" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">PmeI</text></g><g class="feature" data-kind="feature" data-name="N entry junction" data-type="misc_feature" data-span="371 .. 374" data-length="4 bp"><path d="M332.31 33.32L387.69 33.32L387.69 48.32L332.31 48.32Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="313.78 322.38 326.04 333.11 340.4 344.91 349.64 356.44 360.1 363.29 370.58 377.87 384.19 388.7 391.9 398.93" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">N entry junction</text></g><g class="feature" data-kind="feature" data-name="N_JUN" data-type="CDS" data-span="375 .. 1123" data-length="749 bp"><path d="M387.69 74.71L720 74.71L720 89.71L387.69 89.71Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="536.46 545.07 550.82 554.21 562.63" y="86.19" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">N_JUN</text></g><g class="cut_site label" data-kind="cut_site" data-name="BsaI" data-type="cut site" data-span="370"><line x1="332.31" y1="-1.3" x2="332.31" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="335.31" y="-15.01" font-size="11.5" textLength="24.32" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BsaI</text><text x="359.63" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000"> (370)</text></g><text x="278.82" y="116.24" font-size="13.5" textLength="162.37" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">AP-1 DESynR round 3</text><text x="312.5" y="129.17" font-size="10.5" textLength="94.99" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">347 .. 398 (52 bp)</text><g transform="translate(12.98 163.65)"><g class="rows" data-length="6435" data-cell="11"><g class="row" data-start="346" data-end="398" data-top="35.61" data-rail="53.91" data-bottom="72.22"><g class="ruler"><text x="28.48 35.16 41.84 48.52 138.48 145.16 151.84 158.52 248.48 255.16 261.84 268.52 358.48 365.16 371.84 378.52 468.48 475.16 481.84" y="31.13" font-size="10.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350 360 370 380 390</text><line x1="0" y1="53.91" x2="572" y2="53.91" fill="none" stroke="#7f7f7f" stroke-width="1.6"/><path d="M5.5 52.41v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3" fill="none" stroke="#7f7f7f" stroke-width="1"/></g><g class="strand top"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19 200.19 211.19 222.19 233.19 244.19 255.19 266.19 277.19 288.19 299.19 310.19 321.19 332.19 343.19 354.19 365.19 376.19 387.19 398.19 409.19 420.19 431.19 442.19 453.19 464.19 475.19 486.19 497.19 508.19 519.19 530.19 541.19 552.19 563.19" y="45.82" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">TACAGTTTAAACTATGGGGTCTCAAGGAATGACCGCCAAGATGGAAACCACC</text></g><g class="strand bottom"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19 200.19 211.19 222.19 233.19 244.19 255.19 266.19 277.19 288.19 299.19 310.19 321.19 332.19 343.19 354.19 365.19 376.19 387.19 398.19 409.19 420.19 431.19 442.19 453.19 464.19 475.19 486.19 497.19 508.19 519.19 530.19 541.19 552.19 563.19" y="69.62" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">ATGTCAAATTTGATACCCCAGAGTTCCTTACTGGCGGTTCTACCTTTGGTGG</text></g><g class="position"><text x="674" y="57.55" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">398</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M44 79.22H125L132 86.72L125 94.22H44Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="70.2 77.13 88.34 95.41" y="90.7" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">PmeI</text></g><g class="feature" data-kind="feature" data-name="N entry junction" data-type="misc_feature" data-span="371 .. 374" data-length="4 bp"><path d="M264 79.22H308V94.22H264Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="239.78 248.38 252.04 259.11 266.4 270.91 275.64 282.44 286.1 289.29 296.58 303.87 310.19 314.7 317.9 324.93" y="105.89" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">N entry junction</text></g><g class="feature" data-kind="feature" data-name="N_JUN" data-type="CDS" data-span="375 .. 1123" data-length="749 bp"><path d="M308 124.25H572V139.25H308Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><g class="translation"><text x="315.47 321.49 327.51 333.53 348.47 354.49 360.51 366.53 381.47 387.49 393.51 399.53 414.47 420.49 426.51 432.53 447.47 453.49 459.51 465.53 480.47 486.49 492.51 498.53 513.47 519.49 525.51 531.53 546.47 552.49 558.51" y="120.89" font-size="10" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">Met Thr Ala Lys Met Glu Thr Thr</text></g><text x="422.62 431.22 436.97 440.36 448.78" y="135.73" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">N_JUN</text></g><g class="cut_site" data-kind="cut_site" data-name="BsaI" data-type="cut site" data-span="370"><line x1="264" y1="35.61" x2="264" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><g class="bottom"><line x1="264" y1="53.91" x2="308" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><line x1="308" y1="53.91" x2="308" y2="72.22" fill="none" stroke="#252525" stroke-width="1.2"/></g></g><g class="cut_site label" data-kind="cut_site" data-name="BsaI" data-type="cut site" data-span="370"><line x1="264" y1="21.39" x2="264" y2="15.39" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="267" y="11.67" font-size="11.5" textLength="24.32" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BsaI</text></g></g></g></g></svg><figcaption>The end the library is freed on, which the working vector takes: BsaI leaves AGGA here. <a class="cite" href="#source-figure-sources">figure-sources section 2, Cargo GGA ligation</a></figcaption></figure>
-<figure class="reaction" data-overage="0.1"><figcaption>One-pot assembly</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-assemble-into-working-vector.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>AP-1 DESynR round 3 cargo, in the release</td><td>0.252 pmol (167.21 ng)</td><td class="num">50</td><td class="num per-tube">each tube</td></tr><tr><td>pLVX-TetOne-dom, opened</td><td>0.0123 pmol (75 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PaqCI (R0745)</td><td></td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water</td><td>to 200 µL</td><td class="num">147</td><td class="num mix" data-ul="146.5">161</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td class="num">200</td><td class="num mix"><span data-ul="149.0">164</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 149 µL of mix in each tube, then add 50 µL AP-1 DESynR round 3 cargo, in the release, 1 µL pLVX-TetOne-dom, opened.</p></figure>
-<figure class="program"><figcaption>Golden Gate assembly <span class="muted">· 1 h 5 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Assembly</td><td class="num">37 °C</td><td class="num">1 h</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>End soak</td><td class="num">60 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
+<figure class="reaction" data-overage="0.1"><figcaption>One-pot assembly</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-assemble-into-working-vector.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>AP-1 DESynR round 3 cargo, in the release<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[3]</sup></a></td><td>0.252 pmol (167.21 ng)</td><td class="num">50</td><td class="num per-tube">each tube</td></tr><tr><td>pLVX-TetOne-dom, opened<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[3]</sup></a></td><td>0.0123 pmol (75 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PaqCI (R0745)</td><td></td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water</td><td>to 200 µL</td><td class="num">147</td><td class="num mix" data-ul="146.5">161</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td class="num">200</td><td class="num mix"><span data-ul="149.0">164</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 149 µL of mix in each tube, then add 50 µL AP-1 DESynR round 3 cargo, in the release, 1 µL pLVX-TetOne-dom, opened.</p></figure>
+<figure class="program"><figcaption>Golden Gate assembly <span class="muted">· 1 h 5 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Assembly</td><td class="num">37 °C</td><td class="num">1 h</td><td class="num" rowspan="1">1<a class="cite" href="#source-m1100" title="New England Biolabs, Protocol for NEBridge Ligase Master Mix (NEB #M1100) · cycling"><sup>[5]</sup></a></td></tr></tbody><tbody class="stage"><tr><td>End soak</td><td class="num">60 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1<a class="cite" href="#source-m1100" title="New England Biolabs, Protocol for NEBridge Ligase Master Mix (NEB #M1100) · cycling"><sup>[5]</sup></a></td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-assemble-into-working-vector.program.1" data-seconds="3900.0"><label><span class="timer-label">Golden Gate assembly</span><input type="text" class="timer-time" value="1:05:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:05:00</button></span></div></figure>
+<figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-36.8 -42.69 793.6 361.58" width="793.6" height="361.58"><line x1="0" y1="0" x2="720" y2="0" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="3.8" x2="720" y2="3.8" fill="none" stroke="#252525" stroke-width="2.6"/><g class="ends"><circle cx="-7" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-13" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-19" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="727" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="733" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="739" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/></g><g class="scale"><line x1="55.38" y1="5.1" x2="55.38" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="45.36" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350</text><line x1="193.85" y1="5.1" x2="193.85" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="183.83" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">360</text><line x1="332.31" y1="5.1" x2="332.31" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="322.29" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">370</text><line x1="470.77" y1="5.1" x2="470.77" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="460.75" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">380</text><line x1="609.23" y1="5.1" x2="609.23" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="599.21" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">390</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M55.38 33.32L154.15 33.32L154.15 29.32L166.15 40.82L154.15 52.32L154.15 48.32L55.38 48.32Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="90.47 97.4 108.6 115.68" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">PmeI</text></g><g class="feature" data-kind="feature" data-name="N entry junction" data-type="misc_feature" data-span="371 .. 374" data-length="4 bp"><path d="M332.31 33.32L387.69 33.32L387.69 48.32L332.31 48.32Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="313.78 322.38 326.04 333.11 340.4 344.91 349.64 356.44 360.1 363.29 370.58 377.87 384.19 388.7 391.9 398.93" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">N entry junction</text></g><g class="feature" data-kind="feature" data-name="N_JUN" data-type="CDS" data-span="375 .. 1123" data-length="749 bp"><path d="M387.69 74.71L720 74.71L720 89.71L387.69 89.71Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="536.46 545.07 550.82 554.21 562.63" y="86.19" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">N_JUN</text></g><g class="cut_site label" data-kind="cut_site" data-name="BsaI" data-type="cut site" data-span="370"><line x1="332.31" y1="-1.3" x2="332.31" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="335.31" y="-15.01" font-size="11.5" textLength="24.32" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BsaI</text><text x="359.63" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000"> (370)</text></g><text x="278.82" y="116.24" font-size="13.5" textLength="162.37" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">AP-1 DESynR round 3</text><text x="312.5" y="129.17" font-size="10.5" textLength="94.99" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">347 .. 398 (52 bp)</text><g transform="translate(12.98 163.65)"><g class="rows" data-length="6435" data-cell="11"><g class="row" data-start="346" data-end="398" data-top="35.61" data-rail="53.91" data-bottom="72.22"><g class="ruler"><text x="28.48 35.16 41.84 48.52 138.48 145.16 151.84 158.52 248.48 255.16 261.84 268.52 358.48 365.16 371.84 378.52 468.48 475.16 481.84" y="31.13" font-size="10.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350 360 370 380 390</text><line x1="0" y1="53.91" x2="572" y2="53.91" fill="none" stroke="#7f7f7f" stroke-width="1.6"/><path d="M5.5 52.41v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3" fill="none" stroke="#7f7f7f" stroke-width="1"/></g><g class="strand top"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19 200.19 211.19 222.19 233.19 244.19 255.19 266.19 277.19 288.19 299.19 310.19 321.19 332.19 343.19 354.19 365.19 376.19 387.19 398.19 409.19 420.19 431.19 442.19 453.19 464.19 475.19 486.19 497.19 508.19 519.19 530.19 541.19 552.19 563.19" y="45.82" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">TACAGTTTAAACTATGGGGTCTCAAGGAATGACCGCCAAGATGGAAACCACC</text></g><g class="strand bottom"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19 200.19 211.19 222.19 233.19 244.19 255.19 266.19 277.19 288.19 299.19 310.19 321.19 332.19 343.19 354.19 365.19 376.19 387.19 398.19 409.19 420.19 431.19 442.19 453.19 464.19 475.19 486.19 497.19 508.19 519.19 530.19 541.19 552.19 563.19" y="69.62" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">ATGTCAAATTTGATACCCCAGAGTTCCTTACTGGCGGTTCTACCTTTGGTGG</text></g><g class="position"><text x="674" y="57.55" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">398</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M44 79.22H125L132 86.72L125 94.22H44Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="70.2 77.13 88.34 95.41" y="90.7" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">PmeI</text></g><g class="feature" data-kind="feature" data-name="N entry junction" data-type="misc_feature" data-span="371 .. 374" data-length="4 bp"><path d="M264 79.22H308V94.22H264Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="239.78 248.38 252.04 259.11 266.4 270.91 275.64 282.44 286.1 289.29 296.58 303.87 310.19 314.7 317.9 324.93" y="105.89" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">N entry junction</text></g><g class="feature" data-kind="feature" data-name="N_JUN" data-type="CDS" data-span="375 .. 1123" data-length="749 bp"><path d="M308 124.25H572V139.25H308Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><g class="translation"><text x="315.47 321.49 327.51 333.53 348.47 354.49 360.51 366.53 381.47 387.49 393.51 399.53 414.47 420.49 426.51 432.53 447.47 453.49 459.51 465.53 480.47 486.49 492.51 498.53 513.47 519.49 525.51 531.53 546.47 552.49 558.51" y="120.89" font-size="10" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">Met Thr Ala Lys Met Glu Thr Thr</text></g><text x="422.62 431.22 436.97 440.36 448.78" y="135.73" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">N_JUN</text></g><g class="cut_site" data-kind="cut_site" data-name="BsaI" data-type="cut site" data-span="370"><line x1="264" y1="35.61" x2="264" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><g class="bottom"><line x1="264" y1="53.91" x2="308" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><line x1="308" y1="53.91" x2="308" y2="72.22" fill="none" stroke="#252525" stroke-width="1.2"/></g></g><g class="cut_site label" data-kind="cut_site" data-name="BsaI" data-type="cut site" data-span="370"><line x1="264" y1="21.39" x2="264" y2="15.39" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="267" y="11.67" font-size="11.5" textLength="24.32" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BsaI</text></g></g></g></g></svg><figcaption>The end the library is freed on, which the working vector takes: BsaI leaves AGGA here.<a class="cite" href="#source-figure-sources" title="liulab-mbio, Figure sources for four designs · section 2, Cargo GGA ligation"><sup>[6]</sup></a></figcaption><details class="opener"><summary><span class="to-open">Explore the map</span><span class="to-close">Close the map</span></summary><iframe data-src="product-map.html" title="AP-1 DESynR round 3, to explore"></iframe><a class="new-tab" href="product-map.html" target="_blank" rel="noopener">Open it in a new tab</a></details></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One circular final vector a member, about 10975 bp, joined on AGGA and TTCC.</li><li>The ccdB cassette is displaced, so a vector that took no cargo kills its host.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>Colonies that are still ccdB-positive</dt><dd>The working vector was not opened to completion. Check the pick step&#x27;s gel before repeating.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>6435 bp of library goes in and the cargo alone comes out: the backbone the rounds ran in is shredded and stays behind.</li><li>The cycling is NEB&#x27;s longer single-insert program, which it gives for library preparation rather than for cloning one gene.</li><li>75 ng of vector is what this run measured, not a published figure. The cargo is not measured out: the release tube goes in whole.</li><li>The release delivers the cargo at 20.5:1 over the vector, which is what the digest frees and not a ratio anyone sets.</li></ul></div>
@@ -414,8 +476,9 @@ tfoot .muted { font-weight: 400; }
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-electroporate-and-grow"><span class="step-n">4</span><span>Clean the assembly up and electroporate into Endura ElectroCompetent Cells</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Keep the cells and the cuvette on ice; a warm cuvette arcs.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-electroporate-and-grow.1"><span>Add SPRI paramagnetic beads at 1x the volume and elute in water, as every round did after its ligation.</span></label></li><li><label><input type="checkbox" data-key="step-electroporate-and-grow.2"><span>Pulse at 1800 V, 600 Ω and 10 µF in a 1 mm cuvette.</span></label></li><li><label><input type="checkbox" data-key="step-electroporate-and-grow.3"><span>Recover and grow at 30 °C, as every round did.</span></label></li></ol>
-<figure class="program"><figcaption>Recovery and outgrowth at 30 °C <span class="muted">· 13 h</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Recovery, shaking</td><td class="num">30 °C</td><td class="num">1 h</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Outgrowth</td><td class="num">30 °C</td><td class="num">12 h</td><td class="num" rowspan="1">1</td></tr></tbody></table></div></figure>
-<div class="expected"><h3>Expected result</h3><ul><li>At least 195,386 net colonies: the floor for the 0.99 chance this design asked for that none of its 13,824 distinct members is missing, equally represented.</li><li>At that count the chance a named member is missing is 7.27 × 10⁻⁷.</li><li>Near-empty plates from a no-cargo control beside it; what grows there is working vector that kept its ccdB cassette.</li></ul></div>
+<figure class="program"><figcaption>Recovery and outgrowth at 30 °C <span class="muted">· 13 h</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Recovery, shaking</td><td class="num">30 °C</td><td class="num">1 h</td><td class="num" rowspan="1">1<a class="cite" href="#source-takacsi-nagy-2026" title="Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20 · p. e5, recovery and outgrowth"><sup>[7]</sup></a></td></tr></tbody><tbody class="stage"><tr><td>Outgrowth</td><td class="num">30 °C</td><td class="num">12 h</td><td class="num" rowspan="1">1<a class="cite" href="#source-takacsi-nagy-2026" title="Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20 · p. e5, recovery and outgrowth"><sup>[7]</sup></a></td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-electroporate-and-grow.program.1" data-seconds="46800.0"><label><span class="timer-label">Recovery and outgrowth at 30 °C</span><input type="text" class="timer-time" value="13:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 13:00:00</button></span></div></figure>
+<div class="expected"><h3>Expected result</h3><ul><li>At least 195,386 net colonies: the floor for the 0.99 chance this design asked for that none of its 13,824 distinct members is missing, equally represented.</li><li>At that count the chance a named member is missing is 7.27 × 10⁻⁷.</li><li>Near-empty plates from the no-cargo control beside it; what grows there is working vector that kept its ccdB cassette.</li></ul><div class="net-count" data-floor="195386"><p class="net-fields"><span class="calc net-counted"><label>Counted on the plates <input type="text" class="calc-value" inputmode="decimal" value="" placeholder="195,386" data-key="step-electroporate-and-grow.count.counted" size="5" autocomplete="off" spellcheck="false" data-least="0" aria-label="Counted on the plates"></label><button type="button" class="calc-plan" title="Take what you typed back out" hidden>Clear</button></span><span class="calc net-control"><label>less the no-cargo control <input type="text" class="calc-value" inputmode="decimal" value="0" data-plan="0" data-key="step-electroporate-and-grow.count.control" size="5" autocomplete="off" spellcheck="false" data-least="0" aria-label="less the no-cargo control"></label><button type="button" class="calc-plan" title="What the protocol gives" hidden>Back to 0</button></span><span class="calc net-dilution"><label>Dilution factor <input type="text" class="calc-value" inputmode="decimal" value="1" data-plan="1" data-key="step-electroporate-and-grow.count.dilution" size="5" autocomplete="off" spellcheck="false" aria-label="Dilution factor"></label><button type="button" class="calc-plan" title="What the protocol gives" hidden>Back to 1</button></span></p><p class="net-sum" data-clears="at least the floor of 195,386" data-short="short of the floor of 195,386"><strong><span class="net-value">—</span> net colonies</strong><span class="net-said" hidden> — <span class="net-verdict"></span></span>.</p><p class="calc-warning" data-problem="Fewer net colonies than the count above" role="alert" hidden><strong>Fewer net colonies than the count above.</strong> The library has lost members in the transfer. Nothing downstream puts them back; repeat the assembly from more of the released cargo.</p></div>
+</div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>Fewer net colonies than the count above</dt><dd>The library has lost members in the transfer. Nothing downstream puts them back; repeat the assembly from more of the released cargo.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>This is a bottleneck like a round&#x27;s, and the library can only lose members here. Electroporate all of the assembly rather than a measured part of it.</li><li>The settings are the cells&#x27; own and are keyed by their catalogue number, not set by this method.</li><li>ccdB does the selecting here, so the plates carry pLVX-TetOne-dom&#x27;s own marker.</li></ul></div>
 </section>
@@ -423,17 +486,13 @@ tfoot .muted { font-weight: 400; }
 <section class="step" id="step-read-final-representation">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-read-final-representation"><span class="step-n">5</span><span>Read representation in the final vector</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-read-final-representation.1"><span>Amplify across the barcode block again, on Final representation read forward and Final representation read reverse from <a href="../library-read-primers.tsv">library-read-primers.tsv</a>, which give a 149 bp amplicon.</span></label></li><li><label><input type="checkbox" data-key="step-read-final-representation.2"><span>Sequence, decode each read against <a href="../barcodes.tsv">barcodes.tsv</a>, and compare the counts with the read taken in the library backbone.</span></label></li></ol>
-<div class="expected"><h3>Expected result</h3><ul><li>The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into pLVX-TetOne-dom.</li><li>At least 99.5% of what survived the move seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations.</li></ul></div>
+<div class="expected"><h3>Expected result</h3><ul><li>The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into pLVX-TetOne-dom.</li><li>At least 99.5% of what survived the move seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations.<a class="cite" href="#source-joung-2017" title="Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863 · library representation"><sup>[8]</sup></a></li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>Markedly fewer combinations than before the move</dt><dd>The transfer was the bottleneck, not the rounds. Compare the colony count with the step above before rebuilding anything.</dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Linkage is read once, in the library backbone; a barcode still names the same part after the move, because the move carries the whole cargo in one piece.</li><li>The forward anchor is the same retained internal stuffer, which travels with the cargo; the reverse anchor moved with the vector, so this pair is designed against the final record rather than reused from the read before the move.</li></ul></div>
 </section>
 <section class="block sources" id="sources">
 <h2>Sources</h2>
-<ul><li id="source-m0318"><strong>M0318</strong> New England Biolabs #M0318 T7 DNA Ligase product page · r.jina.ai · 2026-10-06 <a href="https://www.neb.com/en/products/m0318-t7-dna-ligase" rel="noreferrer">https://www.neb.com/en/products/m0318-t7-dna-ligase</a></li><li id="source-ma133"><strong>MA133</strong> Endura Competent Cells manual, Lucigen / Biosearch Technologies · MA133 26Feb2018 · plain curl · 2026-10-06</li><li id="source-neb-specifications"><strong>NEB specifications</strong> New England Biolabs product specification sheets · #R3733S/L, #R3539S/L, #R0629S/L, #R0560S/L · plain curl · 2026-10-06 · docs/research/bench-numbers.md</li><li id="source-figure-sources"><strong>figure-sources</strong> liulab-mbio, Figure sources for four designs · docs/research/figure-sources.md</li></ul>
-</section>
-<section class="block references" id="references">
-<h2>References</h2>
-<ol><li>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20, STAR Methods METHOD DETAILS pp. e4-e5. CC BY 4.0 <a href="https://doi.org/10.1016/j.cell.2026.07.054" rel="noreferrer">https://doi.org/10.1016/j.cell.2026.07.054</a></li><li>Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a library needs to represent every member <a href="https://doi.org/10.1016/0092-8674(76)90055-6" rel="noreferrer">https://doi.org/10.1016/0092-8674(76)90055-6</a></li><li>Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863, for a pooled library&#x27;s acceptance bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member <a href="https://doi.org/10.1038/nprot.2017.016" rel="noreferrer">https://doi.org/10.1038/nprot.2017.016</a></li><li>Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53, Table 2, for the screen coverage a library&#x27;s own skew demands: p90/p10 2.5 at 200x, 5 at 300x, 10 at 400x <a href="https://doi.org/10.1186/s13059-020-1939-1" rel="noreferrer">https://doi.org/10.1186/s13059-020-1939-1</a></li><li>Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a 1,000-fold screen at 100-fold coverage <a href="https://doi.org/10.1186/s13059-023-03132-3" rel="noreferrer">https://doi.org/10.1186/s13059-023-03132-3</a></li><li>NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion</li><li>Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to 100-fold differences in read counts, where one introduced during the PCR 34 bp away gave R2 = 0.9977 <a href="https://doi.org/10.1371/journal.pone.0026969" rel="noreferrer">https://doi.org/10.1371/journal.pone.0026969</a></li><li>Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about twofold where the same barcodes introduced during the PCR did not <a href="https://doi.org/10.1101/gr.121715.111" rel="noreferrer">https://doi.org/10.1101/gr.121715.111</a></li><li>Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution <a href="https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended" rel="noreferrer">https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended</a></li><li>Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify <a href="https://www.idtdna.com/page/?p=890" rel="noreferrer">https://www.idtdna.com/page/?p=890</a></li><li>The method this build was planned by: docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method&#x27;s own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated. <a href="https://liuhlab.github.io/liulab-mbio/projects/igga/" rel="noreferrer">https://liuhlab.github.io/liulab-mbio/projects/igga/</a></li><li>NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100) <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a></li><li>NEB, NEBridge Ligase Master Mix Protocol Guidelines <a href="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines" rel="noreferrer">https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines</a></li><li>NEB, Usage Guidelines for Golden Gate Assembly with PaqCI <a href="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci" rel="noreferrer">https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci</a></li></ol>
+<ol><li id="source-m0318"><strong>New England Biolabs #M0318 T7 DNA Ligase product page</strong> · r.jina.ai · 2026-10-06 <a href="https://www.neb.com/en/products/m0318-t7-dna-ligase" rel="noreferrer">https://www.neb.com/en/products/m0318-t7-dna-ligase</a> <span class="cited-at">cited at reaction conditions · note 4</span></li><li id="source-ma133"><strong>Endura Competent Cells manual, Lucigen / Biosearch Technologies</strong> · MA133 26Feb2018 · plain curl · 2026-10-06 <span class="cited-at">cited at p. 4-5</span></li><li id="source-nebiocalculator"><strong>New England Biolabs NEBioCalculator</strong> · script main-6f3020c533.js, capture 2026-08-28 · Wayback Machine · docs/research/primer-design-and-pcr.md <span class="cited-at">cited at dsDNA molecular weight</span></li><li id="source-neb-specifications"><strong>New England Biolabs product specification sheets</strong> · #R3733S/L, #R3539S/L, #R0629S/L, #R0560S/L · plain curl · 2026-10-06 · docs/research/bench-numbers.md <span class="cited-at">cited at #R3733L, concentration · #R0560L, concentration</span></li><li id="source-m1100"><strong>New England Biolabs, Protocol for NEBridge Ligase Master Mix (NEB #M1100)</strong> · capture 2023-03-31 · Wayback Machine · docs/research/golden-gate-assembly.md <a href="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100" rel="noreferrer">https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100</a> <span class="cited-at">cited at cycling</span></li><li id="source-figure-sources"><strong>liulab-mbio, Figure sources for four designs</strong> · docs/research/figure-sources.md <span class="cited-at">cited at section 2, Cargo GGA ligation</span></li><li id="source-takacsi-nagy-2026"><strong>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20</strong> · STAR Methods, METHOD DETAILS pp. e4-e5 · docs/research/protein-library-assembly.md <a href="https://doi.org/10.1016/j.cell.2026.07.054" rel="noreferrer">https://doi.org/10.1016/j.cell.2026.07.054</a> <span class="cited-at">cited at p. e5, recovery and outgrowth</span></li><li id="source-joung-2017"><strong>Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863</strong> · docs/research/vector-qc-panel.md <a href="https://doi.org/10.1038/nprot.2017.016" rel="noreferrer">https://doi.org/10.1038/nprot.2017.016</a> <span class="cited-at">cited at library representation</span></li></ol>
 </section>
 </main>
 <nav class="column within" aria-label="Steps"><h2 class="column-title">This protocol</h2><ul class="step-nav"><li class="step-group"><details data-steps="pick-working-vector" open><summary>Choose the working vector <span class="section-progress muted">0 of 1 done</span></summary><ul class="step-list"><li><a href="#step-pick-working-vector"><span class="step-mark">1</span> <span>Pick the working vector and confirm PaqCI opens it</span></a></li></ul></details></li><li class="step-group"><details data-steps="release-cargo assemble-into-working-vector electroporate-and-grow"><summary>Move the library across <span class="section-progress muted">0 of 3 done</span></summary><ul class="step-list"><li><a href="#step-release-cargo"><span class="step-mark">2</span> <span>Release the cargo with BsaI and PmeI</span></a></li><li><a href="#step-assemble-into-working-vector"><span class="step-mark">3</span> <span>Assemble the cargo into pLVX-TetOne-dom with PaqCI</span></a></li><li><a href="#step-electroporate-and-grow"><span class="step-mark">4</span> <span>Clean the assembly up and electroporate into Endura ElectroCompetent Cells</span></a></li></ul></details></li><li class="step-group"><details data-steps="read-final-representation"><summary>Read the library back <span class="section-progress muted">0 of 1 done</span></summary><ul class="step-list"><li><a href="#step-read-final-representation"><span class="step-mark">5</span> <span>Read representation in the final vector</span></a></li></ul></details></li></ul></nav>
@@ -508,25 +567,78 @@ tfoot .muted { font-weight: 400; }
     })[0];
   }
 
+  function keyOf(box) {
+    return box.getAttribute("data-key");
+  }
+
+  function isTicked(box) {
+    return box.checked;
+  }
+
+  // Into the page's store; `save` writes the store to the browser.
+  function record(box) {
+    if (box.checked) state[keyOf(box)] = true;
+    else delete state[keyOf(box)];
+  }
+
+  // A step's own mark is its instructions together, so each count reads what the bench did
+  // however the reader ticks: every instruction ticked ticks the step, one cleared clears it, and
+  // the step ticked or cleared by hand does the same to all of them. A step with no instructions
+  // is ticked by hand.
+  var stepMarks = stepBoxes.map(function (box) {
+    var step = box.closest(".step");
+    return {
+      box: box,
+      instructions: step ? all('.instructions input[type="checkbox"][data-key]', step) : []
+    };
+  });
+
   function refresh() {
     var done = 0;
-    stepBoxes.forEach(function (box) {
+    stepMarks.forEach(function (mark) {
+      var box = mark.box;
       var step = box.closest(".step");
       if (step) step.classList.toggle("is-done", box.checked);
+      box.indeterminate = !box.checked && mark.instructions.some(isTicked);
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
     showSections();
   }
 
+  function settle(mark, changed) {
+    if (changed === mark.box) {
+      mark.instructions.forEach(function (box) { box.checked = mark.box.checked; });
+    } else {
+      mark.box.checked = mark.instructions.every(isTicked);
+    }
+    [mark.box].concat(mark.instructions).forEach(record);
+    save();
+    refresh();
+  }
+
   boxes.forEach(function (box) {
-    box.checked = state[box.getAttribute("data-key")] === true;
-    box.addEventListener("change", function () {
-      var key = box.getAttribute("data-key");
-      if (box.checked) state[key] = true;
-      else delete state[key];
-      save();
-      refresh();
+    box.checked = state[keyOf(box)] === true;
+  });
+
+  // The store can hold a step's mark without its instructions' or the reverse. Nothing ticked is
+  // lost: a ticked step stands for its instructions, and instructions all ticked for their step.
+  // It is saved once mended, so a run's index, which reads step marks alone, counts it from then.
+  var mended = false;
+  stepMarks.forEach(function (mark) {
+    if (!mark.instructions.length) return;
+    if (!mark.box.checked && !mark.instructions.every(isTicked)) return;
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      if (!box.checked) mended = true;
+      box.checked = true;
+      record(box);
+    });
+  });
+  if (mended) save();
+
+  stepMarks.forEach(function (mark) {
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      box.addEventListener("change", function () { settle(mark, box); });
     });
   });
   refresh();
@@ -574,6 +686,17 @@ tfoot .muted { font-weight: 400; }
   var print = document.querySelector("button.print");
   if (print) print.addEventListener("click", function () { window.print(); });
 
+  // A figure opens to its record's map, which loads the first time it is opened. Nothing is
+  // remembered: an opened map is not a mark.
+  all("details.opener").forEach(function (opener) {
+    opener.addEventListener("toggle", function () {
+      var frame = opener.querySelector("iframe[data-src]");
+      if (opener.open && frame && !frame.getAttribute("src")) {
+        frame.setAttribute("src", frame.getAttribute("data-src"));
+      }
+    });
+  });
+
   // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
   // protocol.model.number, so the column reads the same after the count changes.
   var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
@@ -599,13 +722,17 @@ tfoot .muted { font-weight: 400; }
     if (!input) return;
     var overage = parseFloat(figure.getAttribute("data-overage")) || 0;
     var key = input.getAttribute("data-key");
+    var live = calculators(figure, function () { update(); });
 
     function update() {
       var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
       var scale = reactions * (1 + overage);
-      all("[data-ul]", figure).forEach(function (cell) {
-        cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
-      });
+      if (live) live.draw(scale);
+      else {
+        all("[data-ul]", figure).forEach(function (cell) {
+          cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
+        });
+      }
       all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
       return reactions;
     }
@@ -619,6 +746,211 @@ tfoot .muted { font-weight: 400; }
       state[key] = update();
       save();
     });
+  });
+
+  // Calculators. Arithmetic here is only over numbers render.py wrote, never a constant or a
+  // formula of the package's.
+  //
+  // Every calculator's input is a reader's number: a field over the number the protocol gives,
+  // its `data-plan`. The page keeps the reader's only where it differs, offers the protocol's
+  // back on the button beside it, and holds the field still while anything in its step is
+  // ticked, as a timer's time does while it runs. A held field says so, in render.py's words,
+  // beside it and on itself. `changed` hears each value it takes.
+  //
+  // A field with no `data-plan` is one the protocol has no number for, such as a plate nobody
+  // has counted: it opens empty, its value reads null until the reader types, and the button
+  // empties it again.
+  function readerNumber(field, changed) {
+    var key = field.getAttribute("data-key");
+    var plan = field.hasAttribute("data-plan")
+      ? parseFloat(field.getAttribute("data-plan"))
+      : null;
+    var shown = field.defaultValue;
+    var box = field.closest(".calc");
+    var back = box.querySelector(".calc-plan");
+    // Only a field something is pipetted against carries the word, and only it is held still.
+    var held = box.querySelector(".calc-held");
+    var least = parseFloat(field.getAttribute("data-least"));
+    var step = field.closest(".step");
+    var marks = step ? all('input[type="checkbox"][data-key]', step) : [];
+    var value = allowed(state[key]) ? state[key] : plan;
+
+    function locked() {
+      return held !== null && marks.some(isTicked);
+    }
+
+    // What a field takes: more than nothing, or from its own `data-least` up where none is a
+    // reading of its own.
+    function allowed(given) {
+      if (typeof given !== "number") return false;
+      return isNaN(least) ? given > 0 : given >= least;
+    }
+
+    // What the reader typed: undefined for anything the field will not take. The text the page
+    // opened with reads as the protocol's own, though a number is printed rounded.
+    function typed() {
+      var text = field.value.trim();
+      if (text === shown) return plan;
+      // The page groups a long number, so the reader may type the groups back.
+      text = text.replace(/,/g, "");
+      if (!/^\d*\.?\d+$/.test(text)) return undefined;
+      return allowed(Number(text)) ? Number(text) : undefined;
+    }
+
+    function show() {
+      field.value = value === plan ? shown : String(value);
+      field.readOnly = locked();
+      field.title = locked() ? held.textContent : "";
+      if (held) held.hidden = !locked();
+      back.hidden = value === plan || locked();
+    }
+
+    function take(to) {
+      value = to;
+      if (value !== plan) state[key] = value;
+      else delete state[key];
+      save();
+      changed();
+    }
+
+    field.addEventListener("input", function () {
+      var to = typed();
+      if (to === undefined || locked()) return;
+      take(to);
+      back.hidden = value === plan;
+    });
+    // A slip leaves the number as it was, and the field says so once the reader moves on.
+    field.addEventListener("change", show);
+    back.addEventListener("click", function () { take(plan); show(); });
+    if (step) {
+      step.addEventListener("change", function (event) {
+        if (event.target.type === "checkbox") show();
+      });
+    }
+    show();
+    return {
+      plan: plan,
+      value: function () { return value; }
+    };
+  }
+
+  // A row the bench measures gives the volume that carries its amount, and the row it names
+  // makes up the difference.
+  function calculators(figure, redraw) {
+    var rows = all("tbody > tr", figure);
+    var measured = rows.filter(function (row) { return row.classList.contains("measured"); });
+    if (!measured.length) return null;
+    var planned = rows.map(function (row) { return parseFloat(row.getAttribute("data-rxn-ul")); });
+
+    var calcs = measured.map(function (row) {
+      return {
+        row: row,
+        at: rows.indexOf(row),
+        fill: Number(row.getAttribute("data-fill")),
+        nanograms: parseFloat(row.getAttribute("data-ng")),
+        least: parseFloat(row.getAttribute("data-least-ul")),
+        input: readerNumber(row.querySelector(".calc-value"), redraw)
+      };
+    });
+
+    // Each row's volume for one reaction: the protocol's, or the one the typed concentration
+    // gives, with what a row gained taken off the row that makes it up.
+    function volumes() {
+      var ul = planned.slice();
+      calcs.forEach(function (one) {
+        var value = one.input.value();
+        if (value === one.input.plan) return;
+        var volume = one.nanograms / value;
+        ul[one.fill] -= volume - planned[one.at];
+        ul[one.at] = volume;
+      });
+      return ul;
+    }
+
+    function draw(scale) {
+      var ul = volumes();
+      var fired = {};
+      calcs.forEach(function (one) {
+        var problem = one.row.getAttribute("data-too-dilute");
+        if (problem && ul[one.fill] < 0) fired[problem] = true;
+        problem = one.row.getAttribute("data-too-concentrated");
+        if (problem && ul[one.at] < one.least) fired[problem] = true;
+      });
+      var each = 0;
+      var whole = 0;
+      var spent = false;
+      rows.forEach(function (row, i) {
+        // A row making up the difference cannot go below nothing: the reaction outgrows its
+        // volume instead, and the total says by how much.
+        var volume = Math.max(0, ul[i]);
+        var short = ul[i] < 0;
+        row.classList.toggle("is-over", short);
+        spent = spent || short;
+        row.querySelector(".one").textContent = number(volume);
+        var mix = row.querySelector("[data-ul]");
+        if (mix) {
+          mix.textContent = number(volume * scale);
+          each += volume;
+        }
+        whole += volume;
+      });
+      figure.classList.toggle("is-over", spent);
+      var foot = figure.querySelector("tfoot");
+      if (foot) {
+        foot.querySelector(".one").textContent = number(whole);
+        foot.querySelector("[data-ul]").textContent = number(each * scale);
+      }
+      all(".dispense-mix", figure).forEach(function (span) { span.textContent = number(each); });
+      all(".dispense [data-row]", figure).forEach(function (span) {
+        span.textContent = number(Math.max(0, ul[Number(span.getAttribute("data-row"))]));
+      });
+      all(".calc-warning", figure).forEach(function (warning) {
+        warning.hidden = !fired[warning.getAttribute("data-problem")];
+      });
+    }
+
+    return { draw: draw };
+  }
+
+  // A count the bench took: the control comes off it, the dilution scales it back up, and the
+  // net is read against the floor render.py wrote. The floor itself is never worked out here,
+  // and neither is anything the plan says about it. Until the plate is counted there is no net
+  // and no verdict: the line keeps the dash render.py wrote, so nothing reads as a pass.
+  all(".net-count").forEach(function (block) {
+    var floor = parseFloat(block.getAttribute("data-floor"));
+    var net = block.querySelector(".net-sum");
+    var shown = block.querySelector(".net-value");
+    var said = block.querySelector(".net-said");
+    var verdict = block.querySelector(".net-verdict");
+    var unread = shown.textContent;
+
+    function part(name) {
+      var input = block.querySelector("." + name + " .calc-value");
+      return input ? readerNumber(input, function () { draw(); }) : null;
+    }
+
+    var counted = part("net-counted");
+    var control = part("net-control");
+    var dilution = part("net-dilution");
+
+    function draw() {
+      var plate = counted.value();
+      var read = plate !== null;
+      var total = read ? (plate - (control ? control.value() : 0)) * dilution.value() : 0;
+      var clears = read && total >= floor;
+      // A count is a number of things, so however many there are it is written out in full.
+      shown.textContent = read
+        ? total.toLocaleString("en-US", { maximumFractionDigits: 2 })
+        : unread;
+      said.hidden = !read;
+      verdict.textContent = read ? net.getAttribute(clears ? "data-clears" : "data-short") : "";
+      net.classList.toggle("is-short", read && !clears);
+      all(".calc-warning", block).forEach(function (warning) {
+        warning.hidden = !read || clears;
+      });
+    }
+
+    draw();
   });
 
   // Copy buttons.
@@ -672,61 +1004,143 @@ tfoot .muted { font-weight: 400; }
     return h ? h + ":" + String(m).padStart(2, "0") + ":" + rest : m + ":" + rest;
   }
 
-  function alarm() {
+  // What a reader types for a time: h:mm:ss, m:ss, or a bare number of minutes. Null for
+  // anything else, or for no time at all, so a slip leaves the timer as it was.
+  function parseTime(text) {
+    var parts = String(text).trim().split(":");
+    if (parts.length > 3) return null;
+    var total = 0;
+    for (var i = 0; i < parts.length; i += 1) {
+      if (!/^\d+(\.\d+)?$/.test(parts[i].trim())) return null;
+      total = total * 60 + Number(parts[i]);
+    }
+    if (parts.length === 1) total *= 60;
+    return total > 0 ? total : null;
+  }
+
+  // A browser lets a page sound only once the reader has touched it, so the alarm plays on a
+  // context a touch made or woke; one made when the time runs out can stay silent.
+  var audio = null;
+
+  function unlock() {
     try {
       var Context = window.AudioContext || window.webkitAudioContext;
-      var context = new Context();
-      [0, 0.35, 0.7].forEach(function (offset) {
-        var tone = context.createOscillator();
-        var gain = context.createGain();
-        tone.frequency.value = 880;
-        gain.gain.value = 0.15;
-        tone.connect(gain);
-        gain.connect(context.destination);
-        tone.start(context.currentTime + offset);
-        tone.stop(context.currentTime + offset + 0.2);
-      });
+      if (!audio && Context) audio = new Context();
+      if (audio && audio.state === "suspended") audio.resume();
+    } catch (error) {
+      audio = null;
+    }
+  }
+
+  function beep() {
+    [0, 0.35, 0.7].forEach(function (offset) {
+      var tone = audio.createOscillator();
+      var gain = audio.createGain();
+      tone.frequency.value = 880;
+      gain.gain.value = 0.15;
+      tone.connect(gain);
+      gain.connect(audio.destination);
+      tone.start(audio.currentTime + offset);
+      tone.stop(audio.currentTime + offset + 0.2);
+    });
+  }
+
+  // A context the browser holds back may be let go only at the reader's next touch, which is
+  // no time for an alarm, so one let go more than two seconds late stays quiet.
+  function alarm() {
+    try {
+      unlock();
+      var asked = Date.now();
+      if (audio && audio.state === "running") beep();
+      else if (audio) {
+        Promise.resolve(audio.resume()).then(function () {
+          if (audio.state === "running" && Date.now() - asked < 2000) beep();
+        }, function () {});
+      }
     } catch (error) {
       /* no sound available */
     }
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
+  // until that timer is reset.
+  var title = document.title;
+  var ranOut = {};
+
+  function markTitle(key, label) {
+    if (label) ranOut[key] = label;
+    else delete ranOut[key];
+    var labels = Object.keys(ranOut).map(function (one) { return ranOut[one]; });
+    document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
+  }
+
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
   // page or closing the tab does not lose an incubation. A deadline already past comes back
   // finished and silent: the sound belongs to the moment it ran out, not to the page load.
-  all("button.timer").forEach(function (button) {
-    var key = button.getAttribute("data-key");
-    var total = parseFloat(button.getAttribute("data-seconds")) || 0;
+  // A time the reader typed is kept beside either, and is the timer's until they take the
+  // plan's back; the plan's own is `data-seconds`.
+  var timers = all(".timer[data-key]");
+  timers.forEach(function (timer) {
+    var key = timer.getAttribute("data-key");
+    var plan = parseFloat(timer.getAttribute("data-seconds")) || 0;
+    var label = (timer.querySelector(".timer-label") || timer).textContent;
+    var field = timer.querySelector(".timer-time");
+    var action = timer.querySelector(".timer-action");
+    var back = timer.querySelector(".timer-plan");
+    var kept = state[key] || {};
+    var total = typeof kept.seconds === "number" ? kept.seconds : plan;
     var left = total;
     var end = 0;
     var handle = null;
-    var time = button.querySelector(".timer-time");
-    var action = button.querySelector(".timer-action");
+    var due = null;
 
-    function show(label) {
-      time.textContent = clock(left);
-      action.textContent = label;
+    function show(word) {
+      field.value = clock(left);
+      field.readOnly = handle !== null;
+      action.textContent = word;
+      if (back) back.hidden = total === plan || handle !== null;
+    }
+
+    // What the page keeps for this timer: the reader's time where it is not the plan's, and the
+    // deadline or the seconds left where either is set.
+    function keep(extra) {
+      var held = extra || {};
+      if (total !== plan) held.seconds = total;
+      if (Object.keys(held).length) state[key] = held;
+      else delete state[key];
+      save();
     }
 
     function stop() {
       window.clearInterval(handle);
+      window.clearTimeout(due);
       handle = null;
-      button.classList.remove("is-running");
+      due = null;
+      timer.classList.remove("is-running");
     }
 
+    // The interval redraws, and a hidden tab may run it once a minute; the deadline is a timeout
+    // of its own, which a browser holds to the second. One past what a timeout can wait, about
+    // 24 days, is left to the interval.
     function run() {
+      var wait = Math.max(0, end - Date.now());
       handle = window.setInterval(tick, 250);
-      button.classList.add("is-running");
+      if (wait < 2147483647) due = window.setTimeout(function () { finish(true); }, wait);
+      timer.classList.add("is-running");
       show("Pause");
     }
 
-    function finish(sound) {
+    function finish(sounded) {
+      if (timer.classList.contains("is-finished")) return;
       stop();
       left = 0;
-      button.classList.add("is-finished");
+      timer.classList.add("is-finished");
       show("Reset");
-      if (sound) alarm();
+      if (sounded) {
+        alarm();
+        markTitle(key, label);
+      }
     }
 
     function tick() {
@@ -735,35 +1149,74 @@ tfoot .muted { font-weight: 400; }
       else show("Pause");
     }
 
-    var kept = state[key];
-    if (kept && typeof kept.ends === "number") {
+    // Back to a full count of `to`, standing ready.
+    function ready(to) {
+      stop();
+      total = to;
+      left = to;
+      timer.classList.remove("is-finished");
+      markTitle(key, null);
+      keep();
+      show("Start");
+    }
+
+    if (typeof kept.ends === "number") {
       end = kept.ends;
       left = Math.max(0, (end - Date.now()) / 1000);
       if (left > 0) run();
       else finish(false);
-    } else if (kept && typeof kept.left === "number") {
+    } else if (typeof kept.left === "number") {
       left = kept.left;
       show("Resume");
+    } else {
+      show("Start");
     }
 
-    button.addEventListener("click", function () {
+    action.addEventListener("click", function () {
       if (handle !== null) {
+        left = Math.max(0, (end - Date.now()) / 1000);
         stop();
-        state[key] = { left: left };
+        keep({ left: left });
         show("Resume");
       } else if (left <= 0) {
-        left = total;
-        button.classList.remove("is-finished");
-        delete state[key];
-        show("Start");
+        ready(total);
       } else {
+        unlock();
         end = Date.now() + left * 1000;
-        state[key] = { ends: end };
+        keep({ ends: end });
         run();
       }
-      save();
     });
+
+    // A typed time is the whole count, except on a paused timer, where it is what is left and
+    // the count grows or shrinks by the difference: 60 minutes become 90 with the bench mid-way.
+    field.addEventListener("change", function () {
+      var typed = parseTime(field.value);
+      var paused = !timer.classList.contains("is-finished") && left !== total;
+      if (typed === null || handle !== null) {
+        show(action.textContent);
+      } else if (paused) {
+        total = total - left + typed;
+        left = typed;
+        keep({ left: left });
+        show("Resume");
+      } else {
+        ready(typed);
+      }
+    });
+
+    if (back) back.addEventListener("click", function () { ready(plan); });
   });
+
+  // A timer still running after a reload sounds only once the page has been touched again.
+  if (timers.length) {
+    // A touch lets a page sound when it lifts, not when it lands.
+    ["pointerup", "keydown"].forEach(function (kind) {
+      document.addEventListener(kind, function () {
+        if (document.querySelector(".timer.is-running")) unlock();
+      }, true);
+    });
+  }
 })();
 </script>
 </body>

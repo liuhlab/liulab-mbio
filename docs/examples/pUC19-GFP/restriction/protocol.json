@@ -1,6 +1,6 @@
 {
   "title": "Restriction and ligation: GFP amplicon insert into pUC19",
-  "key": "50b1f46744f27bae",
+  "key": "0dc41c69ee62346f",
   "summary": "Amplify GFP with a recognition site on each primer's 5' tail. Cut pUC19 and GFP amplicon with HindIII and SphI, gel-purify the 2684 bp backbone and the 719 bp insert, ligate them, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -205,7 +205,10 @@
       "contains": [],
       "rules": [],
       "cautions": [],
-      "citation": null
+      "citation": {
+        "source": "N3200",
+        "locator": "band sizes"
+      }
     },
     {
       "name": "NEB 100 bp DNA Ladder",
@@ -217,22 +220,25 @@
       "contains": [],
       "rules": [],
       "cautions": [],
-      "citation": null
+      "citation": {
+        "source": "N3231",
+        "locator": "band sizes"
+      }
     },
     {
-      "name": "Gel extraction spin columns",
+      "name": "Monarch Spin DNA Gel Extraction Kit",
       "supplier": "New England Biolabs",
       "catalog": "T1120",
       "storage": "",
       "amount": "",
-      "note": "",
+      "note": "recovers each band off the gel",
       "contains": [],
       "rules": [],
       "cautions": [],
       "citation": null
     },
     {
-      "name": "PCR cleanup spin columns",
+      "name": "Monarch Spin PCR & DNA Cleanup Kit",
       "supplier": "New England Biolabs",
       "catalog": "T1130",
       "storage": "",
@@ -274,6 +280,21 @@
       "storage": "",
       "amount": "one plate per transformation",
       "note": "",
+      "contains": [],
+      "rules": [],
+      "cautions": [],
+      "citation": {
+        "source": "potapov-2018",
+        "locator": "methods"
+      }
+    },
+    {
+      "name": "Plasmid miniprep kit",
+      "supplier": "",
+      "catalog": "",
+      "storage": "",
+      "amount": "",
+      "note": "for the clones that go to sequencing",
       "contains": [],
       "rules": [],
       "cautions": [],
@@ -375,7 +396,7 @@
     "Agarose gel rig, power supply and a gel imager",
     "Scalpel or gel cutting tips, and a clean cutting surface",
     "Microcentrifuge",
-    "Spectrophotometer or fluorometer",
+    "Spectrophotometer (NanoDrop) or fluorometer (Qubit)",
     "Heat block or water bath at 42 °C",
     "Shaking incubator and a plate incubator at 37 °C"
   ],
@@ -388,7 +409,7 @@
       "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
-        "Mix the master mix and put it in each tube, then add the GFP template.",
+        "Mix the master mix, dispense it into each tube, then add the GFP template.",
         "Run the program below: 63 °C annealing and 20 s extension for a 741 bp product."
       ],
       "cautions": [
@@ -413,7 +434,8 @@
               "stock": "5X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "dNTP mix",
@@ -421,7 +443,8 @@
               "stock": "10 mM each",
               "final": "200 µM each",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Forward primer",
@@ -429,7 +452,8 @@
               "stock": "10 µM",
               "final": "500 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Reverse primer",
@@ -437,7 +461,8 @@
               "stock": "10 µM",
               "final": "500 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Template DNA",
@@ -445,7 +470,8 @@
               "stock": "",
               "final": "",
               "master_mix": false,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Q5 DNA Polymerase",
@@ -453,7 +479,8 @@
               "stock": "2 U/µL",
               "final": "1 unit",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -461,7 +488,8 @@
               "stock": "",
               "final": "to 50 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "GFP PCR",
@@ -555,6 +583,7 @@
       "expected": [
         "One band at 741 bp."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No band",
@@ -580,12 +609,20 @@
       "key": "pcr-gel",
       "section": "Make the fragments",
       "instructions": [
-        "Pour a 2% agarose gel.",
+        "Use a 2% agarose gel.",
         "Load 5 µL of each reaction beside the ladder.",
         "Run until the dye front is two thirds down the gel."
       ],
       "cautions": [],
-      "notes": [],
+      "notes": [
+        {
+          "text": "2% agarose resolves bands of these sizes.",
+          "citation": {
+            "source": "agarose-resolution",
+            "locator": "optimum resolution for linear DNA"
+          }
+        }
+      ],
       "tables": [],
       "programs": [],
       "timers": [],
@@ -626,6 +663,7 @@
       "expected": [
         "GFP: one band at 741 bp."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "A smear or an extra band",
@@ -643,7 +681,7 @@
       "key": "purify-amplicons",
       "section": "Make the fragments",
       "instructions": [
-        "Run each reaction over a spin column and elute in the smallest volume the kit allows."
+        "Run each reaction over a Monarch Spin PCR & DNA Cleanup column and elute in the smallest volume the kit allows."
       ],
       "cautions": [
         {
@@ -675,12 +713,13 @@
       "expected": [
         "Clean DNA, free of polymerase, primers and dNTPs."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "Low recovery",
-          "solution": "Elute twice through the same column, or pool two reactions before purifying.",
+          "solution": "Elute in a larger volume and leave the buffer on the column longer.",
           "citation": {
-            "source": "T1020",
+            "source": "T1130",
             "locator": "troubleshooting, low DNA yield"
           }
         }
@@ -750,7 +789,11 @@
               "stock": "",
               "final": "0.604 pmol (1000 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": null
             },
             {
               "name": "10X rCutSmart Buffer",
@@ -758,7 +801,11 @@
               "stock": "10X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "HindIII-HF (R3104)",
@@ -766,7 +813,11 @@
               "stock": "",
               "final": "10 units",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "SphI-HF (R3182)",
@@ -774,7 +825,11 @@
               "stock": "",
               "final": "10 units",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -782,7 +837,8 @@
               "stock": "",
               "final": "to 50 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "pUC19 digest",
@@ -806,6 +862,7 @@
         "pUC19 backbone: 2684 bp, which is what goes on (HindIII and SphI ends).",
         "pUC19 offcut: 2 bp."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "An uncut band remains",
@@ -890,7 +947,11 @@
               "stock": "",
               "final": "2.19 pmol (1000 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": null
             },
             {
               "name": "10X rCutSmart Buffer",
@@ -898,7 +959,11 @@
               "stock": "10X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "HindIII-HF (R3104)",
@@ -906,7 +971,11 @@
               "stock": "",
               "final": "10 units",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "SphI-HF (R3182)",
@@ -914,7 +983,11 @@
               "stock": "",
               "final": "10 units",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -922,7 +995,8 @@
               "stock": "",
               "final": "to 50 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "GFP amplicon digest",
@@ -945,6 +1019,7 @@
       "expected": [
         "GFP amplicon insert: 719 bp, which is what goes on (SphI and HindIII ends)."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "An uncut band remains",
@@ -970,17 +1045,30 @@
       "key": "gel-purify",
       "section": "Cut and recover",
       "instructions": [
-        "Pour a 1% agarose gel and load each whole digest beside the ladder.",
+        "Use a 1% agarose gel and load each whole digest beside the ladder.",
         "Run until the bands below are apart.",
         "Cut out the 2684 bp pUC19 backbone band and the 719 bp GFP amplicon insert band.",
-        "Recover each slice on a spin column and elute in the smallest volume the kit allows."
+        "Recover each slice on a Monarch Spin DNA Gel Extraction column and elute in the smallest volume the kit allows."
       ],
       "cautions": [
         "Keep the gel off the ultraviolet box for as long as you can; use blue light where there is one."
       ],
       "notes": [
         "A gel is what separates the two pieces of each digest from one another, so a piece that is not wanted cannot religate into the backbone.",
-        "It also takes the enzymes away, so nothing has to be heat inactivated before the ligation."
+        {
+          "text": "It also takes the enzymes away, so nothing has to be heat inactivated before the ligation.",
+          "citation": {
+            "source": "NEB-heat-inactivation",
+            "locator": "enzymes heat does not inactivate"
+          }
+        },
+        {
+          "text": "1% agarose resolves bands of these sizes.",
+          "citation": {
+            "source": "agarose-resolution",
+            "locator": "optimum resolution for linear DNA"
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -1039,10 +1127,11 @@
         "Each slice recovers 70% to 90% of the DNA that was in it.",
         "2 bp runs past the bottom of this ladder."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "Two bands did not separate",
-          "solution": "Run the gel further, or pour it at a percentage that resolves that size range.",
+          "solution": "Run the gel further, or use a percentage that resolves that size range.",
           "citation": {
             "source": "T1120",
             "locator": "agarose concentration, p. 6"
@@ -1050,9 +1139,9 @@
         },
         {
           "problem": "Little DNA comes off the column",
-          "solution": "Elute twice through the same column, and keep the agarose percentage low.",
+          "solution": "Elute in a larger volume, leave it on the column longer, and keep the agarose percentage low.",
           "citation": {
-            "source": "T1020",
+            "source": "T1120",
             "locator": "troubleshooting, low DNA yield"
           }
         }
@@ -1064,13 +1153,11 @@
       "key": "quantify",
       "section": "Cut and recover",
       "instructions": [
-        "Measure each purified amplicon by A260 or with a fluorometer.",
-        "Work out the volume that carries the picomoles the next table asks for."
+        "Measure each purified amplicon by A260 (NanoDrop) or with a fluorometer (Qubit).",
+        "Enter each concentration in the next table's Stock column."
       ],
       "cautions": [],
-      "notes": [
-        "Picomoles, not nanograms: the shorter fragment weighs less at the same molar ratio. Mass to moles here is NEBioCalculator's 36.04 + 615.94 per base pair, which is about 5% off the 650 Da per base pair of NEB's manuals."
-      ],
+      "notes": [],
       "tables": [],
       "programs": [],
       "timers": [],
@@ -1083,6 +1170,7 @@
         "pUC19 backbone: 0.02 pmol is 33.06 ng, so 33 ng/µL or more fits in 1 µL.",
         "GFP amplicon insert: 0.06 pmol is 26.57 ng, so 27 ng/µL or more fits in 1 µL."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "Too dilute to fit in the reaction",
@@ -1123,7 +1211,17 @@
               "stock": "",
               "final": "0.02 pmol (33.06 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": {
+                "nanograms": 33.06,
+                "made_up_by": "Nuclease-free water",
+                "too_dilute": "Too dilute to fit in the reaction",
+                "least_ul": null,
+                "too_concentrated": ""
+              }
             },
             {
               "name": "GFP amplicon insert",
@@ -1131,7 +1229,17 @@
               "stock": "",
               "final": "0.06 pmol (26.57 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": {
+                "nanograms": 26.57,
+                "made_up_by": "Nuclease-free water",
+                "too_dilute": "Too dilute to fit in the reaction",
+                "least_ul": null,
+                "too_concentrated": ""
+              }
             },
             {
               "name": "T4 DNA Ligase Buffer",
@@ -1139,7 +1247,11 @@
               "stock": "10X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "M0202",
+                "locator": "protocol"
+              },
+              "calculator": null
             },
             {
               "name": "T4 DNA Ligase",
@@ -1147,7 +1259,11 @@
               "stock": "400 U/µL",
               "final": "400 units",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "M0202",
+                "locator": "protocol"
+              },
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -1155,7 +1271,8 @@
               "stock": "",
               "final": "to 20 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "Ligation, T4 DNA Ligase (NEB #M0202)",
@@ -1177,7 +1294,10 @@
                 }
               ],
               "cycles": 1,
-              "citation": null
+              "citation": {
+                "source": "M0202",
+                "locator": "protocol"
+              }
             },
             {
               "incubations": [
@@ -1190,7 +1310,10 @@
                 }
               ],
               "cycles": 1,
-              "citation": null
+              "citation": {
+                "source": "M0202",
+                "locator": "protocol"
+              }
             }
           ],
           "title": "Ligation",
@@ -1227,6 +1350,7 @@
         "The product carries AAGCTT at 1165, joining GFP amplicon insert to pUC19 backbone.",
         "1 to 5 µL of this goes into the cells; the rest keeps at -20 °C."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No colonies later",
@@ -1271,12 +1395,20 @@
       "programs": [],
       "timers": [
         {
+          "label": "Thaw",
+          "seconds": 600
+        },
+        {
           "label": "On ice",
           "seconds": 1800
         },
         {
           "label": "Heat shock",
           "seconds": 30
+        },
+        {
+          "label": "Back on ice",
+          "seconds": 300
         },
         {
           "label": "Outgrowth",
@@ -1291,11 +1423,36 @@
       "expected": [
         "No supplier states a colony count for this method, so run the controls below and read the plate against them rather than against a number.",
         "Correct clones are white and empty vector is blue: the insertion interrupts lacZα, which is then not there to complete the host's own.",
-        "Uncut vector, 100 pg to 1 ng: the cells are viable and the antibiotic is right.",
-        "Cut vector, no ligase: under 1% of the colonies the uncut vector gave.",
-        "Vector-only ligation: the same as the cut-vector control, its ends being unable to rejoin.",
-        "A transformation efficiency under 10⁴ cfu/µg means the cells, not the ligation."
+        {
+          "text": "Uncut vector, 100 pg to 1 ng: the cells are viable and the antibiotic is right.",
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "transformation controls"
+          }
+        },
+        {
+          "text": "Cut vector, no ligase: under 1% of the colonies the uncut vector gave.",
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "transformation controls"
+          }
+        },
+        {
+          "text": "Vector-only ligation: the same as the cut-vector control, its ends being unable to rejoin.",
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "transformation controls"
+          }
+        },
+        {
+          "text": "A transformation efficiency under 10⁴ cfu/µg means the cells, not the ligation.",
+          "citation": {
+            "source": "NEB-cloning",
+            "locator": "transformation controls"
+          }
+        }
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No colonies",
@@ -1336,7 +1493,8 @@
               "stock": "2X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Forward primer",
@@ -1344,7 +1502,8 @@
               "stock": "10 µM",
               "final": "200 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Reverse primer",
@@ -1352,7 +1511,8 @@
               "stock": "10 µM",
               "final": "200 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -1360,7 +1520,8 @@
               "stock": "",
               "final": "to 25 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "Colony PCR",
@@ -1491,6 +1652,7 @@
         "Correct clone: 828 bp.",
         "Empty vector: 111 bp."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No band in any lane",
@@ -1516,7 +1678,14 @@
       ],
       "cautions": [],
       "notes": [
-        "The junctions put both recognition sites back, so the pair that made the clone is what cuts the insert out of it again."
+        "The junctions put both recognition sites back, so the pair that made the clone is what cuts the insert out of it again.",
+        {
+          "text": "1% agarose resolves bands of these sizes.",
+          "citation": {
+            "source": "agarose-resolution",
+            "locator": "optimum resolution for linear DNA"
+          }
+        }
       ],
       "tables": [
         {
@@ -1527,7 +1696,11 @@
               "stock": "",
               "final": "0.477 pmol (1000 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": null
             },
             {
               "name": "10X rCutSmart Buffer",
@@ -1535,7 +1708,11 @@
               "stock": "10X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "HindIII-HF (R3104)",
@@ -1543,7 +1720,11 @@
               "stock": "",
               "final": "10 units",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "SphI-HF (R3182)",
@@ -1551,7 +1732,11 @@
               "stock": "",
               "final": "10 units",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "NEB-optimizing",
+                "locator": "typical reaction conditions"
+              },
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -1559,7 +1744,8 @@
               "stock": "",
               "final": "to 50 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "Diagnostic digest",
@@ -1628,6 +1814,7 @@
         "A colony carrying pUC19 instead: 2684 bp and 2 bp.",
         "2 bp runs past the bottom of this ladder."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "Every miniprep gives the vector's bands",
@@ -1654,7 +1841,7 @@
       "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
-        "Send each with both sequencing primers.",
+        "Send each miniprep with both sequencing primers.",
         "Check the read across every junction and the whole of each insert."
       ],
       "cautions": [],
@@ -1675,6 +1862,7 @@
         "Sequencing reverse anneals 123 bp from its own junction and has to read 846 bp to cover the far one.",
         "The junctions read as GCATGC and AAGCTT, and the parts match GFP amplicon insert."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "The read starts too close to the junction",
@@ -1688,65 +1876,55 @@
       "holes": []
     }
   ],
-  "references": [
-    {
-      "text": "NEB, Optimizing Restriction Endonuclease Reactions, for the digest and the star-activity conditions",
-      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/optimizing-restriction-endonuclease-reactions"
-    },
-    {
-      "text": "NEB, Double Digests, for cutting with two enzymes in one buffer",
-      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/double-digests"
-    },
-    {
-      "text": "NEB, Ligation Protocol with T4 DNA Ligase (NEB #M0202), for the ligation, its ratios and both incubations",
-      "url": "https://www.neb.com/en-us/protocols/dna-ligation-with-t4-dna-ligase-m0202"
-    },
-    {
-      "text": "NEB, Monarch Spin DNA Gel Extraction Kit instruction manual, NEB #T1120, version 2.0 10.25, for what a gel extraction recovers",
-      "url": "https://www.neb.com/-/media/nebus/files/manuals/manualt1120.pdf"
-    },
-    {
-      "text": "NEB, Heat Inactivation, for stopping a digest and for the enzymes heat does not stop",
-      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation"
-    },
-    {
-      "text": "NEB, Restriction Endonuclease Technical Guide, version 5.0 - 7/17, for what Dam and Dcm methylate and for the strain to grow a blocked plasmid in",
-      "url": "https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf"
-    },
-    {
-      "text": "NEB, Troubleshooting Guide for Cloning, for the four transformation controls",
-      "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning"
-    },
-    {
-      "text": "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)",
-      "url": ""
-    },
-    {
-      "text": "NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion",
-      "url": ""
-    },
-    {
-      "text": "NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)",
-      "url": ""
-    },
-    {
-      "text": "NEB, Agarose Gel Resolution, for the percentage a band range resolves on",
-      "url": ""
-    },
-    {
-      "text": "NEB, Cleavage Close to the End of DNA Fragments, for the bases a site needs 5' of it to be cut on a PCR product",
-      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments"
-    },
-    {
-      "text": "NEB, Monarch Spin PCR & DNA Cleanup Kit instruction manual, NEB #T1130, version 1.0 06.24, for what a spin column recovers",
-      "url": "https://www.neb.com/-/media/nebus/files/manuals/manualt1130.pdf"
-    },
-    {
-      "text": "Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal and IPTG plate",
-      "url": "https://doi.org/10.1021/acssynbio.8b00333"
-    }
-  ],
   "sources": {
+    "NEBioCalculator": {
+      "document": "New England Biolabs NEBioCalculator",
+      "edition": "script main-6f3020c533.js, capture 2026-08-28",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "N3200": {
+      "document": "New England Biolabs #N3200 1 kb Plus DNA Ladder product page",
+      "edition": "capture 2026-03-07",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "N3231": {
+      "document": "New England Biolabs #N3231 100 bp DNA Ladder product page",
+      "edition": "capture 2025-10-31",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "agarose-resolution": {
+      "document": "New England Biolabs, Agarose Gel Resolution",
+      "edition": "capture 2024-09-18",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "T1120": {
+      "document": "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
+      "edition": "version 2.0 10.25",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "T1130": {
+      "document": "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+      "edition": "version 1.0 06.24",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
     "M0491": {
       "document": "New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page",
       "edition": "capture 2024-08-04",
@@ -1759,14 +1937,6 @@
       "document": "New England Biolabs, Troubleshooting Guide for Cloning",
       "edition": "",
       "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
-      "read_as": "",
-      "date": "2026-09-18",
-      "note": "docs/research/restriction-ligation.md"
-    },
-    "T1020": {
-      "document": "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
-      "edition": "version 2.1_4/21",
-      "url": "",
       "read_as": "",
       "date": "2026-09-18",
       "note": "docs/research/restriction-ligation.md"
@@ -1787,6 +1957,14 @@
       "date": "2026-09-12",
       "note": "docs/research/primer-design-and-pcr.md"
     },
+    "potapov-2018": {
+      "document": "Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674",
+      "edition": "",
+      "url": "https://doi.org/10.1021/acssynbio.8b00333",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/golden-gate-assembly.md"
+    },
     "M0480": {
       "document": "New England Biolabs #M0480 OneTaq DNA Polymerase protocol",
       "edition": "protocols.io version 2, 2022-02-21",
@@ -1794,6 +1972,14 @@
       "read_as": "",
       "date": "2026-09-12",
       "note": ""
+    },
+    "NEB-optimizing": {
+      "document": "New England Biolabs usage guideline, Optimizing Restriction Endonuclease Reactions",
+      "edition": "",
+      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/optimizing-restriction-endonuclease-reactions",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
     },
     "NEB-technical-guide": {
       "document": "New England Biolabs, Restriction Endonuclease Technical Guide",
@@ -1811,27 +1997,11 @@
       "date": "2026-09-18",
       "note": "docs/research/restriction-ligation.md"
     },
-    "T1120": {
-      "document": "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
-      "edition": "version 2.0 10.25",
-      "url": "",
-      "read_as": "",
-      "date": "2026-09-18",
-      "note": "docs/research/restriction-ligation.md"
-    },
     "NEB-background-faq": {
       "document": "New England Biolabs FAQ, How can I reduce the number of vector-only background colonies?",
       "edition": "capture 2019-11-23",
       "url": "",
       "read_as": "Wayback Machine",
-      "date": "2026-09-18",
-      "note": "docs/research/restriction-ligation.md"
-    },
-    "T1130": {
-      "document": "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
-      "edition": "version 1.0 06.24",
-      "url": "",
-      "read_as": "",
       "date": "2026-09-18",
       "note": "docs/research/restriction-ligation.md"
     },
@@ -1848,6 +2018,14 @@
       "edition": "",
       "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
       "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
+    "NEB-heat-inactivation": {
+      "document": "New England Biolabs usage guideline, Heat Inactivation",
+      "edition": "capture 2021-04-20",
+      "url": "https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation",
+      "read_as": "Wayback Machine",
       "date": "2026-09-18",
       "note": "docs/research/restriction-ligation.md"
     }

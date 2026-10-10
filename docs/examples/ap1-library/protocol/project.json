@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "76fcbcada252e552",
+  "key": "8035068f4fa6bca2",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 7 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -93,7 +93,7 @@
   "protocols": [
     {
       "title": "Part carrier",
-      "key": "a3c12b45fd4b23cc",
+      "key": "1e37b944aa4106cd",
       "summary": "Put each of 72 parts in its own pCR-Blunt II-TOPO, one part a well, so the collection keeps and BsmBI can release any of them again.",
       "overview": {
         "Parts": "72, one a well",
@@ -148,7 +148,10 @@
           "contains": [],
           "rules": [],
           "cautions": [],
-          "citation": null
+          "citation": {
+            "source": "zero-blunt-topo",
+            "locator": "TOPO cloning reaction"
+          }
         }
       ],
       "oligos": [],
@@ -268,7 +271,12 @@
           ],
           "tables": [],
           "programs": [],
-          "timers": [],
+          "timers": [
+            {
+              "label": "TOPO reaction",
+              "seconds": 300
+            }
+          ],
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [],
@@ -278,6 +286,7 @@
             "72 carrier plasmids, one a part, each still named by the well it sits in.",
             "No pool and no library: nothing here is mixed, so nothing has to be told apart afterwards."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Two parts end up in one well",
@@ -288,19 +297,22 @@
           "holes": []
         }
       ],
-      "references": [
-        {
-          "text": "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide, for a vector supplied linearised with topoisomerase I bound to each 3' end and a 5 min room-temperature reaction",
-          "url": ""
+      "sources": {
+        "zero-blunt-topo": {
+          "document": "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide",
+          "edition": "",
+          "url": "",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/synthesis-and-assembly.md"
         }
-      ],
-      "sources": {},
+      },
       "holes": [],
       "bill": null
     },
     {
       "title": "Primer plates",
-      "key": "ccff76fac711c73c",
+      "key": "fdb6a0650c5f9cbd",
       "summary": "Order 74 primers as one 96-well plate, resuspend them to 100 µM, and split 1 working plate at 10 µM, one of them thawed for each run that needs these primers.",
       "overview": {
         "Primers": "74 in a 96-well plate",
@@ -1334,6 +1346,7 @@
           "expected": [
             "A sealed 96-well plate holding 74 dried primers."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -1360,6 +1373,7 @@
           "expected": [
             "Every well holds 250 µL at 100 µM."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -1384,6 +1398,7 @@
           "expected": [
             "Every well of primer stock plate holds the primer the map below names."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -2232,6 +2247,7 @@
           "expected": [
             "Each working plate holds 100 µL at 10 µM in 74 wells."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -2257,18 +2273,18 @@
           "expected": [
             "2 labelled plates at -20 °C, 1 of them ready to run from."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         }
       ],
-      "references": [],
       "sources": {},
       "holes": [],
       "bill": null
     },
     {
       "title": "Cargo ordering and pool preparation",
-      "key": "259589bc4f03c615",
+      "key": "1d55f66a11691cec",
       "summary": "Order the synthesised material this library is built from, and put it away ready for the bench.",
       "overview": {},
       "highlights": [],
@@ -2352,6 +2368,7 @@
           "expected": [
             "One pool, 131 oligos, every one 350 nt and no length spread, which is what the padding is for."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The vendor bins the pool by length",
@@ -2374,7 +2391,13 @@
             "Spin the tube down before taking the cap off."
           ],
           "notes": [
-            "Dividing by 20 is what the vendor's own floor of at least 20 ng/µL comes to, and the amplification then pipettes 1 µL of 20 ng/µL: Twist Oligo Pools Amplification Protocol DOC-4060 REV 1.0, \"Before You Begin\"."
+            {
+              "text": "Dividing by 20 is what the floor of at least 20 ng/µL comes to, and the amplification then pipettes 1 µL of 20 ng/µL.",
+              "citation": {
+                "source": "DOC-4060",
+                "locator": "Before You Begin"
+              }
+            }
           ],
           "tables": [],
           "programs": [],
@@ -2387,23 +2410,27 @@
           "expected": [
             "One tube of pool in solution at 20 ng/µL or above, with nothing left undissolved on the wall of the tube."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         }
       ],
-      "references": [
-        {
-          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the buffer a dried pool is dissolved in and the least it may be left at, for the three cycle bands, and for the FAQ answering that more cycles give worse uniformity",
-          "url": ""
+      "sources": {
+        "DOC-4060": {
+          "document": "Twist Bioscience, Twist Oligo Pools Amplification Protocol",
+          "edition": "DOC-4060 REV 1.0",
+          "url": "",
+          "read_as": "held under reference_docs/",
+          "date": "",
+          "note": "docs/research/oligo-pool-pcr-cycles.md"
         }
-      ],
-      "sources": {},
+      },
       "holes": [],
       "bill": null
     },
     {
       "title": "Cargo creation",
-      "key": "0ad188224491aa87",
+      "key": "21f2b86cf4a6b041",
       "summary": "Pull every block out of the ordered pool and close each one's cargo into the vector for the position it fills, one archived well a design.",
       "overview": {},
       "highlights": [],
@@ -2740,7 +2767,13 @@
           "cautions": [],
           "notes": [
             "Every pair anneals at 65.1 °C, so one block of tubes takes them all.",
-            "Twist's band for a 350 nt pool is 12 to 14 cycles; Twist Oligo Pools Amplification Protocol DOC-4060 REV 1.0 gives the same three bands. Its FAQ answers that more cycles give worse uniformity, so 12 is what prints.",
+            {
+              "text": "The band for a 350 nt pool is 12 to 14 cycles, and more cycles give worse uniformity, so 12 is what prints.",
+              "citation": {
+                "source": "DOC-4060",
+                "locator": "Appendix B"
+              }
+            },
             "The outer primer is what makes a batch a batch: it is dropped at PCR2, so a block cannot be pulled out of a batch it does not sit in."
           ],
           "tables": [
@@ -2752,7 +2785,8 @@
                   "stock": "5X",
                   "final": "1X",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "dNTP mix",
@@ -2760,7 +2794,8 @@
                   "stock": "10 mM each",
                   "final": "200 µM each",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Forward primer",
@@ -2768,7 +2803,8 @@
                   "stock": "10 µM",
                   "final": "500 nM",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Reverse primer",
@@ -2776,7 +2812,8 @@
                   "stock": "10 µM",
                   "final": "500 nM",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Template DNA",
@@ -2784,7 +2821,8 @@
                   "stock": "",
                   "final": "",
                   "master_mix": false,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Q5 DNA Polymerase",
@@ -2792,7 +2830,8 @@
                   "stock": "2 U/µL",
                   "final": "1 unit",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Nuclease-free water",
@@ -2800,7 +2839,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "PCR1, one tube a batch",
@@ -2945,6 +2985,7 @@
             "One band at 350 bp in every batch, which is the whole oligo.",
             "Batch sizes: 1 holds 72."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "No band",
@@ -2990,7 +3031,8 @@
                   "stock": "5X",
                   "final": "1X",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "dNTP mix",
@@ -2998,7 +3040,8 @@
                   "stock": "10 mM each",
                   "final": "200 µM each",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Forward primer",
@@ -3006,7 +3049,8 @@
                   "stock": "10 µM",
                   "final": "500 nM",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Reverse primer",
@@ -3014,7 +3058,8 @@
                   "stock": "10 µM",
                   "final": "500 nM",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Template DNA",
@@ -3022,7 +3067,8 @@
                   "stock": "",
                   "final": "",
                   "master_mix": false,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Q5 DNA Polymerase",
@@ -3030,7 +3076,8 @@
                   "stock": "2 U/µL",
                   "final": "1 unit",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "Nuclease-free water",
@@ -3038,7 +3085,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "PCR2, one well a block",
@@ -3180,6 +3228,7 @@
             "One band at 330 bp in every well, the outer primer's 20 nt shorter than PCR1's.",
             "72 wells filled across 1 plate."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A band at PCR1's length",
@@ -3226,7 +3275,11 @@
                   "stock": "",
                   "final": "0.05 pmol (165.17 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PCR2 piece 1",
@@ -3234,7 +3287,11 @@
                   "stock": "",
                   "final": "0.05 pmol (10.16 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PCR2 piece 2",
@@ -3242,7 +3299,11 @@
                   "stock": "",
                   "final": "0.05 pmol (10.16 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PCR2 piece 3",
@@ -3250,7 +3311,11 @@
                   "stock": "",
                   "final": "0.05 pmol (10.16 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PCR2 piece 4",
@@ -3258,7 +3323,11 @@
                   "stock": "",
                   "final": "0.05 pmol (10.16 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PCR2 piece 5",
@@ -3266,7 +3335,11 @@
                   "stock": "",
                   "final": "0.05 pmol (10.16 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "T4 DNA Ligase Buffer",
@@ -3274,7 +3347,11 @@
                   "stock": "10X",
                   "final": "1X",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "E1602",
+                    "locator": "assembly protocol"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "NEBridge Golden Gate Enzyme Mix",
@@ -3282,7 +3359,11 @@
                   "stock": "",
                   "final": "",
                   "master_mix": true,
-                  "citation": null
+                  "citation": {
+                    "source": "E1602",
+                    "locator": "assembly protocol"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "Nuclease-free water",
@@ -3290,7 +3371,8 @@
                   "stock": "",
                   "final": "to 20 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Golden Gate assembly, NEBridge kit E1602",
@@ -3319,7 +3401,10 @@
                     }
                   ],
                   "cycles": 30,
-                  "citation": null
+                  "citation": {
+                    "source": "E1602",
+                    "locator": "assembly protocol"
+                  }
                 },
                 {
                   "incubations": [
@@ -3332,7 +3417,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "E1602",
+                    "locator": "assembly protocol"
+                  }
                 }
               ],
               "title": "Golden Gate assembly",
@@ -3371,6 +3459,7 @@
             "72 plasmids, one a block: its position's destination carrying that block's cargo, 83 to 1,099 bp of it.",
             "Each cargo reads: the overhang its part enters on, its coding bases, the internal stuffer, its barcode, and the TTCC cloning scar. The external stuffers parts.tsv spells either side of it are the destination's own bases."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A block comes out short",
@@ -3384,28 +3473,6 @@
             }
           ],
           "holes": []
-        }
-      ],
-      "references": [
-        {
-          "text": "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)",
-          "url": ""
-        },
-        {
-          "text": "NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)",
-          "url": ""
-        },
-        {
-          "text": "NEB, Agarose Gel Resolution, for the percentage a band range resolves on",
-          "url": ""
-        },
-        {
-          "text": "Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle count banded by the pool's length",
-          "url": ""
-        },
-        {
-          "text": "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the buffer a dried pool is dissolved in and the least it may be left at, for the three cycle bands, and for the FAQ answering that more cycles give worse uniformity",
-          "url": ""
         }
       ],
       "sources": {
@@ -3425,6 +3492,14 @@
           "date": "",
           "note": "docs/research/figure-sources.md"
         },
+        "DOC-4060": {
+          "document": "Twist Bioscience, Twist Oligo Pools Amplification Protocol",
+          "edition": "DOC-4060 REV 1.0",
+          "url": "",
+          "read_as": "held under reference_docs/",
+          "date": "",
+          "note": "docs/research/oligo-pool-pcr-cycles.md"
+        },
         "FRM-001034": {
           "document": "Twist Bioscience, Amplifying Twist Oligo Pools",
           "edition": "REV 8",
@@ -3436,10 +3511,26 @@
         "LevSeq": {
           "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
           "edition": "",
-          "url": "",
+          "url": "https://doi.org/10.1021/acssynbio.4c00625",
           "read_as": "held under reference_docs/",
           "date": "2026-10-06",
           "note": ""
+        },
+        "NEBioCalculator": {
+          "document": "New England Biolabs NEBioCalculator",
+          "edition": "script main-6f3020c533.js, capture 2026-08-28",
+          "url": "",
+          "read_as": "Wayback Machine",
+          "date": "",
+          "note": "docs/research/primer-design-and-pcr.md"
+        },
+        "E1602": {
+          "document": "New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) instruction manual",
+          "edition": "version 3.0_6/26",
+          "url": "https://www.neb.com/-/media/nebus/files/manuals/manuale1602.pdf",
+          "read_as": "",
+          "date": "2026-09-12",
+          "note": "docs/research/golden-gate-assembly.md"
         }
       },
       "holes": [],
@@ -3447,7 +3538,7 @@
     },
     {
       "title": "Cargo validation: barcode ligation",
-      "key": "74c68347759c0a46",
+      "key": "8ac90a12f8273b56",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -3917,6 +4008,7 @@
           "expected": [
             "One spot a design, at about 2,500 colonies a plate, which is the density picking wants."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A spot grows nothing",
@@ -3937,7 +4029,13 @@
           ],
           "cautions": [],
           "notes": [
-            "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
+            {
+              "text": "4 colonies a design is the only count measured: four gave a clean copy of 343 of 458 genes.",
+              "citation": {
+                "source": "lund-2024",
+                "locator": "colonies screened per gene"
+              }
+            },
             "1 fragment: 40 designs, 100.0% of picks clean",
             "2 fragments: 16 designs, 100.0% of picks clean",
             "3 fragments: 6 designs, 93.8% of picks clean",
@@ -3957,6 +4055,7 @@
             "288 wells over 1 plate: 288 picked.",
             "Every colony of one design sits on one plate."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A design in many fragments gives no clean colony",
@@ -3978,7 +4077,12 @@
           "notes": [],
           "tables": [],
           "programs": [],
-          "timers": [],
+          "timers": [
+            {
+              "label": "Plates inverted",
+              "seconds": 1800
+            }
+          ],
           "waits": [],
           "hands_on_seconds": null,
           "transfers": [
@@ -7167,6 +7271,7 @@
           "expected": [
             "288 wells of lysate, 4 picked plates to one."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -7216,6 +7321,7 @@
           "expected": [
             "One barcoded construct a well, carrying four barcodes chained head to tail."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -7246,6 +7352,7 @@
           "expected": [
             "Reads for 288 wells, every well told from the rest by the marks it carries."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -7276,6 +7383,7 @@
             "A well read more than 150 times is called.",
             "A pass matches across the whole designed region: both entry overhangs, the fragment, the stuffer and the barcode."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A well's call is the right protein and the wrong barcode",
@@ -7284,20 +7392,6 @@
             }
           ],
           "holes": []
-        }
-      ],
-      "references": [
-        {
-          "text": "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads",
-          "url": "https://doi.org/10.1038/s41467-026-76740-9"
-        },
-        {
-          "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach",
-          "url": "https://doi.org/10.1021/acssynbio.4c00625"
-        },
-        {
-          "text": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from",
-          "url": "https://doi.org/10.1021/acssynbio.3c00694"
         }
       ],
       "sources": {
@@ -7312,10 +7406,18 @@
         "Qian SI": {
           "document": "Qian et al. 2026, Supplementary Information",
           "edition": "Nat. Commun. 10.1038/s41467-026-76740-9",
-          "url": "",
+          "url": "https://doi.org/10.1038/s41467-026-76740-9",
           "read_as": "held under reference_docs/",
           "date": "2026-10-06",
           "note": ""
+        },
+        "lund-2024": {
+          "document": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751",
+          "edition": "",
+          "url": "https://doi.org/10.1021/acssynbio.3c00694",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/synthesis-and-assembly.md"
         }
       },
       "holes": [],
@@ -7323,7 +7425,7 @@
     },
     {
       "title": "Cargo validation: index PCR",
-      "key": "49e0af3a4fae9ebc",
+      "key": "1941b8d7544f9991",
       "summary": "Take the archived designs to clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
       "overview": {},
       "highlights": [],
@@ -8157,6 +8259,7 @@
           "expected": [
             "One spot a design, at about 2,500 colonies a plate, which is the density picking wants."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A spot grows nothing",
@@ -8177,7 +8280,13 @@
           ],
           "cautions": [],
           "notes": [
-            "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
+            {
+              "text": "4 colonies a design is the only count measured: four gave a clean copy of 343 of 458 genes.",
+              "citation": {
+                "source": "lund-2024",
+                "locator": "colonies screened per gene"
+              }
+            },
             "1 fragment: 40 designs, 100.0% of picks clean",
             "2 fragments: 16 designs, 100.0% of picks clean",
             "3 fragments: 6 designs, 93.8% of picks clean",
@@ -8197,6 +8306,7 @@
             "288 wells over 1 plate: 288 picked.",
             "Every colony of one design sits on one plate."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A design in many fragments gives no clean colony",
@@ -11430,6 +11540,7 @@
           "expected": [
             "3 index plates, 288 reactions in all."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -11462,7 +11573,8 @@
                   "citation": {
                     "source": "LevSeq",
                     "locator": "step 1"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "dNTP mix",
@@ -11473,7 +11585,8 @@
                   "citation": {
                     "source": "LevSeq",
                     "locator": "step 1"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "Taq DNA Polymerase",
@@ -11484,7 +11597,8 @@
                   "citation": {
                     "source": "LevSeq",
                     "locator": "step 1"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "DMSO",
@@ -11495,7 +11609,8 @@
                   "citation": {
                     "source": "LevSeq",
                     "locator": "step 1"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "Nuclease-free water",
@@ -11506,7 +11621,8 @@
                   "citation": {
                     "source": "LevSeq",
                     "locator": "step 1"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "Barcoded primer mix",
@@ -11517,7 +11633,8 @@
                   "citation": {
                     "source": "LevSeq",
                     "locator": "step 3"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "Overnight culture",
@@ -11528,7 +11645,8 @@
                   "citation": {
                     "source": "LevSeq",
                     "locator": "step 4"
-                  }
+                  },
+                  "calculator": null
                 }
               ],
               "title": "Index PCR, one well a sample",
@@ -11685,6 +11803,7 @@
             "One barcoded amplicon a well. A well's own place in the plate names its forward mark — the first well the first mark — and every well of one plate takes that plate's own reverse mark.",
             "One band a well, the design plus about 100 bp: the two marks, and the stretch between the primer sites and the reading frame."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A plate reads back far fewer wells than the others",
@@ -11725,6 +11844,7 @@
           "expected": [
             "Reads for 288 wells, every well told from the rest by the marks it carries."
           ],
+          "calculator": null,
           "troubleshooting": [],
           "holes": []
         },
@@ -11755,6 +11875,7 @@
             "A well read more than 20 times is called; the index PCR route tolerates 10 reads and warns between the two.",
             "A pass matches across the whole designed region: both entry overhangs, the fragment, the stuffer and the barcode."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A well's call is the right protein and the wrong barcode",
@@ -11763,20 +11884,6 @@
             }
           ],
           "holes": []
-        }
-      ],
-      "references": [
-        {
-          "text": "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads",
-          "url": "https://doi.org/10.1038/s41467-026-76740-9"
-        },
-        {
-          "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach",
-          "url": "https://doi.org/10.1021/acssynbio.4c00625"
-        },
-        {
-          "text": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from",
-          "url": "https://doi.org/10.1021/acssynbio.3c00694"
         }
       ],
       "sources": {
@@ -11791,7 +11898,7 @@
         "Qian SI": {
           "document": "Qian et al. 2026, Supplementary Information",
           "edition": "Nat. Commun. 10.1038/s41467-026-76740-9",
-          "url": "",
+          "url": "https://doi.org/10.1038/s41467-026-76740-9",
           "read_as": "held under reference_docs/",
           "date": "2026-10-06",
           "note": ""
@@ -11799,10 +11906,18 @@
         "LevSeq": {
           "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
           "edition": "",
-          "url": "",
+          "url": "https://doi.org/10.1021/acssynbio.4c00625",
           "read_as": "held under reference_docs/",
           "date": "2026-10-06",
           "note": ""
+        },
+        "lund-2024": {
+          "document": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751",
+          "edition": "",
+          "url": "https://doi.org/10.1021/acssynbio.3c00694",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/synthesis-and-assembly.md"
         },
         "PS-M0267": {
           "document": "New England Biolabs, Product Specification: Taq DNA Polymerase with ThermoPol Buffer",
@@ -11818,7 +11933,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "ccfec1f972a39577",
+      "key": "eaa9074283910c4d",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -12140,7 +12255,7 @@
         "Magnetic rack for the bead clean-ups",
         "Electroporator and cuvettes",
         "Shaking incubator at 30 °C",
-        "Spectrophotometer or fluorometer",
+        "Spectrophotometer (NanoDrop) or fluorometer (Qubit)",
         "Long-read sequencer, for the linkage read of the finished library",
         "Short-read sequencer, for the representation read of the finished library"
       ],
@@ -12159,7 +12274,13 @@
           "cautions": [],
           "notes": [
             "Library coverage is counted on equally represented members, so an uneven pool loses members that no later round can put back.",
-            "Equal picomoles are unequal masses: a short member weighs less than a long one for the same number of molecules, and weighing them equally would not pool them equally.",
+            {
+              "text": "Equal picomoles are unequal masses: a short member weighs less than a long one for the same number of molecules, and weighing them equally would not pool them equally.",
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              }
+            },
             "Every round's digest table is laid out at 22.3 ng/µL, which is the floor and not a target: at it the pool takes almost the whole tube and the buffer and water line all but disappears. Concentrate well above it and pipette less pool; the buffer and water line makes the volume up either way.",
             "N: 0.11 pmol a member is 9.99 ng of its shortest at 147 bp and 78.1 ng of its longest at 1,149 bp.",
             "DBD: 0.219 pmol a member is 39.2 ng of its shortest at 291 bp and 48.9 ng of its longest at 363 bp.",
@@ -12178,6 +12299,7 @@
             "DBD: one tube, 24 members, at least 1,000 ng at 22.3 ng/µL or above, 0.219 pmol of each member.",
             "C: one tube, 24 members, at least 1,000 ng at 22.3 ng/µL or above, 0.193 pmol of each member."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "One member is much more dilute than the rest",
@@ -12213,7 +12335,11 @@
                   "stock": "",
                   "final": "0.301 pmol (1000 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "BbsI-HF (R3539)",
@@ -12224,7 +12350,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R3539L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "SrfI (R0629)",
@@ -12235,7 +12362,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R0629L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -12243,7 +12371,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Digest with BbsI and SrfI",
@@ -12265,7 +12394,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 },
                 {
                   "incubations": [
@@ -12278,7 +12410,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 }
               ],
               "title": "Digest with BbsI and SrfI",
@@ -12295,6 +12430,7 @@
             "DMX-iGGA opens on AGGA and TTCC, leaving 5363 bp of backbone.",
             "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Mostly empty library later",
@@ -12314,7 +12450,13 @@
           ],
           "cautions": [],
           "notes": [
-            "One tube takes the whole part list: every member carries the same stuffers and differs only in its coding bases and its barcode.",
+            {
+              "text": "One tube takes the whole part list: every member carries the same stuffers and differs only in its coding bases and its barcode.",
+              "citation": {
+                "source": "method",
+                "locator": ""
+              }
+            },
             "The amounts are weighed at the pool's mean block length, 613 bp."
           ],
           "tables": [
@@ -12326,7 +12468,11 @@
                   "stock": "",
                   "final": "2.65 pmol (1000 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "BsaI-HFv2 (R3733)",
@@ -12337,7 +12483,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R3733L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PmeI (R0560)",
@@ -12348,7 +12495,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R0560L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -12356,7 +12504,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Digest with BsaI and PmeI",
@@ -12378,7 +12527,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 },
                 {
                   "incubations": [
@@ -12391,7 +12543,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 }
               ],
               "title": "Digest with BsaI and PmeI",
@@ -12408,6 +12563,7 @@
             "Every member of the N part list is released, about 559 bp, on the same two overhangs the destination now offers.",
             "PmeI cuts the two external stuffers left behind, so neither can ligate back."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A member is missing from the library later",
@@ -12441,6 +12597,7 @@
             "DMX-iGGA, opened: 0.00605 pmol is 20 ng at 5363 bp.",
             "N part list, released: 0.00605 pmol is 2.08 ng at 559 bp."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Too dilute for the ligation",
@@ -12460,7 +12617,13 @@
           ],
           "cautions": [],
           "notes": [
-            "Picomoles, not nanograms: the shorter fragment weighs less at the same ratio.",
+            {
+              "text": "The 1:1 ratio is the method's, and it is a molar ratio: the shorter fragment weighs less at the same one.",
+              "citation": {
+                "source": "takacsi-nagy-2026",
+                "locator": "p. e4, one-pot assembly"
+              }
+            },
             "The method names T7 DNA Ligase and StickTogether DNA Ligase Buffer and publishes neither the units nor the volume, so the last line of the table is the supplier's own."
           ],
           "tables": [
@@ -12472,7 +12635,11 @@
                   "stock": "",
                   "final": "0.00605 pmol (20 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "N part list, released",
@@ -12480,7 +12647,11 @@
                   "stock": "",
                   "final": "0.00605 pmol (2.08 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
@@ -12488,7 +12659,8 @@
                   "stock": "",
                   "final": "to 200 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Ligation",
@@ -12536,6 +12708,7 @@
           "expected": [
             "Nothing visible. 0.00605 pmol of the released part list against 0.00605 pmol of the opened library is the 1:1 molar ratio."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Few colonies after this round",
@@ -12568,6 +12741,7 @@
           "expected": [
             "Enough for one electroporation: 100 ng is 0.0264 pmol at 6161 bp."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The eluate is still salty",
@@ -12601,6 +12775,7 @@
           "expected": [
             "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The cuvette arcs",
@@ -12624,6 +12799,13 @@
             "Both steps run at 30 °C and not at 37 °C. That is a library precaution rather than an oversight.",
             "The program carries the shorter outgrowth; 12 to 16 hours is the range the method gives.",
             "The 0.99 was chosen for this run, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it; it works out at 8x this round's products.",
+            {
+              "text": "The colony floor is what the chance of a missing member comes to over a library whose members are equally represented.",
+              "citation": {
+                "source": "clarke-1976",
+                "locator": "the clones a library takes"
+              }
+            },
             "The control measures the chain the design rests on — two cuts, a blunt chopper, a ligase that refuses blunt ends and the 2x clean-up — rather than assuming it."
           ],
           "tables": [],
@@ -12641,7 +12823,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 },
                 {
                   "incubations": [
@@ -12654,7 +12839,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 }
               ],
               "title": "Recovery and outgrowth at 30 °C",
@@ -12672,6 +12860,13 @@
             "At that count the chance a named product is missing is 4.15 × 10⁻⁴.",
             "round 1 no-donor control should be near empty beside it; its colonies come off the count."
           ],
+          "calculator": {
+            "floor": 183,
+            "counted": "round 1 titre",
+            "counting": "colonies",
+            "control": "round 1 no-donor control",
+            "below_floor": "Fewer net colonies than the count above"
+          },
           "troubleshooting": [
             {
               "problem": "Fewer net colonies than the count above",
@@ -12710,6 +12905,7 @@
             "One pool of plasmid, 6161 bp per molecule. This is the destination round 2 opens.",
             "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A low yield",
@@ -12740,7 +12936,11 @@
                   "stock": "",
                   "final": "0.264 pmol (1000 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "BbsI-HF (R3539)",
@@ -12751,7 +12951,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R3539L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "SrfI (R0629)",
@@ -12762,7 +12963,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R0629L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -12770,7 +12972,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Digest with BbsI and SrfI",
@@ -12792,7 +12995,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 },
                 {
                   "incubations": [
@@ -12805,7 +13011,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 }
               ],
               "title": "Digest with BbsI and SrfI",
@@ -12822,6 +13031,7 @@
             "AP-1 DESynR round 1 opens on AGAT and TTCC, leaving 6131 bp of backbone.",
             "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Mostly empty library later",
@@ -12841,7 +13051,13 @@
           ],
           "cautions": [],
           "notes": [
-            "One tube takes the whole part list: every member carries the same stuffers and differs only in its coding bases and its barcode.",
+            {
+              "text": "One tube takes the whole part list: every member carries the same stuffers and differs only in its coding bases and its barcode.",
+              "citation": {
+                "source": "method",
+                "locator": ""
+              }
+            },
             "The amounts are weighed at the pool's mean block length, 309 bp."
           ],
           "tables": [
@@ -12853,7 +13069,11 @@
                   "stock": "",
                   "final": "5.25 pmol (1000 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "BsaI-HFv2 (R3733)",
@@ -12864,7 +13084,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R3733L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PmeI (R0560)",
@@ -12875,7 +13096,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R0560L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -12883,7 +13105,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Digest with BsaI and PmeI",
@@ -12905,7 +13128,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 },
                 {
                   "incubations": [
@@ -12918,7 +13144,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 }
               ],
               "title": "Digest with BsaI and PmeI",
@@ -12935,6 +13164,7 @@
             "Every member of the DBD part list is released, about 255 bp, on the same two overhangs the destination now offers.",
             "PmeI cuts the two external stuffers left behind, so neither can ligate back."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A member is missing from the library later",
@@ -12968,6 +13198,7 @@
             "AP-1 DESynR round 1, opened: 0.0053 pmol is 20 ng at 6131 bp.",
             "DBD part list, released: 0.0053 pmol is 0.83 ng at 255 bp."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Too dilute for the ligation",
@@ -12987,7 +13218,13 @@
           ],
           "cautions": [],
           "notes": [
-            "Picomoles, not nanograms: the shorter fragment weighs less at the same ratio.",
+            {
+              "text": "The 1:1 ratio is the method's, and it is a molar ratio: the shorter fragment weighs less at the same one.",
+              "citation": {
+                "source": "takacsi-nagy-2026",
+                "locator": "p. e4, one-pot assembly"
+              }
+            },
             "The method names T7 DNA Ligase and StickTogether DNA Ligase Buffer and publishes neither the units nor the volume, so the last line of the table is the supplier's own."
           ],
           "tables": [
@@ -12999,7 +13236,11 @@
                   "stock": "",
                   "final": "0.0053 pmol (20 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "DBD part list, released",
@@ -13007,7 +13248,11 @@
                   "stock": "",
                   "final": "0.0053 pmol (0.83 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
@@ -13015,7 +13260,8 @@
                   "stock": "",
                   "final": "to 200 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Ligation",
@@ -13063,6 +13309,7 @@
           "expected": [
             "Nothing visible. 0.0053 pmol of the released part list against 0.0053 pmol of the opened library is the 1:1 molar ratio."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Few colonies after this round",
@@ -13095,6 +13342,7 @@
           "expected": [
             "Enough for one electroporation: 100 ng is 0.0255 pmol at 6368 bp."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The eluate is still salty",
@@ -13128,6 +13376,7 @@
           "expected": [
             "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The cuvette arcs",
@@ -13151,6 +13400,13 @@
             "Both steps run at 30 °C and not at 37 °C. That is a library precaution rather than an oversight.",
             "The program carries the shorter outgrowth; 12 to 16 hours is the range the method gives.",
             "The 0.99 was chosen for this run, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it; it works out at 11x this round's products.",
+            {
+              "text": "The colony floor is what the chance of a missing member comes to over a library whose members are equally represented.",
+              "citation": {
+                "source": "clarke-1976",
+                "locator": "the clones a library takes"
+              }
+            },
             "The control measures the chain the design rests on — two cuts, a blunt chopper, a ligase that refuses blunt ends and the 2x clean-up — rather than assuming it."
           ],
           "tables": [],
@@ -13168,7 +13424,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 },
                 {
                   "incubations": [
@@ -13181,7 +13440,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 }
               ],
               "title": "Recovery and outgrowth at 30 °C",
@@ -13199,6 +13461,13 @@
             "At that count the chance a named product is missing is 1.74 × 10⁻⁵.",
             "round 2 no-donor control should be near empty beside it; its colonies come off the count."
           ],
+          "calculator": {
+            "floor": 6306,
+            "counted": "round 2 titre",
+            "counting": "colonies",
+            "control": "round 2 no-donor control",
+            "below_floor": "Fewer net colonies than the count above"
+          },
           "troubleshooting": [
             {
               "problem": "Fewer net colonies than the count above",
@@ -13237,6 +13506,7 @@
             "One pool of plasmid, 6368 bp per molecule. This is the destination round 3 opens.",
             "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A low yield",
@@ -13267,7 +13537,11 @@
                   "stock": "",
                   "final": "0.255 pmol (1000 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "BbsI-HF (R3539)",
@@ -13278,7 +13552,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R3539L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "SrfI (R0629)",
@@ -13289,7 +13564,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R0629L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -13297,7 +13573,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Digest with BbsI and SrfI",
@@ -13319,7 +13596,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 },
                 {
                   "incubations": [
@@ -13332,7 +13612,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 }
               ],
               "title": "Digest with BbsI and SrfI",
@@ -13349,6 +13632,7 @@
             "AP-1 DESynR round 2 opens on GCAT and TTCC, leaving 6338 bp of backbone.",
             "The 30 bp internal stuffer comes out, and SrfI cuts it so it cannot go back in."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Mostly empty library later",
@@ -13368,7 +13652,13 @@
           ],
           "cautions": [],
           "notes": [
-            "One tube takes the whole part list: every member carries the same stuffers and differs only in its coding bases and its barcode.",
+            {
+              "text": "One tube takes the whole part list: every member carries the same stuffers and differs only in its coding bases and its barcode.",
+              "citation": {
+                "source": "method",
+                "locator": ""
+              }
+            },
             "The amounts are weighed at the pool's mean block length, 350 bp."
           ],
           "tables": [
@@ -13380,7 +13670,11 @@
                   "stock": "",
                   "final": "4.64 pmol (1000 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "BsaI-HFv2 (R3733)",
@@ -13391,7 +13685,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R3733L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PmeI (R0560)",
@@ -13402,7 +13697,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R0560L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -13410,7 +13706,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Digest with BsaI and PmeI",
@@ -13432,7 +13729,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 },
                 {
                   "incubations": [
@@ -13445,7 +13745,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e4, digest"
+                  }
                 }
               ],
               "title": "Digest with BsaI and PmeI",
@@ -13462,6 +13765,7 @@
             "Every member of the C part list is released, about 296 bp, on the same two overhangs the destination now offers.",
             "PmeI cuts the two external stuffers left behind, so neither can ligate back."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A member is missing from the library later",
@@ -13495,6 +13799,7 @@
             "AP-1 DESynR round 2, opened: 0.00512 pmol is 20 ng at 6338 bp.",
             "C part list, released: 0.00512 pmol is 0.93 ng at 296 bp."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Too dilute for the ligation",
@@ -13514,7 +13819,13 @@
           ],
           "cautions": [],
           "notes": [
-            "Picomoles, not nanograms: the shorter fragment weighs less at the same ratio.",
+            {
+              "text": "The 1:1 ratio is the method's, and it is a molar ratio: the shorter fragment weighs less at the same one.",
+              "citation": {
+                "source": "takacsi-nagy-2026",
+                "locator": "p. e4, one-pot assembly"
+              }
+            },
             "The method names T7 DNA Ligase and StickTogether DNA Ligase Buffer and publishes neither the units nor the volume, so the last line of the table is the supplier's own."
           ],
           "tables": [
@@ -13526,7 +13837,11 @@
                   "stock": "",
                   "final": "0.00512 pmol (20 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "C part list, released",
@@ -13534,7 +13849,11 @@
                   "stock": "",
                   "final": "0.00512 pmol (0.93 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
@@ -13542,7 +13861,8 @@
                   "stock": "",
                   "final": "to 200 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Ligation",
@@ -13590,6 +13910,7 @@
           "expected": [
             "Nothing visible. 0.00512 pmol of the released part list against 0.00512 pmol of the opened library is the 1:1 molar ratio."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Few colonies after this round",
@@ -13622,6 +13943,7 @@
           "expected": [
             "Enough for one electroporation: 100 ng is 0.0252 pmol at 6435 bp."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The eluate is still salty",
@@ -13655,6 +13977,7 @@
           "expected": [
             "A pulse with no arc, and a time constant of 3.5 to 4.5 ms."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The cuvette arcs",
@@ -13678,6 +14001,13 @@
             "Both steps run at 30 °C and not at 37 °C. That is a library precaution rather than an oversight.",
             "The program carries the shorter outgrowth; 12 to 16 hours is the range the method gives.",
             "The 0.99 was chosen for this run, and follows from the representation the screen downstream asks for. No source sets it, and nothing here defaults it; it works out at 14x this round's products.",
+            {
+              "text": "The colony floor is what the chance of a missing member comes to over a library whose members are equally represented.",
+              "citation": {
+                "source": "clarke-1976",
+                "locator": "the clones a library takes"
+              }
+            },
             "The control measures the chain the design rests on — two cuts, a blunt chopper, a ligase that refuses blunt ends and the 2x clean-up — rather than assuming it."
           ],
           "tables": [],
@@ -13695,7 +14025,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 },
                 {
                   "incubations": [
@@ -13708,7 +14041,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 }
               ],
               "title": "Recovery and outgrowth at 30 °C",
@@ -13726,6 +14062,13 @@
             "At that count the chance a named product is missing is 7.27 × 10⁻⁷.",
             "round 3 no-donor control should be near empty beside it; its colonies come off the count."
           ],
+          "calculator": {
+            "floor": 195386,
+            "counted": "round 3 titre",
+            "counting": "colonies",
+            "control": "round 3 no-donor control",
+            "below_floor": "Fewer net colonies than the count above"
+          },
           "troubleshooting": [
             {
               "problem": "Fewer net colonies than the count above",
@@ -13764,6 +14107,7 @@
             "One pool of plasmid, 6435 bp per molecule. This is the library the rounds built.",
             "BbsI cuts it in 2 places, around the stuffer the part carried in. BsaI cuts it in 2 places, as it cut the destination: the part brought none in."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A low yield",
@@ -13800,6 +14144,7 @@
             "A table from barcode combination to cargo: each read decodes to one member of each part list, and the coding bases it carries are that member's.",
             "The 41 bp block reads C, DBD and N, each barcode separated from the last by the cloning scar TTCC, at 1402 .. 1442 of the representative construct."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A read carries fewer barcodes than there are rounds",
@@ -13826,7 +14171,20 @@
           "notes": [
             "Read representation again after every later bottleneck — the final assembly, and anything downstream that resamples the library. Linkage is read once; this one is read at each.",
             "The short amplicon is what makes repeating it cheap: linkage spans the whole cargo, this spans the block.",
-            "Where you amplify the block to read it, carry any sample index on a primer rather than ligating it on, and keep the barcodes away from where a primer anneals: both cost more read counts than what a barcode spells does."
+            {
+              "text": "Where you amplify the block to read it, carry any sample index on a primer rather than ligating it on: a ligated barcode spreads read counts about twofold where the same one amplified on did not.",
+              "citation": {
+                "source": "alon-2011",
+                "locator": "ligated against amplified barcodes"
+              }
+            },
+            {
+              "text": "Keep the barcodes away from where a primer anneals: a barcode 3 bp from the insert gave up to 100-fold differences in read counts, where one 34 bp away did not.",
+              "citation": {
+                "source": "van-nieuwerburgh-2011",
+                "locator": "barcode position"
+              }
+            }
           ],
           "tables": [],
           "programs": [],
@@ -13839,8 +14197,15 @@
           "expected": [
             "A count for each of up to 13,824 distinct combinations: how many of them are seen at all, and how evenly they are read.",
             "A combination with no reads is a member the library has lost.",
-            "At least 99.5% of the combinations seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations."
+            {
+              "text": "At least 99.5% of the combinations seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations.",
+              "citation": {
+                "source": "joung-2017",
+                "locator": "library representation"
+              }
+            }
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "A combination is missing",
@@ -13849,57 +14214,14 @@
             },
             {
               "problem": "The counts are heavily skewed",
-              "solution": "Members differ in length and a bottleneck can favour the short ones. Imkeller's Table 2 prices the skew in screen coverage: a 90th/10th ratio of 2.5 wants 200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs cells downstream rather than failing here.",
-              "citation": null
+              "solution": "Members differ in length and a bottleneck can favour the short ones. The skew is priced in screen coverage: a 90th/10th ratio of 2.5 wants 200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs cells downstream rather than failing here.",
+              "citation": {
+                "source": "imkeller-2020",
+                "locator": "Table 2"
+              }
             }
           ],
           "holes": []
-        }
-      ],
-      "references": [
-        {
-          "text": "Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20, STAR Methods METHOD DETAILS pp. e4-e5. CC BY 4.0",
-          "url": "https://doi.org/10.1016/j.cell.2026.07.054"
-        },
-        {
-          "text": "Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a library needs to represent every member",
-          "url": "https://doi.org/10.1016/0092-8674(76)90055-6"
-        },
-        {
-          "text": "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863, for a pooled library's acceptance bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member",
-          "url": "https://doi.org/10.1038/nprot.2017.016"
-        },
-        {
-          "text": "Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53, Table 2, for the screen coverage a library's own skew demands: p90/p10 2.5 at 200x, 5 at 300x, 10 at 400x",
-          "url": "https://doi.org/10.1186/s13059-020-1939-1"
-        },
-        {
-          "text": "Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a 1,000-fold screen at 100-fold coverage",
-          "url": "https://doi.org/10.1186/s13059-023-03132-3"
-        },
-        {
-          "text": "NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion",
-          "url": ""
-        },
-        {
-          "text": "Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to 100-fold differences in read counts, where one introduced during the PCR 34 bp away gave R2 = 0.9977",
-          "url": "https://doi.org/10.1371/journal.pone.0026969"
-        },
-        {
-          "text": "Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about twofold where the same barcodes introduced during the PCR did not",
-          "url": "https://doi.org/10.1101/gr.121715.111"
-        },
-        {
-          "text": "Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution",
-          "url": "https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended"
-        },
-        {
-          "text": "Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify",
-          "url": "https://www.idtdna.com/page/?p=890"
-        },
-        {
-          "text": "The method this build was planned by: docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": "https://liuhlab.github.io/liulab-mbio/projects/igga/"
         }
       ],
       "sources": {
@@ -13934,6 +14256,70 @@
           "read_as": "",
           "date": "",
           "note": "docs/research/figure-sources.md"
+        },
+        "takacsi-nagy-2026": {
+          "document": "Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20",
+          "edition": "STAR Methods, METHOD DETAILS pp. e4-e5",
+          "url": "https://doi.org/10.1016/j.cell.2026.07.054",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/protein-library-assembly.md"
+        },
+        "clarke-1976": {
+          "document": "Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99",
+          "edition": "",
+          "url": "https://doi.org/10.1016/0092-8674(76)90055-6",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/protein-library-assembly.md"
+        },
+        "joung-2017": {
+          "document": "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863",
+          "edition": "",
+          "url": "https://doi.org/10.1038/nprot.2017.016",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/vector-qc-panel.md"
+        },
+        "imkeller-2020": {
+          "document": "Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53",
+          "edition": "",
+          "url": "https://doi.org/10.1186/s13059-020-1939-1",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/vector-qc-panel.md"
+        },
+        "NEBioCalculator": {
+          "document": "New England Biolabs NEBioCalculator",
+          "edition": "script main-6f3020c533.js, capture 2026-08-28",
+          "url": "",
+          "read_as": "Wayback Machine",
+          "date": "",
+          "note": "docs/research/primer-design-and-pcr.md"
+        },
+        "van-nieuwerburgh-2011": {
+          "document": "Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. PLoS ONE 6, e26969",
+          "edition": "",
+          "url": "https://doi.org/10.1371/journal.pone.0026969",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/barcode-design.md"
+        },
+        "alon-2011": {
+          "document": "Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA. Genome Res. 21, 1506-1511",
+          "edition": "",
+          "url": "https://doi.org/10.1101/gr.121715.111",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/barcode-design.md"
+        },
+        "method": {
+          "document": "docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
+          "edition": "",
+          "url": "https://liuhlab.github.io/liulab-mbio/projects/igga/",
+          "read_as": "",
+          "date": "",
+          "note": ""
         }
       },
       "holes": [
@@ -13949,7 +14335,7 @@
     },
     {
       "title": "Final cargo ligation",
-      "key": "5df991ae6ad146a5",
+      "key": "0f35f4735f9390c0",
       "summary": "Release the finished cargo from DMX-iGGA and move it into the vector the application asks for.",
       "overview": {},
       "highlights": [],
@@ -14180,7 +14566,7 @@
         "Magnetic rack for the bead clean-ups",
         "Electroporator and cuvettes",
         "Shaking incubator at 30 °C",
-        "Spectrophotometer or fluorometer",
+        "Spectrophotometer (NanoDrop) or fluorometer (Qubit)",
         "Short-read sequencer, for the final representation read of the finished library"
       ],
       "vessels": [],
@@ -14212,6 +14598,7 @@
             "10284 bp opens on AGGA and TTCC, giving up its 385 bp ccdB cassette.",
             "Two bands and no more: PaqCI reads this vector nowhere else."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The stock will not open",
@@ -14242,7 +14629,11 @@
                   "stock": "",
                   "final": "0.252 pmol (1000 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "BsaI-HFv2 (R3733)",
@@ -14253,7 +14644,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R3733L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PmeI (R0560)",
@@ -14264,7 +14656,8 @@
                   "citation": {
                     "source": "NEB specifications",
                     "locator": "#R0560L, concentration"
-                  }
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "CutSmart Buffer and nuclease-free water",
@@ -14272,7 +14665,8 @@
                   "stock": "",
                   "final": "to 50 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "Digest with BsaI and PmeI",
@@ -14349,6 +14743,7 @@
             "The whole 1076 bp cargo free, on AGGA and TTCC, out of 6435 bp of library.",
             "PmeI cuts the backbone it came out of, so that backbone cannot close again."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "The library backbone survives the assembly",
@@ -14382,7 +14777,11 @@
                   "stock": "",
                   "final": "0.252 pmol (167.21 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "pLVX-TetOne-dom, opened",
@@ -14390,7 +14789,11 @@
                   "stock": "",
                   "final": "0.0123 pmol (75 ng)",
                   "master_mix": false,
-                  "citation": null
+                  "citation": {
+                    "source": "NEBioCalculator",
+                    "locator": "dsDNA molecular weight"
+                  },
+                  "calculator": null
                 },
                 {
                   "name": "PaqCI (R0745)",
@@ -14398,7 +14801,8 @@
                   "stock": "",
                   "final": "",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 },
                 {
                   "name": "T7 DNA Ligase in StickTogether DNA Ligase Buffer, and nuclease-free water",
@@ -14406,7 +14810,8 @@
                   "stock": "",
                   "final": "to 200 µL",
                   "master_mix": true,
-                  "citation": null
+                  "citation": null,
+                  "calculator": null
                 }
               ],
               "title": "One-pot assembly",
@@ -14428,7 +14833,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "M1100",
+                    "locator": "cycling"
+                  }
                 },
                 {
                   "incubations": [
@@ -14441,7 +14849,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "M1100",
+                    "locator": "cycling"
+                  }
                 }
               ],
               "title": "Golden Gate assembly",
@@ -14479,6 +14890,7 @@
             "One circular final vector a member, about 10975 bp, joined on AGGA and TTCC.",
             "The ccdB cassette is displaced, so a vector that took no cargo kills its host."
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Colonies that are still ccdB-positive",
@@ -14518,7 +14930,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 },
                 {
                   "incubations": [
@@ -14531,7 +14946,10 @@
                     }
                   ],
                   "cycles": 1,
-                  "citation": null
+                  "citation": {
+                    "source": "takacsi-nagy-2026",
+                    "locator": "p. e5, recovery and outgrowth"
+                  }
                 }
               ],
               "title": "Recovery and outgrowth at 30 °C",
@@ -14547,8 +14965,15 @@
           "expected": [
             "At least 195,386 net colonies: the floor for the 0.99 chance this design asked for that none of its 13,824 distinct members is missing, equally represented.",
             "At that count the chance a named member is missing is 7.27 × 10⁻⁷.",
-            "Near-empty plates from a no-cargo control beside it; what grows there is working vector that kept its ccdB cassette."
+            "Near-empty plates from the no-cargo control beside it; what grows there is working vector that kept its ccdB cassette."
           ],
+          "calculator": {
+            "floor": 195386,
+            "counted": "the plates",
+            "counting": "colonies",
+            "control": "the no-cargo control",
+            "below_floor": "Fewer net colonies than the count above"
+          },
           "troubleshooting": [
             {
               "problem": "Fewer net colonies than the count above",
@@ -14581,8 +15006,15 @@
           "gels": [],
           "expected": [
             "The same combinations, at a similar evenness. A combination seen before the move and not after it was lost in the transfer into pLVX-TetOne-dom.",
-            "At least 99.5% of what survived the move seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations."
+            {
+              "text": "At least 99.5% of what survived the move seen; a 90th/10th percentile skew ratio below 10, judged at 100 or more reads a member, which is 1,382,400 reads over 13,824 combinations.",
+              "citation": {
+                "source": "joung-2017",
+                "locator": "library representation"
+              }
+            }
           ],
+          "calculator": null,
           "troubleshooting": [
             {
               "problem": "Markedly fewer combinations than before the move",
@@ -14591,64 +15023,6 @@
             }
           ],
           "holes": []
-        }
-      ],
-      "references": [
-        {
-          "text": "Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20, STAR Methods METHOD DETAILS pp. e4-e5. CC BY 4.0",
-          "url": "https://doi.org/10.1016/j.cell.2026.07.054"
-        },
-        {
-          "text": "Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a library needs to represent every member",
-          "url": "https://doi.org/10.1016/0092-8674(76)90055-6"
-        },
-        {
-          "text": "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863, for a pooled library's acceptance bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at over 100 reads a member",
-          "url": "https://doi.org/10.1038/nprot.2017.016"
-        },
-        {
-          "text": "Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, 53, Table 2, for the screen coverage a library's own skew demands: p90/p10 2.5 at 200x, 5 at 300x, 10 at 400x",
-          "url": "https://doi.org/10.1186/s13059-020-1939-1"
-        },
-        {
-          "text": "Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a 1,000-fold screen at 100-fold coverage",
-          "url": "https://doi.org/10.1186/s13059-023-03132-3"
-        },
-        {
-          "text": "NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion",
-          "url": ""
-        },
-        {
-          "text": "Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel post amplification barcoding strategy for multiplexed DNA and small RNA deep sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to 100-fold differences in read counts, where one introduced during the PCR 34 bp away gave R2 = 0.9977",
-          "url": "https://doi.org/10.1371/journal.pone.0026969"
-        },
-        {
-          "text": "Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about twofold where the same barcodes introduced during the PCR did not",
-          "url": "https://doi.org/10.1101/gr.121715.111"
-        },
-        {
-          "text": "Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution",
-          "url": "https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended"
-        },
-        {
-          "text": "Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify",
-          "url": "https://www.idtdna.com/page/?p=890"
-        },
-        {
-          "text": "The method this build was planned by: docs/projects/igga.md, the iGGA method page. The 34-base internal stuffer is the method's own, and a round excises the 30-base core of it: the two figures are the same stuffer, counted whole and counted after the entry overhang it opens on. The external stuffers lay BsaI and PmeI at the offsets their own cut offsets ask for, so every overhang is read off the DNA rather than stated.",
-          "url": "https://liuhlab.github.io/liulab-mbio/projects/igga/"
-        },
-        {
-          "text": "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
-          "url": "https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100"
-        },
-        {
-          "text": "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
-          "url": "https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines"
-        },
-        {
-          "text": "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
-          "url": "https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci"
         }
       ],
       "sources": {
@@ -14683,6 +15057,38 @@
           "read_as": "",
           "date": "",
           "note": "docs/research/figure-sources.md"
+        },
+        "takacsi-nagy-2026": {
+          "document": "Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. Cell 189, 1-20",
+          "edition": "STAR Methods, METHOD DETAILS pp. e4-e5",
+          "url": "https://doi.org/10.1016/j.cell.2026.07.054",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/protein-library-assembly.md"
+        },
+        "joung-2017": {
+          "document": "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional activation screening. Nat. Protoc. 12, 828-863",
+          "edition": "",
+          "url": "https://doi.org/10.1038/nprot.2017.016",
+          "read_as": "",
+          "date": "",
+          "note": "docs/research/vector-qc-panel.md"
+        },
+        "NEBioCalculator": {
+          "document": "New England Biolabs NEBioCalculator",
+          "edition": "script main-6f3020c533.js, capture 2026-08-28",
+          "url": "",
+          "read_as": "Wayback Machine",
+          "date": "",
+          "note": "docs/research/primer-design-and-pcr.md"
+        },
+        "M1100": {
+          "document": "New England Biolabs, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
+          "edition": "capture 2023-03-31",
+          "url": "https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100",
+          "read_as": "Wayback Machine",
+          "date": "",
+          "note": "docs/research/golden-gate-assembly.md"
         }
       },
       "holes": [],

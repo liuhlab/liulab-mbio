@@ -73,7 +73,7 @@ p { margin: 0 0 0.75rem; }
 a { color: var(--accent); overflow-wrap: anywhere; }
 .muted { color: var(--muted); }
 
-.summary { font-size: 1.08rem; color: var(--muted); max-width: 44rem; }
+.summary { font-size: 1.08rem; color: var(--muted); }
 
 /* Short facts only: a card is a few words, so the row stays one height. A sentence is
    .highlights, and the model refuses one here. */
@@ -87,8 +87,12 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
 .handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
 
-.highlights { max-width: 44rem; margin: 0 0 1rem; }
-.highlights p:last-child { margin-bottom: 0; }
+/* The head reads as bands: the sentences, the verdicts and the step count each open under a thin
+   rule rather than in a box, since the facts and the handover above are boxes already. Its prose
+   takes the page's full measure, as a step's does, and no narrower cap of its own. */
+.highlights, .status, .intro .toolbar { border-top: 1px solid var(--line); padding-top: 0.9rem; margin: 1.25rem 0 0; }
+.intro .toolbar { margin-bottom: 1.25rem; }
+.highlights p:last-child, .status > :last-child { margin-bottom: 0; }
 
 .checks { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.6rem; }
 .check { display: inline-flex; align-items: baseline; gap: 0.45rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
@@ -120,12 +124,8 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc { margin: 0 0 1.5rem; }
-.toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-
-/* Both lists of steps — the standalone table of contents and a page's right column — are this
-   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
-   number is in the markup, so no counter here. */
+/* A page's list of steps, in its right column: one group per section, collapsed, so three like
+   rounds read as three rounds. The step's number is in the markup, so no counter here. */
 .step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
 .step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
 .step-group + .step-group { margin-top: 0.45rem; }
@@ -133,9 +133,6 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
 /* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
 .section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
-/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
-.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
 .block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
@@ -191,12 +188,33 @@ button.copy { font-size: 0.75rem; padding: 0.1rem 0.55rem; min-height: 1.6rem; m
 button.is-copied { border-color: var(--accent); color: var(--accent); }
 
 .timers { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-button.timer { display: inline-flex; gap: 0.5rem; align-items: baseline; }
-.timer-time { font-variant-numeric: tabular-nums; font-weight: 700; }
-.timer-action { color: var(--accent); }
-button.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
-button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.program .timers { margin-top: 0.5rem; }
+.timer { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-size: 0.85rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.2rem 0.15rem 0.8rem; }
+.timer label { display: inline-flex; gap: 0.5rem; align-items: baseline; }
+/* The time is typed over in place: a dashed rule marks it as a field until it starts. */
+.timer-time { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.timer-time:read-only { border-bottom-color: transparent; }
+.timer-action { color: var(--accent); min-height: 1.75rem; }
+.timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
+.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
+
+/* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
+   warning is the step's own troubleshooting entry in the caution colours. */
+.calc { white-space: nowrap; }
+.calc-value { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; text-align: right; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.calc-value:read-only { border-bottom-color: transparent; }
+/* The number to beat stands in an uncounted field light, so it never reads as what was counted. */
+.calc-value::placeholder { font-weight: 400; color: var(--muted); opacity: 1; }
+.calc-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
+.calc-held { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; }
+.calc-warning { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0; font-size: 0.9rem; }
+.reaction tr.is-over td, .reaction.is-over tfoot .one { color: var(--caution); font-weight: 700; }
+.net-count { margin-top: 0.6rem; }
+.net-fields { display: flex; flex-wrap: wrap; gap: 0.1rem 1.1rem; margin: 0 0 0.3rem; }
+.net-sum { margin: 0; }
+.net-sum.is-short { color: var(--caution); }
 
 /* A gel is taller than it is wide, so its height is what has to fit on the screen. */
 .gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
@@ -246,7 +264,39 @@ tfoot .muted { font-weight: 400; }
 .listing { font-size: 0.9rem; margin-top: 0.6rem; }
 .listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
-.cite { color: var(--muted); font-size: 0.85em; }
+
+/* A citation: a bracketed number that lands on its entry in the sources list. The padding is a
+   finger's target, the negative margin keeps the text from shifting, and a line height of
+   nothing keeps the raised number from opening the line. */
+.cite { text-decoration: none; padding: 0.35em 0.2em; margin: 0 -0.2em; border-radius: 4px; }
+.cite:hover { text-decoration: underline; }
+.cite:focus-visible { outline-offset: 0; }
+.cite sup { font-size: 0.72em; line-height: 0; font-variant-numeric: tabular-nums; }
+.sources ol { padding-left: 1.8rem; }
+.sources li { margin-bottom: 0.4rem; scroll-margin-top: calc(var(--bar) + 1rem); }
+.sources li:target { background: var(--accent-soft); outline: 4px solid var(--accent-soft); border-radius: 2px; }
+.sources .cited-at, .sources .cited-by { display: block; color: var(--muted); font-size: 0.9em; }
+
+/* A step's figure stands in a box of its own with its caption inside, so it never reads as one
+   of the instructions. Its drawing is drawn small; the control under it opens the record's map in
+   place, whole and to explore, and takes the small drawing's place until closed. */
+.drawing.map { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 0.75rem; }
+.drawing.map:not(.rows), .drawing.map .row { display: flex; flex-direction: column; }
+.drawing.map .opener[open] { order: -1; margin-top: 0; }
+.drawing.map .row-name { order: -2; font-weight: 600; }
+.drawing.map:has(> .opener[open]) > svg, .row:has(> .opener[open]) > svg { display: none; }
+.drawing.map svg { max-height: 24rem; width: auto; margin-inline: auto; border-radius: 6px; }
+.drawing.map figcaption { font-weight: 400; font-size: 0.92rem; margin: 0.6rem 0 0; }
+.opener { margin-top: 0.6rem; }
+.opener > summary { display: inline-flex; align-items: center; gap: 0.4rem; list-style: none; cursor: pointer; font-size: 0.85rem; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 2rem; }
+.opener > summary::-webkit-details-marker { display: none; }
+.opener > summary::before { content: "\2922"; font-size: 0.95em; }
+.opener[open] > summary::before { content: "\2715"; }
+.opener > summary:hover { border-color: var(--accent); }
+.opener[open] .to-open, .opener:not([open]) .to-close { display: none; }
+/* Tall enough for the map and its switches, and no taller than a phone's width needs. */
+.opener iframe { display: block; width: 100%; height: min(78vh, 42rem, calc(60vw + 14rem)); margin: 0.6rem 0 0.3rem; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
+.new-tab { font-size: 0.85rem; }
 
 /* A project folder: the run's nav bar across the top, a column either side of the page. */
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -254,6 +304,10 @@ tfoot .muted { font-weight: 400; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
 .frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
+/* A page outside a run has no bar and no run to list: the page, and its steps beside it. No
+   more specific than .frame, so the narrow layout below folds it as it folds a run's page. */
+.frame:where(.alone) { --bar: 0rem; grid-template-columns: minmax(0, 1fr) 12rem; max-width: calc(54rem + 1.6rem + 12rem); }
+.frame:where(.alone) .page { padding-block: 2rem 4rem; }
 .column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
@@ -311,12 +365,14 @@ tfoot .muted { font-weight: 400; }
 .kit-list .vessels { display: grid; gap: 0.3rem; }
 .hole a { white-space: nowrap; }
 
-/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+/* Too narrow for columns: each list wraps into rows above the page. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
   /* A flex item sizes to its content, so without this the widest table widens the page. */
-  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
+  .frame .page { order: 1; width: 100%; padding-block: 1.2rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  /* The last list above the page closes under a rule, so the title opens a block of its own. */
+  .column.within { align-self: stretch; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
   .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
   .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
@@ -341,7 +397,9 @@ tfoot .muted { font-weight: 400; }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
-  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
+  /* A figure prints small whether or not its map was open on screen. */
+  .drawing.map svg { display: block !important; }
   .frame { display: block; max-width: none; }
   .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
@@ -352,17 +410,21 @@ tfoot .muted { font-weight: 400; }
   /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
   .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
   .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
-  button.timer { border: 1px solid var(--line); animation: none; }
+  .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
+  .timer-time { border: none; }
+  .timer-plan { display: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
+  .calc-value { border: none; }
+  .calc-plan, .calc-held { display: none !important; }
+  .calc-warning { border: 1px solid var(--line); }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
-  .references a::after { content: none; }
 }
 </style>
 </head>
-<body data-protocol="74c68347759c0a46">
+<body data-protocol="8ac90a12f8273b56">
 <nav class="site" aria-label="This run"><a href="index.html">Overview</a><a href="05-cargo-validation-barcode-ligation.html" aria-current="page">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-part-carrier.html">Part carrier</a></li><li><a href="02-primer-plates.html">Primer plates</a></li><li><a href="03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="04-cargo-creation.html">Cargo creation</a></li><li class="chain-choice"><span class="choice-job">Read every well back</span><ul class="chain-ways"><li class="is-here"><a href="05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></li><li><a href="05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li></ul></li><li><a href="06-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="07-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
@@ -375,7 +437,7 @@ tfoot .muted { font-weight: 400; }
 </header>
 <section class="block materials" id="materials">
 <h2>Materials</h2>
-<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th><th>Source</th></tr></thead><tbody><tr><td>25 cm BioAssay plate</td><td>Corning</td><td>431111</td><td></td><td>one spot a design</td><td>50 µg/mL kanamycin; about 2,500 colonies a plate</td><td><a class="cite" href="#source-qian-si">Qian SI Day 2</a></td></tr><tr><td>384-well culture plate</td><td>Beckman Coulter</td><td>c74290</td><td></td><td>1, one a 384 wells</td><td>60 µL low-salt LB with 50 µg/mL kanamycin a well</td><td><a class="cite" href="#source-qian-si">Qian SI Day 3</a></td></tr><tr><td>1536-well barcoding plate</td><td>Greiner</td><td>782270</td><td></td><td>1, one a 4 picked plates</td><td></td><td><a class="cite" href="#source-qian-si">Qian SI Day 4.1</a></td></tr><tr><td>DMX barcode kit</td><td></td><td></td><td>-20 °C</td><td>96 plasmids, 4 groups of 24</td><td>the lab&#x27;s own stock; its sequences are read from the copy you hold</td><td></td></tr><tr><td>Barcoding master mix</td><td></td><td></td><td>-20 °C</td><td>0.5 µL a well</td><td>a well is 3.5 µL: 2 µL lysate, 0.5 µL barcodes, 0.5 µL water and 0.5 µL master mix</td><td><a class="cite" href="#source-qian-si">Qian SI Day 4.1</a></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> QPix XE Microbial Colony Picker, ECHO 525 acoustic liquid handler, Incubator at 37 °C, A sequencer, and a demultiplexer that can check an address</p>
+<div class="scroll"><table><thead><tr><th>Name</th><th>Supplier</th><th>Catalogue</th><th>Storage</th><th>Per run</th><th>Note</th><th>Source</th></tr></thead><tbody><tr><td>25 cm BioAssay plate</td><td>Corning</td><td>431111</td><td></td><td>one spot a design</td><td>50 µg/mL kanamycin; about 2,500 colonies a plate</td><td><a class="cite" href="#source-qian-si" title="Qian et al. 2026, Supplementary Information · Day 2"><sup>[1]</sup></a></td></tr><tr><td>384-well culture plate</td><td>Beckman Coulter</td><td>c74290</td><td></td><td>1, one a 384 wells</td><td>60 µL low-salt LB with 50 µg/mL kanamycin a well</td><td><a class="cite" href="#source-qian-si" title="Qian et al. 2026, Supplementary Information · Day 3"><sup>[1]</sup></a></td></tr><tr><td>1536-well barcoding plate</td><td>Greiner</td><td>782270</td><td></td><td>1, one a 4 picked plates</td><td></td><td><a class="cite" href="#source-qian-si" title="Qian et al. 2026, Supplementary Information · Day 4.1"><sup>[1]</sup></a></td></tr><tr><td>DMX barcode kit</td><td></td><td></td><td>-20 °C</td><td>96 plasmids, 4 groups of 24</td><td>the lab&#x27;s own stock; its sequences are read from the copy you hold</td><td></td></tr><tr><td>Barcoding master mix</td><td></td><td></td><td>-20 °C</td><td>0.5 µL a well</td><td>a well is 3.5 µL: 2 µL lysate, 0.5 µL barcodes, 0.5 µL water and 0.5 µL master mix</td><td><a class="cite" href="#source-qian-si" title="Qian et al. 2026, Supplementary Information · Day 4.1"><sup>[1]</sup></a></td></tr></tbody></table></div><p class="equipment"><strong>Equipment:</strong> QPix XE Microbial Colony Picker, ECHO 525 acoustic liquid handler, Incubator at 37 °C, A sequencer, and a demultiplexer that can check an address</p>
 </section>
 <section class="block plates">
 <h2>Plates</h2>
@@ -396,19 +458,20 @@ tfoot .muted { font-weight: 400; }
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-pick-colonies.1"><span>Pick 4 colonies a design into 60 µL low-salt LB with 50 µg/mL kanamycin, with the QPix XE Microbial Colony Picker.</span></label></li><li><label><input type="checkbox" data-key="step-pick-colonies.2"><span>Fill one quarter of each 384-well plate before starting the next.</span></label></li><li><label><input type="checkbox" data-key="step-pick-colonies.3"><span>Grow overnight at 37 °C.</span></label></li></ol>
 <div class="expected"><h3>Expected result</h3><ul><li>288 wells over 1 plate: 288 picked.</li><li>Every colony of one design sits on one plate.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>A design in many fragments gives no clean colony</dt><dd>The chances above say which designs that is likeliest for. Pick more colonies of those designs before the plates are poured, not after.</dd></dl></div>
-<div class="notes"><h3>Notes</h3><ul><li>4 colonies a design is Lund&#x27;s anchor and the only measured one; four gave a clean copy of 343 of 458 genes.</li><li>1 fragment: 40 designs, 100.0% of picks clean</li><li>2 fragments: 16 designs, 100.0% of picks clean</li><li>3 fragments: 6 designs, 93.8% of picks clean</li><li>4 fragments: 9 designs, 89.2% of picks clean</li><li>5 fragments: 1 design, 84.6% of picks clean</li><li>A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty.</li></ul></div>
+<div class="notes"><h3>Notes</h3><ul><li>4 colonies a design is the only count measured: four gave a clean copy of 343 of 458 genes.<a class="cite" href="#source-lund-2024" title="Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751 · colonies screened per gene"><sup>[2]</sup></a></li><li>1 fragment: 40 designs, 100.0% of picks clean</li><li>2 fragments: 16 designs, 100.0% of picks clean</li><li>3 fragments: 6 designs, 93.8% of picks clean</li><li>4 fragments: 9 designs, 89.2% of picks clean</li><li>5 fragments: 1 design, 84.6% of picks clean</li><li>A quarter at a time is what makes a part-filled plate give full plates downstream, and what keeps a mark off a plate that is mostly empty.</li></ul></div>
 </section>
 <p class="step-section">Mark every well</p>
 <section class="step" id="step-compress-plates">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-compress-plates"><span class="step-n">3</span><span>Compress the picked plates into 1 barcoding plate</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-compress-plates.1"><span>Invert the picked plates for 30 minutes so the cells gather at the meniscus.</span></label></li><li><label><input type="checkbox" data-key="step-compress-plates.2"><span>Move 2 µL of each well into the 1536-well plate.</span></label></li></ol>
-<figure class="transfer"><figcaption>Compress 1 picked plates into lysate 1 <span class="muted">ECHO 525 acoustic liquid handler · 288 wells · picked 1 → lysate 1 · Invert the picked plates for 30 minutes first, so the cells gather at the meniscus</span> <a class="cite" href="#source-qian-si">Qian SI Day 4.1</a></figcaption><div class="scroll"><table><thead><tr><th>From</th><th>To</th><th class="num">µL</th></tr></thead><tbody><tr><td>picked 1 A1</td><td>lysate 1 A1</td><td class="num">2</td></tr><tr><td>picked 1 A3</td><td>lysate 1 A2</td><td class="num">2</td></tr><tr><td>picked 1 A5</td><td>lysate 1 A3</td><td class="num">2</td></tr><tr><td>picked 1 A7</td><td>lysate 1 A4</td><td class="num">2</td></tr><tr><td>picked 1 A9</td><td>lysate 1 A5</td><td class="num">2</td></tr><tr><td>picked 1 A11</td><td>lysate 1 A6</td><td class="num">2</td></tr><tr><td>picked 1 A13</td><td>lysate 1 A7</td><td class="num">2</td></tr><tr><td>picked 1 A15</td><td>lysate 1 A8</td><td class="num">2</td></tr><tr><td>picked 1 A17</td><td>lysate 1 A9</td><td class="num">2</td></tr><tr><td>picked 1 A19</td><td>lysate 1 A10</td><td class="num">2</td></tr><tr><td>picked 1 A21</td><td>lysate 1 A11</td><td class="num">2</td></tr><tr><td>picked 1 A23</td><td>lysate 1 A12</td><td class="num">2</td></tr><tr><td>picked 1 C1</td><td>lysate 1 A13</td><td class="num">2</td></tr><tr><td>picked 1 C3</td><td>lysate 1 A14</td><td class="num">2</td></tr><tr><td>picked 1 C5</td><td>lysate 1 A15</td><td class="num">2</td></tr><tr><td>picked 1 C7</td><td>lysate 1 A16</td><td class="num">2</td></tr><tr><td>picked 1 C9</td><td>lysate 1 A17</td><td class="num">2</td></tr><tr><td>picked 1 C11</td><td>lysate 1 A18</td><td class="num">2</td></tr><tr><td>picked 1 C13</td><td>lysate 1 A19</td><td class="num">2</td></tr><tr><td>picked 1 C15</td><td>lysate 1 A20</td><td class="num">2</td></tr><tr><td>picked 1 C17</td><td>lysate 1 A21</td><td class="num">2</td></tr><tr><td>picked 1 C19</td><td>lysate 1 A22</td><td class="num">2</td></tr><tr><td>picked 1 C21</td><td>lysate 1 A23</td><td class="num">2</td></tr><tr><td>picked 1 C23</td><td>lysate 1 A24</td><td class="num">2</td></tr><tr><td>picked 1 E1</td><td>lysate 1 A25</td><td class="num">2</td></tr><tr><td>picked 1 E3</td><td>lysate 1 A26</td><td class="num">2</td></tr><tr><td>picked 1 E5</td><td>lysate 1 A27</td><td class="num">2</td></tr><tr><td>picked 1 E7</td><td>lysate 1 A28</td><td class="num">2</td></tr><tr><td>picked 1 E9</td><td>lysate 1 A29</td><td class="num">2</td></tr><tr><td>picked 1 E11</td><td>lysate 1 A30</td><td class="num">2</td></tr><tr><td>picked 1 E13</td><td>lysate 1 A31</td><td class="num">2</td></tr><tr><td>picked 1 E15</td><td>lysate 1 A32</td><td class="num">2</td></tr><tr><td>picked 1 E17</td><td>lysate 1 A33</td><td class="num">2</td></tr><tr><td>picked 1 E19</td><td>lysate 1 A34</td><td class="num">2</td></tr><tr><td>picked 1 E21</td><td>lysate 1 A35</td><td class="num">2</td></tr><tr><td>picked 1 E23</td><td>lysate 1 A36</td><td class="num">2</td></tr><tr><td>picked 1 G1</td><td>lysate 1 A37</td><td class="num">2</td></tr><tr><td>picked 1 G3</td><td>lysate 1 A38</td><td class="num">2</td></tr><tr><td>picked 1 G5</td><td>lysate 1 A39</td><td class="num">2</td></tr><tr><td>picked 1 G7</td><td>lysate 1 A40</td><td class="num">2</td></tr><tr><td>picked 1 G9</td><td>lysate 1 A41</td><td class="num">2</td></tr><tr><td>picked 1 G11</td><td>lysate 1 A42</td><td class="num">2</td></tr><tr><td>picked 1 G13</td><td>lysate 1 A43</td><td class="num">2</td></tr><tr><td>picked 1 G15</td><td>lysate 1 A44</td><td class="num">2</td></tr><tr><td>picked 1 G17</td><td>lysate 1 A45</td><td class="num">2</td></tr><tr><td>picked 1 G19</td><td>lysate 1 A46</td><td class="num">2</td></tr><tr><td>picked 1 G21</td><td>lysate 1 A47</td><td class="num">2</td></tr><tr><td>picked 1 G23</td><td>lysate 1 A48</td><td class="num">2</td></tr><tr><td>picked 1 I1</td><td>lysate 1 B1</td><td class="num">2</td></tr><tr><td>picked 1 I3</td><td>lysate 1 B2</td><td class="num">2</td></tr><tr><td>picked 1 I5</td><td>lysate 1 B3</td><td class="num">2</td></tr><tr><td>picked 1 I7</td><td>lysate 1 B4</td><td class="num">2</td></tr><tr><td>picked 1 I9</td><td>lysate 1 B5</td><td class="num">2</td></tr><tr><td>picked 1 I11</td><td>lysate 1 B6</td><td class="num">2</td></tr><tr><td>picked 1 I13</td><td>lysate 1 B7</td><td class="num">2</td></tr><tr><td>picked 1 I15</td><td>lysate 1 B8</td><td class="num">2</td></tr><tr><td>picked 1 I17</td><td>lysate 1 B9</td><td class="num">2</td></tr><tr><td>picked 1 I19</td><td>lysate 1 B10</td><td class="num">2</td></tr><tr><td>picked 1 I21</td><td>lysate 1 B11</td><td class="num">2</td></tr><tr><td>picked 1 I23</td><td>lysate 1 B12</td><td class="num">2</td></tr><tr><td>picked 1 K1</td><td>lysate 1 B13</td><td class="num">2</td></tr><tr><td>picked 1 K3</td><td>lysate 1 B14</td><td class="num">2</td></tr><tr><td>picked 1 K5</td><td>lysate 1 B15</td><td class="num">2</td></tr><tr><td>picked 1 K7</td><td>lysate 1 B16</td><td class="num">2</td></tr><tr><td>picked 1 K9</td><td>lysate 1 B17</td><td class="num">2</td></tr><tr><td>picked 1 K11</td><td>lysate 1 B18</td><td class="num">2</td></tr><tr><td>picked 1 K13</td><td>lysate 1 B19</td><td class="num">2</td></tr><tr><td>picked 1 K15</td><td>lysate 1 B20</td><td class="num">2</td></tr><tr><td>picked 1 K17</td><td>lysate 1 B21</td><td class="num">2</td></tr><tr><td>picked 1 K19</td><td>lysate 1 B22</td><td class="num">2</td></tr><tr><td>picked 1 K21</td><td>lysate 1 B23</td><td class="num">2</td></tr><tr><td>picked 1 K23</td><td>lysate 1 B24</td><td class="num">2</td></tr><tr><td>picked 1 M1</td><td>lysate 1 B25</td><td class="num">2</td></tr><tr><td>picked 1 M3</td><td>lysate 1 B26</td><td class="num">2</td></tr><tr><td>picked 1 M5</td><td>lysate 1 B27</td><td class="num">2</td></tr><tr><td>picked 1 M7</td><td>lysate 1 B28</td><td class="num">2</td></tr><tr><td>picked 1 M9</td><td>lysate 1 B29</td><td class="num">2</td></tr><tr><td>picked 1 M11</td><td>lysate 1 B30</td><td class="num">2</td></tr><tr><td>picked 1 M13</td><td>lysate 1 B31</td><td class="num">2</td></tr><tr><td>picked 1 M15</td><td>lysate 1 B32</td><td class="num">2</td></tr><tr><td>picked 1 M17</td><td>lysate 1 B33</td><td class="num">2</td></tr><tr><td>picked 1 M19</td><td>lysate 1 B34</td><td class="num">2</td></tr><tr><td>picked 1 M21</td><td>lysate 1 B35</td><td class="num">2</td></tr><tr><td>picked 1 M23</td><td>lysate 1 B36</td><td class="num">2</td></tr><tr><td>picked 1 O1</td><td>lysate 1 B37</td><td class="num">2</td></tr><tr><td>picked 1 O3</td><td>lysate 1 B38</td><td class="num">2</td></tr><tr><td>picked 1 O5</td><td>lysate 1 B39</td><td class="num">2</td></tr><tr><td>picked 1 O7</td><td>lysate 1 B40</td><td class="num">2</td></tr><tr><td>picked 1 O9</td><td>lysate 1 B41</td><td class="num">2</td></tr><tr><td>picked 1 O11</td><td>lysate 1 B42</td><td class="num">2</td></tr><tr><td>picked 1 O13</td><td>lysate 1 B43</td><td class="num">2</td></tr><tr><td>picked 1 O15</td><td>lysate 1 B44</td><td class="num">2</td></tr><tr><td>picked 1 O17</td><td>lysate 1 B45</td><td class="num">2</td></tr><tr><td>picked 1 O19</td><td>lysate 1 B46</td><td class="num">2</td></tr><tr><td>picked 1 O21</td><td>lysate 1 B47</td><td class="num">2</td></tr><tr><td>picked 1 O23</td><td>lysate 1 B48</td><td class="num">2</td></tr><tr><td>picked 1 A2</td><td>lysate 1 C1</td><td class="num">2</td></tr><tr><td>picked 1 A4</td><td>lysate 1 C2</td><td class="num">2</td></tr><tr><td>picked 1 A6</td><td>lysate 1 C3</td><td class="num">2</td></tr><tr><td>picked 1 A8</td><td>lysate 1 C4</td><td class="num">2</td></tr><tr><td>picked 1 A10</td><td>lysate 1 C5</td><td class="num">2</td></tr><tr><td>picked 1 A12</td><td>lysate 1 C6</td><td class="num">2</td></tr><tr><td>picked 1 A14</td><td>lysate 1 C7</td><td class="num">2</td></tr><tr><td>picked 1 A16</td><td>lysate 1 C8</td><td class="num">2</td></tr><tr><td>picked 1 A18</td><td>lysate 1 C9</td><td class="num">2</td></tr><tr><td>picked 1 A20</td><td>lysate 1 C10</td><td class="num">2</td></tr><tr><td>picked 1 A22</td><td>lysate 1 C11</td><td class="num">2</td></tr><tr><td>picked 1 A24</td><td>lysate 1 C12</td><td class="num">2</td></tr><tr><td>picked 1 C2</td><td>lysate 1 C13</td><td class="num">2</td></tr><tr><td>picked 1 C4</td><td>lysate 1 C14</td><td class="num">2</td></tr><tr><td>picked 1 C6</td><td>lysate 1 C15</td><td class="num">2</td></tr><tr><td>picked 1 C8</td><td>lysate 1 C16</td><td class="num">2</td></tr><tr><td>picked 1 C10</td><td>lysate 1 C17</td><td class="num">2</td></tr><tr><td>picked 1 C12</td><td>lysate 1 C18</td><td class="num">2</td></tr><tr><td>picked 1 C14</td><td>lysate 1 C19</td><td class="num">2</td></tr><tr><td>picked 1 C16</td><td>lysate 1 C20</td><td class="num">2</td></tr><tr><td>picked 1 C18</td><td>lysate 1 C21</td><td class="num">2</td></tr><tr><td>picked 1 C20</td><td>lysate 1 C22</td><td class="num">2</td></tr><tr><td>picked 1 C22</td><td>lysate 1 C23</td><td class="num">2</td></tr><tr><td>picked 1 C24</td><td>lysate 1 C24</td><td class="num">2</td></tr><tr><td>picked 1 E2</td><td>lysate 1 C25</td><td class="num">2</td></tr><tr><td>picked 1 E4</td><td>lysate 1 C26</td><td class="num">2</td></tr><tr><td>picked 1 E6</td><td>lysate 1 C27</td><td class="num">2</td></tr><tr><td>picked 1 E8</td><td>lysate 1 C28</td><td class="num">2</td></tr><tr><td>picked 1 E10</td><td>lysate 1 C29</td><td class="num">2</td></tr><tr><td>picked 1 E12</td><td>lysate 1 C30</td><td class="num">2</td></tr><tr><td>picked 1 E14</td><td>lysate 1 C31</td><td class="num">2</td></tr><tr><td>picked 1 E16</td><td>lysate 1 C32</td><td class="num">2</td></tr><tr><td>picked 1 E18</td><td>lysate 1 C33</td><td class="num">2</td></tr><tr><td>picked 1 E20</td><td>lysate 1 C34</td><td class="num">2</td></tr><tr><td>picked 1 E22</td><td>lysate 1 C35</td><td class="num">2</td></tr><tr><td>picked 1 E24</td><td>lysate 1 C36</td><td class="num">2</td></tr><tr><td>picked 1 G2</td><td>lysate 1 C37</td><td class="num">2</td></tr><tr><td>picked 1 G4</td><td>lysate 1 C38</td><td class="num">2</td></tr><tr><td>picked 1 G6</td><td>lysate 1 C39</td><td class="num">2</td></tr><tr><td>picked 1 G8</td><td>lysate 1 C40</td><td class="num">2</td></tr><tr><td>picked 1 G10</td><td>lysate 1 C41</td><td class="num">2</td></tr><tr><td>picked 1 G12</td><td>lysate 1 C42</td><td class="num">2</td></tr><tr><td>picked 1 G14</td><td>lysate 1 C43</td><td class="num">2</td></tr><tr><td>picked 1 G16</td><td>lysate 1 C44</td><td class="num">2</td></tr><tr><td>picked 1 G18</td><td>lysate 1 C45</td><td class="num">2</td></tr><tr><td>picked 1 G20</td><td>lysate 1 C46</td><td class="num">2</td></tr><tr><td>picked 1 G22</td><td>lysate 1 C47</td><td class="num">2</td></tr><tr><td>picked 1 G24</td><td>lysate 1 C48</td><td class="num">2</td></tr><tr><td>picked 1 I2</td><td>lysate 1 D1</td><td class="num">2</td></tr><tr><td>picked 1 I4</td><td>lysate 1 D2</td><td class="num">2</td></tr><tr><td>picked 1 I6</td><td>lysate 1 D3</td><td class="num">2</td></tr><tr><td>picked 1 I8</td><td>lysate 1 D4</td><td class="num">2</td></tr><tr><td>picked 1 I10</td><td>lysate 1 D5</td><td class="num">2</td></tr><tr><td>picked 1 I12</td><td>lysate 1 D6</td><td class="num">2</td></tr><tr><td>picked 1 I14</td><td>lysate 1 D7</td><td class="num">2</td></tr><tr><td>picked 1 I16</td><td>lysate 1 D8</td><td class="num">2</td></tr><tr><td>picked 1 I18</td><td>lysate 1 D9</td><td class="num">2</td></tr><tr><td>picked 1 I20</td><td>lysate 1 D10</td><td class="num">2</td></tr><tr><td>picked 1 I22</td><td>lysate 1 D11</td><td class="num">2</td></tr><tr><td>picked 1 I24</td><td>lysate 1 D12</td><td class="num">2</td></tr><tr><td>picked 1 K2</td><td>lysate 1 D13</td><td class="num">2</td></tr><tr><td>picked 1 K4</td><td>lysate 1 D14</td><td class="num">2</td></tr><tr><td>picked 1 K6</td><td>lysate 1 D15</td><td class="num">2</td></tr><tr><td>picked 1 K8</td><td>lysate 1 D16</td><td class="num">2</td></tr><tr><td>picked 1 K10</td><td>lysate 1 D17</td><td class="num">2</td></tr><tr><td>picked 1 K12</td><td>lysate 1 D18</td><td class="num">2</td></tr><tr><td>picked 1 K14</td><td>lysate 1 D19</td><td class="num">2</td></tr><tr><td>picked 1 K16</td><td>lysate 1 D20</td><td class="num">2</td></tr><tr><td>picked 1 K18</td><td>lysate 1 D21</td><td class="num">2</td></tr><tr><td>picked 1 K20</td><td>lysate 1 D22</td><td class="num">2</td></tr><tr><td>picked 1 K22</td><td>lysate 1 D23</td><td class="num">2</td></tr><tr><td>picked 1 K24</td><td>lysate 1 D24</td><td class="num">2</td></tr><tr><td>picked 1 M2</td><td>lysate 1 D25</td><td class="num">2</td></tr><tr><td>picked 1 M4</td><td>lysate 1 D26</td><td class="num">2</td></tr><tr><td>picked 1 M6</td><td>lysate 1 D27</td><td class="num">2</td></tr><tr><td>picked 1 M8</td><td>lysate 1 D28</td><td class="num">2</td></tr><tr><td>picked 1 M10</td><td>lysate 1 D29</td><td class="num">2</td></tr><tr><td>picked 1 M12</td><td>lysate 1 D30</td><td class="num">2</td></tr><tr><td>picked 1 M14</td><td>lysate 1 D31</td><td class="num">2</td></tr><tr><td>picked 1 M16</td><td>lysate 1 D32</td><td class="num">2</td></tr><tr><td>picked 1 M18</td><td>lysate 1 D33</td><td class="num">2</td></tr><tr><td>picked 1 M20</td><td>lysate 1 D34</td><td class="num">2</td></tr><tr><td>picked 1 M22</td><td>lysate 1 D35</td><td class="num">2</td></tr><tr><td>picked 1 M24</td><td>lysate 1 D36</td><td class="num">2</td></tr><tr><td>picked 1 O2</td><td>lysate 1 D37</td><td class="num">2</td></tr><tr><td>picked 1 O4</td><td>lysate 1 D38</td><td class="num">2</td></tr><tr><td>picked 1 O6</td><td>lysate 1 D39</td><td class="num">2</td></tr><tr><td>picked 1 O8</td><td>lysate 1 D40</td><td class="num">2</td></tr><tr><td>picked 1 O10</td><td>lysate 1 D41</td><td class="num">2</td></tr><tr><td>picked 1 O12</td><td>lysate 1 D42</td><td class="num">2</td></tr><tr><td>picked 1 O14</td><td>lysate 1 D43</td><td class="num">2</td></tr><tr><td>picked 1 O16</td><td>lysate 1 D44</td><td class="num">2</td></tr><tr><td>picked 1 O18</td><td>lysate 1 D45</td><td class="num">2</td></tr><tr><td>picked 1 O20</td><td>lysate 1 D46</td><td class="num">2</td></tr><tr><td>picked 1 O22</td><td>lysate 1 D47</td><td class="num">2</td></tr><tr><td>picked 1 O24</td><td>lysate 1 D48</td><td class="num">2</td></tr><tr><td>picked 1 B1</td><td>lysate 1 E1</td><td class="num">2</td></tr><tr><td>picked 1 B3</td><td>lysate 1 E2</td><td class="num">2</td></tr><tr><td>picked 1 B5</td><td>lysate 1 E3</td><td class="num">2</td></tr><tr><td>picked 1 B7</td><td>lysate 1 E4</td><td class="num">2</td></tr><tr><td>picked 1 B9</td><td>lysate 1 E5</td><td class="num">2</td></tr><tr><td>picked 1 B11</td><td>lysate 1 E6</td><td class="num">2</td></tr><tr><td>picked 1 B13</td><td>lysate 1 E7</td><td class="num">2</td></tr><tr><td>picked 1 B15</td><td>lysate 1 E8</td><td class="num">2</td></tr><tr><td>picked 1 B17</td><td>lysate 1 E9</td><td class="num">2</td></tr><tr><td>picked 1 B19</td><td>lysate 1 E10</td><td class="num">2</td></tr><tr><td>picked 1 B21</td><td>lysate 1 E11</td><td class="num">2</td></tr><tr><td>picked 1 B23</td><td>lysate 1 E12</td><td class="num">2</td></tr><tr><td>picked 1 D1</td><td>lysate 1 E13</td><td class="num">2</td></tr><tr><td>picked 1 D3</td><td>lysate 1 E14</td><td class="num">2</td></tr><tr><td>picked 1 D5</td><td>lysate 1 E15</td><td class="num">2</td></tr><tr><td>picked 1 D7</td><td>lysate 1 E16</td><td class="num">2</td></tr><tr><td>picked 1 D9</td><td>lysate 1 E17</td><td class="num">2</td></tr><tr><td>picked 1 D11</td><td>lysate 1 E18</td><td class="num">2</td></tr><tr><td>picked 1 D13</td><td>lysate 1 E19</td><td class="num">2</td></tr><tr><td>picked 1 D15</td><td>lysate 1 E20</td><td class="num">2</td></tr><tr><td>picked 1 D17</td><td>lysate 1 E21</td><td class="num">2</td></tr><tr><td>picked 1 D19</td><td>lysate 1 E22</td><td class="num">2</td></tr><tr><td>picked 1 D21</td><td>lysate 1 E23</td><td class="num">2</td></tr><tr><td>picked 1 D23</td><td>lysate 1 E24</td><td class="num">2</td></tr><tr><td>picked 1 F1</td><td>lysate 1 E25</td><td class="num">2</td></tr><tr><td>picked 1 F3</td><td>lysate 1 E26</td><td class="num">2</td></tr><tr><td>picked 1 F5</td><td>lysate 1 E27</td><td class="num">2</td></tr><tr><td>picked 1 F7</td><td>lysate 1 E28</td><td class="num">2</td></tr><tr><td>picked 1 F9</td><td>lysate 1 E29</td><td class="num">2</td></tr><tr><td>picked 1 F11</td><td>lysate 1 E30</td><td class="num">2</td></tr><tr><td>picked 1 F13</td><td>lysate 1 E31</td><td class="num">2</td></tr><tr><td>picked 1 F15</td><td>lysate 1 E32</td><td class="num">2</td></tr><tr><td>picked 1 F17</td><td>lysate 1 E33</td><td class="num">2</td></tr><tr><td>picked 1 F19</td><td>lysate 1 E34</td><td class="num">2</td></tr><tr><td>picked 1 F21</td><td>lysate 1 E35</td><td class="num">2</td></tr><tr><td>picked 1 F23</td><td>lysate 1 E36</td><td class="num">2</td></tr><tr><td>picked 1 H1</td><td>lysate 1 E37</td><td class="num">2</td></tr><tr><td>picked 1 H3</td><td>lysate 1 E38</td><td class="num">2</td></tr><tr><td>picked 1 H5</td><td>lysate 1 E39</td><td class="num">2</td></tr><tr><td>picked 1 H7</td><td>lysate 1 E40</td><td class="num">2</td></tr><tr><td>picked 1 H9</td><td>lysate 1 E41</td><td class="num">2</td></tr><tr><td>picked 1 H11</td><td>lysate 1 E42</td><td class="num">2</td></tr><tr><td>picked 1 H13</td><td>lysate 1 E43</td><td class="num">2</td></tr><tr><td>picked 1 H15</td><td>lysate 1 E44</td><td class="num">2</td></tr><tr><td>picked 1 H17</td><td>lysate 1 E45</td><td class="num">2</td></tr><tr><td>picked 1 H19</td><td>lysate 1 E46</td><td class="num">2</td></tr><tr><td>picked 1 H21</td><td>lysate 1 E47</td><td class="num">2</td></tr><tr><td>picked 1 H23</td><td>lysate 1 E48</td><td class="num">2</td></tr><tr><td>picked 1 J1</td><td>lysate 1 F1</td><td class="num">2</td></tr><tr><td>picked 1 J3</td><td>lysate 1 F2</td><td class="num">2</td></tr><tr><td>picked 1 J5</td><td>lysate 1 F3</td><td class="num">2</td></tr><tr><td>picked 1 J7</td><td>lysate 1 F4</td><td class="num">2</td></tr><tr><td>picked 1 J9</td><td>lysate 1 F5</td><td class="num">2</td></tr><tr><td>picked 1 J11</td><td>lysate 1 F6</td><td class="num">2</td></tr><tr><td>picked 1 J13</td><td>lysate 1 F7</td><td class="num">2</td></tr><tr><td>picked 1 J15</td><td>lysate 1 F8</td><td class="num">2</td></tr><tr><td>picked 1 J17</td><td>lysate 1 F9</td><td class="num">2</td></tr><tr><td>picked 1 J19</td><td>lysate 1 F10</td><td class="num">2</td></tr><tr><td>picked 1 J21</td><td>lysate 1 F11</td><td class="num">2</td></tr><tr><td>picked 1 J23</td><td>lysate 1 F12</td><td class="num">2</td></tr><tr><td>picked 1 L1</td><td>lysate 1 F13</td><td class="num">2</td></tr><tr><td>picked 1 L3</td><td>lysate 1 F14</td><td class="num">2</td></tr><tr><td>picked 1 L5</td><td>lysate 1 F15</td><td class="num">2</td></tr><tr><td>picked 1 L7</td><td>lysate 1 F16</td><td class="num">2</td></tr><tr><td>picked 1 L9</td><td>lysate 1 F17</td><td class="num">2</td></tr><tr><td>picked 1 L11</td><td>lysate 1 F18</td><td class="num">2</td></tr><tr><td>picked 1 L13</td><td>lysate 1 F19</td><td class="num">2</td></tr><tr><td>picked 1 L15</td><td>lysate 1 F20</td><td class="num">2</td></tr><tr><td>picked 1 L17</td><td>lysate 1 F21</td><td class="num">2</td></tr><tr><td>picked 1 L19</td><td>lysate 1 F22</td><td class="num">2</td></tr><tr><td>picked 1 L21</td><td>lysate 1 F23</td><td class="num">2</td></tr><tr><td>picked 1 L23</td><td>lysate 1 F24</td><td class="num">2</td></tr><tr><td>picked 1 N1</td><td>lysate 1 F25</td><td class="num">2</td></tr><tr><td>picked 1 N3</td><td>lysate 1 F26</td><td class="num">2</td></tr><tr><td>picked 1 N5</td><td>lysate 1 F27</td><td class="num">2</td></tr><tr><td>picked 1 N7</td><td>lysate 1 F28</td><td class="num">2</td></tr><tr><td>picked 1 N9</td><td>lysate 1 F29</td><td class="num">2</td></tr><tr><td>picked 1 N11</td><td>lysate 1 F30</td><td class="num">2</td></tr><tr><td>picked 1 N13</td><td>lysate 1 F31</td><td class="num">2</td></tr><tr><td>picked 1 N15</td><td>lysate 1 F32</td><td class="num">2</td></tr><tr><td>picked 1 N17</td><td>lysate 1 F33</td><td class="num">2</td></tr><tr><td>picked 1 N19</td><td>lysate 1 F34</td><td class="num">2</td></tr><tr><td>picked 1 N21</td><td>lysate 1 F35</td><td class="num">2</td></tr><tr><td>picked 1 N23</td><td>lysate 1 F36</td><td class="num">2</td></tr><tr><td>picked 1 P1</td><td>lysate 1 F37</td><td class="num">2</td></tr><tr><td>picked 1 P3</td><td>lysate 1 F38</td><td class="num">2</td></tr><tr><td>picked 1 P5</td><td>lysate 1 F39</td><td class="num">2</td></tr><tr><td>picked 1 P7</td><td>lysate 1 F40</td><td class="num">2</td></tr><tr><td>picked 1 P9</td><td>lysate 1 F41</td><td class="num">2</td></tr><tr><td>picked 1 P11</td><td>lysate 1 F42</td><td class="num">2</td></tr><tr><td>picked 1 P13</td><td>lysate 1 F43</td><td class="num">2</td></tr><tr><td>picked 1 P15</td><td>lysate 1 F44</td><td class="num">2</td></tr><tr><td>picked 1 P17</td><td>lysate 1 F45</td><td class="num">2</td></tr><tr><td>picked 1 P19</td><td>lysate 1 F46</td><td class="num">2</td></tr><tr><td>picked 1 P21</td><td>lysate 1 F47</td><td class="num">2</td></tr><tr><td>picked 1 P23</td><td>lysate 1 F48</td><td class="num">2</td></tr></tbody></table></div></figure>
+<figure class="transfer"><figcaption>Compress 1 picked plates into lysate 1 <span class="muted">ECHO 525 acoustic liquid handler · 288 wells · picked 1 → lysate 1 · Invert the picked plates for 30 minutes first, so the cells gather at the meniscus</span><a class="cite" href="#source-qian-si" title="Qian et al. 2026, Supplementary Information · Day 4.1"><sup>[1]</sup></a></figcaption><div class="scroll"><table><thead><tr><th>From</th><th>To</th><th class="num">µL</th></tr></thead><tbody><tr><td>picked 1 A1</td><td>lysate 1 A1</td><td class="num">2</td></tr><tr><td>picked 1 A3</td><td>lysate 1 A2</td><td class="num">2</td></tr><tr><td>picked 1 A5</td><td>lysate 1 A3</td><td class="num">2</td></tr><tr><td>picked 1 A7</td><td>lysate 1 A4</td><td class="num">2</td></tr><tr><td>picked 1 A9</td><td>lysate 1 A5</td><td class="num">2</td></tr><tr><td>picked 1 A11</td><td>lysate 1 A6</td><td class="num">2</td></tr><tr><td>picked 1 A13</td><td>lysate 1 A7</td><td class="num">2</td></tr><tr><td>picked 1 A15</td><td>lysate 1 A8</td><td class="num">2</td></tr><tr><td>picked 1 A17</td><td>lysate 1 A9</td><td class="num">2</td></tr><tr><td>picked 1 A19</td><td>lysate 1 A10</td><td class="num">2</td></tr><tr><td>picked 1 A21</td><td>lysate 1 A11</td><td class="num">2</td></tr><tr><td>picked 1 A23</td><td>lysate 1 A12</td><td class="num">2</td></tr><tr><td>picked 1 C1</td><td>lysate 1 A13</td><td class="num">2</td></tr><tr><td>picked 1 C3</td><td>lysate 1 A14</td><td class="num">2</td></tr><tr><td>picked 1 C5</td><td>lysate 1 A15</td><td class="num">2</td></tr><tr><td>picked 1 C7</td><td>lysate 1 A16</td><td class="num">2</td></tr><tr><td>picked 1 C9</td><td>lysate 1 A17</td><td class="num">2</td></tr><tr><td>picked 1 C11</td><td>lysate 1 A18</td><td class="num">2</td></tr><tr><td>picked 1 C13</td><td>lysate 1 A19</td><td class="num">2</td></tr><tr><td>picked 1 C15</td><td>lysate 1 A20</td><td class="num">2</td></tr><tr><td>picked 1 C17</td><td>lysate 1 A21</td><td class="num">2</td></tr><tr><td>picked 1 C19</td><td>lysate 1 A22</td><td class="num">2</td></tr><tr><td>picked 1 C21</td><td>lysate 1 A23</td><td class="num">2</td></tr><tr><td>picked 1 C23</td><td>lysate 1 A24</td><td class="num">2</td></tr><tr><td>picked 1 E1</td><td>lysate 1 A25</td><td class="num">2</td></tr><tr><td>picked 1 E3</td><td>lysate 1 A26</td><td class="num">2</td></tr><tr><td>picked 1 E5</td><td>lysate 1 A27</td><td class="num">2</td></tr><tr><td>picked 1 E7</td><td>lysate 1 A28</td><td class="num">2</td></tr><tr><td>picked 1 E9</td><td>lysate 1 A29</td><td class="num">2</td></tr><tr><td>picked 1 E11</td><td>lysate 1 A30</td><td class="num">2</td></tr><tr><td>picked 1 E13</td><td>lysate 1 A31</td><td class="num">2</td></tr><tr><td>picked 1 E15</td><td>lysate 1 A32</td><td class="num">2</td></tr><tr><td>picked 1 E17</td><td>lysate 1 A33</td><td class="num">2</td></tr><tr><td>picked 1 E19</td><td>lysate 1 A34</td><td class="num">2</td></tr><tr><td>picked 1 E21</td><td>lysate 1 A35</td><td class="num">2</td></tr><tr><td>picked 1 E23</td><td>lysate 1 A36</td><td class="num">2</td></tr><tr><td>picked 1 G1</td><td>lysate 1 A37</td><td class="num">2</td></tr><tr><td>picked 1 G3</td><td>lysate 1 A38</td><td class="num">2</td></tr><tr><td>picked 1 G5</td><td>lysate 1 A39</td><td class="num">2</td></tr><tr><td>picked 1 G7</td><td>lysate 1 A40</td><td class="num">2</td></tr><tr><td>picked 1 G9</td><td>lysate 1 A41</td><td class="num">2</td></tr><tr><td>picked 1 G11</td><td>lysate 1 A42</td><td class="num">2</td></tr><tr><td>picked 1 G13</td><td>lysate 1 A43</td><td class="num">2</td></tr><tr><td>picked 1 G15</td><td>lysate 1 A44</td><td class="num">2</td></tr><tr><td>picked 1 G17</td><td>lysate 1 A45</td><td class="num">2</td></tr><tr><td>picked 1 G19</td><td>lysate 1 A46</td><td class="num">2</td></tr><tr><td>picked 1 G21</td><td>lysate 1 A47</td><td class="num">2</td></tr><tr><td>picked 1 G23</td><td>lysate 1 A48</td><td class="num">2</td></tr><tr><td>picked 1 I1</td><td>lysate 1 B1</td><td class="num">2</td></tr><tr><td>picked 1 I3</td><td>lysate 1 B2</td><td class="num">2</td></tr><tr><td>picked 1 I5</td><td>lysate 1 B3</td><td class="num">2</td></tr><tr><td>picked 1 I7</td><td>lysate 1 B4</td><td class="num">2</td></tr><tr><td>picked 1 I9</td><td>lysate 1 B5</td><td class="num">2</td></tr><tr><td>picked 1 I11</td><td>lysate 1 B6</td><td class="num">2</td></tr><tr><td>picked 1 I13</td><td>lysate 1 B7</td><td class="num">2</td></tr><tr><td>picked 1 I15</td><td>lysate 1 B8</td><td class="num">2</td></tr><tr><td>picked 1 I17</td><td>lysate 1 B9</td><td class="num">2</td></tr><tr><td>picked 1 I19</td><td>lysate 1 B10</td><td class="num">2</td></tr><tr><td>picked 1 I21</td><td>lysate 1 B11</td><td class="num">2</td></tr><tr><td>picked 1 I23</td><td>lysate 1 B12</td><td class="num">2</td></tr><tr><td>picked 1 K1</td><td>lysate 1 B13</td><td class="num">2</td></tr><tr><td>picked 1 K3</td><td>lysate 1 B14</td><td class="num">2</td></tr><tr><td>picked 1 K5</td><td>lysate 1 B15</td><td class="num">2</td></tr><tr><td>picked 1 K7</td><td>lysate 1 B16</td><td class="num">2</td></tr><tr><td>picked 1 K9</td><td>lysate 1 B17</td><td class="num">2</td></tr><tr><td>picked 1 K11</td><td>lysate 1 B18</td><td class="num">2</td></tr><tr><td>picked 1 K13</td><td>lysate 1 B19</td><td class="num">2</td></tr><tr><td>picked 1 K15</td><td>lysate 1 B20</td><td class="num">2</td></tr><tr><td>picked 1 K17</td><td>lysate 1 B21</td><td class="num">2</td></tr><tr><td>picked 1 K19</td><td>lysate 1 B22</td><td class="num">2</td></tr><tr><td>picked 1 K21</td><td>lysate 1 B23</td><td class="num">2</td></tr><tr><td>picked 1 K23</td><td>lysate 1 B24</td><td class="num">2</td></tr><tr><td>picked 1 M1</td><td>lysate 1 B25</td><td class="num">2</td></tr><tr><td>picked 1 M3</td><td>lysate 1 B26</td><td class="num">2</td></tr><tr><td>picked 1 M5</td><td>lysate 1 B27</td><td class="num">2</td></tr><tr><td>picked 1 M7</td><td>lysate 1 B28</td><td class="num">2</td></tr><tr><td>picked 1 M9</td><td>lysate 1 B29</td><td class="num">2</td></tr><tr><td>picked 1 M11</td><td>lysate 1 B30</td><td class="num">2</td></tr><tr><td>picked 1 M13</td><td>lysate 1 B31</td><td class="num">2</td></tr><tr><td>picked 1 M15</td><td>lysate 1 B32</td><td class="num">2</td></tr><tr><td>picked 1 M17</td><td>lysate 1 B33</td><td class="num">2</td></tr><tr><td>picked 1 M19</td><td>lysate 1 B34</td><td class="num">2</td></tr><tr><td>picked 1 M21</td><td>lysate 1 B35</td><td class="num">2</td></tr><tr><td>picked 1 M23</td><td>lysate 1 B36</td><td class="num">2</td></tr><tr><td>picked 1 O1</td><td>lysate 1 B37</td><td class="num">2</td></tr><tr><td>picked 1 O3</td><td>lysate 1 B38</td><td class="num">2</td></tr><tr><td>picked 1 O5</td><td>lysate 1 B39</td><td class="num">2</td></tr><tr><td>picked 1 O7</td><td>lysate 1 B40</td><td class="num">2</td></tr><tr><td>picked 1 O9</td><td>lysate 1 B41</td><td class="num">2</td></tr><tr><td>picked 1 O11</td><td>lysate 1 B42</td><td class="num">2</td></tr><tr><td>picked 1 O13</td><td>lysate 1 B43</td><td class="num">2</td></tr><tr><td>picked 1 O15</td><td>lysate 1 B44</td><td class="num">2</td></tr><tr><td>picked 1 O17</td><td>lysate 1 B45</td><td class="num">2</td></tr><tr><td>picked 1 O19</td><td>lysate 1 B46</td><td class="num">2</td></tr><tr><td>picked 1 O21</td><td>lysate 1 B47</td><td class="num">2</td></tr><tr><td>picked 1 O23</td><td>lysate 1 B48</td><td class="num">2</td></tr><tr><td>picked 1 A2</td><td>lysate 1 C1</td><td class="num">2</td></tr><tr><td>picked 1 A4</td><td>lysate 1 C2</td><td class="num">2</td></tr><tr><td>picked 1 A6</td><td>lysate 1 C3</td><td class="num">2</td></tr><tr><td>picked 1 A8</td><td>lysate 1 C4</td><td class="num">2</td></tr><tr><td>picked 1 A10</td><td>lysate 1 C5</td><td class="num">2</td></tr><tr><td>picked 1 A12</td><td>lysate 1 C6</td><td class="num">2</td></tr><tr><td>picked 1 A14</td><td>lysate 1 C7</td><td class="num">2</td></tr><tr><td>picked 1 A16</td><td>lysate 1 C8</td><td class="num">2</td></tr><tr><td>picked 1 A18</td><td>lysate 1 C9</td><td class="num">2</td></tr><tr><td>picked 1 A20</td><td>lysate 1 C10</td><td class="num">2</td></tr><tr><td>picked 1 A22</td><td>lysate 1 C11</td><td class="num">2</td></tr><tr><td>picked 1 A24</td><td>lysate 1 C12</td><td class="num">2</td></tr><tr><td>picked 1 C2</td><td>lysate 1 C13</td><td class="num">2</td></tr><tr><td>picked 1 C4</td><td>lysate 1 C14</td><td class="num">2</td></tr><tr><td>picked 1 C6</td><td>lysate 1 C15</td><td class="num">2</td></tr><tr><td>picked 1 C8</td><td>lysate 1 C16</td><td class="num">2</td></tr><tr><td>picked 1 C10</td><td>lysate 1 C17</td><td class="num">2</td></tr><tr><td>picked 1 C12</td><td>lysate 1 C18</td><td class="num">2</td></tr><tr><td>picked 1 C14</td><td>lysate 1 C19</td><td class="num">2</td></tr><tr><td>picked 1 C16</td><td>lysate 1 C20</td><td class="num">2</td></tr><tr><td>picked 1 C18</td><td>lysate 1 C21</td><td class="num">2</td></tr><tr><td>picked 1 C20</td><td>lysate 1 C22</td><td class="num">2</td></tr><tr><td>picked 1 C22</td><td>lysate 1 C23</td><td class="num">2</td></tr><tr><td>picked 1 C24</td><td>lysate 1 C24</td><td class="num">2</td></tr><tr><td>picked 1 E2</td><td>lysate 1 C25</td><td class="num">2</td></tr><tr><td>picked 1 E4</td><td>lysate 1 C26</td><td class="num">2</td></tr><tr><td>picked 1 E6</td><td>lysate 1 C27</td><td class="num">2</td></tr><tr><td>picked 1 E8</td><td>lysate 1 C28</td><td class="num">2</td></tr><tr><td>picked 1 E10</td><td>lysate 1 C29</td><td class="num">2</td></tr><tr><td>picked 1 E12</td><td>lysate 1 C30</td><td class="num">2</td></tr><tr><td>picked 1 E14</td><td>lysate 1 C31</td><td class="num">2</td></tr><tr><td>picked 1 E16</td><td>lysate 1 C32</td><td class="num">2</td></tr><tr><td>picked 1 E18</td><td>lysate 1 C33</td><td class="num">2</td></tr><tr><td>picked 1 E20</td><td>lysate 1 C34</td><td class="num">2</td></tr><tr><td>picked 1 E22</td><td>lysate 1 C35</td><td class="num">2</td></tr><tr><td>picked 1 E24</td><td>lysate 1 C36</td><td class="num">2</td></tr><tr><td>picked 1 G2</td><td>lysate 1 C37</td><td class="num">2</td></tr><tr><td>picked 1 G4</td><td>lysate 1 C38</td><td class="num">2</td></tr><tr><td>picked 1 G6</td><td>lysate 1 C39</td><td class="num">2</td></tr><tr><td>picked 1 G8</td><td>lysate 1 C40</td><td class="num">2</td></tr><tr><td>picked 1 G10</td><td>lysate 1 C41</td><td class="num">2</td></tr><tr><td>picked 1 G12</td><td>lysate 1 C42</td><td class="num">2</td></tr><tr><td>picked 1 G14</td><td>lysate 1 C43</td><td class="num">2</td></tr><tr><td>picked 1 G16</td><td>lysate 1 C44</td><td class="num">2</td></tr><tr><td>picked 1 G18</td><td>lysate 1 C45</td><td class="num">2</td></tr><tr><td>picked 1 G20</td><td>lysate 1 C46</td><td class="num">2</td></tr><tr><td>picked 1 G22</td><td>lysate 1 C47</td><td class="num">2</td></tr><tr><td>picked 1 G24</td><td>lysate 1 C48</td><td class="num">2</td></tr><tr><td>picked 1 I2</td><td>lysate 1 D1</td><td class="num">2</td></tr><tr><td>picked 1 I4</td><td>lysate 1 D2</td><td class="num">2</td></tr><tr><td>picked 1 I6</td><td>lysate 1 D3</td><td class="num">2</td></tr><tr><td>picked 1 I8</td><td>lysate 1 D4</td><td class="num">2</td></tr><tr><td>picked 1 I10</td><td>lysate 1 D5</td><td class="num">2</td></tr><tr><td>picked 1 I12</td><td>lysate 1 D6</td><td class="num">2</td></tr><tr><td>picked 1 I14</td><td>lysate 1 D7</td><td class="num">2</td></tr><tr><td>picked 1 I16</td><td>lysate 1 D8</td><td class="num">2</td></tr><tr><td>picked 1 I18</td><td>lysate 1 D9</td><td class="num">2</td></tr><tr><td>picked 1 I20</td><td>lysate 1 D10</td><td class="num">2</td></tr><tr><td>picked 1 I22</td><td>lysate 1 D11</td><td class="num">2</td></tr><tr><td>picked 1 I24</td><td>lysate 1 D12</td><td class="num">2</td></tr><tr><td>picked 1 K2</td><td>lysate 1 D13</td><td class="num">2</td></tr><tr><td>picked 1 K4</td><td>lysate 1 D14</td><td class="num">2</td></tr><tr><td>picked 1 K6</td><td>lysate 1 D15</td><td class="num">2</td></tr><tr><td>picked 1 K8</td><td>lysate 1 D16</td><td class="num">2</td></tr><tr><td>picked 1 K10</td><td>lysate 1 D17</td><td class="num">2</td></tr><tr><td>picked 1 K12</td><td>lysate 1 D18</td><td class="num">2</td></tr><tr><td>picked 1 K14</td><td>lysate 1 D19</td><td class="num">2</td></tr><tr><td>picked 1 K16</td><td>lysate 1 D20</td><td class="num">2</td></tr><tr><td>picked 1 K18</td><td>lysate 1 D21</td><td class="num">2</td></tr><tr><td>picked 1 K20</td><td>lysate 1 D22</td><td class="num">2</td></tr><tr><td>picked 1 K22</td><td>lysate 1 D23</td><td class="num">2</td></tr><tr><td>picked 1 K24</td><td>lysate 1 D24</td><td class="num">2</td></tr><tr><td>picked 1 M2</td><td>lysate 1 D25</td><td class="num">2</td></tr><tr><td>picked 1 M4</td><td>lysate 1 D26</td><td class="num">2</td></tr><tr><td>picked 1 M6</td><td>lysate 1 D27</td><td class="num">2</td></tr><tr><td>picked 1 M8</td><td>lysate 1 D28</td><td class="num">2</td></tr><tr><td>picked 1 M10</td><td>lysate 1 D29</td><td class="num">2</td></tr><tr><td>picked 1 M12</td><td>lysate 1 D30</td><td class="num">2</td></tr><tr><td>picked 1 M14</td><td>lysate 1 D31</td><td class="num">2</td></tr><tr><td>picked 1 M16</td><td>lysate 1 D32</td><td class="num">2</td></tr><tr><td>picked 1 M18</td><td>lysate 1 D33</td><td class="num">2</td></tr><tr><td>picked 1 M20</td><td>lysate 1 D34</td><td class="num">2</td></tr><tr><td>picked 1 M22</td><td>lysate 1 D35</td><td class="num">2</td></tr><tr><td>picked 1 M24</td><td>lysate 1 D36</td><td class="num">2</td></tr><tr><td>picked 1 O2</td><td>lysate 1 D37</td><td class="num">2</td></tr><tr><td>picked 1 O4</td><td>lysate 1 D38</td><td class="num">2</td></tr><tr><td>picked 1 O6</td><td>lysate 1 D39</td><td class="num">2</td></tr><tr><td>picked 1 O8</td><td>lysate 1 D40</td><td class="num">2</td></tr><tr><td>picked 1 O10</td><td>lysate 1 D41</td><td class="num">2</td></tr><tr><td>picked 1 O12</td><td>lysate 1 D42</td><td class="num">2</td></tr><tr><td>picked 1 O14</td><td>lysate 1 D43</td><td class="num">2</td></tr><tr><td>picked 1 O16</td><td>lysate 1 D44</td><td class="num">2</td></tr><tr><td>picked 1 O18</td><td>lysate 1 D45</td><td class="num">2</td></tr><tr><td>picked 1 O20</td><td>lysate 1 D46</td><td class="num">2</td></tr><tr><td>picked 1 O22</td><td>lysate 1 D47</td><td class="num">2</td></tr><tr><td>picked 1 O24</td><td>lysate 1 D48</td><td class="num">2</td></tr><tr><td>picked 1 B1</td><td>lysate 1 E1</td><td class="num">2</td></tr><tr><td>picked 1 B3</td><td>lysate 1 E2</td><td class="num">2</td></tr><tr><td>picked 1 B5</td><td>lysate 1 E3</td><td class="num">2</td></tr><tr><td>picked 1 B7</td><td>lysate 1 E4</td><td class="num">2</td></tr><tr><td>picked 1 B9</td><td>lysate 1 E5</td><td class="num">2</td></tr><tr><td>picked 1 B11</td><td>lysate 1 E6</td><td class="num">2</td></tr><tr><td>picked 1 B13</td><td>lysate 1 E7</td><td class="num">2</td></tr><tr><td>picked 1 B15</td><td>lysate 1 E8</td><td class="num">2</td></tr><tr><td>picked 1 B17</td><td>lysate 1 E9</td><td class="num">2</td></tr><tr><td>picked 1 B19</td><td>lysate 1 E10</td><td class="num">2</td></tr><tr><td>picked 1 B21</td><td>lysate 1 E11</td><td class="num">2</td></tr><tr><td>picked 1 B23</td><td>lysate 1 E12</td><td class="num">2</td></tr><tr><td>picked 1 D1</td><td>lysate 1 E13</td><td class="num">2</td></tr><tr><td>picked 1 D3</td><td>lysate 1 E14</td><td class="num">2</td></tr><tr><td>picked 1 D5</td><td>lysate 1 E15</td><td class="num">2</td></tr><tr><td>picked 1 D7</td><td>lysate 1 E16</td><td class="num">2</td></tr><tr><td>picked 1 D9</td><td>lysate 1 E17</td><td class="num">2</td></tr><tr><td>picked 1 D11</td><td>lysate 1 E18</td><td class="num">2</td></tr><tr><td>picked 1 D13</td><td>lysate 1 E19</td><td class="num">2</td></tr><tr><td>picked 1 D15</td><td>lysate 1 E20</td><td class="num">2</td></tr><tr><td>picked 1 D17</td><td>lysate 1 E21</td><td class="num">2</td></tr><tr><td>picked 1 D19</td><td>lysate 1 E22</td><td class="num">2</td></tr><tr><td>picked 1 D21</td><td>lysate 1 E23</td><td class="num">2</td></tr><tr><td>picked 1 D23</td><td>lysate 1 E24</td><td class="num">2</td></tr><tr><td>picked 1 F1</td><td>lysate 1 E25</td><td class="num">2</td></tr><tr><td>picked 1 F3</td><td>lysate 1 E26</td><td class="num">2</td></tr><tr><td>picked 1 F5</td><td>lysate 1 E27</td><td class="num">2</td></tr><tr><td>picked 1 F7</td><td>lysate 1 E28</td><td class="num">2</td></tr><tr><td>picked 1 F9</td><td>lysate 1 E29</td><td class="num">2</td></tr><tr><td>picked 1 F11</td><td>lysate 1 E30</td><td class="num">2</td></tr><tr><td>picked 1 F13</td><td>lysate 1 E31</td><td class="num">2</td></tr><tr><td>picked 1 F15</td><td>lysate 1 E32</td><td class="num">2</td></tr><tr><td>picked 1 F17</td><td>lysate 1 E33</td><td class="num">2</td></tr><tr><td>picked 1 F19</td><td>lysate 1 E34</td><td class="num">2</td></tr><tr><td>picked 1 F21</td><td>lysate 1 E35</td><td class="num">2</td></tr><tr><td>picked 1 F23</td><td>lysate 1 E36</td><td class="num">2</td></tr><tr><td>picked 1 H1</td><td>lysate 1 E37</td><td class="num">2</td></tr><tr><td>picked 1 H3</td><td>lysate 1 E38</td><td class="num">2</td></tr><tr><td>picked 1 H5</td><td>lysate 1 E39</td><td class="num">2</td></tr><tr><td>picked 1 H7</td><td>lysate 1 E40</td><td class="num">2</td></tr><tr><td>picked 1 H9</td><td>lysate 1 E41</td><td class="num">2</td></tr><tr><td>picked 1 H11</td><td>lysate 1 E42</td><td class="num">2</td></tr><tr><td>picked 1 H13</td><td>lysate 1 E43</td><td class="num">2</td></tr><tr><td>picked 1 H15</td><td>lysate 1 E44</td><td class="num">2</td></tr><tr><td>picked 1 H17</td><td>lysate 1 E45</td><td class="num">2</td></tr><tr><td>picked 1 H19</td><td>lysate 1 E46</td><td class="num">2</td></tr><tr><td>picked 1 H21</td><td>lysate 1 E47</td><td class="num">2</td></tr><tr><td>picked 1 H23</td><td>lysate 1 E48</td><td class="num">2</td></tr><tr><td>picked 1 J1</td><td>lysate 1 F1</td><td class="num">2</td></tr><tr><td>picked 1 J3</td><td>lysate 1 F2</td><td class="num">2</td></tr><tr><td>picked 1 J5</td><td>lysate 1 F3</td><td class="num">2</td></tr><tr><td>picked 1 J7</td><td>lysate 1 F4</td><td class="num">2</td></tr><tr><td>picked 1 J9</td><td>lysate 1 F5</td><td class="num">2</td></tr><tr><td>picked 1 J11</td><td>lysate 1 F6</td><td class="num">2</td></tr><tr><td>picked 1 J13</td><td>lysate 1 F7</td><td class="num">2</td></tr><tr><td>picked 1 J15</td><td>lysate 1 F8</td><td class="num">2</td></tr><tr><td>picked 1 J17</td><td>lysate 1 F9</td><td class="num">2</td></tr><tr><td>picked 1 J19</td><td>lysate 1 F10</td><td class="num">2</td></tr><tr><td>picked 1 J21</td><td>lysate 1 F11</td><td class="num">2</td></tr><tr><td>picked 1 J23</td><td>lysate 1 F12</td><td class="num">2</td></tr><tr><td>picked 1 L1</td><td>lysate 1 F13</td><td class="num">2</td></tr><tr><td>picked 1 L3</td><td>lysate 1 F14</td><td class="num">2</td></tr><tr><td>picked 1 L5</td><td>lysate 1 F15</td><td class="num">2</td></tr><tr><td>picked 1 L7</td><td>lysate 1 F16</td><td class="num">2</td></tr><tr><td>picked 1 L9</td><td>lysate 1 F17</td><td class="num">2</td></tr><tr><td>picked 1 L11</td><td>lysate 1 F18</td><td class="num">2</td></tr><tr><td>picked 1 L13</td><td>lysate 1 F19</td><td class="num">2</td></tr><tr><td>picked 1 L15</td><td>lysate 1 F20</td><td class="num">2</td></tr><tr><td>picked 1 L17</td><td>lysate 1 F21</td><td class="num">2</td></tr><tr><td>picked 1 L19</td><td>lysate 1 F22</td><td class="num">2</td></tr><tr><td>picked 1 L21</td><td>lysate 1 F23</td><td class="num">2</td></tr><tr><td>picked 1 L23</td><td>lysate 1 F24</td><td class="num">2</td></tr><tr><td>picked 1 N1</td><td>lysate 1 F25</td><td class="num">2</td></tr><tr><td>picked 1 N3</td><td>lysate 1 F26</td><td class="num">2</td></tr><tr><td>picked 1 N5</td><td>lysate 1 F27</td><td class="num">2</td></tr><tr><td>picked 1 N7</td><td>lysate 1 F28</td><td class="num">2</td></tr><tr><td>picked 1 N9</td><td>lysate 1 F29</td><td class="num">2</td></tr><tr><td>picked 1 N11</td><td>lysate 1 F30</td><td class="num">2</td></tr><tr><td>picked 1 N13</td><td>lysate 1 F31</td><td class="num">2</td></tr><tr><td>picked 1 N15</td><td>lysate 1 F32</td><td class="num">2</td></tr><tr><td>picked 1 N17</td><td>lysate 1 F33</td><td class="num">2</td></tr><tr><td>picked 1 N19</td><td>lysate 1 F34</td><td class="num">2</td></tr><tr><td>picked 1 N21</td><td>lysate 1 F35</td><td class="num">2</td></tr><tr><td>picked 1 N23</td><td>lysate 1 F36</td><td class="num">2</td></tr><tr><td>picked 1 P1</td><td>lysate 1 F37</td><td class="num">2</td></tr><tr><td>picked 1 P3</td><td>lysate 1 F38</td><td class="num">2</td></tr><tr><td>picked 1 P5</td><td>lysate 1 F39</td><td class="num">2</td></tr><tr><td>picked 1 P7</td><td>lysate 1 F40</td><td class="num">2</td></tr><tr><td>picked 1 P9</td><td>lysate 1 F41</td><td class="num">2</td></tr><tr><td>picked 1 P11</td><td>lysate 1 F42</td><td class="num">2</td></tr><tr><td>picked 1 P13</td><td>lysate 1 F43</td><td class="num">2</td></tr><tr><td>picked 1 P15</td><td>lysate 1 F44</td><td class="num">2</td></tr><tr><td>picked 1 P17</td><td>lysate 1 F45</td><td class="num">2</td></tr><tr><td>picked 1 P19</td><td>lysate 1 F46</td><td class="num">2</td></tr><tr><td>picked 1 P21</td><td>lysate 1 F47</td><td class="num">2</td></tr><tr><td>picked 1 P23</td><td>lysate 1 F48</td><td class="num">2</td></tr></tbody></table></div></figure>
+<div class="timers"><span class="timer" data-key="step-compress-plates.timer.1" data-seconds="1800"><label><span class="timer-label">Plates inverted</span><input type="text" class="timer-time" value="30:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 30:00</button></span></div>
 <div class="expected"><h3>Expected result</h3><ul><li>288 wells of lysate, 4 picked plates to one.</li></ul></div>
 </section>
 <section class="step" id="step-barcode-wells">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-barcode-wells"><span class="step-n">4</span><span>Barcode each well in lysate</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-barcode-wells.1"><span>Add one barcode from each of the 4 kit groups to every well, by the address that well&#x27;s position gives.</span></label></li><li><label><input type="checkbox" data-key="step-barcode-wells.2"><span>Make each well up to 3.5 µL with 0.5 µL barcodes, 0.5 µL water and 0.5 µL master mix.</span></label></li><li><label><input type="checkbox" data-key="step-barcode-wells.3"><span>Run the ligation, then pool.</span></label></li></ol>
-<figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-48.25 -42.69 805.05 204.72" width="805.05" height="204.72"><line x1="0" y1="0" x2="720" y2="0" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="3.8" x2="720" y2="3.8" fill="none" stroke="#252525" stroke-width="2.6"/><g class="ends"><circle cx="-7" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-13" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-19" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="727" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="733" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="739" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/></g><g class="scale"><line x1="68.57" y1="5.1" x2="68.57" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="58.55" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">300</text><line x1="240" y1="5.1" x2="240" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="229.98" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350</text><line x1="411.43" y1="5.1" x2="411.43" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="401.41" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">400</text><line x1="582.86" y1="5.1" x2="582.86" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="572.84" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">450</text></g><g class="feature" data-kind="feature" data-name="6xHis" data-type="CDS" data-span="415 .. 432" data-length="18 bp"><path d="M459.43 33.32L509.14 33.32L509.14 29.32L521.14 40.82L509.14 52.32L509.14 48.32L459.43 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="468.31 475.62 482.43 491.08 494.27" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">6xHis</text></g><g class="feature" data-kind="feature" data-name="T7 promoter" data-type="promoter" data-span="264 .. 282" data-length="19 bp"><path d="M0 33.32L0 33.32L0 29.32L6.86 40.82L0 52.32L0 48.32L0 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="-32.25 -25.23 -17.91 -14.25 -6.95 -2.48 4.56 15.76 22.8 27.3 34.38" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">T7 promoter</text></g><g class="feature" data-kind="feature" data-name="RBS" data-type="RBS" data-span="322 .. 344" data-length="23 bp"><path d="M140.57 33.32L207.43 33.32L207.43 29.32L219.43 40.82L207.43 52.32L207.43 48.32L140.57 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="162.51 170.5 178.19" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">RBS</text></g><g class="feature" data-kind="feature" data-name="lac operator" data-type="protein_bind" data-span="283 .. 307" data-length="25 bp"><path d="M6.86 74.71L80.57 74.71L80.57 70.71L92.57 82.21L80.57 93.71L80.57 89.71L6.86 89.71Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="14.87 18.07 25.12 31.44 35.1 42.13 49.43 56.51 61.23 68.28 72.79 79.83" y="105.38" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">lac operator</text></g><g class="feature" data-kind="feature" data-name="internal stuffer" data-type="misc_feature" data-span="371 .. 400" data-length="30 bp"><path d="M308.57 33.32L399.43 33.32L399.43 29.32L411.43 40.82L399.43 52.32L399.43 48.32L308.57 48.32Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="317.27 320.46 327.75 332.26 339.33 343.86 351.15 358.19 361.39 365.05 371.04 375.55 382.83 386.88 390.93 398.01" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">internal stuffer</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M240 33.32L255.43 33.32L255.43 29.32L267.43 40.82L255.43 52.32L255.43 48.32L240 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="239.41 246.35 257.55 264.62" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">PmeI</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="438 .. 445" data-length="8 bp"><path d="M538.29 33.32L553.71 33.32L553.71 29.32L565.71 40.82L553.71 52.32L553.71 48.32L538.29 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="537.7 544.63 555.84 562.91" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">PmeI</text></g><g class="cut_site label" data-kind="cut_site" data-name="XbaI" data-type="cut site" data-span="310"><line x1="102.86" y1="-1.3" x2="102.86" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="105.86" y="-15.01" font-size="11.5" textLength="29.14" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">XbaI</text><text x="134.99" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (310)</text></g><g class="cut_site label" data-kind="cut_site" data-name="XmaI" data-type="cut site" data-span="385"><line x1="360" y1="-1.3" x2="360" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="289.53" y="-15.01" font-size="11.5" textLength="32.89" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">XmaI</text><text x="322.42" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (385)</text></g><g class="cut_site label" data-kind="cut_site" data-name="SmaI - SrfI" data-type="cut site" data-span="387"><line x1="366.86" y1="-1.3" x2="366.86" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="369.86" y="-15.01" font-size="11.5" textLength="32.3" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">SmaI</text><text x="402.16" y="-15.01" font-size="11.5" textLength="11.46" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> - </text><text x="413.62" y="-15.01" font-size="11.5" textLength="23.24" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">SrfI</text><text x="436.86" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (387)</text></g><text x="313.61" y="130.63" font-size="13.5" textLength="92.79" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">DMX-iGGA N</text><text x="309.16" y="143.56" font-size="10.5" textLength="101.67" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">281 .. 490 (210 bp)</text></svg><figcaption>The cassette DMX-iGGA N carries, drawn empty: a picked well holds one with its design in place of the stuffer. The kit chains its 4 barcodes on, AGGA through TTCC, reading on the strand the cargo reads on. <a class="cite" href="#source-figure-sources">figure-sources section 3, DMX</a></figcaption></figure>
+<figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-48.25 -42.69 805.05 204.72" width="805.05" height="204.72"><line x1="0" y1="0" x2="720" y2="0" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="3.8" x2="720" y2="3.8" fill="none" stroke="#252525" stroke-width="2.6"/><g class="ends"><circle cx="-7" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-13" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-19" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="727" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="733" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="739" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/></g><g class="scale"><line x1="68.57" y1="5.1" x2="68.57" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="58.55" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">300</text><line x1="240" y1="5.1" x2="240" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="229.98" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350</text><line x1="411.43" y1="5.1" x2="411.43" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="401.41" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">400</text><line x1="582.86" y1="5.1" x2="582.86" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="572.84" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">450</text></g><g class="feature" data-kind="feature" data-name="6xHis" data-type="CDS" data-span="415 .. 432" data-length="18 bp"><path d="M459.43 33.32L509.14 33.32L509.14 29.32L521.14 40.82L509.14 52.32L509.14 48.32L459.43 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="468.31 475.62 482.43 491.08 494.27" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">6xHis</text></g><g class="feature" data-kind="feature" data-name="T7 promoter" data-type="promoter" data-span="264 .. 282" data-length="19 bp"><path d="M0 33.32L0 33.32L0 29.32L6.86 40.82L0 52.32L0 48.32L0 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="-32.25 -25.23 -17.91 -14.25 -6.95 -2.48 4.56 15.76 22.8 27.3 34.38" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">T7 promoter</text></g><g class="feature" data-kind="feature" data-name="RBS" data-type="RBS" data-span="322 .. 344" data-length="23 bp"><path d="M140.57 33.32L207.43 33.32L207.43 29.32L219.43 40.82L207.43 52.32L207.43 48.32L140.57 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="162.51 170.5 178.19" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">RBS</text></g><g class="feature" data-kind="feature" data-name="lac operator" data-type="protein_bind" data-span="283 .. 307" data-length="25 bp"><path d="M6.86 74.71L80.57 74.71L80.57 70.71L92.57 82.21L80.57 93.71L80.57 89.71L6.86 89.71Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="14.87 18.07 25.12 31.44 35.1 42.13 49.43 56.51 61.23 68.28 72.79 79.83" y="105.38" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">lac operator</text></g><g class="feature" data-kind="feature" data-name="internal stuffer" data-type="misc_feature" data-span="371 .. 400" data-length="30 bp"><path d="M308.57 33.32L399.43 33.32L399.43 29.32L411.43 40.82L399.43 52.32L399.43 48.32L308.57 48.32Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="317.27 320.46 327.75 332.26 339.33 343.86 351.15 358.19 361.39 365.05 371.04 375.55 382.83 386.88 390.93 398.01" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">internal stuffer</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M240 33.32L255.43 33.32L255.43 29.32L267.43 40.82L255.43 52.32L255.43 48.32L240 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="239.41 246.35 257.55 264.62" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">PmeI</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="438 .. 445" data-length="8 bp"><path d="M538.29 33.32L553.71 33.32L553.71 29.32L565.71 40.82L553.71 52.32L553.71 48.32L538.29 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="537.7 544.63 555.84 562.91" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">PmeI</text></g><g class="cut_site label" data-kind="cut_site" data-name="XbaI" data-type="cut site" data-span="310"><line x1="102.86" y1="-1.3" x2="102.86" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="105.86" y="-15.01" font-size="11.5" textLength="29.14" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">XbaI</text><text x="134.99" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (310)</text></g><g class="cut_site label" data-kind="cut_site" data-name="XmaI" data-type="cut site" data-span="385"><line x1="360" y1="-1.3" x2="360" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="289.53" y="-15.01" font-size="11.5" textLength="32.89" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">XmaI</text><text x="322.42" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (385)</text></g><g class="cut_site label" data-kind="cut_site" data-name="SmaI - SrfI" data-type="cut site" data-span="387"><line x1="366.86" y1="-1.3" x2="366.86" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="369.86" y="-15.01" font-size="11.5" textLength="32.3" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">SmaI</text><text x="402.16" y="-15.01" font-size="11.5" textLength="11.46" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> - </text><text x="413.62" y="-15.01" font-size="11.5" textLength="23.24" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#dddddd">SrfI</text><text x="436.86" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (387)</text></g><text x="313.61" y="130.63" font-size="13.5" textLength="92.79" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">DMX-iGGA N</text><text x="309.16" y="143.56" font-size="10.5" textLength="101.67" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">281 .. 490 (210 bp)</text></svg><figcaption>The cassette DMX-iGGA N carries, drawn empty: a picked well holds one with its design in place of the stuffer. The kit chains its 4 barcodes on, AGGA through TTCC, reading on the strand the cargo reads on.<a class="cite" href="#source-figure-sources" title="liulab-mbio, Figure sources for four designs · section 3, DMX"><sup>[3]</sup></a></figcaption><details class="opener"><summary><span class="to-open">Explore the map</span><span class="to-close">Close the map</span></summary><iframe data-src="block-vector-1-map.html" title="DMX-iGGA N, to explore"></iframe><a class="new-tab" href="block-vector-1-map.html" target="_blank" rel="noopener">Open it in a new tab</a></details></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One barcoded construct a well, carrying four barcodes chained head to tail.</li></ul></div>
 <div class="notes"><h3>Notes</h3><ul><li>The address is worked out from where the well is, not looked up: three groups name the well and the fourth goes across the whole plate from a reservoir.</li><li>The kit&#x27;s sequences are not shipped. Read them from the copy you hold.</li></ul></div>
 </section>
@@ -428,11 +491,7 @@ tfoot .muted { font-weight: 400; }
 </section>
 <section class="block sources" id="sources">
 <h2>Sources</h2>
-<ul><li id="source-figure-sources"><strong>figure-sources</strong> liulab-mbio, Figure sources for four designs · docs/research/figure-sources.md</li><li id="source-qian-si"><strong>Qian SI</strong> Qian et al. 2026, Supplementary Information · Nat. Commun. 10.1038/s41467-026-76740-9 · held under reference_docs/ · 2026-10-06</li></ul>
-</section>
-<section class="block references" id="references">
-<h2>References</h2>
-<ol><li>Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads <a href="https://doi.org/10.1038/s41467-026-76740-9" rel="noreferrer">https://doi.org/10.1038/s41467-026-76740-9</a></li><li>Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach <a href="https://doi.org/10.1021/acssynbio.4c00625" rel="noreferrer">https://doi.org/10.1021/acssynbio.4c00625</a></li><li>Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from <a href="https://doi.org/10.1021/acssynbio.3c00694" rel="noreferrer">https://doi.org/10.1021/acssynbio.3c00694</a></li></ol>
+<ol><li id="source-qian-si"><strong>Qian et al. 2026, Supplementary Information</strong> · Nat. Commun. 10.1038/s41467-026-76740-9 · held under reference_docs/ · 2026-10-06 <a href="https://doi.org/10.1038/s41467-026-76740-9" rel="noreferrer">https://doi.org/10.1038/s41467-026-76740-9</a> <span class="cited-at">cited at Day 2 · Day 3 · Day 4.1</span></li><li id="source-lund-2024"><strong>Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751</strong> · docs/research/synthesis-and-assembly.md <a href="https://doi.org/10.1021/acssynbio.3c00694" rel="noreferrer">https://doi.org/10.1021/acssynbio.3c00694</a> <span class="cited-at">cited at colonies screened per gene</span></li><li id="source-figure-sources"><strong>liulab-mbio, Figure sources for four designs</strong> · docs/research/figure-sources.md <span class="cited-at">cited at section 3, DMX</span></li></ol>
 </section>
 </main>
 <nav class="column within" aria-label="Steps"><h2 class="column-title">This protocol</h2><ul class="step-nav"><li class="step-group"><details data-steps="array-designs pick-colonies" open><summary>Array and pick <span class="section-progress muted">0 of 2 done</span></summary><ul class="step-list"><li><a href="#step-array-designs"><span class="step-mark">1</span> <span>Array 72 designs and grow</span></a></li><li><a href="#step-pick-colonies"><span class="step-mark">2</span> <span>Pick 4 colonies of each design</span></a></li></ul></details></li><li class="step-group"><details data-steps="compress-plates barcode-wells pool-and-sequence"><summary>Mark every well <span class="section-progress muted">0 of 3 done</span></summary><ul class="step-list"><li><a href="#step-compress-plates"><span class="step-mark">3</span> <span>Compress the picked plates into 1 barcoding plate</span></a></li><li><a href="#step-barcode-wells"><span class="step-mark">4</span> <span>Barcode each well in lysate</span></a></li><li><a href="#step-pool-and-sequence"><span class="step-mark">5</span> <span>Pool and sequence</span></a></li></ul></details></li><li class="step-group"><details data-steps="call-wells"><summary>Call the wells <span class="section-progress muted">0 of 1 done</span></summary><ul class="step-list"><li><a href="#step-call-wells"><span class="step-mark">6</span> <span>Call every well</span></a></li></ul></details></li></ul></nav>
@@ -507,25 +566,78 @@ tfoot .muted { font-weight: 400; }
     })[0];
   }
 
+  function keyOf(box) {
+    return box.getAttribute("data-key");
+  }
+
+  function isTicked(box) {
+    return box.checked;
+  }
+
+  // Into the page's store; `save` writes the store to the browser.
+  function record(box) {
+    if (box.checked) state[keyOf(box)] = true;
+    else delete state[keyOf(box)];
+  }
+
+  // A step's own mark is its instructions together, so each count reads what the bench did
+  // however the reader ticks: every instruction ticked ticks the step, one cleared clears it, and
+  // the step ticked or cleared by hand does the same to all of them. A step with no instructions
+  // is ticked by hand.
+  var stepMarks = stepBoxes.map(function (box) {
+    var step = box.closest(".step");
+    return {
+      box: box,
+      instructions: step ? all('.instructions input[type="checkbox"][data-key]', step) : []
+    };
+  });
+
   function refresh() {
     var done = 0;
-    stepBoxes.forEach(function (box) {
+    stepMarks.forEach(function (mark) {
+      var box = mark.box;
       var step = box.closest(".step");
       if (step) step.classList.toggle("is-done", box.checked);
+      box.indeterminate = !box.checked && mark.instructions.some(isTicked);
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
     showSections();
   }
 
+  function settle(mark, changed) {
+    if (changed === mark.box) {
+      mark.instructions.forEach(function (box) { box.checked = mark.box.checked; });
+    } else {
+      mark.box.checked = mark.instructions.every(isTicked);
+    }
+    [mark.box].concat(mark.instructions).forEach(record);
+    save();
+    refresh();
+  }
+
   boxes.forEach(function (box) {
-    box.checked = state[box.getAttribute("data-key")] === true;
-    box.addEventListener("change", function () {
-      var key = box.getAttribute("data-key");
-      if (box.checked) state[key] = true;
-      else delete state[key];
-      save();
-      refresh();
+    box.checked = state[keyOf(box)] === true;
+  });
+
+  // The store can hold a step's mark without its instructions' or the reverse. Nothing ticked is
+  // lost: a ticked step stands for its instructions, and instructions all ticked for their step.
+  // It is saved once mended, so a run's index, which reads step marks alone, counts it from then.
+  var mended = false;
+  stepMarks.forEach(function (mark) {
+    if (!mark.instructions.length) return;
+    if (!mark.box.checked && !mark.instructions.every(isTicked)) return;
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      if (!box.checked) mended = true;
+      box.checked = true;
+      record(box);
+    });
+  });
+  if (mended) save();
+
+  stepMarks.forEach(function (mark) {
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      box.addEventListener("change", function () { settle(mark, box); });
     });
   });
   refresh();
@@ -573,6 +685,17 @@ tfoot .muted { font-weight: 400; }
   var print = document.querySelector("button.print");
   if (print) print.addEventListener("click", function () { window.print(); });
 
+  // A figure opens to its record's map, which loads the first time it is opened. Nothing is
+  // remembered: an opened map is not a mark.
+  all("details.opener").forEach(function (opener) {
+    opener.addEventListener("toggle", function () {
+      var frame = opener.querySelector("iframe[data-src]");
+      if (opener.open && frame && !frame.getAttribute("src")) {
+        frame.setAttribute("src", frame.getAttribute("data-src"));
+      }
+    });
+  });
+
   // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
   // protocol.model.number, so the column reads the same after the count changes.
   var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
@@ -598,13 +721,17 @@ tfoot .muted { font-weight: 400; }
     if (!input) return;
     var overage = parseFloat(figure.getAttribute("data-overage")) || 0;
     var key = input.getAttribute("data-key");
+    var live = calculators(figure, function () { update(); });
 
     function update() {
       var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
       var scale = reactions * (1 + overage);
-      all("[data-ul]", figure).forEach(function (cell) {
-        cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
-      });
+      if (live) live.draw(scale);
+      else {
+        all("[data-ul]", figure).forEach(function (cell) {
+          cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
+        });
+      }
       all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
       return reactions;
     }
@@ -618,6 +745,211 @@ tfoot .muted { font-weight: 400; }
       state[key] = update();
       save();
     });
+  });
+
+  // Calculators. Arithmetic here is only over numbers render.py wrote, never a constant or a
+  // formula of the package's.
+  //
+  // Every calculator's input is a reader's number: a field over the number the protocol gives,
+  // its `data-plan`. The page keeps the reader's only where it differs, offers the protocol's
+  // back on the button beside it, and holds the field still while anything in its step is
+  // ticked, as a timer's time does while it runs. A held field says so, in render.py's words,
+  // beside it and on itself. `changed` hears each value it takes.
+  //
+  // A field with no `data-plan` is one the protocol has no number for, such as a plate nobody
+  // has counted: it opens empty, its value reads null until the reader types, and the button
+  // empties it again.
+  function readerNumber(field, changed) {
+    var key = field.getAttribute("data-key");
+    var plan = field.hasAttribute("data-plan")
+      ? parseFloat(field.getAttribute("data-plan"))
+      : null;
+    var shown = field.defaultValue;
+    var box = field.closest(".calc");
+    var back = box.querySelector(".calc-plan");
+    // Only a field something is pipetted against carries the word, and only it is held still.
+    var held = box.querySelector(".calc-held");
+    var least = parseFloat(field.getAttribute("data-least"));
+    var step = field.closest(".step");
+    var marks = step ? all('input[type="checkbox"][data-key]', step) : [];
+    var value = allowed(state[key]) ? state[key] : plan;
+
+    function locked() {
+      return held !== null && marks.some(isTicked);
+    }
+
+    // What a field takes: more than nothing, or from its own `data-least` up where none is a
+    // reading of its own.
+    function allowed(given) {
+      if (typeof given !== "number") return false;
+      return isNaN(least) ? given > 0 : given >= least;
+    }
+
+    // What the reader typed: undefined for anything the field will not take. The text the page
+    // opened with reads as the protocol's own, though a number is printed rounded.
+    function typed() {
+      var text = field.value.trim();
+      if (text === shown) return plan;
+      // The page groups a long number, so the reader may type the groups back.
+      text = text.replace(/,/g, "");
+      if (!/^\d*\.?\d+$/.test(text)) return undefined;
+      return allowed(Number(text)) ? Number(text) : undefined;
+    }
+
+    function show() {
+      field.value = value === plan ? shown : String(value);
+      field.readOnly = locked();
+      field.title = locked() ? held.textContent : "";
+      if (held) held.hidden = !locked();
+      back.hidden = value === plan || locked();
+    }
+
+    function take(to) {
+      value = to;
+      if (value !== plan) state[key] = value;
+      else delete state[key];
+      save();
+      changed();
+    }
+
+    field.addEventListener("input", function () {
+      var to = typed();
+      if (to === undefined || locked()) return;
+      take(to);
+      back.hidden = value === plan;
+    });
+    // A slip leaves the number as it was, and the field says so once the reader moves on.
+    field.addEventListener("change", show);
+    back.addEventListener("click", function () { take(plan); show(); });
+    if (step) {
+      step.addEventListener("change", function (event) {
+        if (event.target.type === "checkbox") show();
+      });
+    }
+    show();
+    return {
+      plan: plan,
+      value: function () { return value; }
+    };
+  }
+
+  // A row the bench measures gives the volume that carries its amount, and the row it names
+  // makes up the difference.
+  function calculators(figure, redraw) {
+    var rows = all("tbody > tr", figure);
+    var measured = rows.filter(function (row) { return row.classList.contains("measured"); });
+    if (!measured.length) return null;
+    var planned = rows.map(function (row) { return parseFloat(row.getAttribute("data-rxn-ul")); });
+
+    var calcs = measured.map(function (row) {
+      return {
+        row: row,
+        at: rows.indexOf(row),
+        fill: Number(row.getAttribute("data-fill")),
+        nanograms: parseFloat(row.getAttribute("data-ng")),
+        least: parseFloat(row.getAttribute("data-least-ul")),
+        input: readerNumber(row.querySelector(".calc-value"), redraw)
+      };
+    });
+
+    // Each row's volume for one reaction: the protocol's, or the one the typed concentration
+    // gives, with what a row gained taken off the row that makes it up.
+    function volumes() {
+      var ul = planned.slice();
+      calcs.forEach(function (one) {
+        var value = one.input.value();
+        if (value === one.input.plan) return;
+        var volume = one.nanograms / value;
+        ul[one.fill] -= volume - planned[one.at];
+        ul[one.at] = volume;
+      });
+      return ul;
+    }
+
+    function draw(scale) {
+      var ul = volumes();
+      var fired = {};
+      calcs.forEach(function (one) {
+        var problem = one.row.getAttribute("data-too-dilute");
+        if (problem && ul[one.fill] < 0) fired[problem] = true;
+        problem = one.row.getAttribute("data-too-concentrated");
+        if (problem && ul[one.at] < one.least) fired[problem] = true;
+      });
+      var each = 0;
+      var whole = 0;
+      var spent = false;
+      rows.forEach(function (row, i) {
+        // A row making up the difference cannot go below nothing: the reaction outgrows its
+        // volume instead, and the total says by how much.
+        var volume = Math.max(0, ul[i]);
+        var short = ul[i] < 0;
+        row.classList.toggle("is-over", short);
+        spent = spent || short;
+        row.querySelector(".one").textContent = number(volume);
+        var mix = row.querySelector("[data-ul]");
+        if (mix) {
+          mix.textContent = number(volume * scale);
+          each += volume;
+        }
+        whole += volume;
+      });
+      figure.classList.toggle("is-over", spent);
+      var foot = figure.querySelector("tfoot");
+      if (foot) {
+        foot.querySelector(".one").textContent = number(whole);
+        foot.querySelector("[data-ul]").textContent = number(each * scale);
+      }
+      all(".dispense-mix", figure).forEach(function (span) { span.textContent = number(each); });
+      all(".dispense [data-row]", figure).forEach(function (span) {
+        span.textContent = number(Math.max(0, ul[Number(span.getAttribute("data-row"))]));
+      });
+      all(".calc-warning", figure).forEach(function (warning) {
+        warning.hidden = !fired[warning.getAttribute("data-problem")];
+      });
+    }
+
+    return { draw: draw };
+  }
+
+  // A count the bench took: the control comes off it, the dilution scales it back up, and the
+  // net is read against the floor render.py wrote. The floor itself is never worked out here,
+  // and neither is anything the plan says about it. Until the plate is counted there is no net
+  // and no verdict: the line keeps the dash render.py wrote, so nothing reads as a pass.
+  all(".net-count").forEach(function (block) {
+    var floor = parseFloat(block.getAttribute("data-floor"));
+    var net = block.querySelector(".net-sum");
+    var shown = block.querySelector(".net-value");
+    var said = block.querySelector(".net-said");
+    var verdict = block.querySelector(".net-verdict");
+    var unread = shown.textContent;
+
+    function part(name) {
+      var input = block.querySelector("." + name + " .calc-value");
+      return input ? readerNumber(input, function () { draw(); }) : null;
+    }
+
+    var counted = part("net-counted");
+    var control = part("net-control");
+    var dilution = part("net-dilution");
+
+    function draw() {
+      var plate = counted.value();
+      var read = plate !== null;
+      var total = read ? (plate - (control ? control.value() : 0)) * dilution.value() : 0;
+      var clears = read && total >= floor;
+      // A count is a number of things, so however many there are it is written out in full.
+      shown.textContent = read
+        ? total.toLocaleString("en-US", { maximumFractionDigits: 2 })
+        : unread;
+      said.hidden = !read;
+      verdict.textContent = read ? net.getAttribute(clears ? "data-clears" : "data-short") : "";
+      net.classList.toggle("is-short", read && !clears);
+      all(".calc-warning", block).forEach(function (warning) {
+        warning.hidden = !read || clears;
+      });
+    }
+
+    draw();
   });
 
   // Copy buttons.
@@ -671,61 +1003,143 @@ tfoot .muted { font-weight: 400; }
     return h ? h + ":" + String(m).padStart(2, "0") + ":" + rest : m + ":" + rest;
   }
 
-  function alarm() {
+  // What a reader types for a time: h:mm:ss, m:ss, or a bare number of minutes. Null for
+  // anything else, or for no time at all, so a slip leaves the timer as it was.
+  function parseTime(text) {
+    var parts = String(text).trim().split(":");
+    if (parts.length > 3) return null;
+    var total = 0;
+    for (var i = 0; i < parts.length; i += 1) {
+      if (!/^\d+(\.\d+)?$/.test(parts[i].trim())) return null;
+      total = total * 60 + Number(parts[i]);
+    }
+    if (parts.length === 1) total *= 60;
+    return total > 0 ? total : null;
+  }
+
+  // A browser lets a page sound only once the reader has touched it, so the alarm plays on a
+  // context a touch made or woke; one made when the time runs out can stay silent.
+  var audio = null;
+
+  function unlock() {
     try {
       var Context = window.AudioContext || window.webkitAudioContext;
-      var context = new Context();
-      [0, 0.35, 0.7].forEach(function (offset) {
-        var tone = context.createOscillator();
-        var gain = context.createGain();
-        tone.frequency.value = 880;
-        gain.gain.value = 0.15;
-        tone.connect(gain);
-        gain.connect(context.destination);
-        tone.start(context.currentTime + offset);
-        tone.stop(context.currentTime + offset + 0.2);
-      });
+      if (!audio && Context) audio = new Context();
+      if (audio && audio.state === "suspended") audio.resume();
+    } catch (error) {
+      audio = null;
+    }
+  }
+
+  function beep() {
+    [0, 0.35, 0.7].forEach(function (offset) {
+      var tone = audio.createOscillator();
+      var gain = audio.createGain();
+      tone.frequency.value = 880;
+      gain.gain.value = 0.15;
+      tone.connect(gain);
+      gain.connect(audio.destination);
+      tone.start(audio.currentTime + offset);
+      tone.stop(audio.currentTime + offset + 0.2);
+    });
+  }
+
+  // A context the browser holds back may be let go only at the reader's next touch, which is
+  // no time for an alarm, so one let go more than two seconds late stays quiet.
+  function alarm() {
+    try {
+      unlock();
+      var asked = Date.now();
+      if (audio && audio.state === "running") beep();
+      else if (audio) {
+        Promise.resolve(audio.resume()).then(function () {
+          if (audio.state === "running" && Date.now() - asked < 2000) beep();
+        }, function () {});
+      }
     } catch (error) {
       /* no sound available */
     }
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
+  // until that timer is reset.
+  var title = document.title;
+  var ranOut = {};
+
+  function markTitle(key, label) {
+    if (label) ranOut[key] = label;
+    else delete ranOut[key];
+    var labels = Object.keys(ranOut).map(function (one) { return ranOut[one]; });
+    document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
+  }
+
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
   // page or closing the tab does not lose an incubation. A deadline already past comes back
   // finished and silent: the sound belongs to the moment it ran out, not to the page load.
-  all("button.timer").forEach(function (button) {
-    var key = button.getAttribute("data-key");
-    var total = parseFloat(button.getAttribute("data-seconds")) || 0;
+  // A time the reader typed is kept beside either, and is the timer's until they take the
+  // plan's back; the plan's own is `data-seconds`.
+  var timers = all(".timer[data-key]");
+  timers.forEach(function (timer) {
+    var key = timer.getAttribute("data-key");
+    var plan = parseFloat(timer.getAttribute("data-seconds")) || 0;
+    var label = (timer.querySelector(".timer-label") || timer).textContent;
+    var field = timer.querySelector(".timer-time");
+    var action = timer.querySelector(".timer-action");
+    var back = timer.querySelector(".timer-plan");
+    var kept = state[key] || {};
+    var total = typeof kept.seconds === "number" ? kept.seconds : plan;
     var left = total;
     var end = 0;
     var handle = null;
-    var time = button.querySelector(".timer-time");
-    var action = button.querySelector(".timer-action");
+    var due = null;
 
-    function show(label) {
-      time.textContent = clock(left);
-      action.textContent = label;
+    function show(word) {
+      field.value = clock(left);
+      field.readOnly = handle !== null;
+      action.textContent = word;
+      if (back) back.hidden = total === plan || handle !== null;
+    }
+
+    // What the page keeps for this timer: the reader's time where it is not the plan's, and the
+    // deadline or the seconds left where either is set.
+    function keep(extra) {
+      var held = extra || {};
+      if (total !== plan) held.seconds = total;
+      if (Object.keys(held).length) state[key] = held;
+      else delete state[key];
+      save();
     }
 
     function stop() {
       window.clearInterval(handle);
+      window.clearTimeout(due);
       handle = null;
-      button.classList.remove("is-running");
+      due = null;
+      timer.classList.remove("is-running");
     }
 
+    // The interval redraws, and a hidden tab may run it once a minute; the deadline is a timeout
+    // of its own, which a browser holds to the second. One past what a timeout can wait, about
+    // 24 days, is left to the interval.
     function run() {
+      var wait = Math.max(0, end - Date.now());
       handle = window.setInterval(tick, 250);
-      button.classList.add("is-running");
+      if (wait < 2147483647) due = window.setTimeout(function () { finish(true); }, wait);
+      timer.classList.add("is-running");
       show("Pause");
     }
 
-    function finish(sound) {
+    function finish(sounded) {
+      if (timer.classList.contains("is-finished")) return;
       stop();
       left = 0;
-      button.classList.add("is-finished");
+      timer.classList.add("is-finished");
       show("Reset");
-      if (sound) alarm();
+      if (sounded) {
+        alarm();
+        markTitle(key, label);
+      }
     }
 
     function tick() {
@@ -734,35 +1148,74 @@ tfoot .muted { font-weight: 400; }
       else show("Pause");
     }
 
-    var kept = state[key];
-    if (kept && typeof kept.ends === "number") {
+    // Back to a full count of `to`, standing ready.
+    function ready(to) {
+      stop();
+      total = to;
+      left = to;
+      timer.classList.remove("is-finished");
+      markTitle(key, null);
+      keep();
+      show("Start");
+    }
+
+    if (typeof kept.ends === "number") {
       end = kept.ends;
       left = Math.max(0, (end - Date.now()) / 1000);
       if (left > 0) run();
       else finish(false);
-    } else if (kept && typeof kept.left === "number") {
+    } else if (typeof kept.left === "number") {
       left = kept.left;
       show("Resume");
+    } else {
+      show("Start");
     }
 
-    button.addEventListener("click", function () {
+    action.addEventListener("click", function () {
       if (handle !== null) {
+        left = Math.max(0, (end - Date.now()) / 1000);
         stop();
-        state[key] = { left: left };
+        keep({ left: left });
         show("Resume");
       } else if (left <= 0) {
-        left = total;
-        button.classList.remove("is-finished");
-        delete state[key];
-        show("Start");
+        ready(total);
       } else {
+        unlock();
         end = Date.now() + left * 1000;
-        state[key] = { ends: end };
+        keep({ ends: end });
         run();
       }
-      save();
     });
+
+    // A typed time is the whole count, except on a paused timer, where it is what is left and
+    // the count grows or shrinks by the difference: 60 minutes become 90 with the bench mid-way.
+    field.addEventListener("change", function () {
+      var typed = parseTime(field.value);
+      var paused = !timer.classList.contains("is-finished") && left !== total;
+      if (typed === null || handle !== null) {
+        show(action.textContent);
+      } else if (paused) {
+        total = total - left + typed;
+        left = typed;
+        keep({ left: left });
+        show("Resume");
+      } else {
+        ready(typed);
+      }
+    });
+
+    if (back) back.addEventListener("click", function () { ready(plan); });
   });
+
+  // A timer still running after a reload sounds only once the page has been touched again.
+  if (timers.length) {
+    // A touch lets a page sound when it lifts, not when it lands.
+    ["pointerup", "keydown"].forEach(function (kind) {
+      document.addEventListener(kind, function () {
+        if (document.querySelector(".timer.is-running")) unlock();
+      }, true);
+    });
+  }
 })();
 </script>
 </body>
