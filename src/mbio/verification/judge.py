@@ -3,12 +3,12 @@
 `verify` lays each result on the record, counts a base only where its result trusts it, and
 gives every region the record must read true one verdict:
 
-| Verdict | When |
-| --- | --- |
-| pass | every base is read by a counted base of some result, and nothing disagrees |
-| fail | a disagreement every result reading it shows; a mixed base; a mixed result reading it |
-| none | part of it went unread, and nothing failed; the detail says which bases |
-| warn | results contradict each other at a base; a base read by more than 10 reads and fewer than 20 |
+- pass: every base is read by a counted base of some result, and nothing disagrees.
+- fail: a disagreement every result reading it shows; a mixed base no other trusted result reads
+  cleanly; a mixed result reading it.
+- none: part of it went unread, and nothing failed; the detail says which bases.
+- warn: results contradict each other at a base, a mixed base among them; a base read by more
+  than 10 reads and fewer than 20.
 
 Every disagreement is placed on the record as an ADR 0001 span and named with the regions it
 falls in. One outside every region is named with the record's features instead and judges
@@ -385,7 +385,7 @@ def verify(
             features=features,
         )
         covering = [reading for reading in judged if touched <= reading.read.keys()]
-        shared = kind == "mixed" or all(reading in showing for reading in covering)
+        shared = all(reading in showing for reading in covering)
         found.append((disagreement, touched, shared))
     return Verification(
         tuple(_region_check(*pair, n, judged, found) for pair in zip(ordered, held, strict=True)),

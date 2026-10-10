@@ -62,7 +62,7 @@ pixi run python -c "from mbio.verification import verify; help(verify)"
 | Verdict | On a region |
 | --- | --- |
 | pass | a trusted base of some result covers every base, and nothing disagrees |
-| fail | every trusted result covering a base shares a disagreement there, or the base or the sample is mixed |
+| fail | every trusted result covering a base shares a disagreement there, a mixed base no other trusted result reads cleanly, or the sample is mixed |
 | warn | two trusted results contradict each other at a base, or more than 10 reads but fewer than 20 stand behind one |
 | no verdict, `None` | part of it went unread and nothing failed |
 

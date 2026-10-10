@@ -91,6 +91,19 @@ def test_two_results_contradicting_each_other_at_a_base_warn():
     assert found.disagreements[0].results == ("reverse",)
 
 
+def test_a_mixed_base_fails_alone_and_warns_where_another_result_reads_it_cleanly():
+    """A second plasmid in a miniprep shows from both primers, so one clean read contradicts it."""
+    code = {"A": "R", "G": "R", "C": "Y", "T": "Y"}[PRODUCT.sequence[400]]
+    mixed = SequencingResult("forward", bases(150, 950, {400: code}))
+    clean = SequencingResult("reverse", reverse_complement(bases(150, 950)))
+    alone = verify(PRODUCT, (mixed,), REGIONS)
+    assert statuses(alone)["insert"] == "fail"
+    assert alone.checks[1].detail == "mixed at 401"
+    beside = verify(PRODUCT, (mixed, clean), REGIONS)
+    assert statuses(beside)["insert"] == "warn"
+    assert [(one.kind, one.results) for one in beside.disagreements] == [("mixed", ("forward",))]
+
+
 def test_a_result_carrying_a_second_consensus_is_mixed_and_fails():
     mixed = SequencingResult("r", bases(150, 950), others=(bases(150, 950, {400: other(400)}),))
     found = verify(PRODUCT, (mixed,), REGIONS)
