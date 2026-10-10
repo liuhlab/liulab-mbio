@@ -324,7 +324,9 @@ def page_key(value: Protocol | Project) -> str:
     which is what carries the bench's ticks across an agent's edit; everything else is digested,
     so a re-planned run starts clean. The digest is of the data the page is written from, never
     of the Python objects, and a field at its default does not count: renaming a class or adding
-    a field leaves every key, and so every tick, where it was.
+    a field leaves every key, and so every tick, where it was. Reordering a class's fields does
+    move the key, by design: `write_protocol` writes them in declared order and the key follows
+    the written bytes, so sorting them here would stop it standing on what the file says.
 
     Examples
     --------
