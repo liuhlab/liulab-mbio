@@ -1,8 +1,10 @@
 """The sequence view laid out, items in and shapes out: rows holding the stretch in order, bars
 and names under the bases, translations centred on their codons, primers beside the strand they
-spell with their tails and mismatches, cuts through both strands, and labels apart from each other
-and clear of the bases, on crowded and seeded random records, whole and in regions."""
+spell with their tails and mismatches, cuts and insertions through both strands, tracks in strips
+under the rows, and labels apart from each other and clear of the bases, on crowded and seeded
+random records, whole and in regions."""
 
+import dataclasses
 import math
 import random
 from collections.abc import Callable, Iterable
@@ -39,6 +41,7 @@ class Given:
     span: tuple[int, int] | None = None
     bases_per_row: int = 60
     both_strands: bool = True
+    tracks: tuple[sequence_view.Track, ...] = ()
 
 
 def _laid(given: Given) -> sequence_view.SequenceView:
@@ -49,6 +52,7 @@ def _laid(given: Given) -> sequence_view.SequenceView:
         span=given.span,
         bases_per_row=given.bases_per_row,
         both_strands=given.both_strands,
+        tracks=given.tracks,
     )
 
 
@@ -63,8 +67,27 @@ def _record(
     )
 
 
-def _items(record: SequenceRecord) -> tuple[layers.Item, ...]:
-    return layers.items(record, cut_sites=False, translations=True)
+def _items(
+    record: SequenceRecord, insertions: Iterable[layers.Insertion] = ()
+) -> tuple[layers.Item, ...]:
+    return layers.items(record, cut_sites=False, translations=True, insertions=insertions)
+
+
+def _track(name: str, bases: Iterable[int], *, every: int = 10) -> sequence_view.Track:
+    """A track whose peaks lie `every` samples apart over `bases`, one curve rising at each."""
+    peaks = tuple((every * (index + 1), base) for index, base in enumerate(bases))
+    count = every * (len(peaks) + 2)
+    curves = tuple(
+        sequence_view.Curve(
+            tuple(
+                sum(100.0 * math.exp(-(((sample - at) / 2) ** 2)) for at, _ in peaks[channel::4])
+                for sample in range(count)
+            ),
+            color,
+        )
+        for channel, color in enumerate(("#228833", "#4477aa", "#000000", "#cc3311"))
+    )
+    return sequence_view.Track(name, curves, peaks)
 
 
 def _feature(name: str, start: int, end: int, strand: Strand = Strand.FORWARD) -> Feature:
@@ -146,12 +169,16 @@ def _crowded() -> Given:
     cuts = [(names[i % 5], 300 + i + i // 3) for i in range(20)]
     cuts += [("Cutter", 0), ("Other", 1199), ("Third", 1199), ("Long name for a cutter", 310)]
     staggers = {"Cutter": 4, "Other": -4, "Third": 0, "Fourth": 2, "Fifth": -20}
+    insertions = [layers.Insertion(f"insertion {i}", 300 + 3 * i, i + 1) for i in range(4)]
+    insertions += [layers.Insertion("at the origin", 0, 30), layers.Insertion("row edge", 360, 2)]
+    record = _record(*features, bases=bases, primers=tuple(primers))
     return Given(
-        (
-            *_items(_record(*features, bases=bases, primers=tuple(primers))),
-            *layers.merge_cuts(cuts, LENGTH, staggers=staggers),
-        ),
+        (*_items(record, insertions), *layers.merge_cuts(cuts, LENGTH, staggers=staggers)),
         bases,
+        tracks=(
+            _track("a read across the origin", [*range(1150, 1200), *range(40)]),
+            _track("a read back across the crowd", range(380, 280, -1)),
+        ),
     )
 
 
@@ -230,11 +257,9 @@ def _random_given(seed: int) -> Given:
 #: base a row, a linear record, and a crowd on one strand in rows of seven.
 RECORDS: dict[str, Callable[[], Given]] = {
     "crowded": _crowded,
-    "crowded, across the origin": lambda: Given(
-        _crowded().items, _crowded().bases, span=(1100, 1400)
-    ),
-    "crowded, one strand, 7 a row": lambda: Given(
-        _crowded().items, _crowded().bases, bases_per_row=7, both_strands=False
+    "crowded, across the origin": lambda: dataclasses.replace(_crowded(), span=(1100, 1400)),
+    "crowded, one strand, 7 a row": lambda: dataclasses.replace(
+        _crowded(), bases_per_row=7, both_strands=False
     ),
     **{f"random {seed}": lambda seed=seed: _random_given(seed) for seed in (1, 2)},
 }
@@ -439,8 +464,26 @@ def test_everything_a_row_draws_lies_within_its_extent(
             *(_line_box(tail.points) for tail in row.tails),
             *(mark.box for mark in row.mismatches),
             *(_line_box(line) for cut in row.cuts for line in cut.lines),
+            *(_line_box(line) for mark in row.insertions for line in mark.lines),
+            *(strip.box for strip in row.strips),
         ]
         assert [box for box in drawn if not _within(box, row.extent)] == []
+
+
+def test_each_insertion_is_drawn_among_the_bases_and_each_strip_under_everything_else(
+    laid_out: sequence_view.SequenceView,
+) -> None:
+    for row in laid_out.rows:
+        for mark in row.insertions:
+            assert all(_within(_line_box(line), row.strands) for line in mark.lines)
+        above = [row.bases, *(_band(bar) for bar in row.bars), *(_name_box(n) for n in row.names)]
+        lowest = max(box.y + box.height for box in above)
+        assert all(strip.box.y > lowest for strip in row.strips)
+        assert all(one.box.y + one.box.height < other.box.y for one, other in pairwise(row.strips))
+        for strip in row.strips:
+            points = [point for stroke in strip.strokes for point in stroke.points]
+            assert points
+            assert all(_within(Box(x, y, 0.0, 0.0), strip.box) for x, y in points)
 
 
 def test_each_primer_lies_beside_the_strand_it_spells_apart_from_the_rest_its_marks_on_it(
@@ -774,6 +817,102 @@ def test_a_cut_is_drawn_through_the_top_strand_along_the_rail_and_through_the_bo
         {"Wraps": [("top", 58), ("rail", 58, 60)]},
         {"Wraps": [("rail", 0, 2), ("bottom", 2)]},
     )
+
+
+def test_an_insertion_draws_through_both_strands_between_two_bases_labelled_with_what_it_adds() -> (
+    None
+):
+    record = _record(bases=_bases(), circular=False)
+    marks = [
+        layers.Insertion("three", 100, 3),
+        layers.Insertion("at a row's edge", 120, 1),
+        layers.Insertion("after the last base", LENGTH, 2),
+    ]
+    for both in (True, False):
+        given = Given(_items(record, marks), record.sequence, circular=False, both_strands=both)
+        rows = _laid(given).rows
+        drawn = {
+            mark.item.name: (index, mark.lines)
+            for index, row in enumerate(rows)
+            for mark in row.insertions
+        }
+        # The row holding the base after it, but after the last base, the last row.
+        where = {"three": (1, 40), "at a row's edge": (2, 0), "after the last base": (19, 60)}
+        assert drawn.keys() == where.keys()
+        for name, (index, cells) in where.items():
+            row, x = rows[index], cells * sequence_view.CELL
+            through = (Point(x, row.strands.y), Point(x, row.rail))
+            under = (Point(x, row.rail), Point(x, row.strands.y + row.strands.height))
+            assert drawn[name] == (index, (through, under) if both else (through,))
+        labelled = {label.item.name: label.item.label for row in rows for label in row.labels}
+        assert labelled == {
+            "three": "+3 bp",
+            "at a row's edge": "+1 bp",
+            "after the last base": "+2 bp",
+        }
+    with pytest.raises(ValueError, match="adds at least one base"):
+        _items(record, [layers.Insertion("nothing", 5, 0)])
+    with pytest.raises(ValueError, match="does not lie on"):
+        _items(record, [layers.Insertion("off", LENGTH + 1, 1)])
+
+
+def _strokes(row: sequence_view.Row, name: str) -> dict[int, list[Point]]:
+    """Where a track's first curve draws each of its samples in a row, by the sample's index."""
+    [strip] = [one for one in row.strips if one.track.name == name]
+    first = strip.track.curves[0]
+    return {
+        sample: [point]
+        for stroke in strip.strokes
+        if stroke.curve is first
+        for sample, point in zip(stroke.samples, stroke.points, strict=True)
+    }
+
+
+def test_a_track_lays_each_peak_over_the_middle_of_its_base_in_a_strip_under_its_rows() -> None:
+    forward = _track("forward", range(50, 75))
+    backward = _track("backward", range(130, 110, -1))
+    broken = sequence_view.Track(
+        "broken", forward.curves, ((10, 200), (20, 201), (30, 205), (40, 206))
+    )
+    tracks = (forward, backward, broken)
+    rows = _laid(Given((), _bases(), circular=False, tracks=tracks)).rows
+    cell = sequence_view.CELL
+    for track in tracks:
+        for sample, base in track.peaks:
+            row = rows[base // 60]
+            [point] = _strokes(row, track.name)[sample]
+            assert point.x == pytest.approx((base - row.start + 0.5) * cell)
+    # Samples between two peaks lie evenly between their bases, and a run reaches half a base
+    # past each end, cut where the rows meet.
+    first, second = _strokes(rows[0], "forward"), _strokes(rows[1], "forward")
+    assert first[15][0].x == pytest.approx(51 * cell)
+    assert (min(first), first[min(first)][0].x) == (5, pytest.approx(50 * cell))
+    assert max(first) < min(second)
+    assert all(point.x < 60 * cell for [point] in first.values())
+    assert all(point.x >= 0 for [point] in second.values())
+    assert (max(second), second[max(second)][0].x) == (254, pytest.approx(14.9 * cell))
+    # Read back along the record, the curves run right to left.
+    back = _strokes(rows[1], "backward")
+    assert [back[one][0].x for one in sorted(back)] == sorted(
+        (point.x for [point] in back.values()), reverse=True
+    )
+    # Two peaks over bases apart do not join: the curve stops at one and starts again at the other.
+    [strip] = [one for one in rows[3].strips if one.track.name == "broken"]
+    runs = [stroke.samples for stroke in strip.strokes if stroke.curve is forward.curves[0]]
+    assert [(run[0], run[-1]) for run in runs] == [(5, 24), (25, 44)]
+    # A track reaches only the rows its peaks lie in, and each strip's highest value its top.
+    assert [[one.track.name for one in row.strips] for row in rows[:5]] == [
+        ["forward"],
+        ["forward", "backward"],
+        ["backward"],
+        ["broken"],
+        [],
+    ]
+    for row in rows[:4]:
+        for strip in row.strips:
+            ys = [point.y for stroke in strip.strokes for point in stroke.points]
+            assert min(ys) == pytest.approx(strip.box.y, abs=1)
+            assert max(ys) == pytest.approx(strip.box.y + strip.box.height, abs=1e-6)
 
 
 def test_enzymes_cutting_at_one_position_are_one_label_a_name_a_line_bold_where_unique() -> None:

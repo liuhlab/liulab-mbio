@@ -9,7 +9,8 @@ site, overlapping ones further out.
 A feature's name sits on its arrow when it fits, curved along the band and upright on the lower
 half. Every other label is outside, in the columns `labels.columns` lays out, so no label overlaps
 another label or the drawing: a feature's name boxed in its colour, a primer's in purple, and a cut
-site's enzymes in black, joined to the backbone at the cut.
+site's enzymes in black, joined to the backbone at the cut. An insertion is a short bar across the
+backbone at its point, its label joined to it as a cut site's is.
 
 The columns grow above and below the circle as far as `REACH`. Past it, labels hide in the order
 `layers.hiding` gives, and a notice at the bottom right says how many. A name on an arrow never
@@ -26,6 +27,7 @@ from mbio.plot import labels
 from mbio.plot.fonts import BOLD, SANS, Font
 from mbio.plot.labels import Box, Point
 from mbio.plot.layers import (
+    DIM,
     Item,
     Span,
     hiding,
@@ -85,6 +87,10 @@ _RING_PADDING = 3.0
 # A primer's arrow outside the backbone: its thickness, and the room either side of it.
 _PRIMER_BAND = 4.0
 _PRIMER_GAP = 2.0
+
+# An insertion's bar: how far it reaches past the backbone either side, and how thick it is.
+_INSERTION_REACH = 1.5
+_INSERTION = 2.0
 
 # The labels: padding inside a box, where leaders start and the ellipse begins beyond the
 # drawing, the space between boxes in a column and between the columns, and the canvas's margin.
@@ -204,8 +210,9 @@ def layout(items: Sequence[Item], *, name: str, length: int) -> CircularMap:
         *(
             _feature(item, own[id(item)], names.get(id(item)))
             for item in items
-            if item.kind != "cut_site"
+            if item.kind in ("feature", "primer")
         ),
+        *(_mark(item, length) for item in items if item.kind == "insertion"),
         *(_label(label, backbone) for label in boxed),
         *_centre(name, length),
         *said,
@@ -492,7 +499,7 @@ def _feature(item: Item, arrows: Sequence[Arrow], name: Name | None) -> Group:
     for before, after in itertools.pairwise(arrows):
         if after.start > before.end:
             joint = _move(before.radius, before.end) + _arc(before.radius, before.end, after.start)
-            shapes.append(Path(joint, "none", _CONNECTOR, 1.5))
+            shapes.append(Path(joint, "none", DIM if item.dim else _CONNECTOR, 1.5))
     shapes.extend(
         Path(_outline(arrow), arrow.span.color, outline_color(arrow.span.color), 0.8)
         for arrow in arrows
@@ -506,6 +513,15 @@ def _font(bold: bool) -> Font:
     return BOLD if bold else SANS
 
 
+def _mark(item: Item, length: int) -> Group:
+    """Return an insertion's bar across the backbone at its point, in its colour."""
+    angle = _angle(item.spans[0].start, length)
+    inner = RADIUS - _STRANDS_APART - _BACKBONE / 2 - _INSERTION_REACH
+    outer = RADIUS + _BACKBONE / 2 + _INSERTION_REACH
+    line = Line(*_point(inner, angle), *_point(outer, angle), item.color, _INSERTION)
+    return Group((line,), classes=(item.kind,), data={"kind": item.kind, **item.hover})
+
+
 def _label(label: Label, backbone: float) -> Group:
     """Return a label: a feature's name boxed in its colour, any other label's text unboxed.
 
@@ -514,7 +530,7 @@ def _label(label: Label, backbone: float) -> Group:
     box, item = label.box, label.item
     (x1, y1), (x2, y2) = label.leader
     shapes: list[Shape] = [Line(x1, y1, x2, y2, _LEADER, 0.8)]
-    if item.kind == "cut_site":
+    if item.kind in ("cut_site", "insertion"):
         inward = backbone / math.hypot(x1, y1)
         shapes.append(Line(x1 * inward, y1 * inward, x1, y1, _LEADER, 0.8))
     fill = item.color

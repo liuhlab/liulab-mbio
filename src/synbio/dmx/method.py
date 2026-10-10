@@ -12,12 +12,12 @@ Every number a read-back prints is here, with the document it was read from besi
 """
 
 from collections.abc import Sequence
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 
 from mbio.bench import plates
 from mbio.bench.materials import material
-from mbio.bench.readback import WellVerdict, clean_colony_chance, identity_check
-from mbio.checks import Check, Status
+from mbio.bench.readback import WellVerdict, clean_colony_chance
+from mbio.checks import Check, Status, counted
 from mbio.protocol.model import (
     Citation,
     Component,
@@ -34,6 +34,9 @@ from mbio.protocol.model import (
     Transfer,
     Well,
 )
+from mbio.sequence import Feature, Segment, SequenceRecord
+from mbio.verification.judge import verify
+from mbio.verification.result import SequencingResult
 from synbio.dmx.kit import GROUP_SIZE, GROUPS, Kit, KitBarcode
 
 #: Colonies picked per design. Four is Lund's only measured anchor, and it is a build's input
@@ -418,7 +421,7 @@ def depth_check(route: Route, reads: int, *, wanted: int | None = None) -> Check
         status,
         float(reads),
         f"the {route.name} route wants more than {mark} reads a well{tolerated}; below that no "
-        f"is deep enough to call",
+        "well is deep enough to call",
     )
 
 
@@ -431,19 +434,52 @@ def judge_well(
     designed: str,
     wanted: int | None = None,
 ) -> WellVerdict:
-    """Judge one well: deep enough to call, and then an exact match or not.
+    """Judge one well: deep enough to call, and then a verification of its designed region.
 
-    The two questions run in that order, which is why a shallow well is never a failure.
+    The two questions run in that order, which is why a shallow well is never a failure. The
+    first consensus is the well's result and any further one makes it mixed; the whole designed
+    region is the one region, so any disagreement in it fails the well, and bases a consensus
+    carries beyond it fail nothing. A consensus that leaves a designed base unread fails too,
+    where a general verification gives such a base no verdict: the call spans the well's whole
+    amplicon, so a base it does not read is missing rather than out of reach, whether the call
+    stops short of it or holds an ``N`` there. No consensus at all carries no verdict.
 
     Raises
     ------
     ValueError
-        For any reason `depth_check` or `identity_check` refuses.
+        For any reason `depth_check`, `mbio.verification.judge.verify` or a result refuses,
+        such as an empty designed region.
     """
     depth = depth_check(route, reads, wanted=wanted)
     if depth.status is None:
         return WellVerdict(well, (depth,))
-    return WellVerdict(well, (depth, identity_check(called, designed)))
+    if not designed:
+        raise ValueError("a well is judged against a designed region, and this one is empty")
+    record = SequenceRecord(designed, name="designed region")
+    region = Feature("designed region", "misc_feature", (Segment(0, len(record)),))
+    results: tuple[SequencingResult, ...] = ()
+    if called:
+        first, *others = called
+        name = f"{well.plate} {well.well}"
+        results = (SequencingResult(name, first, reads=reads, others=tuple(others)),)
+    verification = verify(record, results, (region,))
+    checks = verification.checks
+    if results and verification.placements[0].span is not None:
+        checks = tuple(
+            _left_unread(one, len(record)) if one.status is None else one for one in checks
+        )
+    return WellVerdict(well, (depth, *checks, *verification.result_checks))
+
+
+def _left_unread(check: Check, length: int) -> Check:
+    """Return a designed region a called consensus left bases of unread, failed.
+
+    `verify` names the unread bases after ``unread:`` in the detail, and its check's value is
+    how many bases were read.
+    """
+    where = check.detail.partition(" unread: ")[2].split("; ")[0]
+    missing = counted(length - int(check.value), "designed base")
+    return replace(check, status="fail", detail=f"the consensus leaves {missing} unread: {where}")
 
 
 @dataclass(frozen=True, slots=True)

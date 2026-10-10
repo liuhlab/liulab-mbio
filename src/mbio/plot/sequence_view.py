@@ -18,11 +18,16 @@ feature leaves. A CDS's translation runs above its bar, each amino acid's three 
 its codon's middle base, a stop in red. A feature's name goes inside its bar when it fits,
 underneath when nothing else in its track lies there, and otherwise in a box above the ruler, in
 the rows `labels.staircase` lays out, as the linear map's are. Primers and cut sites are labelled
-there too, a cut site's enzymes one name a line. A row grows to hold what it draws, so nothing is
-hidden.
+there too, a cut site's enzymes one name a line. An insertion is a line through both strands at
+the point between two bases, labelled there with how many bases it adds.
+
+Under all of that, each `Track` the row reaches draws its curves in a strip of their own, every
+peak over the middle of its base. A row grows to hold what it draws, so nothing is hidden.
 """
 
 import dataclasses
+import math
+from bisect import bisect_right
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from functools import cache, lru_cache
@@ -103,6 +108,14 @@ _TAIL = 1.5
 _PRIMER_GAP = 2.0
 _MARK_INSET = 2.0
 _CUT = 1.2
+_INSERTION = 2.0
+
+# A track's strip: its curves' height, the room above its name, and how thick a curve and the
+# strip's foot are.
+_STRIP = 40.0
+_STRIP_GAP = 6.0
+_CURVE = 0.8
+_FOOT = 0.5
 
 # The labels: padding inside a box, the room between the ruler and the lowest box, and between
 # boxes; the room between rows, and the canvas's margin.
@@ -111,6 +124,37 @@ _GAP = 6.0
 _SPACING = 2.0
 _ROW_GAP = 16.0
 _EDGE = 16.0
+
+
+@dataclass(frozen=True, slots=True)
+class Curve:
+    """One series of a track's values, drawn as a line in `color`."""
+
+    values: tuple[float, ...]
+    color: str
+
+
+@dataclass(frozen=True, slots=True)
+class Track:
+    """Values along a record's bases, such as a trace's four channels, drawn under the rows.
+
+    Parameters
+    ----------
+    name
+        What its strip is labelled with.
+    curves
+        Each series, sampled alike: the nth value of every curve is one sample.
+    peaks
+        Which sample lies over which base: a sample's index and the base, 0-based and less than
+        the record's length, in the order of the samples. A peak lies over the middle of its base.
+        Two peaks over neighbouring bases join, and the samples between them lie evenly between
+        the two; a curve runs on half a base past each end of a run, as its last step runs. A peak
+        whose base neighbours neither of its own neighbours' is drawn with nothing.
+    """
+
+    name: str
+    curves: tuple[Curve, ...]
+    peaks: tuple[tuple[int, int], ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -254,6 +298,39 @@ class Cut:
 
 
 @dataclass(frozen=True, slots=True)
+class Mark:
+    """What a row holds of an insertion: a line through both strands, between two bases.
+
+    `lines` gives each line's two ends: through the top strand down to the rail, and on from the
+    rail through the bottom strand when it is drawn.
+    """
+
+    item: Item
+    lines: tuple[tuple[Point, Point], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Stroke:
+    """One curve drawn through samples that follow on in a row: each sample's index and point."""
+
+    curve: Curve
+    samples: tuple[int, ...]
+    points: tuple[Point, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Strip:
+    """What a row draws of a track: its curves in `box`.
+
+    They are scaled so the highest value the row draws reaches the top, and 0 lies at the foot.
+    """
+
+    track: Track
+    box: Box
+    strokes: tuple[Stroke, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class Row:
     """One row block of a sequence view: the bases it holds, and what went where in it.
 
@@ -269,8 +346,10 @@ class Row:
         The box its strands and the rail take.
     rail
         The height of its rail.
-    bars, names, translations, arrows, tails, mismatches, cuts, labels
+    bars, names, translations, arrows, tails, mismatches, cuts, insertions, labels
         What it draws of each item, in order along the row.
+    strips
+        What it draws of each track it reaches, in the order the tracks were given.
     shapes
         Everything in the row, in the order it is drawn.
     """
@@ -288,7 +367,9 @@ class Row:
     tails: tuple[Tail, ...]
     mismatches: tuple[Mismatch, ...]
     cuts: tuple[Cut, ...]
+    insertions: tuple[Mark, ...]
     labels: tuple[Label, ...]
+    strips: tuple[Strip, ...]
     shapes: tuple[Shape, ...]
 
 
@@ -349,8 +430,9 @@ class _Primed:
 class _Found:
     """What lies in one row.
 
-    Each feature's pieces and codons, each primer's pieces and mismatches, and each cut site's
-    position, with whether the row labels it.
+    Each feature's pieces and codons, each primer's pieces and mismatches, each cut site's
+    position, with whether the row labels it, each insertion's position, and each track's runs of
+    samples, each sample's index and where it lies.
     """
 
     features: list[tuple[Item, list[Piece]]] = field(default_factory=list)
@@ -358,6 +440,8 @@ class _Found:
     primers: list[tuple[Item, Piece]] = field(default_factory=list)
     mismatches: dict[int, list[int]] = field(default_factory=dict)
     cuts: list[tuple[Item, int, bool]] = field(default_factory=list)
+    insertions: list[tuple[Item, int]] = field(default_factory=list)
+    sampled: dict[int, list[list[tuple[int, float]]]] = field(default_factory=dict)
 
 
 def layout(
@@ -368,6 +452,7 @@ def layout(
     span: tuple[int, int] | None = None,
     bases_per_row: int = 60,
     both_strands: bool = True,
+    tracks: Sequence[Track] = (),
 ) -> SequenceView:
     """Lay out `items` over `bases`, a record's sequence, in rows of `bases_per_row` bases.
 
@@ -386,6 +471,8 @@ def layout(
         How many bases a row holds, the last row perhaps fewer. At least 1.
     both_strands
         Whether the bottom strand is drawn under the top one.
+    tracks
+        Each drawn under every row its peaks reach, in this order.
     """
     record = SequenceRecord(bases, topology="circular" if circular else "linear")
     length = len(record)
@@ -418,6 +505,15 @@ def layout(
                         item, piece.start, start, end, length, circular, bases_per_row
                     ):
                         found[index].cuts.append((item, at, labelled))
+            case "insertion":
+                # At the edge between two rows, the row holding the base after it, but at the end.
+                for piece in pieces(item, start, end, length, circular=circular):
+                    index = min((piece.start - start) // bases_per_row, len(bounds) - 1)
+                    found[index].insertions.append((item, piece.start))
+    for index, track in enumerate(tracks):
+        for run in _sampled(track, start, end, length):
+            for row, cut in _by_row_sampled(run, start, bases_per_row).items():
+                found[row].sampled.setdefault(index, []).append(cut)
     widest = max(SANS.width(_last(last, length), SMALL_SIZE) for _, last in bounds)
     right = bases_per_row * CELL + _NUMBER_GAP + widest
     rows: list[Row] = []
@@ -434,6 +530,7 @@ def layout(
             right=right,
             width=bases_per_row * CELL,
             both_strands=both_strands,
+            value_tracks=tracks,
         )
         rows.append(row)
         top = row.extent.y + row.extent.height + _ROW_GAP
@@ -454,6 +551,61 @@ def layout(
     )
     whole = Group(grouped, classes=("rows",), data={"length": str(length), "cell": number(CELL)})
     return SequenceView(extent, tuple(rows), (whole,))
+
+
+def _sampled(track: Track, start: int, end: int, length: int) -> list[list[tuple[int, float]]]:
+    """Return a track's runs of samples in the stretch: each sample's index, and where it lies.
+
+    Where is counted in bases as the stretch counts them, a base's middle half past its start.
+    """
+    runs: list[list[tuple[int, float]]] = []
+    last: tuple[int, float] | None = None
+    for sample, base in track.peaks:
+        here = _within(base, start, end, length)
+        if not here:
+            last = None
+            continue
+        peak = (sample, here[0] + 0.5)
+        if last is not None and sample > last[0] and abs(peak[1] - last[1]) == 1:
+            runs[-1].append(peak)
+        else:
+            runs.append([peak])
+        last = peak
+    count = min((len(curve.values) for curve in track.curves), default=0)
+    sampled = []
+    for run in runs:
+        if len(run) < 2:
+            continue
+        (first, at_first), (second, at_second) = run[0], run[1]
+        (before, at_before), (final, at_final) = run[-2], run[-1]
+        knots = [
+            (first - (second - first) / 2, at_first - (at_second - at_first) / 2),
+            *run,
+            (final + (final - before) / 2, at_final + (at_final - at_before) / 2),
+        ]
+        samples = [knot[0] for knot in knots]
+        # Half-open, so a run that ends where the next starts shares no sample with it.
+        low, high = max(0, math.ceil(samples[0])), min(count, math.ceil(samples[-1])) - 1
+        placed = []
+        for sample in range(low, high + 1):
+            index = min(bisect_right(samples, sample), len(knots) - 1)
+            (s0, x0), (s1, x1) = knots[index - 1], knots[index]
+            at = x0 + (x1 - x0) * (sample - s0) / (s1 - s0)
+            if start <= at < end:
+                placed.append((sample, at))
+        if placed:
+            sampled.append(placed)
+    return sampled
+
+
+def _by_row_sampled(
+    run: Sequence[tuple[int, float]], start: int, bases_per_row: int
+) -> dict[int, list[tuple[int, float]]]:
+    """Return a run of samples cut where rows meet, by the row's index."""
+    rows: dict[int, list[tuple[int, float]]] = {}
+    for sample, at in run:
+        rows.setdefault(int((at - start) // bases_per_row), []).append((sample, at))
+    return rows
 
 
 def _within(position: int, start: int, end: int, length: int) -> list[int]:
@@ -536,6 +688,7 @@ def _row(
     right: float,
     width: float,
     both_strands: bool,
+    value_tracks: Sequence[Track],
 ) -> tuple[Row, dict[int, int]]:
     """Lay out the row holding bases `first` to `last`, its top at `top`.
 
@@ -581,6 +734,11 @@ def _row(
         for item, position, labelled in found.cuts
         if labelled and SANS.drawn(item.label)
     ]
+    anchored += [
+        (item, Point(at(position), 0.0))
+        for item, position in found.insertions
+        if SANS.drawn(item.label)
+    ]
     stairs = labels.staircase(
         [_anchored(item, anchor) for item, anchor in anchored], base=-_GAP, spacing=_SPACING
     )
@@ -597,7 +755,7 @@ def _row(
         mine = tuple(dataclasses.replace(bar, middle=middle) for bar in run.bars)
         bars.extend(mine)
         shapes.extend(
-            Line(at(piece.start), middle, at(piece.end), middle, _CONNECTOR, 1.2)
+            Line(at(piece.start), middle, at(piece.end), middle, _joint(run.item), 1.2)
             for piece in run.pieces
             if piece.span is None
         )
@@ -665,6 +823,19 @@ def _row(
             below = tuple(Line(x1, y1, x2, y2, _INK, _CUT) for (x1, y1), (x2, y2) in under)
             shapes.append(Group(below, classes=("bottom",)))
 
+    insertions: list[Mark] = []
+    for item, position in found.insertions:
+        x, rail = at(position), down.rail + shift
+        through = (Point(x, down.strand + shift), Point(x, rail))
+        insertions.append(Mark(item, (through,)))
+        _, shapes = groups.setdefault(id(item), (item, []))
+        shapes.append(Line(*through[0], *through[1], item.color, _INSERTION))
+        if both_strands:
+            below = (Point(x, rail), Point(x, down.strands + shift))
+            insertions[-1] = Mark(item, (through, below))
+            line = Line(*below[0], *below[1], item.color, _INSERTION)
+            shapes.append(Group((line,), classes=("bottom",)))
+
     placed = tuple(
         Label(
             item,
@@ -677,8 +848,11 @@ def _row(
         for (item, _), one in zip(anchored, stairs, strict=True)
     )
 
+    strips, painted = _strips(value_tracks, found.sampled, first, at(last), down.bottom + shift)
     drawn, boxes = _bases_drawn(record, first, last, down, shift, right, both_strands)
     boxes += [
+        *(strip.box for strip in strips),
+        *(_text_box(text) for group in painted for text in group.shapes if isinstance(text, Text)),
         Box(0.0, shift, 0.0, down.bottom),
         *(Box(bar.start, bar.body.y, bar.end - bar.start, _BAR) for bar in bars),
         *(_letters_box(name.letters) for name in names),
@@ -694,6 +868,7 @@ def _row(
             for item, shapes in groups.values()
         ),
         *(_label(label) for label in placed),
+        *painted,
     )
     row = Row(
         first,
@@ -709,10 +884,83 @@ def _row(
         tuple(tails),
         tuple(mismatches),
         tuple(cuts),
+        tuple(insertions),
         placed,
+        tuple(strips),
         shapes,
     )
     return row, after
+
+
+def _strips(
+    tracks: Sequence[Track],
+    found: Mapping[int, list[list[tuple[int, float]]]],
+    first: int,
+    width: float,
+    top: float,
+) -> tuple[list[Strip], list[Group]]:
+    """Return the strip of each track a row reaches, one under another from `top`, and its shapes.
+
+    Each strip's name stands over its curves, and a thin line along its foot marks 0.
+    """
+    strips: list[Strip] = []
+    groups: list[Group] = []
+    name_height = _height(SANS, SMALL_SIZE)
+    for index, track in enumerate(tracks):
+        runs = found.get(index)
+        if not runs:
+            continue
+        top += _STRIP_GAP
+        name = Text(
+            0.0,
+            _baseline(SANS, SMALL_SIZE, top + name_height / 2),
+            track.name,
+            SANS,
+            SMALL_SIZE,
+            _INK,
+        )
+        top += name_height + _RULER_GAP
+        foot = top + _STRIP
+        highest = max(
+            (
+                max(curve.values[sample], 0.0)
+                for run in runs
+                for sample, _ in run
+                for curve in track.curves
+            ),
+            default=0.0,
+        )
+        scale = _STRIP / highest if highest > 0 else 0.0
+        strokes = tuple(
+            Stroke(
+                curve,
+                tuple(sample for sample, _ in run),
+                tuple(
+                    Point((at - first) * CELL, foot - max(curve.values[sample], 0.0) * scale)
+                    for sample, at in run
+                ),
+            )
+            for run in runs
+            for curve in track.curves
+        )
+        strips.append(Strip(track, Box(0.0, top, width, _STRIP), strokes))
+        shapes: list[Shape] = [name] if SANS.drawn(track.name) else []
+        shapes.append(Line(0.0, foot, width, foot, _RAIL, _FOOT))
+        shapes.extend(
+            Path(_polyline(stroke.points), "none", stroke.curve.color, _CURVE) for stroke in strokes
+        )
+        groups.append(Group(tuple(shapes), classes=("track",), data={"name": track.name}))
+        top = foot
+    return strips, groups
+
+
+def _polyline(points: Sequence[Point]) -> str:
+    """Return a line through `points` as path data."""
+    head, *rest = points
+    path = f"M{number(head.x)} {number(head.y)}"
+    if rest:
+        path += "L" + " ".join(f"{number(x)} {number(y)}" for x, y in rest)
+    return path
 
 
 def _tracks[R: (_Run, _Primed)](
@@ -1133,6 +1381,11 @@ def _label(label: Label) -> Group:
     return Group(
         tuple(shapes), classes=(item.kind, "label"), data={"kind": item.kind, **item.hover}
     )
+
+
+def _joint(item: Item) -> str:
+    """Return the colour of the line across a joined item's gap: pale grey when it is unlit."""
+    return DIM if item.dim else _CONNECTOR
 
 
 def _ink(item: Item) -> str:

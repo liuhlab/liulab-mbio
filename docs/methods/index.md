@@ -23,7 +23,7 @@ Each of the four writes the plasmid you should get, the oligos to order, and the
 as one page you can follow at the bench. Gateway also writes the entry clone that the BP reaction
 makes.
 
-## The other four pages
+## The other five pages
 
 [Primer design](primers.md) designs or judges a pair on its own, for a fragment you only want to
 amplify, and can check that pair against a whole genome before you order it.
@@ -33,6 +33,9 @@ another, free of the enzyme sites you forbid.
 
 [Codon optimisation](codon-optimisation.md) writes a protein as DNA in a host's commonest codons,
 and moves the codons that would spell an enzyme site you named.
+
+[Sequence verification](sequence-verification.md) checks a clone's sequencing against the
+plasmid it should be, once the reads come back, and gives each junction and insert a verdict.
 
 [Maps and figures](maps.md) draws any record as a figure or as a page to look through, including
 every product the four methods above write.

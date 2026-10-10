@@ -32,6 +32,7 @@ and the commands in step. Each command also wraps a function you can call yourse
 | `mbio protocol render` | Turn protocol data back into a page |
 | `mbio plot map` | Draw a record as a map |
 | `mbio primers design` | Design a PCR primer pair |
+| `mbio sequence-verify` | Check one clone's sequencing results against the plasmid it should be |
 | `synbio version` | Print the installed version |
 | `synbio dmx plan` | Plan a read-back of designs the lab already holds |
 | `synbio igga plan` | Plan a barcoded combinatorial library |
@@ -277,6 +278,43 @@ genome itself and moved off any off-target amplicon.
 
 It writes `primers.tsv`. On a genome it writes `genome.tsv` too, holding every amplicon the pair
 makes there, the intended one first.
+
+## Check a clone's sequencing
+
+`mbio sequence-verify` holds one clone's sequencing results against the plasmid it should be,
+and gives each junction and each insert a verdict.
+
+```bash
+pixi run mbio sequence-verify PRODUCT RESULT --out DIR
+```
+
+| Argument or option | Default | What it is |
+| --- | --- | --- |
+| `PRODUCT` | required | The plasmid the clone should be, such as the `product.dna` a plan wrote |
+| `RESULT` | required | A Sanger read as `.ab1` or `.abi`, or a whole-plasmid consensus as FASTA, GenBank or `.dna`. Give one or more |
+| `--feature` | none | A feature to judge, in place of the junctions and inserts. Repeat it once per feature |
+| `--out` | none | A folder to write the clone's page into, as `verification.html` |
+
+A cloning plan marks each junction in the product it writes, so the command finds the junctions
+and the inserts between them on its own. It marks the junction the vector's own bases follow,
+so the vector itself is left out. On a plasmid no plan wrote, name what to judge with
+`--feature`.
+
+It prints one line for each junction and insert, with its verdict: pass, fail, warn or no
+verdict. Any difference outside them is listed with the feature it falls in, and judges nothing.
+Then comes a line for each result, and last the clone's line, `verified` or `not verified`.
+
+A consensus can't show a mixed sample: the plasmid read most becomes the consensus, so each one
+says so. A result where more than a tenth of the bases it trusts disagree, or fail to line up,
+prints one line, that it does not read as this plasmid, and nothing else. The vendor's table of
+reads at each base is not read yet, so give the consensus file rather than the folder.
+
+With `--out`, it also writes a page to read the result by, and prints its path last. The page
+gives the verdict and the same table, then a map of the plasmid with each result and each
+difference on it, and a close-up of every difference. Under a Sanger read's bases it draws the
+trace.
+
+The command exits with 1 when the clone is not verified, so a script can stop on it.
 
 ## Read designs back
 

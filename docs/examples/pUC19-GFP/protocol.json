@@ -1,6 +1,6 @@
 {
   "title": "Golden Gate assembly: GFP into pUC19",
-  "key": "4b99a365377559ce",
+  "key": "ce16dbdff3e81a3e",
   "summary": "Open pUC19 by PCR across 395-451, amplify GFP with BbsI tails, join the 2 fragments in one Golden Gate reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -358,7 +358,8 @@
   ],
   "order_sheet": "primers.tsv",
   "files": [
-    "primers.tsv"
+    "primers.tsv",
+    "product.dna"
   ],
   "equipment": [
     "Thermocycler with a heated lid",
@@ -1540,7 +1541,7 @@
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each miniprep with both sequencing primers.",
-        "Check the read across every junction and the whole of each insert."
+        "Check each read against product.dna; keep a clone only when every junction and insert reads true."
       ],
       "cautions": [],
       "notes": [

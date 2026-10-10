@@ -69,6 +69,7 @@
     ["cut_site", "enzyme site"],
     ["primer", "primer"],
     ["feature", "feature"],
+    ["insertion", "insertion"],
   ];
   const said = (hidden) => {
     const parts = words

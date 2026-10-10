@@ -1,6 +1,6 @@
 {
   "title": "Gibson assembly: GFP into pUC19",
-  "key": "125831d76b821ad3",
+  "key": "b367710cda61665f",
   "summary": "Open pUC19 by PCR across 395-452, amplify GFP with the overlap at each junction carried as a primer tail, join the 2 fragments in one NEBuilder HiFi DNA Assembly Master Mix reaction, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -388,7 +388,8 @@
   ],
   "order_sheet": "primers.tsv",
   "files": [
-    "primers.tsv"
+    "primers.tsv",
+    "product.dna"
   ],
   "equipment": [
     "Thermocycler with a heated lid",
@@ -1556,7 +1557,7 @@
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each miniprep with both sequencing primers.",
-        "Check the read across every junction and the whole of each insert."
+        "Check each read against product.dna; keep a clone only when every junction and insert reads true."
       ],
       "cautions": [],
       "notes": [

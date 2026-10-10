@@ -65,3 +65,7 @@ method in the table above would do the same job, offer it and say what changes f
 library by iterative Golden Gate, sizes each round's colonies for the completeness asked for, and
 writes one protocol covering every round. Send someone who wants every combination of lists of
 domains there.
+
+## When the reads come back
+
+`sequence-verify` checks them against the plan's `product.dna`.

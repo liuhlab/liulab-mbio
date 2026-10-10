@@ -789,6 +789,7 @@ def sequencing_step(
     *,
     junctions: Sequence[str],
     inserts: Sequence[str],
+    product: str,
     instructions: Sequence[str] = (),
     notes: Sequence[Note | str] = (),
 ) -> Step:
@@ -802,6 +803,8 @@ def sequencing_step(
         The bases each junction spells.
     inserts
         What the inserts are called.
+    product
+        The file name the plan writes its product under, which each read is checked against.
     instructions
         The caller's own, after the step's, such as what its provider asks to be sent.
     notes
@@ -819,7 +822,8 @@ def sequencing_step(
             "Miniprep two or three colonies that read as correct.",
             "Send each miniprep with both sequencing primers.",
             *instructions,
-            "Check the read across every junction and the whole of each insert.",
+            f"Check each read against {product}; keep a clone only when every junction and "
+            "insert reads true.",
         ),
         expected=(
             *lengths,

@@ -1,0 +1,113 @@
+:root {
+  color-scheme: light;
+  --ink: #1c1e21;
+  --muted: #5c626b;
+  --line: #dedbd3;
+  --pass: #1d6b58;
+  --pass-soft: #e2f0eb;
+  --warn: #8f4a00;
+  --warn-soft: #fff1dc;
+  --fail: #a11d1d;
+  --fail-soft: #fdeaea;
+}
+
+html,
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--ink);
+  font: 16px/1.45 system-ui, sans-serif;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  margin: 0 0 0.2rem;
+  font-size: 2rem;
+}
+
+h2 {
+  margin: 2rem 0 0.6rem;
+  font-size: 1.2rem;
+}
+
+header p,
+.legend {
+  margin: 0;
+  color: var(--muted);
+}
+
+.verdict.is-pass {
+  color: var(--pass);
+}
+
+.verdict.is-fail {
+  color: var(--fail);
+}
+
+table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+td.verdict {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+tr.is-pass td.verdict {
+  color: var(--pass);
+}
+
+tr.is-warn {
+  background: var(--warn-soft);
+}
+
+tr.is-warn td.verdict {
+  color: var(--warn);
+}
+
+tr.is-fail {
+  background: var(--fail-soft);
+}
+
+tr.is-fail td.verdict {
+  color: var(--fail);
+}
+
+tr.is-none td.verdict {
+  color: var(--muted);
+}
+
+figure {
+  margin: 0.6rem 0 1.6rem;
+  overflow-x: auto;
+}
+
+figcaption {
+  margin-bottom: 0.4rem;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}

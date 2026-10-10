@@ -1,6 +1,6 @@
 {
   "title": "Restriction and ligation: GFP amplicon insert into pUC19",
-  "key": "0dc41c69ee62346f",
+  "key": "e0f2ef856ee012c4",
   "summary": "Amplify GFP with a recognition site on each primer's 5' tail. Cut pUC19 and GFP amplicon with HindIII and SphI, gel-purify the 2684 bp backbone and the 719 bp insert, ligate them, and confirm the clone by colony PCR and sequencing.",
   "overview": {
     "Vector": "pUC19, 2686 bp",
@@ -389,7 +389,8 @@
   ],
   "order_sheet": "primers.tsv",
   "files": [
-    "primers.tsv"
+    "primers.tsv",
+    "product.dna"
   ],
   "equipment": [
     "Thermocycler with a heated lid",
@@ -1842,7 +1843,7 @@
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
         "Send each miniprep with both sequencing primers.",
-        "Check the read across every junction and the whole of each insert."
+        "Check each read against product.dna; keep a clone only when every junction and insert reads true."
       ],
       "cautions": [],
       "notes": [

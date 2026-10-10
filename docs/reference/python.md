@@ -132,6 +132,35 @@ computed in, and its own cycling rules.
 
 ::: mbio.primers.GenomeReport
 
+## Check a clone's sequencing
+
+`mbio sequence-verify` checks one clone from the command line. From a script you choose what to
+judge, and read every difference and where each result landed.
+
+`read_trace` reads a Sanger `.ab1` or `.abi` file. A whole-plasmid consensus is a `SequencingResult` made
+from its bases. `regions` finds the junctions a cloning plan marked in its product, and the
+inserts between them. `verify` gives each of those a verdict, and the clone one too.
+`draw_page` lays that out as one page to write, and `read_channels` reads a trace's four channels
+so the page can draw each one under its bases.
+
+::: mbio.verification.read_trace
+
+::: mbio.verification.SequencingResult
+
+::: mbio.verification.regions
+
+::: mbio.verification.verify
+
+::: mbio.verification.Verification
+
+::: mbio.verification.Disagreement
+
+::: mbio.verification.draw_page
+
+::: mbio.verification.Page
+
+::: mbio.verification.read_channels
+
 ## Design barcodes
 
 `mbio barcode-design` draws a set from the command line. From a script you set the rules

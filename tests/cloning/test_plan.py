@@ -2,7 +2,8 @@
 
 import pytest
 
-from mbio.cloning.plan import insertion_span
+from mbio.cloning.plan import PRIMER_FILE, PRODUCT_FILE, insertion_span, ordered_from_sheet
+from mbio.protocol.model import Protocol
 from mbio.sequence import Feature, Segment, SequenceRecord, Topology
 
 
@@ -59,3 +60,10 @@ def test_a_named_site_at_both_ends_of_a_linear_vector_is_refused_without_naming_
     ) as refused:
         insertion_span(linear, "MCS")
     assert "origin" not in str(refused.value)
+
+
+def test_a_cloning_page_names_the_sheet_and_the_product_its_plan_writes_beside_it():
+    protocol = ordered_from_sheet(Protocol("Clone GFP"))
+
+    assert protocol.order_sheet == PRIMER_FILE
+    assert protocol.files == (PRIMER_FILE, PRODUCT_FILE)

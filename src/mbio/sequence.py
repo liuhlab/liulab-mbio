@@ -16,6 +16,16 @@ from typing import Literal
 #: The IUPAC nucleotide codes a DNA sequence may hold.
 IUPAC_DNA = frozenset("ACGTRYSWKMBDHVN")
 
+#: What each IUPAC code stands for.
+IUPAC_BASES: Mapping[str, frozenset[str]] = {
+    code: frozenset(bases)
+    for code, bases in {
+        "A": "A", "C": "C", "G": "G", "T": "T",
+        "R": "AG", "Y": "CT", "S": "CG", "W": "AT", "K": "GT", "M": "AC",
+        "B": "CGT", "D": "AGT", "H": "ACT", "V": "ACG", "N": "ACGT",
+    }.items()
+}  # fmt: skip
+
 _COMPLEMENT = str.maketrans(
     "ACGTRYSWKMBDHVNacgtryswkmbdhvn",
     "TGCAYRSWMKVHDBNtgcayrswmkvhdbn",

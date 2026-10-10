@@ -34,6 +34,7 @@ nav:
       - Primer design: methods/primers.md
       - Barcode sets: methods/barcodes.md
       - Codon optimisation: methods/codon-optimisation.md
+      - Sequence verification: methods/sequence-verification.md
       - Maps and figures: methods/maps.md
   - Protocols:
       - Protocols: protocols/index.md

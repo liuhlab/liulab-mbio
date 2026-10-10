@@ -489,6 +489,7 @@ def _steps(
                 reads,
                 junctions=[one.overlap for one in assembly.junctions],
                 inserts=inserts,
+                product=PRODUCT_FILE,
                 notes=(
                     Note(
                         f"About one error per {MOLECULES_PER_ERROR} molecules joined was found "

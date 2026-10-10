@@ -19,8 +19,8 @@ citations name them; `steps.SOURCES` gathers the shared steps' and the materials
   representation read is held to. It cites sources, so it sits in this layer rather than beside
   `barcodes`; what calls it is any pipeline that builds a library in rounds. Imported by module:
   its `SOURCES` are one sizing rule's, not this package's.
-- `readback`: what one well's read came to, where a construct is read back one well at a time,
-  and how often one picked colony is clean.
+- `readback`: what one well's read came to and whether reformatting keeps it, where a construct
+  is read back one well at a time, and how often one picked colony is clean.
 - `inactivation`: an enzyme's heat inactivation, and one tube's grouped by it.
 - `materials`: what a material brings with it -- its own program, what it puts in the tube, and
   the rules it carries. A number attaches to the thing that changes it.
@@ -93,7 +93,6 @@ from mbio.bench.readback import (
     CLEAN_COLONY_CURVE,
     WellVerdict,
     clean_colony_chance,
-    identity_check,
     reformat,
 )
 from mbio.bench.steps import (
@@ -246,7 +245,6 @@ __all__ = [
     "gel_step",
     "heat_inactivation",
     "heat_inactivations",
-    "identity_check",
     "kit",
     "listed",
     "material",

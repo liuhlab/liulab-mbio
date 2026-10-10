@@ -667,9 +667,12 @@ _Avoid_: joining, annealing, sealing
 ### Product
 
 The circular plasmid an assembly makes: every part's features carried to their new coordinates,
-its primers annotated where they anneal, and each junction marked. It keeps the vector's origin,
-so the vector's own coordinates still read true and no junction sits at base zero. A Gibson plan
-holds it as `Plan.plasmid`, because `Plan.product` there is the **assembly product**.
+its primers annotated where they anneal, and each junction marked, including the one where the
+vector's own bases resume. It keeps the vector's origin, so the vector's own coordinates still
+read true. A junction can begin at or straddle base zero, where that origin falls in the span an
+insert replaced or in the junction's own bases, so base zero does not say which stretch is the
+vector. A Gibson plan holds it as `Plan.plasmid`, because `Plan.product` there is the **assembly
+product**.
 _Avoid_: construct, output, final plasmid
 
 ### Assembly plan
@@ -720,6 +723,28 @@ A colony PCR primer annealing inside one insert rather than in the vector either
 its own junction a band, and it is what separates a reversed insert from a correct clone, which
 two flanking vector primers cannot do.
 _Avoid_: internal primer, screening primer
+
+### Sequencing result
+
+What one sample's sequencing comes back as, read into the bases called for it: a Sanger read, a
+whole-plasmid consensus, or the consensus an in-house route calls for one well. Beyond the bases
+it carries whatever the route gave to trust them by: a quality or a read depth at each base, how
+many reads stood behind it, the stretch worth trusting, and any second consensus the same sample
+gave, which makes it mixed. One sample may give several, such as a Sanger read from each side of
+the insert.
+_Avoid_: read (one kind of it), trace (a Sanger file), call
+
+### Verification
+
+Holding one clone's **sequencing results** against the record it should be, and giving each
+junction and each insert a verdict: a pass where every base was read and none disagrees, a
+failure where a base a result trusts disagrees or the sample is mixed, a warning where two
+results disagree with each other, and no verdict where part of it went unread. A clone is
+verified only when every junction and insert passes; nothing failing is not enough. Every
+disagreement is placed on the record. One outside every junction and insert is named with the
+feature it falls in and carries no verdict, because whether it matters is a judgement about
+what that feature does. A **DMX** well's call is a verification of its designed region.
+_Avoid_: validation, confirmation, QC
 
 ### DAD-GGA-DMX
 
@@ -923,9 +948,17 @@ _Avoid_: plasmid map (a linear record has one too), figure, plot
 ### Sequence view
 
 A drawing of a sequence record base by base, in rows: both strands, the translation of every CDS,
-features as bars, primers as arrows and enzyme names above their cut. It is drawn only with a
-map, which shows where each row lies.
+features as bars, primers as arrows, enzyme names above their cut, an insertion as a line between
+two bases, and each **track** under the rows it reaches. It is drawn only with a map, which shows
+where each row lies.
 _Avoid_: sequence panel, text view
+
+### Track
+
+Values along a record's bases, such as the four channels of a Sanger trace, drawn as curves in a
+strip under each row of a **sequence view** they reach. Where the values come with peak positions,
+each peak sits over the middle of its base, so the signal behind every base stands under it.
+_Avoid_: chromatogram (one kind of it), lane, signal, trace (a Sanger file)
 
 ### Highlight
 

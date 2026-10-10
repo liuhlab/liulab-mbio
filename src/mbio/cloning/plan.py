@@ -99,13 +99,13 @@ def amplicon_files(names: Iterable[str]) -> tuple[str, ...]:
 
 
 def ordered_from_sheet(protocol: Protocol) -> Protocol:
-    """Return `protocol` naming the primer sheet its plan writes beside its page.
+    """Return `protocol` naming the primer sheet and the product its plan writes beside its page.
 
-    Every cloning plan writes `PRIMER_FILE` into the directory it writes the page into, so the
-    page links the file rather than being the thing a supplier is sent, and any text naming the
-    sheet links it too.
+    Every cloning plan writes `PRIMER_FILE` and `PRODUCT_FILE` into the directory it writes the
+    page into, so the page links the sheet rather than being the thing a supplier is sent, and
+    any text naming either file links it.
     """
-    return replace(protocol, order_sheet=PRIMER_FILE, files=(PRIMER_FILE,))
+    return replace(protocol, order_sheet=PRIMER_FILE, files=(PRIMER_FILE, PRODUCT_FILE))
 
 
 def as_project(protocol: Protocol) -> Project:

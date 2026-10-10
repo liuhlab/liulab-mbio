@@ -2,6 +2,7 @@
 
 import pytest
 
+from mbio.bench.readback import reformat
 from mbio.protocol.model import Citation, Step, Well
 from synbio.dmx import kit, method, steps
 
@@ -99,17 +100,61 @@ def test_a_well_too_thin_to_call_is_judged_on_its_depth_alone():
     thin = method.judge_well(
         Well("picked", "A1"), route=method.ROUTE_LIGATION, reads=4, called=(), designed=designed
     )
-    deep = method.judge_well(
-        Well("picked", "A2"),
-        route=method.ROUTE_LIGATION,
-        reads=400,
-        called=("AGGAA",),
-        designed=designed,
-    )
+    deep = judged(("AGGAA",), designed)
     assert [one.name for one in thin.checks] == ["reads_per_well"]
     assert thin.called is False
-    assert [one.name for one in deep.checks] == ["reads_per_well", "well_identity"]
+    assert [one.name for one in deep.checks] == ["reads_per_well", "designed region", "picked A2"]
     assert deep.status == "fail"
+
+
+DESIGNED = "AGGAATGAAACCGTTCCGATTACAGG"
+
+
+def judged(called: tuple[str, ...], designed: str = DESIGNED):
+    """Return the verdict on a well read deeply, by the barcode ligation route."""
+    well = Well("picked", "A2")
+    return method.judge_well(
+        well, route=method.ROUTE_LIGATION, reads=400, called=called, designed=designed
+    )
+
+
+def test_a_well_passes_on_an_exact_match_and_fails_on_one_mismatch_or_a_mixture():
+    """A barcode that no longer names its member cannot be put right by the linkage read."""
+    assert judged((DESIGNED,)).status == "pass"
+    assert judged((DESIGNED[:12] + "T" + DESIGNED[13:],)).status == "fail"
+    mixed = judged((DESIGNED, DESIGNED[:-1] + "A"))
+    assert [one.status for one in mixed.checks] == ["pass", "fail", "fail"]
+    nothing = judged(())
+    assert [one.status for one in nothing.checks] == ["pass", None]
+    assert reformat((nothing,)) == (nothing,)
+
+
+@pytest.mark.parametrize(
+    ("called", "detail"),
+    [
+        (DESIGNED[:13], "the consensus leaves 13 designed bases unread: 14 .. 26"),
+        (DESIGNED[:9] + "N" + DESIGNED[10:], "the consensus leaves 1 designed base unread: 10"),
+    ],
+    ids=["cut short", "interior N"],
+)
+def test_a_consensus_that_leaves_a_designed_base_unread_fails_the_well(called, detail):
+    """The call spans the whole amplicon, so a designed base it does not read is missing."""
+    well = judged((called,))
+    region = well.checks[1]
+    assert (region.status, region.detail) == ("fail", detail)
+    assert well.status == "fail"
+    assert reformat((well,)) == ()
+
+
+def test_a_soft_masked_consensus_is_read_in_any_case():
+    assert judged((DESIGNED.lower(),)).status == "pass"
+    assert judged((DESIGNED[:13].lower() + DESIGNED[13:],)).status == "pass"
+
+
+def test_a_consensus_that_is_not_dna_is_refused_naming_the_well_letter_and_base():
+    """On a plate of 1536 wells, the message has to say which one."""
+    with pytest.raises(ValueError, match=r"'picked A2' holds 'X' at base 13"):
+        judged((DESIGNED[:12] + "X" + DESIGNED[13:],))
 
 
 def test_a_kit_the_user_holds_is_read_and_its_chain_checked(tmp_path):

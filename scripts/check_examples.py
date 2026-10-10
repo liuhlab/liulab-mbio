@@ -11,7 +11,7 @@ difference rather than the first.
 A red run is fixed by running the example's own command and committing what it writes. The
 check never writes into `docs/examples/`.
 
-The generators are named below rather than discovered. Three of them are scripts rather than
+The generators are named below rather than discovered. Four of them are scripts rather than
 documented commands, and another writes files that `tests/methods/igga/test_gate.py` reads as
 its known-good corpus; none of them is reachable by reading a page. Another generator is a line
 added here, and an example that grows a file fails here until `writes` names it. That is the
@@ -266,6 +266,17 @@ GENERATORS: tuple[Generator, ...] = (
         ),
         reads=(f"{PUC19}/product.dna",),
         writes=("product-insert.pdf", "product-map.html", "puc19-map.pdf"),
+    ),
+    Generator(
+        what="the pUC19-GFP consensus, and the verification page it makes",
+        directory=REPO / PUC19 / "verification",
+        commands=(
+            f"python scripts/build_example_consensus.py --out {OUT}/consensus.fasta",
+            "python scripts/build_example_verification.py "
+            f"--result {OUT}/consensus.fasta --out {OUT}/verification.html",
+        ),
+        reads=(f"{PUC19}/product.dna",),
+        writes=("consensus.fasta", "verification.html"),
     ),
 )
 
