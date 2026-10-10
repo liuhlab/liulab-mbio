@@ -20,7 +20,7 @@ a method's name, which inverts the package boundary. The grouping belongs in thi
 note can sit under two headings at once. Within the directory, a note in a family takes the
 family's name as a prefix, so `ls` clusters it at no cost.
 
-Thirty-eight notes, under nine headings. Four of them earn a second heading, listed at the end.
+Thirty-nine notes, under ten headings. Four of them earn a second heading, listed at the end.
 
 ## Shipped data and where it came from
 
@@ -80,6 +80,12 @@ Thirty-eight notes, under nine headings. Four of them earn a second heading, lis
 | [`route-choice.md`](route-choice.md) | how a reader picks between barcode ligation and index PCR, or neither, and what a run that reads nothing back holds |
 | [`route-b-index-pcr.md`](route-b-index-pcr.md) | the per-well numbers of LevSeq's index PCR, the one stage the bench-numbers inventory left out |
 | [`route-b-index-primers.md`](route-b-index-primers.md) | where the index primers bind and what marks a well, against a premise that turned out wrong |
+
+## Judging a sequencing read
+
+| Note | What it settled |
+| --- | --- |
+| [`sequencing-read-packages.md`](sequencing-read-packages.md) | which packages could align a read to its product and judge it, measured against Biopython; none gives a verdict, so add no dependency |
 
 ## Drawing a record
 
