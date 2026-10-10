@@ -16,8 +16,9 @@ plasmid.
 
 The plasmid the clone should be. Each of the four cloning plans writes it as `product.dna`, and
 marks each junction on it. The command reads those marks, and judges each junction and each
-stretch between two of them as an insert. The vector is left out, and
-[the command line reference](../reference/cli.md#check-a-clones-sequencing) says how it is found.
+stretch between two of them as an insert. The plan tags the junction the vector's own bases
+follow as the backbone, and the stretch after it is left out. See
+[the command line reference](../reference/cli.md#check-a-clones-sequencing).
 
 Every result one sample gave. A Sanger read is its `.ab1` file. A whole-plasmid consensus is the
 FASTA or GenBank file the service sent. Give a read from each side of the insert together, in
