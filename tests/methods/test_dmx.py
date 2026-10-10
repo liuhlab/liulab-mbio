@@ -129,16 +129,21 @@ def test_a_well_passes_on_an_exact_match_and_fails_on_one_mismatch_or_a_mixture(
     assert reformat((nothing,)) == (nothing,)
 
 
-def test_a_consensus_that_stops_short_of_the_design_fails_the_well():
-    """The call spans the whole amplicon, so a designed base it lacks is missing, not unread."""
-    half = judged((DESIGNED[:13],))
-    region = half.checks[1]
-    assert (region.status, region.detail) == (
-        "fail",
-        "the consensus stops short: 13 bases unread: 14 .. 26",
-    )
-    assert half.status == "fail"
-    assert reformat((half,)) == ()
+@pytest.mark.parametrize(
+    ("called", "detail"),
+    [
+        (DESIGNED[:13], "the consensus leaves 13 designed bases unread: 14 .. 26"),
+        (DESIGNED[:9] + "N" + DESIGNED[10:], "the consensus leaves 1 designed base unread: 10"),
+    ],
+    ids=["cut short", "interior N"],
+)
+def test_a_consensus_that_leaves_a_designed_base_unread_fails_the_well(called, detail):
+    """The call spans the whole amplicon, so a designed base it does not read is missing."""
+    well = judged((called,))
+    region = well.checks[1]
+    assert (region.status, region.detail) == ("fail", detail)
+    assert well.status == "fail"
+    assert reformat((well,)) == ()
 
 
 def test_a_soft_masked_consensus_is_read_in_any_case():

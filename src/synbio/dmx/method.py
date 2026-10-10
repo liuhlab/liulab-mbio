@@ -17,7 +17,7 @@ from dataclasses import KW_ONLY, dataclass, replace
 from mbio.bench import plates
 from mbio.bench.materials import material
 from mbio.bench.readback import WellVerdict, clean_colony_chance
-from mbio.checks import Check, Status
+from mbio.checks import Check, Status, counted
 from mbio.protocol.model import (
     Citation,
     Component,
@@ -439,10 +439,10 @@ def judge_well(
     The two questions run in that order, which is why a shallow well is never a failure. The
     first consensus is the well's result and any further one makes it mixed; the whole designed
     region is the one region, so any disagreement in it fails the well, and bases a consensus
-    carries beyond it fail nothing. A consensus that stops short of a designed base fails too,
-    where a general verification leaves such a base unread: the call spans the well's whole
-    amplicon, so a base it lacks is missing rather than out of reach. No consensus at all
-    carries no verdict.
+    carries beyond it fail nothing. A consensus that leaves a designed base unread fails too,
+    where a general verification gives such a base no verdict: the call spans the well's whole
+    amplicon, so a base it does not read is missing rather than out of reach, whether the call
+    stops short of it or holds an ``N`` there. No consensus at all carries no verdict.
 
     Raises
     ------
@@ -466,12 +466,20 @@ def judge_well(
     checks = verification.checks
     if results and verification.placements[0].span is not None:
         checks = tuple(
-            replace(one, status="fail", detail=f"the consensus stops short: {one.detail}")
-            if one.status is None
-            else one
-            for one in checks
+            _left_unread(one, len(record)) if one.status is None else one for one in checks
         )
     return WellVerdict(well, (depth, *checks, *verification.result_checks))
+
+
+def _left_unread(check: Check, length: int) -> Check:
+    """Return a designed region a called consensus left bases of unread, failed.
+
+    `verify` names the unread bases after ``unread:`` in the detail, and its check's value is
+    how many bases were read.
+    """
+    where = check.detail.partition(" unread: ")[2].split("; ")[0]
+    missing = counted(length - int(check.value), "designed base")
+    return replace(check, status="fail", detail=f"the consensus leaves {missing} unread: {where}")
 
 
 @dataclass(frozen=True, slots=True)
