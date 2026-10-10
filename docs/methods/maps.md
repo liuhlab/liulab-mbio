@@ -48,7 +48,7 @@ label leaves you a figure, but not the one you meant.
 | --- | --- |
 | [puc19-map.pdf](../examples/pUC19-GFP/puc19-map.pdf) | pUC19 drawn whole, as a circle |
 | [product-insert.pdf](../examples/pUC19-GFP/product-insert.pdf) | the GFP of the finished plasmid, as a line |
-| [product-map.html](../examples/pUC19-GFP/product-map.html) | the finished plasmid as a page, every BbsI site drawn. The plan writes the same page, and its protocol's figure opens it |
+| [product-map.html](../examples/pUC19-GFP/product-map.html) | the finished plasmid as a page to explore. The Golden Gate plan writes this same page, and its protocol's figure opens it |
 
 The other two came from the finished Golden Gate plasmid, 3,347 bp:
 
