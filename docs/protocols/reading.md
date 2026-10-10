@@ -80,9 +80,10 @@ array is still one reaction, not 96.
 ## Thermocycler programs
 
 A program is a table of step, temperature, time and cycles, with the whole run length in its
-caption: `32 min 30 s plus ramps`. A tag beside a row says where that row came from, such as
-`E1601 FAQ 11` on the cycle count of the first PCR. Each tag jumps to the source list at the
-foot of the page.
+caption: `32 min 30 s plus ramps`. A small bracketed number beside a row says where that row came
+from, such as `[1]` on the cycle count of the first PCR. It jumps to the source with that number
+in the list at the foot of the page. Hold the pointer over it to see the document and the part
+cited, here FAQ 11 of the kit manual.
 
 ## Timers
 
@@ -120,8 +121,9 @@ drawing is a prediction, not a photograph.
 ## Where the numbers came from
 
 The page closes with two lists. **Sources** names each document a number was read from, with its
-edition and the day it was read; the citation tags in the steps point into it. **References** is
-the wider reading behind the method. Where the package cannot source a number, it says so rather
+edition and the day it was read. Each is numbered as the bracketed numbers in the text name it,
+and says which parts of the document the page cites, so a number still leads somewhere on paper.
+**References** is the wider reading behind the method. Where the package cannot source a number, it says so rather
 than printing a guess, and a chain collects those in a `Holes` list on its way-in page.
 
 [Change a protocol](editing.md) says what you may edit here, and what you must leave to the
