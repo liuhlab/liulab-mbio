@@ -67,25 +67,83 @@
     })[0];
   }
 
+  // A step's own mark is its instructions together: the last instruction ticked ticks the step,
+  // and the step ticked or cleared does the same to every instruction, so each count reads what
+  // the bench did however the reader ticks. A step with no instructions is ticked by hand.
+  // Its instructions are the boxes keyed by its own key, a dot and a number.
+  function keyOf(box) {
+    return box.getAttribute("data-key");
+  }
+
+  function isTicked(box) {
+    return box.checked;
+  }
+
+  var stepMarks = stepBoxes.map(function (box) {
+    var prefix = keyOf(box) + ".";
+    return {
+      box: box,
+      parts: boxes.filter(function (part) { return keyOf(part).indexOf(prefix) === 0; })
+    };
+  });
+
+  function keep(box) {
+    if (box.checked) state[keyOf(box)] = true;
+    else delete state[keyOf(box)];
+  }
+
   function refresh() {
     var done = 0;
-    stepBoxes.forEach(function (box) {
+    stepMarks.forEach(function (mark) {
+      var box = mark.box;
       var step = box.closest(".step");
       if (step) step.classList.toggle("is-done", box.checked);
+      box.indeterminate = !box.checked && mark.parts.some(isTicked);
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
     showSections();
   }
 
+  // A store written before steps followed their instructions can hold one without the other.
+  // Nothing ticked is lost: a step ticked by hand stands for its instructions, and instructions
+  // all ticked for their step. The run's index reads only step marks, so the mended store is saved.
+  var mended = false;
+  stepMarks.forEach(function (mark) {
+    var keys = mark.parts.map(keyOf);
+    var whole = state[keyOf(mark.box)] === true || keys.every(function (key) {
+      return state[key] === true;
+    });
+    if (!keys.length || !whole) return;
+    keys.concat(keyOf(mark.box)).forEach(function (key) {
+      if (state[key] !== true) mended = true;
+      state[key] = true;
+    });
+  });
+  if (mended) save();
+
   boxes.forEach(function (box) {
-    box.checked = state[box.getAttribute("data-key")] === true;
-    box.addEventListener("change", function () {
-      var key = box.getAttribute("data-key");
-      if (box.checked) state[key] = true;
-      else delete state[key];
+    box.checked = state[keyOf(box)] === true;
+  });
+
+  stepMarks.forEach(function (mark) {
+    mark.box.addEventListener("change", function () {
+      mark.parts.forEach(function (part) {
+        part.checked = mark.box.checked;
+        keep(part);
+      });
+      keep(mark.box);
       save();
       refresh();
+    });
+    mark.parts.forEach(function (part) {
+      part.addEventListener("change", function () {
+        mark.box.checked = mark.parts.every(isTicked);
+        keep(part);
+        keep(mark.box);
+        save();
+        refresh();
+      });
     });
   });
   refresh();
