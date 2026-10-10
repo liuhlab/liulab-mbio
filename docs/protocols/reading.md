@@ -33,7 +33,7 @@ buffer, so the package will not score the round from it. Treat it as a call you 
 ## Materials and the oligo sheet
 
 **Materials** is everything the run consumes: name, supplier, catalogue number, storage, how
-much per run, and a note. Fifteen rows here, with the equipment named on a line under them.
+much per run, and a note. Sixteen rows here, with the equipment named on a line under them.
 
 **Oligos** is the order sheet. Nine rows, each with its sequence, length, melting temperature,
 what it is for, its working stock and its own verdict. A copy button sits on every sequence, and
@@ -90,7 +90,7 @@ array is still one reaction, not 96.
 
 A program is a table of step, temperature, time and cycles, with the whole run length in its
 caption: `32 min 30 s plus ramps`. A small bracketed number beside a row says where that row came
-from, such as `[1]` on the cycle count of the first PCR. It jumps to the source with that number
+from, such as `[4]` on the cycle count of the first PCR. It jumps to the source with that number
 in the list at the foot of the page. Hold the pointer over it to see the document and the part
 cited, here FAQ 11 of the kit manual.
 
