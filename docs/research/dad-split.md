@@ -471,8 +471,8 @@ does not have, which is why dropping the branch and bound cost so little.
 
 ## 6. Provenance of files read
 
-The branch and bound #261 measured the greedy against lives on the `origin/prototype/261-dad-split`
-branch, kept there as evidence rather than as a tool.
+The branch and bound #261 measured the greedy against lives at the `archive/261-dad-split` tag,
+kept there as evidence rather than as a tool.
 
 | File | Source | Read |
 | --- | --- | --- |
