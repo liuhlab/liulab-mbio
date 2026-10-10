@@ -10,8 +10,8 @@ documented numbers, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run mbio cloning gibson plan vector.dna insert.dna --out plan/
-pixi run mbio cloning gibson plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run mbio cloning gibson plan vector.dna insert.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning gibson plan vector.dna first.dna second.dna third.dna --out plan/ --cleanup-kit D4003
 ```
 
 Give the inserts in the order they go round the product. The vector is opened by PCR across the
@@ -43,7 +43,7 @@ Every option has a default; a vector and one insert are enough on their own.
 | `--product` | The kit on your bench. The start of a name is enough: `nebuilder`, `gibson`, `in-fusion` |
 | `--polymerase` | For the PCRs |
 | `--host` | The strain the protocol names |
-| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name. `D4003`, Zymo's, is the lab's |
 | `--name` | What to call the product |
 
 ## The kit decides the numbers

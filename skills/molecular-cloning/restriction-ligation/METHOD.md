@@ -10,8 +10,8 @@ nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run mbio cloning restriction plan vector.dna insert.dna --out plan/
-pixi run mbio cloning restriction plan vector.dna source.dna --out plan/ --enzyme EcoRI --enzyme BamHI
+pixi run mbio cloning restriction plan vector.dna insert.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning restriction plan vector.dna source.dna --out plan/ --enzyme EcoRI --enzyme BamHI --cleanup-kit D4003
 ```
 
 The second argument is the insert, or the plasmid it is cut out of. Name no enzyme and the pair
@@ -58,7 +58,7 @@ the user that before they order, not after they sequence.
 | `--enzyme` | An enzyme both digests use; give it once or twice. Chosen for you when you name none |
 | `--polymerase` | For the insert's PCR, where one runs |
 | `--host` | The strain the protocol names |
-| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name. `D4003`, Zymo's, is the lab's |
 | `--name` | What to call the product |
 
 ## What carries no verdict

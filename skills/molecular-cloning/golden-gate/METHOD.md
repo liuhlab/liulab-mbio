@@ -10,8 +10,8 @@ it, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/
-pixi run mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/ --cleanup-kit D4003
 ```
 
 One reaction joins as many inserts as the overhangs allow. Give them in the order they go round
@@ -56,7 +56,7 @@ Every option below has a default; a vector and one insert are enough on their ow
 | `--codon-table` | Whose codon usage a proposed domestication picks its codons from, such as `human`. Not the strain |
 | `--polymerase` | For the PCRs |
 | `--host` | The strain the protocol names |
-| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name. `D4003`, Zymo's, is the lab's |
 | `--name` | What to call the product |
 
 ## From Python

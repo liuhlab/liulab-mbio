@@ -15,9 +15,9 @@ sites themselves, so there is no enzyme to choose and no overhang to score.
 Three routes, and the records you have decide which:
 
 ```bash
-pixi run mbio cloning gateway plan entry.dna destination.dna --out plan/
-pixi run mbio cloning gateway plan insert.dna destination.dna --donor donor.dna --out plan/
-pixi run mbio cloning gateway plan gene.dna destination.dna --donor donor.dna --amplify --out plan/
+pixi run mbio cloning gateway plan entry.dna destination.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning gateway plan insert.dna destination.dna --donor donor.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning gateway plan gene.dna destination.dna --donor donor.dna --amplify --out plan/ --cleanup-kit D4003
 ```
 
 An entry clone alone plans LR. A donor vector as well plans BP first, feeding its entry clone
@@ -50,7 +50,7 @@ The command prints a summary line and those paths. The same inputs write the sam
 | `--fusion` | `none`, `N-terminal`, `C-terminal` or `both`: which tag the insert reads into |
 | `--polymerase` | For the attB PCR |
 | `--host` | The strain the protocol names for selecting each clone |
-| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name. `D4003`, Zymo's, is the lab's |
 | `--name` | What to call the expression clone |
 
 ## The junction is not scarless
