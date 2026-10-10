@@ -392,8 +392,11 @@ def test_the_demo_is_left_with_the_four_numbers_no_input_of_its_own_can_give(pla
 def test_a_chance_too_small_to_print_fixed_prints_as_a_power_of_ten(protocol):
     """A step builder formats it as the page does, so no line reads ``7.27e-07``."""
     grow = next(one for one in protocol.steps if one.title.startswith("Round 3: recover"))
-    assert "At that count the chance a named product is missing is 7.27 × 10⁻⁷." in grow.expected
-    assert not [line for one in protocol.steps for line in one.expected if re.search(r"\de-", line)]
+    said = [one.text for one in grow.observed]
+    assert "At that count the chance a named product is missing is 7.27 × 10⁻⁷." in said
+    assert not [
+        one.text for step in protocol.steps for one in step.observed if re.search(r"\de-", one.text)
+    ]
 
 
 def test_a_pools_picomoles_print_three_figures_and_not_six(protocol):
@@ -892,13 +895,17 @@ def test_only_the_library_in_its_working_vector_is_called_finished(plan, protoco
     assert run.protocols  # the demo names a working vector, so the two are different molecules
 
     prep = next(one for one in protocol.steps if one.key == "round-3-prep")
-    assert "the library the rounds built" in " ".join(prep.expected)
-    assert "finished library" not in " ".join(prep.expected)
+    assert "the library the rounds built" in " ".join(one.text for one in prep.observed)
+    assert "finished library" not in " ".join(one.text for one in prep.observed)
 
     said = " ".join(
         text
         for step in protocol.steps
-        for text in (*step.instructions, *step.expected, *(n.text for n in step.noted))
+        for text in (
+            *step.instructions,
+            *(one.text for one in step.observed),
+            *(n.text for n in step.noted),
+        )
     )
     assert "finished library" not in said
 

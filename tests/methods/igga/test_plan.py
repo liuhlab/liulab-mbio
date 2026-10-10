@@ -338,7 +338,11 @@ def test_a_build_may_state_the_four_numbers_the_method_leaves_open(pooled):
     said = " ".join(
         text
         for step in after.steps
-        for text in (*step.instructions, *(n.text for n in step.noted), *step.expected)
+        for text in (
+            *step.instructions,
+            *(n.text for n in step.noted),
+            *(one.text for one in step.observed),
+        )
     )
 
     assert [hole.id for step in before.steps for hole in step.holes] == [
@@ -400,7 +404,7 @@ def test_every_sheet_the_run_writes_is_one_its_pages_can_link(plan, pooled):
 
 def test_the_representation_step_states_the_marks_and_the_depth_they_take(protocol):
     """Joung's three, and the read depth that follows from the library's own width."""
-    said = " ".join(protocol.steps[-6].expected)
+    said = " ".join(one.text for one in protocol.steps[-6].observed)
 
     assert "99.5%" in said
     assert "skew ratio below 10" in said

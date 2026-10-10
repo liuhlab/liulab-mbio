@@ -46,6 +46,7 @@ from mbio.protocol.model import (
     Lane,
     Material,
     Note,
+    Observation,
     Oligo,
     Protocol,
     Rule,
@@ -621,7 +622,7 @@ def transform_step(
     protocol: Transformation = NEB_TRANSFORMATION,
     title: str = "Transform and plate",
     key: str = "transform",
-    expected: Sequence[str] = (),
+    expected: Sequence[Observation | str] = (),
     notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
@@ -646,7 +647,7 @@ def transform_step(
     expected, notes, troubleshooting
         The caller's own, after the step's.
     """
-    results = [colonies]
+    results: list[Observation | str] = [colonies]
     if phenotype.blue_white and phenotype.reporter is not None:
         results.append(
             f"Correct clones are white and empty vector is blue: the insertion interrupts "

@@ -36,6 +36,7 @@ from mbio.protocol.model import (
     Incubation,
     Item,
     Material,
+    Observation,
     Oligo,
     Plate,
     Project,
@@ -1505,6 +1506,12 @@ def _bullets(items: Iterable[str], paths: Sequence[str] = ()) -> str:
     return f"<ul>{lines}</ul>" if lines else ""
 
 
+def _observed(items: Iterable[Observation], paths: Sequence[str] = ()) -> str:
+    """Return the expected results as bullets, each citing the document its claim rests on."""
+    lines = "".join(f"<li>{_linked(one.text, paths)}{_cite(one.citation)}</li>" for one in items)
+    return f"<ul>{lines}</ul>" if lines else ""
+
+
 def _linked(text: str, paths: Sequence[str] = ()) -> str:
     """Escape `text`, linking every file of `paths` it names by that file's own name.
 
@@ -2394,7 +2401,7 @@ def _step(
         net = _net_count(f"{anchor}.count", step.calculator, trouble) if step.calculator else ""
         parts.append(
             '<div class="expected"><h3>Expected result</h3>'
-            f"{_bullets(step.expected, protocol.files)}{net}{gels}</div>\n"
+            f"{_observed(step.observed, protocol.files)}{net}{gels}</div>\n"
         )
     if step.troubleshooting:
         entries = "".join(

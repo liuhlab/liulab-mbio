@@ -13,6 +13,7 @@ from mbio import checks as judged
 from mbio.bench.amounts import SOURCES as AMOUNT_SOURCES
 from mbio.bench.amounts import Amount
 from mbio.bench.coverage import (
+    MARKS_CITATION,
     REPRESENTATION_MARKS,
     RepresentationMarks,
     reads_for_representation,
@@ -23,7 +24,7 @@ from mbio.bench.phenotype import selection_marker
 from mbio.bench.prices import PriceRecord
 from mbio.bench.steps import QUANTIFY_EQUIPMENT, enzyme_material, listed
 from mbio.enzymes import Enzyme
-from mbio.protocol.model import Citation, Material, Source
+from mbio.protocol.model import Citation, Material, Observation, Source
 from mbio.protocol.model import Item as Handed
 from mbio.sequence import SequenceRecord
 from synbio import dmx
@@ -561,13 +562,17 @@ def as_platform(pair: ReadPair | None) -> str:
     return "" if pair is None else f" as a {pair.platform}"
 
 
-def marks_sentence(constructs: int, marks: RepresentationMarks, what: str) -> str:
-    """State the three marks the counts are judged on, and the depth they are judged at."""
+def marks_sentence(constructs: int, marks: RepresentationMarks, what: str) -> Observation:
+    """State the three marks the counts are judged on, and the depth they are judged at.
+
+    The three are a pooled library's acceptance bar, so the line carries where they were read.
+    """
     depth = reads_for_representation(constructs, marks.reads_per_member) if constructs else 0
     at = f", which is {depth:,} reads over {constructs:,} combinations" if depth else ""
-    return (
+    return Observation(
         f"At least {marks.seen:.1%} {what} seen; a 90th/10th percentile skew ratio below "
-        f"{marks.skew:g}, judged at {marks.reads_per_member} or more reads a member{at}."
+        f"{marks.skew:g}, judged at {marks.reads_per_member} or more reads a member{at}.",
+        citation=MARKS_CITATION,
     )
 
 

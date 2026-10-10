@@ -8,7 +8,6 @@ steps, because they are a stage of the method, and what the vector would have fi
 from collections.abc import Sequence
 
 from mbio.bench.coverage import (
-    MARKS_CITATION,
     RepresentationMarks,
     absent_probability,
     colonies_for_completeness,
@@ -26,7 +25,6 @@ from mbio.protocol.model import (
     CountToNet,
     Figure,
     Incubation,
-    Note,
     Source,
     Stage,
     Step,
@@ -505,10 +503,6 @@ def _representation_step(
             marks_sentence(constructs, marks, "of what survived the move"),
         ),
         notes=(
-            Note(
-                "The three marks above are a pooled library's acceptance bar.",
-                citation=MARKS_CITATION,
-            ),
             "Linkage is read once, in the library backbone; a barcode still names the same part "
             "after the move, because the move carries the whole cargo in one piece.",
             "The forward anchor is the same retained internal stuffer, which travels with the "

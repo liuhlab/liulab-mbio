@@ -22,6 +22,7 @@ from mbio.protocol.model import (
     Citation,
     Component,
     Incubation,
+    Observation,
     ReactionTable,
     Source,
     Stage,
@@ -469,15 +470,19 @@ def gel_recovery(length_bp: int) -> tuple[float, float]:
 COLUMN_RECOVERY = (0.70, 0.90)
 
 
-#: NEB's four transformation controls and what each should give relative to the others. No
-#: supplier states an absolute colony count for this method, so what a plan promises is a ratio.
-#: §12.
-CONTROLS: tuple[str, ...] = (
-    "Uncut vector, 100 pg to 1 ng: the cells are viable and the antibiotic is right.",
-    "Cut vector, no ligase: under 1% of the colonies the uncut vector gave.",
-    "Vector-only ligation: the same as the cut-vector control, its ends being unable to rejoin.",
-    "A transformation efficiency under 10⁴ cfu/µg means the cells, not the ligation.",
-)
-
 #: Where those controls stand in the cloning troubleshooting guide `mbio.bench.steps` names.
 CONTROLS_CITATION = Citation("NEB-cloning", "transformation controls")
+
+#: NEB's four transformation controls and what each should give relative to the others. No
+#: supplier states an absolute colony count for this method, so what each line promises is a
+#: ratio, and each carries where it was read. §12.
+CONTROLS: tuple[Observation, ...] = tuple(
+    Observation(text, citation=CONTROLS_CITATION)
+    for text in (
+        "Uncut vector, 100 pg to 1 ng: the cells are viable and the antibiotic is right.",
+        "Cut vector, no ligase: under 1% of the colonies the uncut vector gave.",
+        "Vector-only ligation: the same as the cut-vector control, its ends being unable to "
+        "rejoin.",
+        "A transformation efficiency under 10⁴ cfu/µg means the cells, not the ligation.",
+    )
+)

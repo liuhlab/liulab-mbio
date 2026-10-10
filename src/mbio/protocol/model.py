@@ -166,8 +166,8 @@ class Citation:
     """Where in a source the claim one row or sentence makes stands.
 
     Provenance is per row, not per number: a citation hangs on the component, the incubation,
-    the cycling stage, the material or the bill row that carries the number, and on the note,
-    caution or troubleshooting entry whose sentence it backs.
+    the cycling stage, the material or the bill row that carries the number, and on the expected
+    line, note, caution or troubleshooting entry whose sentence it backs.
 
     Parameters
     ----------
@@ -918,6 +918,24 @@ class Caution:
 
 
 @dataclass(frozen=True, slots=True)
+class Observation:
+    """What a step's reader should see if it worked, and where that was read.
+
+    Parameters
+    ----------
+    text
+        The observation the reader checks against, in a sentence.
+    citation
+        The document stating it. Absent where this run computed or chose the result, which is
+        most of them.
+    """
+
+    text: str
+    _: KW_ONLY
+    citation: Citation | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Troubleshooting:
     """A problem the reader may see at a step, and what to do about it.
 
@@ -1400,7 +1418,9 @@ class Step:
     figures
         The records the step draws, shown under its instructions.
     gels, expected
-        What a successful step looks like.
+        What a successful step looks like. A bare expected line is one citing nothing, and the
+        tuple is left as it was written, since most of the package reads an expected line as
+        text; `observed` gives each of them as an `Observation`.
     calculator
         Where the reader has a count of their own to work out and read against what `expected`
         states, shown under it.
@@ -1425,7 +1445,7 @@ class Step:
     transfers: tuple[Transfer, ...] = ()
     figures: tuple[Figure, ...] = ()
     gels: tuple[Gel, ...] = ()
-    expected: tuple[str, ...] = ()
+    expected: tuple[Observation | str, ...] = ()
     calculator: CountToNet | None = None
     troubleshooting: tuple[Troubleshooting, ...] = ()
     holes: tuple[Hole, ...] = ()
@@ -1458,6 +1478,17 @@ class Step:
         (Caution(text='Keep it on ice.', citation=None),)
         """
         return cast("tuple[Caution, ...]", self.cautions)
+
+    @property
+    def observed(self) -> tuple[Observation, ...]:
+        """Every expected line, each an `Observation`, a bare string being one citing nothing.
+
+        Examples
+        --------
+        >>> Step("Run the gel", expected=("One band at 749 bp.",)).observed
+        (Observation(text='One band at 749 bp.', citation=None),)
+        """
+        return tuple(Observation(one) if isinstance(one, str) else one for one in self.expected)
 
     @property
     def noted(self) -> tuple[Note, ...]:
@@ -1771,6 +1802,7 @@ class Protocol:
                 *(t.citation for s in self.steps for t in s.troubleshooting),
                 *(c.citation for s in self.steps for c in s.cautioned),
                 *(n.citation for s in self.steps for n in s.noted),
+                *(o.citation for s in self.steps for o in s.observed),
                 *(w.citation for s in self.steps for w in s.waits),
             )
             if citation
@@ -2102,13 +2134,13 @@ def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
 
 
 def _plain(value: Any) -> Any:
-    """Return `value` as JSON data, writing a note or caution citing nothing as its text alone.
+    """Return `value` as JSON data, writing a sentence citing nothing as its text alone.
 
     So the common sentence stays the bare string a hand-edited file writes, and only one
     carrying a citation grows an object.
     """
     match value:
-        case Note(citation=None) | Caution(citation=None):
+        case Note(citation=None) | Caution(citation=None) | Observation(citation=None):
             return value.text
         case _ if is_dataclass(value) and not isinstance(value, type):
             return {f.name: _plain(getattr(value, f.name)) for f in fields(value)}

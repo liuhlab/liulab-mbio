@@ -74,7 +74,6 @@ from mbio.cloning.restriction.bench import (
     COHESIVE_SECONDS,
     COLUMN_RECOVERY,
     CONTROLS,
-    CONTROLS_CITATION,
     DIGEST_SECONDS,
     ELUATE_CAUTION,
     HIGH_LIGASE_UNITS_UL,
@@ -613,13 +612,6 @@ def _steps(
                 colonies="No supplier states a colony count for this method, so run the controls "
                 "below and read the plate against them rather than against a number.",
                 expected=CONTROLS,
-                notes=(
-                    Note(
-                        "Each control is read against the others: what they promise is a ratio "
-                        "of colonies, not a count.",
-                        citation=CONTROLS_CITATION,
-                    ),
-                ),
             ),
             colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
             _diagnostic_step(diagnostic, product=ligation.product),

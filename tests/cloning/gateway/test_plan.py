@@ -122,7 +122,7 @@ def test_the_protocol_says_what_each_junction_spells_and_that_it_is_not_scarless
     protocol = gateway_plan.protocol()
 
     assert any("not scarless" in line for line in protocol.highlights)
-    expected = " ".join(protocol.steps[1].expected)
+    expected = " ".join(one.text for one in protocol.steps[1].observed)
     assert REGIONS["attB1"] in expected
     assert REGIONS["attB2"] in expected
 
@@ -320,7 +320,7 @@ def test_the_protocol_carries_the_pcr_step_its_program_and_its_expected_band(
     ]
     step = protocol.steps[0]
     assert step.programs[0].title == f"{made.name} PCR"
-    assert f"One band at {made.length} bp" in " ".join(step.expected)
+    assert f"One band at {made.length} bp" in " ".join(one.text for one in step.observed)
     assert any(made.polymerase.name in component.name for component in step.tables[0].components)
     assert [oligo.name for oligo in protocol.oligos] == [
         report.primer.name for report in amplified_plan.reports
@@ -400,11 +400,11 @@ def test_the_protocol_carries_the_colony_pcr_its_program_the_gel_and_the_sequenc
     assert screen.tables
     assert [lane.label for lane in screen.gels[0].lanes] == [CORRECT_CLONE, EMPTY_CLONE]
     assert f"{gateway_plan.colony.agarose_percent:g}% gel" in " ".join(screen.instructions)
-    assert not any("reversed" in line.lower() for line in screen.expected)
+    assert not any("reversed" in one.text.lower() for one in screen.observed)
     # Gateway asks for no junction primer, so the line saying where one stops is left out.
-    assert not any("junction primer" in line for line in screen.expected)
+    assert not any("junction primer" in one.text for one in screen.observed)
     assert any("pCR8/GW/TOPO" in n.text for n in confirm.noted)
-    assert REGIONS["attB1"] in " ".join(confirm.expected)
+    assert REGIONS["attB1"] in " ".join(one.text for one in confirm.observed)
 
 
 def test_both_sets_of_oligos_reach_the_order_sheet_with_what_each_is_for(

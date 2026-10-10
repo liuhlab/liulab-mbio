@@ -14,7 +14,7 @@ from collections.abc import Mapping, Sequence
 
 from mbio.barcodes import deletion_ambiguity
 from mbio.bench.amounts import CONVERSION_CITATION, Amount, to_nanograms
-from mbio.bench.coverage import COMPLETENESS_CITATION, MARKS_CITATION, SKEW_COST_CITATION
+from mbio.bench.coverage import COMPLETENESS_CITATION, SKEW_COST_CITATION
 from mbio.bench.steps import card, listed
 from mbio.checks import counted
 from mbio.enzymes import Enzyme
@@ -773,10 +773,6 @@ def _representation_step(run: Run, pair: ReadPair | None) -> Step:
             marks_sentence(constructs, marks, "of the combinations"),
         ),
         notes=(
-            Note(
-                "The three marks above are a pooled library's acceptance bar.",
-                citation=MARKS_CITATION,
-            ),
             "Read representation again after every later bottleneck — the final assembly, and "
             "anything downstream that resamples the library. Linkage is read once; this one is "
             "read at each.",
