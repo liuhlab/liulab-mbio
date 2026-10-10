@@ -9,9 +9,11 @@ from typer.testing import CliRunner
 from mbio.cli import app
 from mbio.io import read_record
 from mbio.sequence import Feature, Segment, SequenceRecord
-from mbio.verification.cli import CONSENSUS_CAVEAT, read_result, report
+from mbio.verification.cli import CONSENSUS_CAVEAT, PAGE, read_result, report
 from mbio.verification.judge import verify
 from mbio.verification.result import SequencingResult
+
+from ..html import parse
 
 #: The Golden Gate plan's product: its GFP insert between two tagged junctions.
 PRODUCT = Path(__file__).parents[2] / "docs" / "examples" / "pUC19-GFP" / "product.dna"
@@ -93,6 +95,17 @@ def test_a_trace_that_is_not_this_product_prints_one_line_and_nothing_else(data_
     [line, clone] = lines
     assert re.match(r"3730\s+fail\s+does not read as this product: \d+ of \d+ trusted bases", line)
     assert clone == "not verified"
+
+
+def test_out_writes_the_clone_s_page_and_prints_its_path_last(planted, data_dir, tmp_path):
+    out = tmp_path / "made"
+    code, lines = _run(PRODUCT, planted, data_dir / "3730.ab1", "--out", out)
+    assert code == 1
+    assert lines[-2:] == ["not verified", str(out / PAGE)]
+    page = parse((out / PAGE).read_text(encoding="utf-8"))
+    rows = [row.find_all("th")[0].text for row in page.find_all("tbody")[0].find_all("tr")]
+    assert rows[0] == "ATGA junction"
+    assert "3730" in rows
 
 
 @pytest.mark.parametrize("given", ["folder", "calls.tsv"])

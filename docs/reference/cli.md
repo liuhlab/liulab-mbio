@@ -285,7 +285,7 @@ makes there, the intended one first.
 and gives each junction and each insert a verdict.
 
 ```bash
-pixi run mbio sequence-verify PRODUCT RESULT
+pixi run mbio sequence-verify PRODUCT RESULT --out DIR
 ```
 
 | Argument or option | Default | What it is |
@@ -293,6 +293,7 @@ pixi run mbio sequence-verify PRODUCT RESULT
 | `PRODUCT` | required | The plasmid the clone should be, such as the `product.dna` a plan wrote |
 | `RESULT` | required | A Sanger read as `.ab1`, or a whole-plasmid consensus as FASTA, GenBank or `.dna`. Give one or more |
 | `--feature` | none | A feature to judge, in place of the junctions and inserts. Repeat it once per feature |
+| `--out` | none | A folder to write the clone's page into, as `verification.html` |
 
 A cloning plan marks each junction in the product it writes, so the command finds the junctions
 and the inserts between them on its own. It marks the junction the vector's own bases follow,
@@ -307,6 +308,11 @@ A consensus can't show a mixed sample: the plasmid read most becomes the consens
 says so. A result where more than a tenth of the bases it trusts disagree, or fail to line up,
 prints one line, that it does not read as this plasmid, and nothing else. The vendor's table of
 reads at each base is not read yet, so give the consensus file rather than the folder.
+
+With `--out`, it also writes a page to read the result by, and prints its path last. The page
+gives the verdict and the same table, then a map of the plasmid with each read and each
+difference on it, and a close-up of every difference. Under a Sanger read's bases it draws the
+trace.
 
 The command exits with 1 when the clone is not verified, so a script can stop on it.
 

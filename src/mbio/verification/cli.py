@@ -2,6 +2,7 @@
 
 `mbio.cli` mounts `sequence_verify` on the root app, as it writes `codon-optimize` there. The
 regions judged are the ones `regions` reads off the product, or the features `--feature` names.
+`--out` also writes the clone's page, `draw_page`'s, each trace drawn under its bases.
 """
 
 from collections.abc import Sequence
@@ -13,8 +14,12 @@ import typer
 from mbio.checks import Check
 from mbio.io import read_record
 from mbio.verification.judge import Verification, regions, verify
+from mbio.verification.page import draw_page
 from mbio.verification.result import SequencingResult
-from mbio.verification.trace import read_trace
+from mbio.verification.trace import Signal, read_signal, read_trace
+
+#: What `--out` names the clone's page in the directory it is given.
+PAGE = "verification.html"
 
 #: What a consensus with no per-base support cannot show, printed beside each one:
 #: `docs/research/sequencing-read-evidence.md`, section 3.5.
@@ -71,6 +76,14 @@ def sequence_verify(
             "per feature.",
         ),
     ] = None,
+    out: Annotated[
+        Path | None,
+        typer.Option(
+            "--out",
+            file_okay=False,
+            help=f"A directory to write the clone's page into, as {PAGE}; made if it is not there.",
+        ),
+    ] = None,
 ) -> None:
     """Give each junction and insert of PRODUCT a verdict from RESULT, then the clone one."""
     try:
@@ -78,13 +91,25 @@ def sequence_verify(
         judged = regions(record, feature or ())
         given = [read_result(one) for one in results]
         made = verify(record, given, judged)
+        signals = _signals(results, given) if out is not None else {}
     except (KeyError, ValueError, NotImplementedError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
     for line in report(made, given, len(record)):
         typer.echo(line)
+    if out is not None:
+        typer.echo(draw_page(record, given, made, signals=signals).write(out / PAGE))
     if not made.verified:
         raise typer.Exit(1)
+
+
+def _signals(paths: Sequence[Path], given: Sequence[SequencingResult]) -> dict[str, Signal]:
+    """Return each trace's signal, by the name of the result read from it."""
+    return {
+        one.name: read_signal(path)
+        for path, one in zip(paths, given, strict=True)
+        if path.suffix.lower() == ".ab1"
+    }
 
 
 def report(made: Verification, results: Sequence[SequencingResult], length: int) -> list[str]:

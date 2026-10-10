@@ -64,6 +64,32 @@ with 1.
 | --- | --- |
 | [product.dna](../examples/pUC19-GFP/product.dna) | the plasmid the Golden Gate plan says to make |
 | [consensus.fasta](../examples/pUC19-GFP/verification/consensus.fasta) | the same bases with two changed, standing in for what a sequencing service sends |
+| [verification.html](../examples/pUC19-GFP/verification/verification.html) | the page `--out` writes for this clone |
+
+## Read it on a page
+
+Add `--out` with a folder, and the command also writes a page there, `verification.html`. It
+prints the page's path last.
+
+```bash
+pixi run mbio sequence-verify docs/examples/pUC19-GFP/product.dna \
+  docs/examples/pUC19-GFP/verification/consensus.fasta --out verification
+```
+
+The page reads from the top:
+
+- The verdict: verified or not verified.
+- The table the command prints. Each junction and insert has a row, and so does each
+  difference outside them.
+- A map of the plasmid. Each read is an arrow over the bases it trusts, and every difference is
+  marked in the colour of its row's verdict.
+- A close-up of each difference, a few dozen bases either side. A read's own differences are
+  marked on its arrow, so where two reads disagree, one is marked and the other is not. Under a
+  Sanger read, the close-up draws its trace, with each peak under its base.
+
+A result that does not read as this plasmid gets its row, and nothing is drawn for it.
+[The example's page](../examples/pUC19-GFP/verification/verification.html) is the one this run
+writes.
 
 ## What each verdict means
 
