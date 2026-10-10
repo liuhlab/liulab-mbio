@@ -65,7 +65,7 @@ _BASE_COLORS: Mapping[str, str] = {
     "T": "#cc3311",
 }
 
-#: The most bases an insertion's name spells out; a longer one is named by how many it adds.
+#: The most bases an insertion's caption spells out; a longer one is named by how many it adds.
 _SPELLED = 6
 
 #: What a verdict reads as on the page; a check no threshold judges says so.
@@ -297,12 +297,13 @@ def _verdict(one: Disagreement, statuses: Mapping[str, Status | None]) -> Status
 
 
 def _name(one: Disagreement, record: SequenceRecord) -> str:
-    """Return a disagreement's name as a reader reads it, 1-based: ``1234 C>T``."""
+    """Return a disagreement's name as a reader reads it, 1-based: ``1234 C>T``.
+
+    An insertion is named as the command names it, ``insertion after 1234``.
+    """
     n = len(record)
     if one.kind == "insertion":
-        added = one.bases if len(one.bases) <= _SPELLED else counted(len(one.bases), "base")
-        point = layers.point_text(one.start, n, circular=record.topology == "circular")
-        return f"{point} ins {added}"
+        return one.said(n)
     if one.kind == "deletion":
         if one.end - one.start == 1:
             return f"{position_text(one.start, n)} del"
@@ -328,7 +329,11 @@ def _caption(one: Disagreement, statuses: Mapping[str, Status | None]) -> str:
         where = f"in {', '.join(one.features)}, outside every region"
     else:
         where = "outside every region and feature"
-    return f"{one.kind} {where}, read by {', '.join(one.results)}."
+    kind = one.kind
+    if kind == "insertion":
+        added = one.bases if len(one.bases) <= _SPELLED else counted(len(one.bases), "base")
+        kind = f"insertion of {added}"
+    return f"{kind} {where}, read by {', '.join(one.results)}."
 
 
 def _window(one: Disagreement, record: SequenceRecord) -> tuple[int, int]:

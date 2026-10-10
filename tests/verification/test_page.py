@@ -205,6 +205,9 @@ def test_an_insertion_draws_on_the_map_and_in_its_close_up(
     assert view is not None
     marks = [mark for row in view.rows for mark in row.insertions]
     assert [mark.item.name for mark in marks] == [close.name]
+    # The page names it in the command's words, and its caption says what it adds.
+    assert close.name == one.said(len(bases)) == f"insertion after {PLANTED}"
+    assert close.caption.startswith(f"insertion of {one.bases} in ")
 
 
 def test_a_page_where_every_result_is_gated_holds_only_the_gate_rows_and_not_verified(
