@@ -1408,14 +1408,16 @@ def test_a_highlight_keeps_what_it_names_in_colour_and_dims_every_other_item(
     assert set(sites.values()) == {layers.ENZYME.lower(), layers.DIM}
 
 
-def test_a_highlight_dims_a_name_and_a_translation_an_unlit_item_owns() -> None:
-    """Two paints are dark whatever the item's own colour: a name beside it, and its residues."""
+def test_a_highlight_dims_a_name_a_translation_and_a_gap_an_unlit_item_owns() -> None:
+    """Three paints are dark whatever the item's own colour: a name beside it, its residues, and
+    the line across a joined item's gap."""
     record = SequenceRecord(
         "ATGTAA" + "ACGT" * 10,
         name="dim",
         features=(
             Feature("a long coding name", "CDS", (Segment(0, 6),), strand=Strand.FORWARD),
             Feature("tag", "promoter", (Segment(10, 40),)),
+            Feature("joined", "misc_feature", (Segment(12, 16), Segment(30, 34))),
         ),
     )
 
@@ -1429,6 +1431,16 @@ def test_a_highlight_dims_a_name_and_a_translation_an_unlit_item_owns() -> None:
         for group in parse(drawing.element()).find_all("g", cls="translation")
         for text in group.find_all("text")
     } == {layers.DIM}
+    circle = draw_map(dataclasses.replace(record, topology="circular"), highlight="tag")
+    for drawn in (drawing, circle):
+        gaps = [
+            one.attrs["stroke"]
+            for group in parse(drawn.element()).find_all("g", data_kind="feature")
+            if group.attrs["data-name"] == "joined"
+            for one in group.find_all(("line", "path"), fill="none")
+        ]
+        assert gaps
+        assert set(gaps) == {layers.DIM}
 
 
 def test_a_highlight_moves_no_label(puc19: SequenceRecord, puc19_file: Path) -> None:

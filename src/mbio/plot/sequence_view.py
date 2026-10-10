@@ -755,7 +755,7 @@ def _row(
         mine = tuple(dataclasses.replace(bar, middle=middle) for bar in run.bars)
         bars.extend(mine)
         shapes.extend(
-            Line(at(piece.start), middle, at(piece.end), middle, _CONNECTOR, 1.2)
+            Line(at(piece.start), middle, at(piece.end), middle, _joint(run.item), 1.2)
             for piece in run.pieces
             if piece.span is None
         )
@@ -1381,6 +1381,11 @@ def _label(label: Label) -> Group:
     return Group(
         tuple(shapes), classes=(item.kind, "label"), data={"kind": item.kind, **item.hover}
     )
+
+
+def _joint(item: Item) -> str:
+    """Return the colour of the line across a joined item's gap: pale grey when it is unlit."""
+    return DIM if item.dim else _CONNECTOR
 
 
 def _ink(item: Item) -> str:

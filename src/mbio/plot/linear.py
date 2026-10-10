@@ -600,7 +600,8 @@ def _items(
     for run in runs:
         _, shapes = groups.setdefault(id(run.item), (run.item, []))
         middle = arrows[id(run)][0].middle
-        shapes.extend(Line(low, middle, high, middle, _CONNECTOR, 1.5) for low, high in run.gaps)
+        joint = DIM if run.item.dim else _CONNECTOR
+        shapes.extend(Line(low, middle, high, middle, joint, 1.5) for low, high in run.gaps)
         shapes.extend(
             Path(_outline(arrow), arrow.span.color, outline_color(arrow.span.color), 0.8)
             for arrow in arrows[id(run)]

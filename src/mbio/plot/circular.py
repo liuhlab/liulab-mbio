@@ -27,6 +27,7 @@ from mbio.plot import labels
 from mbio.plot.fonts import BOLD, SANS, Font
 from mbio.plot.labels import Box, Point
 from mbio.plot.layers import (
+    DIM,
     Item,
     Span,
     hiding,
@@ -498,7 +499,7 @@ def _feature(item: Item, arrows: Sequence[Arrow], name: Name | None) -> Group:
     for before, after in itertools.pairwise(arrows):
         if after.start > before.end:
             joint = _move(before.radius, before.end) + _arc(before.radius, before.end, after.start)
-            shapes.append(Path(joint, "none", _CONNECTOR, 1.5))
+            shapes.append(Path(joint, "none", DIM if item.dim else _CONNECTOR, 1.5))
     shapes.extend(
         Path(_outline(arrow), arrow.span.color, outline_color(arrow.span.color), 0.8)
         for arrow in arrows
