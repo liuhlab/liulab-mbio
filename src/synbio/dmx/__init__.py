@@ -23,8 +23,8 @@ checked as it is read; `method` holds the routes, the addresses, the plates and 
 own pieces; `steps` writes them up as the steps a reader works through; `kit` holds the 96
 barcodes, which are not shipped and are read from a copy the user holds; `carrier` puts one part
 a well in its own plasmid, which is where this method's cargo starts; and `cli` is the verb that
-runs the plan. What a call is worth once it is back is `mbio.bench.readback`'s, because
-any method reading a construct back per well judges it the same way.
+runs the plan. What a call is worth once it is back is `mbio.verification`'s, because
+any method reading a construct back judges it the same way.
 """
 
 from synbio.dmx.build import Build, read_build, read_designs

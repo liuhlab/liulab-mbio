@@ -99,17 +99,46 @@ def test_a_well_too_thin_to_call_is_judged_on_its_depth_alone():
     thin = method.judge_well(
         Well("picked", "A1"), route=method.ROUTE_LIGATION, reads=4, called=(), designed=designed
     )
-    deep = method.judge_well(
-        Well("picked", "A2"),
-        route=method.ROUTE_LIGATION,
-        reads=400,
-        called=("AGGAA",),
-        designed=designed,
-    )
+    deep = judged(("AGGAATCTTCC",), designed)
     assert [one.name for one in thin.checks] == ["reads_per_well"]
     assert thin.called is False
-    assert [one.name for one in deep.checks] == ["reads_per_well", "well_identity"]
+    assert [one.name for one in deep.checks] == ["reads_per_well", "designed region", "picked A2"]
     assert deep.status == "fail"
+
+
+DESIGNED = "AGGAATGAAACCGTTCCGATTACAGG"
+
+
+def judged(called: tuple[str, ...], designed: str = DESIGNED):
+    """Return the verdict on a well read deeply, by the barcode ligation route."""
+    well = Well("picked", "A2")
+    return method.judge_well(
+        well, route=method.ROUTE_LIGATION, reads=400, called=called, designed=designed
+    )
+
+
+def test_a_well_passes_on_an_exact_match_and_fails_on_one_mismatch_or_a_mixture():
+    """A barcode that no longer names its member cannot be put right by the linkage read."""
+    assert judged((DESIGNED,)).status == "pass"
+    assert judged((DESIGNED[:12] + "T" + DESIGNED[13:],)).status == "fail"
+    mixed = judged((DESIGNED, DESIGNED[:-1] + "A"))
+    assert [one.status for one in mixed.checks] == ["pass", "fail", "fail"]
+    nothing = judged(())
+    assert [one.status for one in nothing.checks] == ["pass", None]
+
+
+@pytest.mark.parametrize(
+    ("called", "where"),
+    [("C" + DESIGNED[1:], "substitution at 1"), (DESIGNED[:-1] + "A", "substitution at 26")],
+)
+def test_a_mismatched_end_base_fails_as_a_substitution_there(called, where):
+    region = judged((called,)).checks[1]
+    assert (region.status, region.detail) == ("fail", where)
+
+
+def test_bases_a_consensus_carries_beyond_the_designed_region_fail_nothing():
+    verdict = judged(("TTTGCA" + DESIGNED + "CCGTA",))
+    assert [one.status for one in verdict.checks] == ["pass", "pass", "pass"]
 
 
 def test_a_kit_the_user_holds_is_read_and_its_chain_checked(tmp_path):
