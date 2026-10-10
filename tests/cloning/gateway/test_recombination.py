@@ -17,7 +17,7 @@ from mbio.sequence import (
     Strand,
     reverse_complement,
 )
-from mbio.verification.judge import JUNCTION_TAG
+from mbio.verification.judge import BACKBONE, JUNCTION_TAG
 
 from .records import att_site, destination_vector
 
@@ -48,7 +48,7 @@ def test_each_junction_spells_the_att_site_the_arithmetic_names(lr: Recombinatio
     assert reverse_complement(product.extract(second.span)) == REGIONS["attB2"]
     # Site 1 opens onto the segment that moved, site 2 back onto the backbone.
     tags = {one.name: one.qualifiers.get(JUNCTION_TAG) for one in product.features}
-    assert (tags["attB1"], tags["attB2"]) == ((lr.moved.name,), (lr.backbone.name,))
+    assert (tags["attB1"], tags["attB2"]) == ((lr.moved.name,), (BACKBONE,))
 
 
 def test_the_product_carries_the_insert_between_the_two_att_sites(

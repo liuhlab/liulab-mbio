@@ -47,7 +47,7 @@ from mbio.sites import (
     find_sites,
     primer_tail,
 )
-from mbio.verification.judge import JUNCTION_TAG
+from mbio.verification.judge import BACKBONE, JUNCTION_TAG
 
 #: What a junction is drawn in, and the overhang on an amplicon that becomes one. A feature
 #: built in code has no colour of its own, and `mbio.snapgene` writes SnapGene's default grey
@@ -472,7 +472,8 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
     Two ends join where their overhangs are equal, both being written on the top strand, so the
     parts are chained from the first one round until the circle closes. That first part sets the
     origin: the product is turned so its template's own first base keeps the place it had, which
-    leaves the vector's coordinates readable and keeps a junction off base zero.
+    leaves the vector's coordinates readable, and keeps a junction off base zero wherever that
+    base lies in the vector's own span rather than in the one the inserts replaced.
 
     Parameters
     ----------
@@ -503,7 +504,8 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
     bases = ""
     features: list[Feature] = []
     primers: list[Primer] = []
-    joins: list[tuple[int, Part, Part]] = []
+    # The last of each is whether the vector's own bases follow that join.
+    joins: list[tuple[int, Part, Part, bool]] = []
     for place, (index, piece) in enumerate(zip(order, cut, strict=True)):
         part = parts[index]
         at = len(bases)
@@ -513,8 +515,11 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
         primers.extend(kept)
         primers.append(annealed(part.forward, at + len(part.left_overhang), Strand.FORWARD))
         primers.append(annealed(part.reverse, at + part.fragment_length, Strand.REVERSE))
-        joins.append((at, parts[order[place - 1]], part))
-    features.extend(_junction_feature(at, before, after, one) for at, before, after in joins)
+        joins.append((at, parts[order[place - 1]], part, index == order[0]))
+    features.extend(
+        _junction_feature(at, before, after, one, BACKBONE if vector else after.name)
+        for at, before, after, vector in joins
+    )
     origin = origin_in(parts[order[0]].template, *parts[order[0]].span)
     product = SequenceRecord(
         bases,
@@ -532,7 +537,7 @@ def assemble(parts: Sequence[Part], enzyme: EnzymeLike, *, name: str = "") -> As
                     Junction(
                         (at - origin) % len(bases), after.left_overhang, before.name, after.name
                     )
-                    for at, before, after in joins
+                    for at, before, after, _ in joins
                 ),
                 key=lambda junction: junction.start,
             )
@@ -569,8 +574,14 @@ def _junction_name(overhang: str) -> str:
     return f"{overhang} junction"
 
 
-def _junction_feature(at: int, before: Part, after: Part, enzyme: Enzyme) -> Feature:
-    """Draw the junction that begins at `at`, where `before` gives way to `after`."""
+def _junction_feature(
+    at: int, before: Part, after: Part, enzyme: Enzyme, following: str
+) -> Feature:
+    """Draw the junction that begins at `at`, where `before` gives way to `after`.
+
+    Its tag names `following`: the part whose bases come after it, or `BACKBONE` for the
+    vector's.
+    """
     overhang = after.left_overhang
     return Feature(
         _junction_name(overhang),
@@ -579,7 +590,7 @@ def _junction_feature(at: int, before: Part, after: Part, enzyme: Enzyme) -> Fea
         color=JUNCTION_COLOR,
         qualifiers={
             "note": (f"{before.name} to {after.name}, {enzyme.name} overhang",),
-            JUNCTION_TAG: (after.name,),
+            JUNCTION_TAG: (following,),
         },
     )
 

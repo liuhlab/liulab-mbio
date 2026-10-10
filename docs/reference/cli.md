@@ -295,9 +295,9 @@ pixi run mbio sequence-verify PRODUCT RESULT
 | `--feature` | none | A feature to judge, in place of the junctions and inserts. Repeat it once per feature |
 
 A cloning plan marks each junction in the product it writes, so the command finds the junctions
-and the inserts between them on its own. The vector is left out: it is the stretch holding base
-1, or the one before the junction that holds it. On a plasmid no plan wrote, name what to judge
-with `--feature`.
+and the inserts between them on its own. It marks the junction the vector's own bases follow,
+so the vector itself is left out. On a plasmid no plan wrote, name what to judge with
+`--feature`.
 
 It prints one line for each junction and insert, with its verdict: pass, fail, warn or no
 verdict. Any difference outside them is listed with the feature it falls in, and judges nothing.

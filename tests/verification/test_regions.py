@@ -1,25 +1,23 @@
 """The regions a verification judges, read off the junctions a plan tagged."""
 
-from pathlib import Path
-
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, SeqFeature, SimpleLocation
 from Bio.SeqRecord import SeqRecord
 
+from mbio.cloning.restriction import plan_restriction
+from mbio.edits import rotate
 from mbio.io import read_record
 from mbio.sequence import Feature, Segment, SequenceRecord
 from mbio.snapgene import write_dna
-from mbio.verification.judge import JUNCTION_TAG, regions
-
-#: The Golden Gate plan's product, as `scripts/check_examples.py` keeps it current.
-PRODUCT = Path(__file__).parents[2] / "docs" / "examples" / "pUC19-GFP" / "product.dna"
+from mbio.verification.judge import BACKBONE, JUNCTION_TAG, regions
 
 
 @pytest.fixture(scope="module")
-def product() -> SequenceRecord:
-    return read_record(PRODUCT)
+def product(plan) -> SequenceRecord:
+    """The shared Golden Gate plan's product: GFP in the pUC19 cloning site."""
+    return plan.product
 
 
 def _seen(record: SequenceRecord) -> list[tuple[str, list[tuple[int, int]], tuple]]:
@@ -34,7 +32,7 @@ def test_a_product_gives_its_junctions_and_the_insert_between_them(product):
     assert _seen(product) == [
         ("ATGA junction", [(395, 399)], ("GFP",)),
         ("GFP insert", [(399, 1112)], ()),
-        ("TGGC junction", [(1112, 1116)], ("pUC19 backbone",)),
+        ("TGGC junction", [(1112, 1116)], (BACKBONE,)),
     ]
 
 
@@ -77,24 +75,33 @@ def test_a_repeated_part_takes_an_ordinal():
     record = SequenceRecord(
         "A" * 100,
         topology="circular",
-        features=(_junction(20, 30, "GFP"), _junction(40, 50, "GFP"), _junction(60, 70, "vector")),
+        features=(
+            _junction(20, 30, "GFP"),
+            _junction(40, 50, "GFP"),
+            _junction(60, 70, BACKBONE),
+        ),
     )
     inserts = [(one.name, one.segments[0]) for one in regions(record) if one.name != "j"]
     assert inserts == [("GFP insert", Segment(30, 40)), ("GFP insert 2", Segment(50, 60))]
 
 
-def test_a_junction_holding_base_0_leaves_the_backbone_it_closes_out():
-    # A plan given a vector turned to within a junction's own bases writes this: the product
-    # keeps that origin, so no stretch holds base 0 and the junction straddling it does.
-    record = SequenceRecord(
-        "A" * 100,
-        topology="circular",
-        features=(_junction(20, 30, "GFP"), _junction(95, 105, "vector")),
-    )
-    inserts = [(one.name, one.segments[0]) for one in regions(record) if one.name != "j"]
-    # The stretch that junction opens is counted back into the record; the one it closes, the
-    # 65 bases of backbone from 30, is left out.
-    assert inserts == [("vector insert", Segment(5, 20))]
+@pytest.mark.parametrize("turn", [444, 450])
+def test_a_product_whose_origin_lies_in_a_junction_judges_the_insert_and_not_the_vector(
+    puc19, gfp, turn
+):
+    # pUC19 turned so its own first base lands inside a junction's bases: at 444 inside the
+    # junction the insert follows, at 450 inside the one the vector follows. The product keeps
+    # that origin, so where base 0 falls says nothing about which side the vector lies on.
+    product = plan_restriction(rotate(puc19, turn), gfp).product
+    judged = sorted((one.name, one.qualifiers.get(JUNCTION_TAG, ())) for one in regions(product))
+    assert judged == [
+        ("AAGCTT junction", (BACKBONE,)),
+        ("GCATGC junction", ("GFP amplicon",)),
+        ("GFP amplicon insert", ()),
+    ]
+    # The one stretch judged is GFP, and not the 2.6 kb of vector on the other side of it.
+    insert = next(one for one in regions(product) if one.name.endswith("insert"))
+    assert len(product.extract(insert)) == len(gfp)
 
 
 def test_a_linear_record_has_no_stretch_round_from_its_last_junction():

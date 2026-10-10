@@ -46,7 +46,7 @@ from mbio.sequence import (
     position_text,
     reverse_complement,
 )
-from mbio.verification.judge import JUNCTION_TAG
+from mbio.verification.judge import BACKBONE, JUNCTION_TAG
 
 #: What an overlap is drawn in. A feature built in code has no colour of its own, and
 #: `mbio.snapgene` writes SnapGene's default grey for one that has none.
@@ -557,7 +557,8 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
     Each part contributes its own span, and the overlap at each junction is the bases one of
     the two parts already spells there. The first part sets the origin: the product is turned
     so its template's own first base keeps the place it had, which leaves the vector's
-    coordinates readable and keeps a junction off base zero.
+    coordinates readable, and keeps a junction off base zero wherever that base lies in the
+    vector's own span rather than in the one the inserts replaced.
 
     Parameters
     ----------
@@ -596,7 +597,11 @@ def assemble(parts: Sequence[Part], *, name: str = "") -> Assembly:
     joins = [
         _junction(parts[index - 1], part, starts[index], length) for index, part in enumerate(parts)
     ]
-    features.extend(_overlap_feature(one) for one in joins)
+    # The first join is the one the vector's own bases follow, parts[0] being the vector.
+    features.extend(
+        _overlap_feature(one, BACKBONE if index == 0 else one.after)
+        for index, one in enumerate(joins)
+    )
     product = SequenceRecord(
         bases,
         topology="circular",
@@ -653,8 +658,12 @@ def _junction(before: Part, after: Part, at: int, length: int) -> Junction:
     )
 
 
-def _overlap_feature(junction: Junction) -> Feature:
-    """Draw what carries the junction, so a map shows where it is and what holds it together."""
+def _overlap_feature(junction: Junction, following: str) -> Feature:
+    """Draw what carries the junction, so a map shows where it is and what holds it together.
+
+    Its tag names `following`: the part whose bases come after it, or `BACKBONE` for the
+    vector's.
+    """
     if junction.bridge:
         return Feature(
             junction.feature_name,
@@ -666,7 +675,7 @@ def _overlap_feature(junction: Junction) -> Feature:
                     f"{junction.bridge}, {junction.length} bp of {junction.before} and as many "
                     f"of {junction.after}; neither carries a tail",
                 ),
-                JUNCTION_TAG: (junction.after,),
+                JUNCTION_TAG: (following,),
             },
         )
     return Feature(
@@ -679,7 +688,7 @@ def _overlap_feature(junction: Junction) -> Feature:
                 f"{junction.length} bp shared with {junction.before}, taken from "
                 f"{junction.taken_from}",
             ),
-            JUNCTION_TAG: (junction.after,),
+            JUNCTION_TAG: (following,),
         },
     )
 

@@ -55,6 +55,10 @@ MISREAD_SHARE = 0.1
 #: a restriction piece was cut from or a Gateway segment moved from.
 JUNCTION_TAG = "mbio_junction"
 
+#: What `JUNCTION_TAG` holds on the one junction the vector's own bases follow. The plan knows
+#: which that is, so nothing has to work it out from where the product's origin was turned to.
+BACKBONE = "backbone"
+
 
 #: The kinds of disagreement.
 type Kind = Literal["substitution", "insertion", "deletion", "mixed"]
@@ -432,10 +436,9 @@ def regions(record: SequenceRecord, names: Iterable[str] = ()) -> tuple[Feature,
     """Return the features a verification of `record` judges, in record order.
 
     These are the junctions tagged with `JUNCTION_TAG`, and the insert between each two
-    consecutive ones, named for the part the first one's tag names. The stretch holding base 0
-    is the vector's backbone, since a product keeps its vector's origin, and is left out, as is
-    the stretch whose closing junction holds base 0. A name that repeats takes an ordinal.
-    Given `names`, the features of `record` so named are returned instead.
+    consecutive ones, named for the part the first one's tag names. The stretch the junction
+    tagged `BACKBONE` opens is the vector, and is left out. A name that repeats takes an
+    ordinal. Given `names`, the features of `record` so named are returned instead.
 
     Raises
     ------
@@ -444,8 +447,9 @@ def regions(record: SequenceRecord, names: Iterable[str] = ()) -> tuple[Feature,
 
     Examples
     --------
+    >>> tags = ((10, "GFP"), (30, BACKBONE))
     >>> joins = [Feature("j", "misc_feature", (Segment(at, at + 2),),
-    ...          qualifiers={JUNCTION_TAG: (part,)}) for at, part in ((10, "GFP"), (30, "pUC19"))]
+    ...          qualifiers={JUNCTION_TAG: (part,)}) for at, part in tags]
     >>> plasmid = SequenceRecord("A" * 50, topology="circular", features=tuple(joins))
     >>> [(one.name, one.segments[0].start) for one in regions(plasmid)]
     [('j', 10), ('GFP insert', 12), ('j', 30)]
@@ -466,27 +470,26 @@ def regions(record: SequenceRecord, names: Iterable[str] = ()) -> tuple[Feature,
 def _inserts(record: SequenceRecord, junctions: list[Feature]) -> list[Feature]:
     """Return the stretch between each two consecutive junctions, but the backbone.
 
-    A circular record's last junction is followed by its first, one turn on. The backbone is the
-    stretch holding base 0, or, where the junction closing a stretch holds it, that stretch: the
-    product keeps its vector's origin, so base 0 is a vector base and the junction straddling it
-    is where the backbone gives way.
+    A circular record's last junction is followed by its first, one turn on. Which stretch is
+    the vector is the junction's own tag and not a question of geometry: a product keeps its
+    vector's origin, and a junction may straddle base 0, so where that base falls says nothing
+    about which side of that junction the vector lies on.
     """
     length = len(record)
-    # Each stretch, its opening junction, and where the junction closing it ends.
-    gaps: list[tuple[int, int, Feature, int]] = []
+    gaps: list[tuple[int, int, Feature]] = []
     reach = 0
     for before, after in pairwise(junctions):
         reach = max(reach, _end(before))
-        gaps.append((reach, after.segments[0].start, before, _end(after)))
+        gaps.append((reach, after.segments[0].start, before))
     if junctions and record.topology == "circular":
-        last, first = max(junctions, key=_end), junctions[0]
-        gaps.append((_end(last), first.segments[0].start + length, last, _end(first) + length))
+        last = max(junctions, key=_end)
+        gaps.append((_end(last), junctions[0].segments[0].start + length, last))
     # A stretch starting a turn on is brought back into the record.
     kept = sorted(
         (
             (start % length, end - start // length * length, opener)
-            for start, end, opener, closed in gaps
-            if start < end and not _holds_origin(start, closed, length)
+            for start, end, opener in gaps
+            if start < end and opener.qualifiers[JUNCTION_TAG][0] != BACKBONE
         ),
         key=lambda gap: gap[:2],
     )
@@ -501,11 +504,6 @@ def _inserts(record: SequenceRecord, junctions: list[Feature]) -> list[Feature]:
         taken.add(chosen)
         inserts.append(Feature(chosen, "misc_feature", (Segment(start, end),)))
     return inserts
-
-
-def _holds_origin(start: int, end: int, length: int) -> bool:
-    """Whether the span from `start` to `end` holds base 0, which lies at a multiple of `length`."""
-    return -(-start // length) * length < end
 
 
 def _end(feature: Feature) -> int:

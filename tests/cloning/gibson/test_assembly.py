@@ -19,7 +19,7 @@ from mbio.cloning.gibson.design import overlap_after, overlap_before
 from mbio.edits import rotate
 from mbio.primers.thresholds import THRESHOLDS_FOR
 from mbio.sequence import SequenceRecord, reverse_complement
-from mbio.verification.judge import JUNCTION_TAG
+from mbio.verification.judge import BACKBONE, JUNCTION_TAG
 
 #: Where the fixture's own MCS feature sits, which is the span the insert replaces.
 MCS = (395, 452)
@@ -144,4 +144,6 @@ def test_each_junction_is_marked_and_says_which_part_the_bases_came_from(built):
         mark = marks[f"{junction.before}-{junction.after} overlap"]
         assert (mark.segments[0].start, mark.segments[0].end) == (junction.start, junction.end)
         assert junction.taken_from in mark.qualifiers["note"][0]
-        assert mark.qualifiers[JUNCTION_TAG] == (junction.after,)
+        # The one the vector follows is tagged as the backbone, whatever that part is called.
+        following = BACKBONE if junction.after == "pUC19 backbone" else junction.after
+        assert mark.qualifiers[JUNCTION_TAG] == (following,)
