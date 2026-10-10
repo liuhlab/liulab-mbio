@@ -74,14 +74,13 @@ Rule 4 of `docs/agents/writing.md` says how each field is worded; read it before
 - **Volumes in a reaction table**, never buried in a sentence: the reader scales it to their
   reaction count and pipettes from it. Mark anything added to each tube separately, such as
   template, as not part of the master mix. A DNA row the bench measures carries a
-  `calculator`, not a `stock`: its nanograms, the row making up the volume, and the problem
-  shown once it no longer fits. Rename either, and change the calculator too.
+  `calculator`, not a `stock`: its nanograms, the row making it up, and the problem shown once
+  it stops fitting. A count against a floor is a step's own. Rename either, change it.
 - **Thermocycler programs as programs**, with stages, cycles and the lid temperature.
 - **Timers** for any wait the reader has to track. A program gets its own from its run time,
   so add none for one. Give no timer to a time stated only in words, such as overnight.
 - **Expected result at every step**, so the reader knows whether to carry on. Where the answer
-  is a gel, give the gel: band sizes per lane and a named ladder. A count read against a floor is
-  the step's own `calculator`.
+  is a gel, give the gel: band sizes per lane and a named ladder.
 - **Troubleshooting** for what actually goes wrong at that step, each with what to do.
 - **Cautions** before a step, **notes** after it.
 - **Sources** for what a vendor protocol or paper gave: each document once in `sources`, cited
