@@ -164,8 +164,10 @@ fold to work: removing a site there changes a shape the virus needs. **Whether i
 is open** — the one published backbone carrying that change reports no titre. Measure it.
 
 **A round comes up short of colonies.** Plate a dilution of every round beside a no-donor
-control, and subtract the control. Run the round again rather than carrying on: members lost
-in one round are missing from all of them after it.
+control, and subtract the control. The round's page does that sum for you: type both counts and
+the dilution into its expected result and it says whether the net clears the floor. Run the
+round again rather than carrying on: members lost in one round are missing from all of them
+after it.
 
 **A part's protein comes back changed.** A junction spells whole codons, so the overhang
 decides the residues either side of it. The planner scores every candidate set across all the

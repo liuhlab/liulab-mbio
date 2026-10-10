@@ -75,7 +75,7 @@ HIGHLIGHTS_HEADING = "Keep in mind"
 
 #: What a calculator's field says while the step's ticks hold it still, so a reader who meant
 #: to correct a number is told why it will not take one.
-FIELD_HELD = "clear the step's ticks to change"
+FIELD_HELD = "untick to change"
 
 #: What one protocol written alone is called, as the data and as the page rendered from it.
 PROTOCOL_DATA_FILE = "protocol.json"

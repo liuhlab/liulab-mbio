@@ -81,7 +81,9 @@ Rule 4 of `docs/agents/writing.md` says how each field is worded; read it before
 - **Timers** for any wait the reader has to track. A program gets its own from its run time,
   so add none for one. Give no timer to a time stated only in words, such as overnight.
 - **Expected result at every step**, so the reader knows whether to carry on. Where the answer
-  is a gel, give the gel: band sizes per lane and a named ladder.
+  is a gel, give the gel: band sizes per lane and a named ladder. Where it is a count read
+  against a floor, the step carries a `calculator`: the floor, what was counted, the control
+  whose count comes off, and the troubleshooting problem a short count shows.
 - **Troubleshooting** for what actually goes wrong at that step, each with what to do.
 - **Cautions** before a step, **notes** after it.
 - **Sources** for what a vendor protocol or paper gave: each document once in `sources`, cited

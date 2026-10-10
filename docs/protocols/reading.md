@@ -77,9 +77,9 @@ have a field in the `Stock` column: `82 ng/µL` for the pUC19 backbone. That is 
 concentration the planned 1 µL assumes. Type the one you measured and the row gives the volume
 that carries the same picomoles. The water takes up the difference, so the reaction stays 15
 µL. The page keeps your number, and a button beside it offers the planned one back. Once you
-tick anything in step 7, the field holds still, so no volume moves while you pipette. Clear the
-ticks to change it. If the DNA no longer fits, a line under the table says so in step 6's own
-troubleshooting words.
+tick anything in step 7, the field holds still, so no volume moves while you pipette; it says
+`untick to change` beside it. Clear the ticks and it takes a number again. If the DNA no longer
+fits, a line under the table says so in step 6's own troubleshooting words.
 
 **Two senses of `reaction` sit on one page.** In a reaction table, one reaction is one tube of
 that mix, so a step done in 72 wells says 72. In the cards at the top, `2 in one reaction` means
@@ -128,6 +128,13 @@ after the first PCR, `Clean DNA, free of polymerase, primers and dNTPs.` after t
 A step that shows you nothing at the time says so, and says when it will show. Troubleshooting
 follows: a short list of a problem and what to do about it. Read it before the step, not after
 it has gone wrong.
+
+Where the result is a count you have to work out, the expected result gives you the sum. Each
+round of [the library page](../examples/ap1-library/protocol/06-library-assembly-in-rounds.html)
+asks for a number of colonies. Type what you counted, what grew on the control plate and how
+far you diluted, and the line below says how many colonies that comes to and whether it clears
+the floor the round asked for. Short of it, the step's own troubleshooting line appears. The
+chance a member is missing stays as planned: that one is not worked out again for your count.
 
 ## The simulated gel
 
