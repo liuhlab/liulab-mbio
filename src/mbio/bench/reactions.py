@@ -6,10 +6,11 @@ the fix named, and one last line fills the rest.
 """
 
 from collections.abc import Sequence
+from dataclasses import replace
 
 from mbio.bench.amounts import Amount
-from mbio.bench.steps import listed
-from mbio.protocol.model import Component, ReactionTable, number
+from mbio.bench.steps import TOO_DILUTE, listed
+from mbio.protocol.model import AmountToVolume, Component, ReactionTable, number
 
 #: What fills a reaction to volume, where the method names nothing of its own to go in with it.
 WATER = "Nuclease-free water"
@@ -24,6 +25,7 @@ def reaction_table(
     filler: str = WATER,
     reactions: int = 1,
     what: str = "",
+    measured: bool = False,
 ) -> ReactionTable:
     """Return one reaction: the DNA per tube, the rest of it, and the line that fills the volume.
 
@@ -44,6 +46,10 @@ def reaction_table(
         How many reactions the table is scaled to.
     what
         What a refusal calls this reaction; the title by default.
+    measured
+        Whether a step before this one measures the DNA, so each DNA row takes the
+        concentration the bench measured, gives the volume that carries its amount, and makes
+        the difference up with the last line.
 
     Raises
     ------
@@ -60,8 +66,19 @@ def reaction_table(
     taken_ul = sum(component.volume_ul for component in components)
     fits(amounts, volume_ul=volume_ul, taken_ul=taken_ul, what=what or title)
     used = sum(amount.volume_ul for amount in amounts) + taken_ul
+    dna = dna_components(amounts)
+    if measured:
+        dna = tuple(
+            replace(
+                row,
+                calculator=AmountToVolume(
+                    amount.nanograms, made_up_by=filler, too_dilute=TOO_DILUTE.problem
+                ),
+            )
+            for row, amount in zip(dna, amounts, strict=True)
+        )
     rows = (
-        *dna_components(amounts),
+        *dna,
         *components,
         Component(filler, round(volume_ul - used, 2), final=f"to {volume_ul:g} µL"),
     )

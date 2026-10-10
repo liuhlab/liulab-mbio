@@ -451,7 +451,7 @@ def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
 
 def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
     """Set the one-tube digest and ligation up."""
-    table = assembly_reaction(enzyme, amounts)
+    table = assembly_reaction(enzyme, amounts, measured=True)
     total = sum(component.volume_ul for component in table.components)
     return Step(
         "Set up the Golden Gate reaction",

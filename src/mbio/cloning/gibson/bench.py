@@ -428,12 +428,16 @@ def assembly_dna_check(product: AssemblyProduct, amounts: Sequence[Amount]) -> C
 
 
 def assembly_reaction(
-    product: AssemblyProduct, amounts: Sequence[Amount], *, reactions: int = 1
+    product: AssemblyProduct,
+    amounts: Sequence[Amount],
+    *,
+    reactions: int = 1,
+    measured: bool = False,
 ) -> ReactionTable:
     """Return the one-tube assembly reaction this product's manual sets up.
 
     The DNA goes in each tube and the master mix is half the reaction, which is the order and
-    the proportion NEB's table gives.
+    the proportion NEB's table gives. `measured` is `reaction_table`'s.
 
     Raises
     ------
@@ -455,6 +459,7 @@ def assembly_reaction(
         volume_ul=product.reaction_ul,
         title=f"{product.name} reaction",
         reactions=reactions,
+        measured=measured,
     )
 
 

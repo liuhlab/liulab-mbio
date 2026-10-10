@@ -370,9 +370,15 @@ def ligation_amounts(
 
 
 def ligation_reaction(
-    amounts: Sequence[Amount], *, volume_ul: float = LIGATION_VOLUME_UL, reactions: int = 1
+    amounts: Sequence[Amount],
+    *,
+    volume_ul: float = LIGATION_VOLUME_UL,
+    reactions: int = 1,
+    measured: bool = False,
 ) -> ReactionTable:
     """Return the ligation reaction for these fragments, the backbone first.
+
+    `measured` is `reaction_table`'s.
 
     Raises
     ------
@@ -396,6 +402,7 @@ def ligation_reaction(
         volume_ul=volume_ul,
         title="Ligation, T4 DNA Ligase (NEB #M0202)",
         reactions=reactions,
+        measured=measured,
     )
 
 

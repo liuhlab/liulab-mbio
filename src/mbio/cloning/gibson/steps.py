@@ -593,7 +593,7 @@ def _assembly_step(
     A stitched part and a bridging oligo go into this same tube, each at the dose its own source
     states rather than at the picomoles the table gives a fragment.
     """
-    table = assembly_reaction(product, amounts)
+    table = assembly_reaction(product, amounts, measured=True)
     tier = product.tier(len(amounts))
     total = sum(component.volume_ul for component in table.components)
     ratio = Note(

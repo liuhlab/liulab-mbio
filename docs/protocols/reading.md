@@ -56,9 +56,9 @@ sits above the title instead.
 Each step and each instruction has a tick box. Tick every instruction of a step and the step ticks
 itself; clear one and it clears. A step partly done shows a dash in its box. Tick the step and all
 its instructions tick with it. The bar at the top counts steps: `0 of 11 steps done`. The page
-remembers your ticks, your reaction counts and your running timers, so closing the tab does not
-lose the sitting. `Reset page` puts all three back to what was written. `Print` lays the page out
-for paper.
+remembers your ticks, your reaction counts, the concentrations you type and your running timers,
+so closing the tab does not lose the sitting. `Reset page` puts them all back to what was written.
+`Print` lays the page out for paper.
 
 A step holds some of these, always in this order: cautions, instructions, a reaction table, a
 thermocycler program, timers, the expected result, troubleshooting, and notes. A note is the one
@@ -71,6 +71,15 @@ rescales. `1 rxn (µL)` is one tube; `Mix for N (µL)` is the master mix, which 
 10% extra. A line under the table says how to split it, such as
 `Put 49 µL of mix in each tube, then add 1 µL Template DNA`, because the template is the one
 thing that differs tube to tube.
+
+Step 6 measures each fragment, and step 7's table takes what you measured. Its two DNA rows
+have a field in the `Stock` column: `82 ng/µL` for the pUC19 backbone. That is the
+concentration the planned 1 µL assumes. Type the one you measured and the row gives the volume
+that carries the same picomoles. The water takes up the difference, so the reaction stays 15
+µL. The page keeps your number, and a button beside it offers the planned one back. Once you
+tick anything in step 7, the field holds still, so no volume moves while you pipette. Clear the
+ticks to change it. If the DNA no longer fits, a line under the table says so in step 6's own
+troubleshooting words.
 
 **Two senses of `reaction` sit on one page.** In a reaction table, one reaction is one tube of
 that mix, so a step done in 72 wells says 72. In the cards at the top, `2 in one reaction` means

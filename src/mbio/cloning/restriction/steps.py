@@ -1061,7 +1061,7 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
             f"{OVERNIGHT_CELSIUS:g} °C.",
             "Then run the heat step below, and chill on ice.",
         ),
-        tables=(ligation_reaction(amounts),),
+        tables=(ligation_reaction(amounts, measured=True),),
         programs=(ligation_program(blunt=ligation.blunt),),
         expected=(
             *(

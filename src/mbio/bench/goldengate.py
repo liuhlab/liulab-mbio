@@ -189,11 +189,12 @@ def assembly_reaction(
     *,
     system: System = LIGASE_MASTER_MIX,
     reactions: int = 1,
+    measured: bool = False,
 ) -> ReactionTable:
     """Return the Golden Gate reaction for these fragments, the vector counted among them.
 
     DNA goes in each tube, everything else into the master mix, which is the order NEB asks for.
-    The PaqCI activator line appears only for PaqCI.
+    The PaqCI activator line appears only for PaqCI. `measured` is `reaction_table`'s.
 
     Raises
     ------
@@ -216,6 +217,7 @@ def assembly_reaction(
         volume_ul=total,
         title=_reaction_title(enzyme, system),
         reactions=reactions,
+        measured=measured,
     )
 
 

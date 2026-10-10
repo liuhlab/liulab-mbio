@@ -6,6 +6,8 @@ import pytest
 
 from mbio.bench.amounts import dna_amount, to_pmol
 from mbio.bench.reactions import floor_ng_ul, reaction_table
+from mbio.bench.steps import TOO_DILUTE
+from mbio.protocol import AmountToVolume
 
 #: The one refusal, which names both ways out: concentrate the DNA, or scale the reaction.
 REFUSAL = (
@@ -32,3 +34,14 @@ def test_a_rows_picomoles_print_three_figures_and_not_six() -> None:
 def test_a_reaction_everything_else_fills_leaves_the_dna_no_concentration_to_arrive_at() -> None:
     with pytest.raises(ValueError, match="leaves a 15 µL reaction no room"):
         floor_ng_ul(100.0, volume_ul=15.0, taken_ul=15.0)
+
+
+def test_a_measured_reaction_lets_each_dna_row_take_the_benchs_concentration() -> None:
+    """Each DNA row carries its weight, gives way to the filler, and fires the measuring step's."""
+    amount = dna_amount("pUC19", 2686, pmol=0.05)
+    dna, water = reaction_table((amount,), volume_ul=15.0, measured=True).components
+
+    assert dna.calculator == AmountToVolume(
+        amount.nanograms, made_up_by=water.name, too_dilute=TOO_DILUTE.problem
+    )
+    assert water.calculator is None

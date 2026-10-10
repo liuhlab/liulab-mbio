@@ -554,8 +554,19 @@ def cleanup_step(
     )
 
 
+#: What the measuring step says when a DNA is too dilute for the reaction after it, and so what
+#: that reaction's calculators fire.
+TOO_DILUTE = Troubleshooting(
+    "Too dilute to fit in the reaction", "Concentrate the amplicon, or scale the reaction up."
+)
+
+
 def quantify_step(amounts: Sequence[Amount]) -> Step:
-    """Return the step that measures what the next reaction is about to take."""
+    """Return the step that measures what the next reaction is about to take.
+
+    The reaction's table takes each concentration measured here, built with
+    `reaction_table(..., measured=True)`, and fires `TOO_DILUTE` where one does not fit.
+    """
     wanted = tuple(
         f"{amount.name}: {number(amount.pmol)} pmol is {amount.nanograms:g} ng, so "
         f"{amount.nanograms / DNA_VOLUME_UL:.0f} ng/µL or more fits in {DNA_VOLUME_UL:g} µL."
@@ -566,20 +577,10 @@ def quantify_step(amounts: Sequence[Amount]) -> Step:
         key="quantify",
         instructions=(
             "Measure each purified amplicon by A260 (NanoDrop) or with a fluorometer (Qubit).",
-            "Work out the volume that carries the picomoles the next table asks for.",
+            "Type each concentration into the next table, which gives the volume to pipette.",
         ),
         expected=wanted,
-        notes=(
-            "Picomoles, not nanograms: the shorter fragment weighs less at the same molar "
-            "ratio. Mass to moles here is NEBioCalculator's 36.04 + 615.94 per base pair, "
-            "which is about 5% off the 650 Da per base pair of NEB's manuals.",
-        ),
-        troubleshooting=(
-            Troubleshooting(
-                "Too dilute to fit in the reaction",
-                "Concentrate the amplicon, or scale the reaction up.",
-            ),
-        ),
+        troubleshooting=(TOO_DILUTE,),
     )
 
 
