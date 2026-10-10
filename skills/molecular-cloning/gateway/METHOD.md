@@ -30,7 +30,7 @@ sequence — see `docs/adr/0008-att-sites-and-vectors.md`.
 
 It designs the attB tails where an insert needs them, simulates both recombinations base for
 base, works out what each reaction takes, and designs the colony PCR and the sequencing that
-confirm the clone. Four files land in the directory you name, and five where BP ran:
+confirm the clone. These files land in the directory you name, the entry clone only where BP ran:
 
 - `entry-clone.dna` — the entry clone BP makes, where BP was planned and not otherwise
 - `product.dna` — the expression clone, features carried over and each att junction annotated
@@ -38,6 +38,7 @@ confirm the clone. Four files land in the directory you name, and five where BP 
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from it, self-contained: both reaction tables, the
   incubations, expected bands, a simulated gel and troubleshooting
+- `NAME-map.html` — beside each record a step's figure draws, the map that figure opens
 
 The command prints a summary line and those paths. The same inputs write the same bytes.
 

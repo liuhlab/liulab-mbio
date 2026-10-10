@@ -468,10 +468,8 @@ def _tail_figure(part: Part, enzyme: Enzyme, path: str) -> Figure:
         primer=part.forward.name,
         enzymes=(enzyme.name,),
         caption=(
-            f"The end of the {part.name} amplicon that {part.forward.name} makes. Its tail "
-            f"carries a {enzyme.name} site pointing into the fragment, and {enzyme.name} cuts the "
-            f"two strands {len(left)} bases apart, leaving {left} single-stranded. The other "
-            f"end leaves {right} the same way."
+            f"The {part.name} amplicon's forward end: the {enzyme.name} site its tail carries, "
+            f"and the {left} overhang the cut leaves. The reverse end leaves {right}."
         ),
         highlight=(site_name(enzyme), overhang_name(left)),
     )

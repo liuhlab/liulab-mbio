@@ -21,15 +21,16 @@ the plan dephosphorylates it and screens for an insert that went in the other wa
 
 It plans both digests and the gel that separates their fragments, works the ligation out in
 picomoles, and designs the colony PCR, the diagnostic digest and the sequencing that confirm the
-clone. Four files land in the directory you name:
+clone. These files land in the directory you name:
 
 - `product.dna` — the finished plasmid, features carried over and each junction annotated
 - `primers.tsv` — every oligo it designed, with length and Tm
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, reaction
   tables, thermocycler programs, expected bands, a simulated gel and troubleshooting
+- `NAME-map.html` — beside each record a step's figure draws, the map that figure opens
 
-The command prints a summary line and the four paths. The same inputs write the same bytes.
+The command prints a summary line and every path. The same inputs write the same bytes.
 
 ## Which route the insert takes
 

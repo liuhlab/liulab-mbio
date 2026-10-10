@@ -53,6 +53,9 @@ from mbio.sites import (
 #: for one that has none.
 JUNCTION_COLOR = "#ff9900"
 
+#: What the recognition site a tail carries is drawn in, so a lit one is not taken for grey.
+SITE_COLOR = "#77aadd"
+
 
 @dataclass(frozen=True, slots=True)
 class Part:
@@ -235,6 +238,7 @@ def _tail_marks(enzyme: Enzyme, bases: str, tails: tuple[int, int]) -> tuple[Fea
                 "protein_bind",
                 (Segment(site.start, site.end),),
                 strand=site.strand,
+                color=SITE_COLOR,
             ),
             Feature(
                 overhang_name(site.overhang or ""),

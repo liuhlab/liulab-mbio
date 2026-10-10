@@ -19,7 +19,7 @@ span they replace; a vector handed in already linear is taken as it is, and then
 
 It chooses the overlap at every junction, designs the primers that carry it as a tail, simulates
 the product, sizes the one assembly reaction, and designs the colony PCR and the sequencing that
-confirm the clone. Four files land in the directory you name:
+confirm the clone. These files land in the directory you name:
 
 - `product.dna` — the assembled plasmid, features carried over and each junction annotated
 - `primers.tsv` — every oligo it designed, with length and Tm; it stays whole when a step
@@ -27,8 +27,9 @@ confirm the clone. Four files land in the directory you name:
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, the
   reaction table, the incubation, expected bands, a simulated gel and troubleshooting
+- `NAME-map.html` — beside each record a step's figure draws, the map that figure opens
 
-The command prints a summary line and the four paths. The same inputs write the same bytes.
+The command prints a summary line and every path. The same inputs write the same bytes.
 
 ## Ask only for what the files do not settle
 

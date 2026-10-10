@@ -13,7 +13,7 @@ from collections.abc import Iterable
 
 from mbio.plot.sequence_view import LIMIT
 from mbio.protocol.model import Citation, Figure, Source
-from mbio.sequence import SequenceRecord, Strand
+from mbio.sequence import BindingSite, SequenceRecord, Strand
 
 #: What a figure of this library cites, and the note it cites.
 SOURCE_KEY = "figure-sources"
@@ -136,8 +136,8 @@ def tail_figure(
     path
         What the protocol calls that record, relative to the directory the protocol is read from.
     primer
-        The primer whose end is drawn: a forward primer's is the record's start, a reverse
-        primer's its end. It is lit.
+        The primer whose end is drawn: the one of that name whose 5' end is an end of the record,
+        the start for a forward primer and the end for a reverse one. It is lit.
     enzymes
         The enzymes whose cuts are drawn through both strands. They are lit.
     caption
@@ -150,7 +150,7 @@ def tail_figure(
     Raises
     ------
     ValueError
-        If `context` is negative, or `record` carries no primer called `primer`.
+        If `context` is negative, or no primer called `primer` makes an end of `record`.
 
     Examples
     --------
@@ -169,10 +169,7 @@ def tail_figure(
     """
     if context < 0:
         raise ValueError(f"a tail figure draws 0 or more bases of context, not {context}")
-    sites = [site for one in record.primers if one.name == primer for site in one.binding_sites]
-    if not sites:
-        raise ValueError(f"{record.name or 'the amplicon'} carries no primer called {primer!r}")
-    site = sites[0]
+    site = _making(record, primer)
     if site.strand is Strand.REVERSE:
         span = (max(0, site.start - context), len(record))
     else:
@@ -187,6 +184,29 @@ def tail_figure(
         enzymes=drawn,
         highlight=tuple(dict.fromkeys((primer, *drawn, *highlight))),
     )
+
+
+def _making(record: SequenceRecord, primer: str) -> BindingSite:
+    """Return where the primer called `primer` anneals to make an end of `record`, tail and all.
+
+    A primer of the same name carried over from a template anneals inside the record, so the one
+    whose 5' end is the record's start or end is the one that made it.
+
+    Raises
+    ------
+    ValueError
+        If no primer of that name makes either end.
+    """
+    for one in record.primers:
+        if one.name != primer:
+            continue
+        for site in one.binding_sites:
+            tail = len(one.sequence) - (site.end - site.start)
+            if site.strand is Strand.REVERSE and site.end + tail == len(record):
+                return site
+            if site.strand is not Strand.REVERSE and site.start == tail:
+                return site
+    raise ValueError(f"no primer called {primer!r} makes an end of {record.name or 'the amplicon'}")
 
 
 def _around(

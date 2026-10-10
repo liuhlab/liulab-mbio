@@ -126,3 +126,8 @@ def test_a_tail_figure_draws_the_end_its_primer_makes_and_lights_the_cut() -> No
     assert drawn("r").sequence_view
     with pytest.raises(ValueError, match="no primer"):
         drawn("gone")
+    # A primer of the same name carried over from a template anneals inside; the one making the
+    # end is the one drawn.
+    carried = Primer("f", "ACGT", binding_sites=(BindingSite(20, 24, Strand.FORWARD),))
+    amplicon = SequenceRecord("A" * 40, name="a", primers=(carried, forward, reverse))
+    assert drawn("f").span == (0, 14)

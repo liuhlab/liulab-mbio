@@ -20,7 +20,7 @@ before it. A single insert is the ordinary case, not a special one.
 
 It chooses the enzyme, designs every junction's overhang together, simulates the PCRs and the
 ligation, works out the bench quantities, and designs the colony PCR and sequencing that confirm
-the clone. Four files land in the directory you name:
+the clone. These files land in the directory you name:
 
 - `product.dna` — the assembled plasmid, features carried over and each junction annotated
 - `primers.tsv` — every oligo it designed, with length and Tm; it stays whole when a step
@@ -28,8 +28,10 @@ the clone. Four files land in the directory you name:
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, reaction
   tables, thermocycler programs, expected bands, a simulated gel and troubleshooting, step by step
+- `NAME-amplicon.dna` — each fragment's amplicon, whose end its PCR step draws
+- `NAME-map.html` — beside each record a step's figure draws, the map that figure opens
 
-The command prints a summary line and the four paths. The same inputs write the same bytes.
+The command prints a summary line and every path. The same inputs write the same bytes.
 
 ## What the fragment count changes
 
