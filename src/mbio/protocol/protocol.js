@@ -454,6 +454,7 @@
 
     action.addEventListener("click", function () {
       if (handle !== null) {
+        left = Math.max(0, (end - Date.now()) / 1000);
         stop();
         keep({ left: left });
         show("Resume");
@@ -467,11 +468,21 @@
       }
     });
 
-    // A typed time is the whole count from here: the timer stands ready at it.
+    // A typed time is the whole count, except on a paused timer, where it is what is left and
+    // the count grows or shrinks by the difference: 60 minutes become 90 with the bench mid-way.
     field.addEventListener("change", function () {
       var typed = parseTime(field.value);
-      if (typed === null || handle !== null) show(action.textContent);
-      else ready(typed);
+      var paused = !timer.classList.contains("is-finished") && left !== total;
+      if (typed === null || handle !== null) {
+        show(action.textContent);
+      } else if (paused) {
+        total = total - left + typed;
+        left = typed;
+        keep({ left: left });
+        show("Resume");
+      } else {
+        ready(typed);
+      }
     });
 
     if (back) back.addEventListener("click", function () { ready(plan); });
@@ -479,7 +490,8 @@
 
   // A timer still running after a reload sounds only once the page has been touched again.
   if (timers.length) {
-    ["pointerdown", "keydown"].forEach(function (kind) {
+    // A touch lets a page sound when it lifts, not when it lands.
+    ["pointerup", "keydown"].forEach(function (kind) {
       document.addEventListener(kind, function () {
         if (document.querySelector(".timer.is-running")) unlock();
       }, true);
