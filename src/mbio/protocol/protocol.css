@@ -79,10 +79,9 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 
 /* The head reads as bands: the sentences, the verdicts and the step count each open under a thin
    rule rather than in a box, since the facts and the handover above are boxes already. Its prose
-   runs the page's full measure, as a step's does. */
+   takes the page's full measure, as a step's does, and no narrower cap of its own. */
 .highlights, .status, .intro .toolbar { border-top: 1px solid var(--line); padding-top: 0.9rem; margin: 1.25rem 0 0; }
 .intro .toolbar { margin-bottom: 1.25rem; }
-.highlights p { margin-bottom: 0.45rem; }
 .highlights p:last-child, .status > :last-child { margin-bottom: 0; }
 
 .checks { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.6rem; }
@@ -308,14 +307,14 @@ tfoot .muted { font-weight: 400; }
 .kit-list .vessels { display: grid; gap: 0.3rem; }
 .hole a { white-space: nowrap; }
 
-/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+/* Too narrow for columns: each list wraps into rows above the page. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
   /* A flex item sizes to its content, so without this the widest table widens the page. */
   .frame .page { order: 1; width: 100%; padding-block: 1.2rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
   /* The last list above the page closes under a rule, so the title opens a block of its own. */
-  .column.within { padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
+  .column.within { align-self: stretch; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
   .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
   .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }

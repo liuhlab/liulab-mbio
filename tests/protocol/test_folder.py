@@ -220,7 +220,6 @@ def test_a_protocol_written_on_its_own_carries_no_run(tmp_path: Path) -> None:
     page = parse(written.page.read_text(encoding="utf-8"))
     assert not page.find_all("nav", cls="site")
     assert not page.find_all("nav", cls="chain")
-    assert page.find_all("nav", cls="within")
 
 
 def test_the_shape_written_follows_the_chain_length_and_not_the_pipeline(tmp_path: Path) -> None:

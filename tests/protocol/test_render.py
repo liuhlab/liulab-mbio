@@ -36,7 +36,7 @@ from mbio.protocol import (
     render_html,
     write_html,
 )
-from mbio.protocol.render import HIGHLIGHTS, NO_NUMBER, page_key
+from mbio.protocol.render import HIGHLIGHTS_HEADING, NO_NUMBER, page_key
 
 from ..html import Node, parse
 
@@ -80,7 +80,7 @@ def test_the_header_reads_in_bands_and_its_sentences_carry_a_heading(page: Node)
     header = page.find_all("header", cls="intro")[0]
     blocks = [n.attrs.get("class") or n.tag for n in header.children if isinstance(n, Node)]
     assert blocks == ["h1", "summary", "overview", "highlights", "status", "toolbar"]
-    assert header.find_all(cls="highlights")[0].find_all("h3")[0].text == HIGHLIGHTS
+    assert header.find_all(cls="highlights")[0].find_all("h3")[0].text == HIGHLIGHTS_HEADING
 
 
 def test_a_card_holds_a_fact_and_a_sentence_is_prose(page: Node) -> None:
@@ -236,7 +236,7 @@ def test_the_navigation_groups_the_steps_under_the_section_each_belongs_to() -> 
 
 
 def test_a_page_lists_its_steps_in_the_column_beside_it_alone_or_in_a_run() -> None:
-    """The right column stays on screen; a page alone has it too, and no run's left column."""
+    """A page lists its steps in the column beside it; a page alone has no run's left column."""
     one = rounds()
     alone = parse(render_html(one))
     [frame] = alone.find_all("div", cls="alone")
@@ -249,7 +249,7 @@ def test_a_page_lists_its_steps_in_the_column_beside_it_alone_or_in_a_run() -> N
     assert [g.attrs["data-steps"] for g in column.find_all("details")] == [
         g.attrs["data-steps"] for g in beside.find_all("details")
     ]
-    # One list a page: the header no longer carries a copy that scrolls away.
+    # One list of steps a page, and it is the column's.
     assert len(alone.find_all("nav")) == 1
 
 

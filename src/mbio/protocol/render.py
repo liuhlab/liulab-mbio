@@ -69,7 +69,7 @@ NO_NUMBER = "no sourced number"
 CITED_BY_BILL = "the bill"
 
 #: What heads a protocol's highlights, so its sentences read as a block of their own.
-HIGHLIGHTS = "Keep in mind"
+HIGHLIGHTS_HEADING = "Keep in mind"
 
 #: What one protocol written alone is called, as the data and as the page rendered from it.
 PROTOCOL_DATA_FILE = "protocol.json"
@@ -1455,7 +1455,9 @@ def _header(protocol: Protocol, *, place: str = "") -> str:
     parts.append(_handover(protocol))
     if protocol.highlights:
         lines = "".join(f"<p>{_linked(one, protocol.files)}</p>" for one in protocol.highlights)
-        parts.append(f'<section class="highlights"><h3>{HIGHLIGHTS}</h3>{lines}</section>\n')
+        parts.append(
+            f'<section class="highlights"><h3>{HIGHLIGHTS_HEADING}</h3>{lines}</section>\n'
+        )
     status = _checks(protocol.checks) + _hole_count(protocol.all_holes)
     if status:
         parts.append(f'<div class="status">{status}</div>\n')
