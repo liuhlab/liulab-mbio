@@ -2446,9 +2446,7 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
         cells = [f"<td>{escape(component.name)}{_cite(component.citation)}</td>"]
         if component.calculator is not None:
             assumed = component.calculator.nanograms / component.volume_ul
-            field = _reader_number(
-                f"{key}.row.{row}", assumed, label=component.name, unit="ng/µL"
-            )
+            field = _reader_number(f"{key}.row.{row}", assumed, label=component.name, unit="ng/µL")
             cells.append(f"<td>{field}</td>")
         elif stock:
             cells.append(f"<td>{escape(component.stock)}</td>")
@@ -2528,7 +2526,7 @@ def _reader_number(
     said = ", ".join(text for text in (label or before, unit) if text)
     return (
         f'<span class="calc{" " + part if part else ""}">'
-        f'<label>{escape(before) + " " if before else ""}'
+        f"<label>{escape(before) + ' ' if before else ''}"
         f'<input type="text" class="calc-value" inputmode="decimal" value="{shown}"'
         f' data-plan="{plan!r}" data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
         + (f' data-least="{least!r}"' if least is not None else "")
