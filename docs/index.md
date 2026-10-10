@@ -8,6 +8,14 @@ can open — a map in SnapGene, a sheet in a spreadsheet, one page in a browser.
 One install gives two commands: `mbio` for a job with a standard name, and `synbio` for a
 method this lab named. [Two commands](two-packages.md) says which one a job wants.
 
+```mermaid
+graph LR
+  M["Cloning method"] -- "planned into" --> P["Protocol"] -- "chained by an item" --> J["Project"]
+```
+
+A cloning method is how fragments are joined. A protocol is one page someone follows at the
+bench. A project is protocols run in order, each handed what the ones before it produced.
+
 ## Pick a job
 
 Each row is one job, with a worked run you can repeat. For a cloning job,
