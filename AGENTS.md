@@ -42,14 +42,12 @@ One direction, bottom to top — nothing lower imports anything higher.
 | command line | `cli`, and each feature's own `cli` | the verbs: each package's root app mounts one sub-app per feature it holds, `cloning/cli` one per method and the spine they share |
 
 Each pipeline has one way in. `plan_assembly`, `plan_gibson` and `plan_restriction` each write
-four files: the product, the primer sheet, `protocol.json` and the `protocol.html` rendered from
-it, and beside them the map each figure opens; `plan_gateway` writes those plus the entry clone
-where it planned a BP reaction.
+the product, the primer sheet, `protocol.json`, the `protocol.html` rendered from it and a map
+per figure; `plan_gateway` writes those plus the entry clone where it planned a BP reaction.
 `synbio.igga.plan_igga` writes the synthesis order sheet, the barcode and amino-acid change
-tables, a record per round, a block vector per position, the product, the map each figure
-opens, and a `protocol` folder:
-the run as a chain of protocols, one page each. `synbio.dmx.plan_dmx` turns its output directory
-into the protocol folder, and writes no record and no sheet. The method is code and one build's
+tables, a record per round, a block vector per position, the product, the maps, and a `protocol`
+folder: the run as a chain of protocols, one page each. `synbio.dmx.plan_dmx` turns its output
+directory into the protocol folder, and writes no record and no sheet. The method is code and one build's
 choices are a file: `docs/adr/0010-method-in-code.md` draws that line. A pipeline's protocol is
 data an agent may edit and render again, never a place to invent a number the package computes:
 `build-protocol` says how, `docs/adr/0002-editable-protocols.md` why.
