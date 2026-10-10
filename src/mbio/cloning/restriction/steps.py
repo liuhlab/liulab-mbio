@@ -616,7 +616,10 @@ def _steps(
             colony_pcr_step(colony, junctions=len(ligation.junctions), notes=_one_way(colony)),
             _diagnostic_step(diagnostic, product=ligation.product),
             sequencing_step(
-                reads, junctions=[one.label for one in ligation.junctions], inserts=[insert.name]
+                reads,
+                junctions=[one.label for one in ligation.junctions],
+                inserts=[insert.name],
+                product=PRODUCT_FILE,
             ),
         ),
     )

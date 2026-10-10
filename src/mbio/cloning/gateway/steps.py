@@ -814,6 +814,7 @@ def _validation_steps(
             reads,
             junctions=[one.bases for one in lr.junctions],
             inserts=[insert],
+            product=PRODUCT_FILE,
             instructions=(
                 f"Send at least {SEQUENCING_NG:g} ng of plasmid with "
                 f"{SEQUENCING_MIN_PMOL:g}-{SEQUENCING_MAX_PMOL:g} pmol of each primer.",

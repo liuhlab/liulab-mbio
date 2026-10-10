@@ -12,6 +12,7 @@ from mbio.bench.steps import (
     phenotype_sentences,
     primer_plate_protocol,
     primer_plate_steps,
+    sequencing_step,
 )
 from mbio.primers import Q5
 from mbio.protocol.model import Citation, Note, Oligo, Protocol
@@ -46,6 +47,15 @@ def test_a_pcr_step_is_built_from_a_parts_name_and_its_reaction() -> None:
     assert step.expected == ("One band at 749 bp.",)
     assert "GFP plasmid template" in step.troubleshooting[0].solution
     assert step.notes == ()
+
+
+def test_the_sequencing_step_ends_by_checking_each_read_against_the_file_it_is_handed() -> None:
+    step = sequencing_step((), junctions=["AATG"], inserts=["GFP"], product="clone.dna")
+
+    assert step.instructions[-1] == (
+        "Check each read against clone.dna; keep a clone only when every junction and insert "
+        "reads true."
+    )
 
 
 def test_a_pcr_step_leaves_an_unsourced_count_blank_and_carries_the_callers_notes() -> None:

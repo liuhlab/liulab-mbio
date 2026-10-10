@@ -432,7 +432,9 @@ def _steps(
                     ),
                 ),
             ),
-            sequencing_step(reads, junctions=overhangs.overhangs, inserts=inserts),
+            sequencing_step(
+                reads, junctions=overhangs.overhangs, inserts=inserts, product=PRODUCT_FILE
+            ),
         ),
     )
 
