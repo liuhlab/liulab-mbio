@@ -14,7 +14,6 @@ from mbio.protocol.model import (
     Hole,
     Material,
     Plate,
-    Reference,
     Source,
     Step,
     citing,
@@ -33,7 +32,7 @@ class Protocol:
 
     Every method takes the run and nothing else, so no protocol reads another's arguments. The
     defaults are the empty answers: a protocol that needs no plates, no equipment or no
-    references of its own says nothing rather than being dispatched past.
+    sources of its own says nothing rather than being dispatched past.
     """
 
     def title(self, run: Run) -> str:
@@ -89,10 +88,6 @@ class Protocol:
         """Return the facts to check before starting, each short enough to be a card."""
         return {}
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Where this protocol's own numbers are read from."""
-        return ()
-
     def sources(self, run: Run) -> dict[str, Source]:
         """Every document this protocol could cite; `citing` drops the ones it did not."""
         return {}
@@ -128,7 +123,6 @@ class Protocol:
                 equipment=self.equipment(run),
                 plates=self.plates(run),
                 steps=tuple(steps),
-                references=self.references(run),
                 sources=dict(sources),
                 holes=self.holes(run),
             )

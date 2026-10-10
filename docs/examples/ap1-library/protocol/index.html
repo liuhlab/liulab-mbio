@@ -70,7 +70,7 @@ p { margin: 0 0 0.75rem; }
 a { color: var(--accent); overflow-wrap: anywhere; }
 .muted { color: var(--muted); }
 
-.summary { font-size: 1.08rem; color: var(--muted); max-width: 44rem; }
+.summary { font-size: 1.08rem; color: var(--muted); }
 
 /* Short facts only: a card is a few words, so the row stays one height. A sentence is
    .highlights, and the model refuses one here. */
@@ -84,8 +84,12 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
 .handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
 
-.highlights { max-width: 44rem; margin: 0 0 1rem; }
-.highlights p:last-child { margin-bottom: 0; }
+/* The head reads as bands: the sentences, the verdicts and the step count each open under a thin
+   rule rather than in a box, since the facts and the handover above are boxes already. Its prose
+   takes the page's full measure, as a step's does, and no narrower cap of its own. */
+.highlights, .status, .intro .toolbar { border-top: 1px solid var(--line); padding-top: 0.9rem; margin: 1.25rem 0 0; }
+.intro .toolbar { margin-bottom: 1.25rem; }
+.highlights p:last-child, .status > :last-child { margin-bottom: 0; }
 
 .checks { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.6rem; }
 .check { display: inline-flex; align-items: baseline; gap: 0.45rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
@@ -117,12 +121,8 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc { margin: 0 0 1.5rem; }
-.toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-
-/* Both lists of steps — the standalone table of contents and a page's right column — are this
-   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
-   number is in the markup, so no counter here. */
+/* A page's list of steps, in its right column: one group per section, collapsed, so three like
+   rounds read as three rounds. The step's number is in the markup, so no counter here. */
 .step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
 .step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
 .step-group + .step-group { margin-top: 0.45rem; }
@@ -130,9 +130,6 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
 /* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
 .section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
-/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
-.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
 .block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
@@ -188,12 +185,33 @@ button.copy { font-size: 0.75rem; padding: 0.1rem 0.55rem; min-height: 1.6rem; m
 button.is-copied { border-color: var(--accent); color: var(--accent); }
 
 .timers { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-button.timer { display: inline-flex; gap: 0.5rem; align-items: baseline; }
-.timer-time { font-variant-numeric: tabular-nums; font-weight: 700; }
-.timer-action { color: var(--accent); }
-button.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
-button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.program .timers { margin-top: 0.5rem; }
+.timer { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-size: 0.85rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.2rem 0.15rem 0.8rem; }
+.timer label { display: inline-flex; gap: 0.5rem; align-items: baseline; }
+/* The time is typed over in place: a dashed rule marks it as a field until it starts. */
+.timer-time { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.timer-time:read-only { border-bottom-color: transparent; }
+.timer-action { color: var(--accent); min-height: 1.75rem; }
+.timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
+.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
+
+/* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
+   warning is the step's own troubleshooting entry in the caution colours. */
+.calc { white-space: nowrap; }
+.calc-value { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; text-align: right; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.calc-value:read-only { border-bottom-color: transparent; }
+/* The number to beat stands in an uncounted field light, so it never reads as what was counted. */
+.calc-value::placeholder { font-weight: 400; color: var(--muted); opacity: 1; }
+.calc-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
+.calc-held { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; }
+.calc-warning { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0; font-size: 0.9rem; }
+.reaction tr.is-over td, .reaction.is-over tfoot .one { color: var(--caution); font-weight: 700; }
+.net-count { margin-top: 0.6rem; }
+.net-fields { display: flex; flex-wrap: wrap; gap: 0.1rem 1.1rem; margin: 0 0 0.3rem; }
+.net-sum { margin: 0; }
+.net-sum.is-short { color: var(--caution); }
 
 /* A gel is taller than it is wide, so its height is what has to fit on the screen. */
 .gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
@@ -243,7 +261,39 @@ tfoot .muted { font-weight: 400; }
 .listing { font-size: 0.9rem; margin-top: 0.6rem; }
 .listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
-.cite { color: var(--muted); font-size: 0.85em; }
+
+/* A citation: a bracketed number that lands on its entry in the sources list. The padding is a
+   finger's target, the negative margin keeps the text from shifting, and a line height of
+   nothing keeps the raised number from opening the line. */
+.cite { text-decoration: none; padding: 0.35em 0.2em; margin: 0 -0.2em; border-radius: 4px; }
+.cite:hover { text-decoration: underline; }
+.cite:focus-visible { outline-offset: 0; }
+.cite sup { font-size: 0.72em; line-height: 0; font-variant-numeric: tabular-nums; }
+.sources ol { padding-left: 1.8rem; }
+.sources li { margin-bottom: 0.4rem; scroll-margin-top: calc(var(--bar) + 1rem); }
+.sources li:target { background: var(--accent-soft); outline: 4px solid var(--accent-soft); border-radius: 2px; }
+.sources .cited-at, .sources .cited-by { display: block; color: var(--muted); font-size: 0.9em; }
+
+/* A step's figure stands in a box of its own with its caption inside, so it never reads as one
+   of the instructions. Its drawing is drawn small; the control under it opens the record's map in
+   place, whole and to explore, and takes the small drawing's place until closed. */
+.drawing.map { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 0.75rem; }
+.drawing.map:not(.rows), .drawing.map .row { display: flex; flex-direction: column; }
+.drawing.map .opener[open] { order: -1; margin-top: 0; }
+.drawing.map .row-name { order: -2; font-weight: 600; }
+.drawing.map:has(> .opener[open]) > svg, .row:has(> .opener[open]) > svg { display: none; }
+.drawing.map svg { max-height: 24rem; width: auto; margin-inline: auto; border-radius: 6px; }
+.drawing.map figcaption { font-weight: 400; font-size: 0.92rem; margin: 0.6rem 0 0; }
+.opener { margin-top: 0.6rem; }
+.opener > summary { display: inline-flex; align-items: center; gap: 0.4rem; list-style: none; cursor: pointer; font-size: 0.85rem; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 2rem; }
+.opener > summary::-webkit-details-marker { display: none; }
+.opener > summary::before { content: "\2922"; font-size: 0.95em; }
+.opener[open] > summary::before { content: "\2715"; }
+.opener > summary:hover { border-color: var(--accent); }
+.opener[open] .to-open, .opener:not([open]) .to-close { display: none; }
+/* Tall enough for the map and its switches, and no taller than a phone's width needs. */
+.opener iframe { display: block; width: 100%; height: min(78vh, 42rem, calc(60vw + 14rem)); margin: 0.6rem 0 0.3rem; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
+.new-tab { font-size: 0.85rem; }
 
 /* A project folder: the run's nav bar across the top, a column either side of the page. */
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -251,6 +301,10 @@ tfoot .muted { font-weight: 400; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
 .frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
+/* A page outside a run has no bar and no run to list: the page, and its steps beside it. No
+   more specific than .frame, so the narrow layout below folds it as it folds a run's page. */
+.frame:where(.alone) { --bar: 0rem; grid-template-columns: minmax(0, 1fr) 12rem; max-width: calc(54rem + 1.6rem + 12rem); }
+.frame:where(.alone) .page { padding-block: 2rem 4rem; }
 .column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
@@ -308,12 +362,14 @@ tfoot .muted { font-weight: 400; }
 .kit-list .vessels { display: grid; gap: 0.3rem; }
 .hole a { white-space: nowrap; }
 
-/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+/* Too narrow for columns: each list wraps into rows above the page. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
   /* A flex item sizes to its content, so without this the widest table widens the page. */
-  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
+  .frame .page { order: 1; width: 100%; padding-block: 1.2rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  /* The last list above the page closes under a rule, so the title opens a block of its own. */
+  .column.within { align-self: stretch; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
   .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
   .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
@@ -338,7 +394,9 @@ tfoot .muted { font-weight: 400; }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
-  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
+  /* A figure prints small whether or not its map was open on screen. */
+  .drawing.map svg { display: block !important; }
   .frame { display: block; max-width: none; }
   .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
@@ -349,17 +407,21 @@ tfoot .muted { font-weight: 400; }
   /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
   .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
   .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
-  button.timer { border: 1px solid var(--line); animation: none; }
+  .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
+  .timer-time { border: none; }
+  .timer-plan { display: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
+  .calc-value { border: none; }
+  .calc-plan, .calc-held { display: none !important; }
+  .calc-warning { border: 1px solid var(--line); }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
-  .references a::after { content: none; }
 }
 </style>
 </head>
-<body data-protocol="76fcbcada252e552">
+<body data-protocol="2f0d06c5250f0941">
 <nav class="site" aria-label="This run"><a href="index.html" aria-current="page">Overview</a><a href="01-part-carrier.html">Protocols</a><a href="reagents.html">Reagents and equipment</a><a href="references.html">References</a></nav>
 <div class="frame"><nav class="column chain" aria-label="Protocols"><h2 class="column-title">Protocols</h2><ol><li><a href="01-part-carrier.html">Part carrier</a></li><li><a href="02-primer-plates.html">Primer plates</a></li><li><a href="03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></li><li><a href="04-cargo-creation.html">Cargo creation</a></li><li class="chain-choice"><span class="choice-job">Read every well back</span><ul class="chain-ways"><li><a href="05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></li><li><a href="05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></li></ul></li><li><a href="06-library-assembly-in-rounds.html">Library assembly in rounds</a></li><li><a href="07-final-cargo-ligation.html">Final cargo ligation</a></li></ol></nav>
 <main class="page">
@@ -384,11 +446,11 @@ tfoot .muted { font-weight: 400; }
 </section>
 <section class="block chain-list" id="protocols">
 <h2>Protocols</h2>
-<ol class="chain-pages"><li data-page-key="a3c12b45fd4b23cc" data-steps="seat-parts"><a href="01-part-carrier.html">Part carrier</a> <span class="page-progress muted">1 step</span></li><li data-page-key="ccff76fac711c73c" data-steps="order-primers resuspend-primers seat-stock-plate split-working-plates store-plates"><a href="02-primer-plates.html">Primer plates</a> <span class="page-progress muted">5 steps</span></li><li data-page-key="259589bc4f03c615" data-steps="order-pool resuspend-pool"><a href="03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a> <span class="page-progress muted">2 steps</span></li><li data-page-key="0ad188224491aa87" data-steps="pcr1 pcr2 assemble-cargo"><a href="04-cargo-creation.html">Cargo creation</a> <span class="page-progress muted">3 steps</span></li><li class="chain-choice"><span class="choice-job">Read every well back</span> <span class="muted">do one of these two</span><ul class="chain-ways"><li data-page-key="74c68347759c0a46" data-steps="array-designs pick-colonies compress-plates barcode-wells pool-and-sequence call-wells"><a href="05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a> <span class="page-progress muted">6 steps</span></li><li data-page-key="49e0af3a4fae9ebc" data-steps="array-designs pick-colonies sample-into-index-plates index-pcr pool-and-sequence call-wells"><a href="05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a> <span class="page-progress muted">6 steps</span></li></ul></li><li data-page-key="ccfec1f972a39577" data-steps="pool-part-lists round-1-open round-1-release round-1-digest-cleanup round-1-ligate round-1-ligation-cleanup round-1-electroporate round-1-grow round-1-prep round-2-open round-2-release round-2-digest-cleanup round-2-ligate round-2-ligation-cleanup round-2-electroporate round-2-grow round-2-prep round-3-open round-3-release round-3-digest-cleanup round-3-ligate round-3-ligation-cleanup round-3-electroporate round-3-grow round-3-prep read-linkage read-representation"><a href="06-library-assembly-in-rounds.html">Library assembly in rounds</a> <span class="page-progress muted">27 steps</span></li><li data-page-key="5df991ae6ad146a5" data-steps="pick-working-vector release-cargo assemble-into-working-vector electroporate-and-grow read-final-representation"><a href="07-final-cargo-ligation.html">Final cargo ligation</a> <span class="page-progress muted">5 steps</span></li></ol>
+<ol class="chain-pages"><li data-page-key="1e37b944aa4106cd" data-steps="seat-parts"><a href="01-part-carrier.html">Part carrier</a> <span class="page-progress muted">1 step</span></li><li data-page-key="fdb6a0650c5f9cbd" data-steps="order-primers resuspend-primers seat-stock-plate split-working-plates store-plates"><a href="02-primer-plates.html">Primer plates</a> <span class="page-progress muted">5 steps</span></li><li data-page-key="1d55f66a11691cec" data-steps="order-pool resuspend-pool"><a href="03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a> <span class="page-progress muted">2 steps</span></li><li data-page-key="21f2b86cf4a6b041" data-steps="pcr1 pcr2 assemble-cargo"><a href="04-cargo-creation.html">Cargo creation</a> <span class="page-progress muted">3 steps</span></li><li class="chain-choice"><span class="choice-job">Read every well back</span> <span class="muted">do one of these two</span><ul class="chain-ways"><li data-page-key="8ac90a12f8273b56" data-steps="array-designs pick-colonies compress-plates barcode-wells pool-and-sequence call-wells"><a href="05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a> <span class="page-progress muted">6 steps</span></li><li data-page-key="1941b8d7544f9991" data-steps="array-designs pick-colonies sample-into-index-plates index-pcr pool-and-sequence call-wells"><a href="05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a> <span class="page-progress muted">6 steps</span></li></ul></li><li data-page-key="5b5a787c7334834d" data-steps="pool-part-lists round-1-open round-1-release round-1-digest-cleanup round-1-ligate round-1-ligation-cleanup round-1-electroporate round-1-grow round-1-prep round-2-open round-2-release round-2-digest-cleanup round-2-ligate round-2-ligation-cleanup round-2-electroporate round-2-grow round-2-prep round-3-open round-3-release round-3-digest-cleanup round-3-ligate round-3-ligation-cleanup round-3-electroporate round-3-grow round-3-prep read-linkage read-representation"><a href="06-library-assembly-in-rounds.html">Library assembly in rounds</a> <span class="page-progress muted">27 steps</span></li><li data-page-key="0f35f4735f9390c0" data-steps="pick-working-vector release-cargo assemble-into-working-vector electroporate-and-grow read-final-representation"><a href="07-final-cargo-ligation.html">Final cargo ligation</a> <span class="page-progress muted">5 steps</span></li></ol>
 </section>
 <section class="block schedule" id="schedule">
 <h2>Schedule</h2>
-<div class="scroll"><table class="schedule"><thead><tr><th>Protocol</th><th class="num">Steps</th><th class="num">Held</th><th class="num">Holding nothing</th></tr></thead><tbody><tr><td><a href="01-part-carrier.html">Part carrier</a></td><td class="num">1</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">1</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="02-primer-plates.html">Primer plates</a></td><td class="num">5</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></td><td class="num">2</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">2</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="04-cargo-creation.html">Cargo creation</a></td><td class="num">3</td><td class="num">1 h 18 min</td><td class="num">1</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr class="schedule-choice"><td><span class="choice-job">Read every well back</span></td><td class="num">6</td><td class="num">1 h 35 min <span class="muted">over 1 of 2 ways</span></td><td class="num">5 to 6</td></tr><tr class="schedule-way"><td><a href="05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></td><td class="num">6</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">6</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr class="schedule-way"><td><a href="05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></td><td class="num">6</td><td class="num">1 h 35 min</td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="06-library-assembly-in-rounds.html">Library assembly in rounds</a></td><td class="num">27</td><td class="num">52 h 30 min</td><td class="num">15</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="07-final-cargo-ligation.html">Final cargo ligation</a></td><td class="num">5</td><td class="num">15 h 45 min</td><td class="num">2</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr></tbody><tfoot><tr><th>Total</th><td class="num">49</td><td class="num">71 h 8 min <span class="muted">over 3 of 7 protocols</span></td><td class="num">31 to 32</td></tr></tfoot></table></div>
+<div class="scroll"><table class="schedule"><thead><tr><th>Protocol</th><th class="num">Steps</th><th class="num">Held</th><th class="num">Holding nothing</th></tr></thead><tbody><tr><td><a href="01-part-carrier.html">Part carrier</a></td><td class="num">1</td><td class="num">5 min</td><td class="num">0</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="02-primer-plates.html">Primer plates</a></td><td class="num">5</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></td><td class="num">2</td><td class="num"><span class="hole-none">no sourced number</span></td><td class="num">2</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="04-cargo-creation.html">Cargo creation</a></td><td class="num">3</td><td class="num">1 h 18 min</td><td class="num">1</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr class="schedule-choice"><td><span class="choice-job">Read every well back</span></td><td class="num">6</td><td class="num">30 min to 1 h 35 min</td><td class="num">5</td></tr><tr class="schedule-way"><td><a href="05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></td><td class="num">6</td><td class="num">30 min</td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr class="schedule-way"><td><a href="05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></td><td class="num">6</td><td class="num">1 h 35 min</td><td class="num">5</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="06-library-assembly-in-rounds.html">Library assembly in rounds</a></td><td class="num">27</td><td class="num">52 h 30 min</td><td class="num">15</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr><tr><td><a href="07-final-cargo-ligation.html">Final cargo ligation</a></td><td class="num">5</td><td class="num">15 h 45 min</td><td class="num">2</td></tr><tr class="wait-row"><td colspan="4"><span class="muted">No waiting recorded.</span></td></tr></tbody><tfoot><tr><th>Total</th><td class="num">49</td><td class="num">70 h 8 min to 71 h 12 min <span class="muted">over 5 of 7 protocols</span></td><td class="num">30</td></tr></tfoot></table></div>
 <p>A blank here is a number nobody has stated, never a zero. Most of this run is time nobody attends and nobody can date, so it is written down rather than drawn as a length. No protocol here states hands-on or unattended time, so those columns are left out. Where one job offers several ways, the row above them gives each column's range: you do one way, and that way's own row says what it takes. A total that covers only part of the run says so beside it.</p>
 </section>
 <section class="block holes" id="holes">
@@ -472,25 +534,78 @@ tfoot .muted { font-weight: 400; }
     })[0];
   }
 
+  function keyOf(box) {
+    return box.getAttribute("data-key");
+  }
+
+  function isTicked(box) {
+    return box.checked;
+  }
+
+  // Into the page's store; `save` writes the store to the browser.
+  function record(box) {
+    if (box.checked) state[keyOf(box)] = true;
+    else delete state[keyOf(box)];
+  }
+
+  // A step's own mark is its instructions together, so each count reads what the bench did
+  // however the reader ticks: every instruction ticked ticks the step, one cleared clears it, and
+  // the step ticked or cleared by hand does the same to all of them. A step with no instructions
+  // is ticked by hand.
+  var stepMarks = stepBoxes.map(function (box) {
+    var step = box.closest(".step");
+    return {
+      box: box,
+      instructions: step ? all('.instructions input[type="checkbox"][data-key]', step) : []
+    };
+  });
+
   function refresh() {
     var done = 0;
-    stepBoxes.forEach(function (box) {
+    stepMarks.forEach(function (mark) {
+      var box = mark.box;
       var step = box.closest(".step");
       if (step) step.classList.toggle("is-done", box.checked);
+      box.indeterminate = !box.checked && mark.instructions.some(isTicked);
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
     showSections();
   }
 
+  function settle(mark, changed) {
+    if (changed === mark.box) {
+      mark.instructions.forEach(function (box) { box.checked = mark.box.checked; });
+    } else {
+      mark.box.checked = mark.instructions.every(isTicked);
+    }
+    [mark.box].concat(mark.instructions).forEach(record);
+    save();
+    refresh();
+  }
+
   boxes.forEach(function (box) {
-    box.checked = state[box.getAttribute("data-key")] === true;
-    box.addEventListener("change", function () {
-      var key = box.getAttribute("data-key");
-      if (box.checked) state[key] = true;
-      else delete state[key];
-      save();
-      refresh();
+    box.checked = state[keyOf(box)] === true;
+  });
+
+  // The store can hold a step's mark without its instructions' or the reverse. Nothing ticked is
+  // lost: a ticked step stands for its instructions, and instructions all ticked for their step.
+  // It is saved once mended, so a run's index, which reads step marks alone, counts it from then.
+  var mended = false;
+  stepMarks.forEach(function (mark) {
+    if (!mark.instructions.length) return;
+    if (!mark.box.checked && !mark.instructions.every(isTicked)) return;
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      if (!box.checked) mended = true;
+      box.checked = true;
+      record(box);
+    });
+  });
+  if (mended) save();
+
+  stepMarks.forEach(function (mark) {
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      box.addEventListener("change", function () { settle(mark, box); });
     });
   });
   refresh();
@@ -538,6 +653,17 @@ tfoot .muted { font-weight: 400; }
   var print = document.querySelector("button.print");
   if (print) print.addEventListener("click", function () { window.print(); });
 
+  // A figure opens to its record's map, which loads the first time it is opened. Nothing is
+  // remembered: an opened map is not a mark.
+  all("details.opener").forEach(function (opener) {
+    opener.addEventListener("toggle", function () {
+      var frame = opener.querySelector("iframe[data-src]");
+      if (opener.open && frame && !frame.getAttribute("src")) {
+        frame.setAttribute("src", frame.getAttribute("data-src"));
+      }
+    });
+  });
+
   // Reaction tables: the arithmetic render.py writes the mix column with, and the rule of
   // protocol.model.number, so the column reads the same after the count changes.
   var SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
@@ -563,13 +689,17 @@ tfoot .muted { font-weight: 400; }
     if (!input) return;
     var overage = parseFloat(figure.getAttribute("data-overage")) || 0;
     var key = input.getAttribute("data-key");
+    var live = calculators(figure, function () { update(); });
 
     function update() {
       var reactions = Math.max(1, Math.floor(Number(input.value) || 1));
       var scale = reactions * (1 + overage);
-      all("[data-ul]", figure).forEach(function (cell) {
-        cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
-      });
+      if (live) live.draw(scale);
+      else {
+        all("[data-ul]", figure).forEach(function (cell) {
+          cell.textContent = number(parseFloat(cell.getAttribute("data-ul")) * scale);
+        });
+      }
       all(".rxn-n", figure).forEach(function (span) { span.textContent = String(reactions); });
       return reactions;
     }
@@ -583,6 +713,211 @@ tfoot .muted { font-weight: 400; }
       state[key] = update();
       save();
     });
+  });
+
+  // Calculators. Arithmetic here is only over numbers render.py wrote, never a constant or a
+  // formula of the package's.
+  //
+  // Every calculator's input is a reader's number: a field over the number the protocol gives,
+  // its `data-plan`. The page keeps the reader's only where it differs, offers the protocol's
+  // back on the button beside it, and holds the field still while anything in its step is
+  // ticked, as a timer's time does while it runs. A held field says so, in render.py's words,
+  // beside it and on itself. `changed` hears each value it takes.
+  //
+  // A field with no `data-plan` is one the protocol has no number for, such as a plate nobody
+  // has counted: it opens empty, its value reads null until the reader types, and the button
+  // empties it again.
+  function readerNumber(field, changed) {
+    var key = field.getAttribute("data-key");
+    var plan = field.hasAttribute("data-plan")
+      ? parseFloat(field.getAttribute("data-plan"))
+      : null;
+    var shown = field.defaultValue;
+    var box = field.closest(".calc");
+    var back = box.querySelector(".calc-plan");
+    // Only a field something is pipetted against carries the word, and only it is held still.
+    var held = box.querySelector(".calc-held");
+    var least = parseFloat(field.getAttribute("data-least"));
+    var step = field.closest(".step");
+    var marks = step ? all('input[type="checkbox"][data-key]', step) : [];
+    var value = allowed(state[key]) ? state[key] : plan;
+
+    function locked() {
+      return held !== null && marks.some(isTicked);
+    }
+
+    // What a field takes: more than nothing, or from its own `data-least` up where none is a
+    // reading of its own.
+    function allowed(given) {
+      if (typeof given !== "number") return false;
+      return isNaN(least) ? given > 0 : given >= least;
+    }
+
+    // What the reader typed: undefined for anything the field will not take. The text the page
+    // opened with reads as the protocol's own, though a number is printed rounded.
+    function typed() {
+      var text = field.value.trim();
+      if (text === shown) return plan;
+      // The page groups a long number, so the reader may type the groups back.
+      text = text.replace(/,/g, "");
+      if (!/^\d*\.?\d+$/.test(text)) return undefined;
+      return allowed(Number(text)) ? Number(text) : undefined;
+    }
+
+    function show() {
+      field.value = value === plan ? shown : String(value);
+      field.readOnly = locked();
+      field.title = locked() ? held.textContent : "";
+      if (held) held.hidden = !locked();
+      back.hidden = value === plan || locked();
+    }
+
+    function take(to) {
+      value = to;
+      if (value !== plan) state[key] = value;
+      else delete state[key];
+      save();
+      changed();
+    }
+
+    field.addEventListener("input", function () {
+      var to = typed();
+      if (to === undefined || locked()) return;
+      take(to);
+      back.hidden = value === plan;
+    });
+    // A slip leaves the number as it was, and the field says so once the reader moves on.
+    field.addEventListener("change", show);
+    back.addEventListener("click", function () { take(plan); show(); });
+    if (step) {
+      step.addEventListener("change", function (event) {
+        if (event.target.type === "checkbox") show();
+      });
+    }
+    show();
+    return {
+      plan: plan,
+      value: function () { return value; }
+    };
+  }
+
+  // A row the bench measures gives the volume that carries its amount, and the row it names
+  // makes up the difference.
+  function calculators(figure, redraw) {
+    var rows = all("tbody > tr", figure);
+    var measured = rows.filter(function (row) { return row.classList.contains("measured"); });
+    if (!measured.length) return null;
+    var planned = rows.map(function (row) { return parseFloat(row.getAttribute("data-rxn-ul")); });
+
+    var calcs = measured.map(function (row) {
+      return {
+        row: row,
+        at: rows.indexOf(row),
+        fill: Number(row.getAttribute("data-fill")),
+        nanograms: parseFloat(row.getAttribute("data-ng")),
+        least: parseFloat(row.getAttribute("data-least-ul")),
+        input: readerNumber(row.querySelector(".calc-value"), redraw)
+      };
+    });
+
+    // Each row's volume for one reaction: the protocol's, or the one the typed concentration
+    // gives, with what a row gained taken off the row that makes it up.
+    function volumes() {
+      var ul = planned.slice();
+      calcs.forEach(function (one) {
+        var value = one.input.value();
+        if (value === one.input.plan) return;
+        var volume = one.nanograms / value;
+        ul[one.fill] -= volume - planned[one.at];
+        ul[one.at] = volume;
+      });
+      return ul;
+    }
+
+    function draw(scale) {
+      var ul = volumes();
+      var fired = {};
+      calcs.forEach(function (one) {
+        var problem = one.row.getAttribute("data-too-dilute");
+        if (problem && ul[one.fill] < 0) fired[problem] = true;
+        problem = one.row.getAttribute("data-too-concentrated");
+        if (problem && ul[one.at] < one.least) fired[problem] = true;
+      });
+      var each = 0;
+      var whole = 0;
+      var spent = false;
+      rows.forEach(function (row, i) {
+        // A row making up the difference cannot go below nothing: the reaction outgrows its
+        // volume instead, and the total says by how much.
+        var volume = Math.max(0, ul[i]);
+        var short = ul[i] < 0;
+        row.classList.toggle("is-over", short);
+        spent = spent || short;
+        row.querySelector(".one").textContent = number(volume);
+        var mix = row.querySelector("[data-ul]");
+        if (mix) {
+          mix.textContent = number(volume * scale);
+          each += volume;
+        }
+        whole += volume;
+      });
+      figure.classList.toggle("is-over", spent);
+      var foot = figure.querySelector("tfoot");
+      if (foot) {
+        foot.querySelector(".one").textContent = number(whole);
+        foot.querySelector("[data-ul]").textContent = number(each * scale);
+      }
+      all(".dispense-mix", figure).forEach(function (span) { span.textContent = number(each); });
+      all(".dispense [data-row]", figure).forEach(function (span) {
+        span.textContent = number(Math.max(0, ul[Number(span.getAttribute("data-row"))]));
+      });
+      all(".calc-warning", figure).forEach(function (warning) {
+        warning.hidden = !fired[warning.getAttribute("data-problem")];
+      });
+    }
+
+    return { draw: draw };
+  }
+
+  // A count the bench took: the control comes off it, the dilution scales it back up, and the
+  // net is read against the floor render.py wrote. The floor itself is never worked out here,
+  // and neither is anything the plan says about it. Until the plate is counted there is no net
+  // and no verdict: the line keeps the dash render.py wrote, so nothing reads as a pass.
+  all(".net-count").forEach(function (block) {
+    var floor = parseFloat(block.getAttribute("data-floor"));
+    var net = block.querySelector(".net-sum");
+    var shown = block.querySelector(".net-value");
+    var said = block.querySelector(".net-said");
+    var verdict = block.querySelector(".net-verdict");
+    var unread = shown.textContent;
+
+    function part(name) {
+      var input = block.querySelector("." + name + " .calc-value");
+      return input ? readerNumber(input, function () { draw(); }) : null;
+    }
+
+    var counted = part("net-counted");
+    var control = part("net-control");
+    var dilution = part("net-dilution");
+
+    function draw() {
+      var plate = counted.value();
+      var read = plate !== null;
+      var total = read ? (plate - (control ? control.value() : 0)) * dilution.value() : 0;
+      var clears = read && total >= floor;
+      // A count is a number of things, so however many there are it is written out in full.
+      shown.textContent = read
+        ? total.toLocaleString("en-US", { maximumFractionDigits: 2 })
+        : unread;
+      said.hidden = !read;
+      verdict.textContent = read ? net.getAttribute(clears ? "data-clears" : "data-short") : "";
+      net.classList.toggle("is-short", read && !clears);
+      all(".calc-warning", block).forEach(function (warning) {
+        warning.hidden = !read || clears;
+      });
+    }
+
+    draw();
   });
 
   // Copy buttons.
@@ -636,61 +971,143 @@ tfoot .muted { font-weight: 400; }
     return h ? h + ":" + String(m).padStart(2, "0") + ":" + rest : m + ":" + rest;
   }
 
-  function alarm() {
+  // What a reader types for a time: h:mm:ss, m:ss, or a bare number of minutes. Null for
+  // anything else, or for no time at all, so a slip leaves the timer as it was.
+  function parseTime(text) {
+    var parts = String(text).trim().split(":");
+    if (parts.length > 3) return null;
+    var total = 0;
+    for (var i = 0; i < parts.length; i += 1) {
+      if (!/^\d+(\.\d+)?$/.test(parts[i].trim())) return null;
+      total = total * 60 + Number(parts[i]);
+    }
+    if (parts.length === 1) total *= 60;
+    return total > 0 ? total : null;
+  }
+
+  // A browser lets a page sound only once the reader has touched it, so the alarm plays on a
+  // context a touch made or woke; one made when the time runs out can stay silent.
+  var audio = null;
+
+  function unlock() {
     try {
       var Context = window.AudioContext || window.webkitAudioContext;
-      var context = new Context();
-      [0, 0.35, 0.7].forEach(function (offset) {
-        var tone = context.createOscillator();
-        var gain = context.createGain();
-        tone.frequency.value = 880;
-        gain.gain.value = 0.15;
-        tone.connect(gain);
-        gain.connect(context.destination);
-        tone.start(context.currentTime + offset);
-        tone.stop(context.currentTime + offset + 0.2);
-      });
+      if (!audio && Context) audio = new Context();
+      if (audio && audio.state === "suspended") audio.resume();
+    } catch (error) {
+      audio = null;
+    }
+  }
+
+  function beep() {
+    [0, 0.35, 0.7].forEach(function (offset) {
+      var tone = audio.createOscillator();
+      var gain = audio.createGain();
+      tone.frequency.value = 880;
+      gain.gain.value = 0.15;
+      tone.connect(gain);
+      gain.connect(audio.destination);
+      tone.start(audio.currentTime + offset);
+      tone.stop(audio.currentTime + offset + 0.2);
+    });
+  }
+
+  // A context the browser holds back may be let go only at the reader's next touch, which is
+  // no time for an alarm, so one let go more than two seconds late stays quiet.
+  function alarm() {
+    try {
+      unlock();
+      var asked = Date.now();
+      if (audio && audio.state === "running") beep();
+      else if (audio) {
+        Promise.resolve(audio.resume()).then(function () {
+          if (audio.state === "running" && Date.now() - asked < 2000) beep();
+        }, function () {});
+      }
     } catch (error) {
       /* no sound available */
     }
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
+  // until that timer is reset.
+  var title = document.title;
+  var ranOut = {};
+
+  function markTitle(key, label) {
+    if (label) ranOut[key] = label;
+    else delete ranOut[key];
+    var labels = Object.keys(ranOut).map(function (one) { return ranOut[one]; });
+    document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
+  }
+
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
   // page or closing the tab does not lose an incubation. A deadline already past comes back
   // finished and silent: the sound belongs to the moment it ran out, not to the page load.
-  all("button.timer").forEach(function (button) {
-    var key = button.getAttribute("data-key");
-    var total = parseFloat(button.getAttribute("data-seconds")) || 0;
+  // A time the reader typed is kept beside either, and is the timer's until they take the
+  // plan's back; the plan's own is `data-seconds`.
+  var timers = all(".timer[data-key]");
+  timers.forEach(function (timer) {
+    var key = timer.getAttribute("data-key");
+    var plan = parseFloat(timer.getAttribute("data-seconds")) || 0;
+    var label = (timer.querySelector(".timer-label") || timer).textContent;
+    var field = timer.querySelector(".timer-time");
+    var action = timer.querySelector(".timer-action");
+    var back = timer.querySelector(".timer-plan");
+    var kept = state[key] || {};
+    var total = typeof kept.seconds === "number" ? kept.seconds : plan;
     var left = total;
     var end = 0;
     var handle = null;
-    var time = button.querySelector(".timer-time");
-    var action = button.querySelector(".timer-action");
+    var due = null;
 
-    function show(label) {
-      time.textContent = clock(left);
-      action.textContent = label;
+    function show(word) {
+      field.value = clock(left);
+      field.readOnly = handle !== null;
+      action.textContent = word;
+      if (back) back.hidden = total === plan || handle !== null;
+    }
+
+    // What the page keeps for this timer: the reader's time where it is not the plan's, and the
+    // deadline or the seconds left where either is set.
+    function keep(extra) {
+      var held = extra || {};
+      if (total !== plan) held.seconds = total;
+      if (Object.keys(held).length) state[key] = held;
+      else delete state[key];
+      save();
     }
 
     function stop() {
       window.clearInterval(handle);
+      window.clearTimeout(due);
       handle = null;
-      button.classList.remove("is-running");
+      due = null;
+      timer.classList.remove("is-running");
     }
 
+    // The interval redraws, and a hidden tab may run it once a minute; the deadline is a timeout
+    // of its own, which a browser holds to the second. One past what a timeout can wait, about
+    // 24 days, is left to the interval.
     function run() {
+      var wait = Math.max(0, end - Date.now());
       handle = window.setInterval(tick, 250);
-      button.classList.add("is-running");
+      if (wait < 2147483647) due = window.setTimeout(function () { finish(true); }, wait);
+      timer.classList.add("is-running");
       show("Pause");
     }
 
-    function finish(sound) {
+    function finish(sounded) {
+      if (timer.classList.contains("is-finished")) return;
       stop();
       left = 0;
-      button.classList.add("is-finished");
+      timer.classList.add("is-finished");
       show("Reset");
-      if (sound) alarm();
+      if (sounded) {
+        alarm();
+        markTitle(key, label);
+      }
     }
 
     function tick() {
@@ -699,35 +1116,74 @@ tfoot .muted { font-weight: 400; }
       else show("Pause");
     }
 
-    var kept = state[key];
-    if (kept && typeof kept.ends === "number") {
+    // Back to a full count of `to`, standing ready.
+    function ready(to) {
+      stop();
+      total = to;
+      left = to;
+      timer.classList.remove("is-finished");
+      markTitle(key, null);
+      keep();
+      show("Start");
+    }
+
+    if (typeof kept.ends === "number") {
       end = kept.ends;
       left = Math.max(0, (end - Date.now()) / 1000);
       if (left > 0) run();
       else finish(false);
-    } else if (kept && typeof kept.left === "number") {
+    } else if (typeof kept.left === "number") {
       left = kept.left;
       show("Resume");
+    } else {
+      show("Start");
     }
 
-    button.addEventListener("click", function () {
+    action.addEventListener("click", function () {
       if (handle !== null) {
+        left = Math.max(0, (end - Date.now()) / 1000);
         stop();
-        state[key] = { left: left };
+        keep({ left: left });
         show("Resume");
       } else if (left <= 0) {
-        left = total;
-        button.classList.remove("is-finished");
-        delete state[key];
-        show("Start");
+        ready(total);
       } else {
+        unlock();
         end = Date.now() + left * 1000;
-        state[key] = { ends: end };
+        keep({ ends: end });
         run();
       }
-      save();
     });
+
+    // A typed time is the whole count, except on a paused timer, where it is what is left and
+    // the count grows or shrinks by the difference: 60 minutes become 90 with the bench mid-way.
+    field.addEventListener("change", function () {
+      var typed = parseTime(field.value);
+      var paused = !timer.classList.contains("is-finished") && left !== total;
+      if (typed === null || handle !== null) {
+        show(action.textContent);
+      } else if (paused) {
+        total = total - left + typed;
+        left = typed;
+        keep({ left: left });
+        show("Resume");
+      } else {
+        ready(typed);
+      }
+    });
+
+    if (back) back.addEventListener("click", function () { ready(plan); });
   });
+
+  // A timer still running after a reload sounds only once the page has been touched again.
+  if (timers.length) {
+    // A touch lets a page sound when it lifts, not when it lands.
+    ["pointerup", "keydown"].forEach(function (kind) {
+      document.addEventListener(kind, function () {
+        if (document.querySelector(".timer.is-running")) unlock();
+      }, true);
+    });
+  }
 })();
 </script>
 </body>

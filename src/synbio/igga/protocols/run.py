@@ -10,21 +10,22 @@ from collections.abc import Sequence
 from dataclasses import KW_ONLY, dataclass, replace
 
 from mbio import checks as judged
-from mbio.bench.amounts import REFERENCES as AMOUNT_REFERENCES
+from mbio.bench.amounts import SOURCES as AMOUNT_SOURCES
 from mbio.bench.amounts import Amount
-from mbio.bench.coverage import REFERENCES as COVERAGE_REFERENCES
 from mbio.bench.coverage import (
+    MARKS_CITATION,
     REPRESENTATION_MARKS,
     RepresentationMarks,
     reads_for_representation,
 )
+from mbio.bench.coverage import SOURCES as COVERAGE_SOURCES
 from mbio.bench.materials import material
 from mbio.bench.phenotype import selection_marker
 from mbio.bench.prices import PriceRecord
-from mbio.bench.steps import enzyme_material, listed
+from mbio.bench.steps import QUANTIFY_EQUIPMENT, enzyme_material, listed
 from mbio.enzymes import Enzyme
+from mbio.protocol.model import Citation, Expectation, Material, Source
 from mbio.protocol.model import Item as Handed
-from mbio.protocol.model import Material, Reference
 from mbio.sequence import SequenceRecord
 from synbio import dmx
 from synbio.dmx.carrier import CARRIER, CARRIER_MARKER, ENZYME, SeatedParts
@@ -44,7 +45,7 @@ from synbio.igga.bench import (
     choppers,
     pulse,
 )
-from synbio.igga.bench import REFERENCES as BENCH_REFERENCES
+from synbio.igga.bench import SOURCES as BENCH_SOURCES
 from synbio.igga.cargo import PoolPlan
 from synbio.igga.figures import OLIGO_FILE
 from synbio.igga.method import Scheme
@@ -54,6 +55,9 @@ from synbio.igga.reads import Platform, ReadPair, ReadPairs
 from synbio.igga.rounds import Round
 from synbio.igga.standard import PartList, Standard
 from synbio.igga.vector import Destination, Working
+
+#: What the method this build was planned by is keyed as, where the scheme names one.
+SCHEME_SOURCE_KEY = "method"
 
 #: Where the records a figure draws sit, relative to the pages that draw them:
 #: `mbio.protocol.render.PROTOCOL_DIR` puts the pages one directory below the records.
@@ -73,7 +77,7 @@ ROUND_EQUIPMENT: tuple[str, ...] = (
     "Magnetic rack for the bead clean-ups",
     "Electroporator and cuvettes",
     f"Shaking incubator at {GROWTH_CELSIUS:g} °C",
-    "Spectrophotometer or fluorometer",
+    QUANTIFY_EQUIPMENT,
 )
 
 #: What one protocol hands the next, by name. The name is the contract, so the protocol that
@@ -88,39 +92,45 @@ LIBRARY_ITEM = "the library in its working vector"
 BLOCK_VECTOR_ITEM = "block vector {number}"
 WORKING_ITEM = "working vector"
 
-#: What a synthesised block is resuspended in, and the floor both vendors publish for it. Each
-#: gives 10 ng/µL as a least, not a value: at it a 1,000 ng pool fills 100 µL, more than twice
-#: what the round's digest leaves, so the pool's own floor is computed and these set the buffer.
-POOL_RESUSPENSION_REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Twist Bioscience, How should Multiplexed Gene Fragments be resuspended? — nuclease-free "
-        "TE pH 8.0 or 10 mM Tris-HCl pH 8.0, at least 10 ng/µL for the stock dilution",
+#: The documents a round's own sentences rest on, beside the ones a material or a reaction
+#: brings with it. Each is cited where its claim is made; `mbio.protocol.citing` drops the rest.
+ROUND_SOURCES: dict[str, Source] = {
+    **BENCH_SOURCES,
+    **COVERAGE_SOURCES,
+    **AMOUNT_SOURCES,
+    "twist-fragments": Source(
+        "Twist Bioscience, How should Multiplexed Gene Fragments be resuspended?",
         url="https://www.twistbioscience.com/faq/multiplexed-gene-fragments/how-should-multiplexed-gene-fragments-be-resuspended",
+        note="docs/research/bench-numbers.md",
     ),
-    Reference(
-        "Integrated DNA Technologies, gBlocks Gene Fragments resuspension — spin down, add IDTE "
-        "or molecular-grade water to 10 ng/µL, vortex, 50 °C for 15-20 min, then verify",
+    "idt-gblocks": Source(
+        "Integrated DNA Technologies, gBlocks Gene Fragments resuspension",
         url="https://www.idtdna.com/page/?p=890",
+        note="docs/research/bench-numbers.md",
     ),
-)
-
-#: What the two readout cautions of the confirming step are measured by.
-READOUT_REFERENCES: tuple[Reference, ...] = (
-    Reference(
+    "van-nieuwerburgh-2011": Source(
         "Van Nieuwerburgh, F. et al. (2011) Quantitative bias in Illumina TruSeq and a novel "
         "post amplification barcoding strategy for multiplexed DNA and small RNA deep "
-        "sequencing. PLoS ONE 6, e26969, for a barcode 3 bp from the insert giving up to "
-        "100-fold differences in read counts, where one introduced during the PCR 34 bp away "
-        "gave R2 = 0.9977",
+        "sequencing. PLoS ONE 6, e26969",
         url="https://doi.org/10.1371/journal.pone.0026969",
+        note="docs/research/barcode-design.md",
     ),
-    Reference(
+    "alon-2011": Source(
         "Alon, S. et al. (2011) Barcoding bias in high-throughput multiplex sequencing of "
-        "miRNA. Genome Res. 21, 1506-1511, for ligated barcodes spreading read counts about "
-        "twofold where the same barcodes introduced during the PCR did not",
+        "miRNA. Genome Res. 21, 1506-1511",
         url="https://doi.org/10.1101/gr.121715.111",
+        note="docs/research/barcode-design.md",
     ),
-)
+}
+
+#: Where a block's resuspension buffer and its warming step are read.
+RESUSPENSION_BUFFER_CITATION = Citation("twist-fragments", "resuspension")
+RESUSPENSION_WARMING_CITATION = Citation("idt-gblocks", "resuspension")
+
+#: Where the two rules for reading a barcode back are read: carry the index on a primer, and
+#: keep a barcode away from where one anneals.
+INDEX_ON_PRIMER_CITATION = Citation("alon-2011", "ligated against amplified barcodes")
+BARCODE_DISTANCE_CITATION = Citation("van-nieuwerburgh-2011", "barcode position")
 
 
 @dataclass(frozen=True)
@@ -379,28 +389,17 @@ class Run:
         return tuple(found)
 
     @property
-    def round_references(self) -> tuple[Reference, ...]:
-        """Where a round's numbers come from, and where the scheme itself came from.
+    def round_sources(self) -> dict[str, Source]:
+        """Every document a round's own sentences could cite, the scheme's own among them.
 
         No NEBridge kit is among them: a round runs the method's own chemistry, and a page
         citing a kit the run never buys sends its reader to the wrong document. A protocol
-        borrowing the kit module's cycling cites that cycling's own source instead.
+        borrowing the kit module's cycling takes that cycling's own source instead.
         """
-        items = [
-            *BENCH_REFERENCES,
-            *COVERAGE_REFERENCES,
-            *AMOUNT_REFERENCES,
-            *READOUT_REFERENCES,
-            *POOL_RESUSPENSION_REFERENCES,
-        ]
+        found = dict(ROUND_SOURCES)
         if self.scheme.source:
-            items.append(
-                Reference(
-                    f"The method this build was planned by: {self.scheme.source}",
-                    url=self.scheme.source_url,
-                )
-            )
-        return tuple(items)
+            found[SCHEME_SOURCE_KEY] = Source(self.scheme.source, url=self.scheme.source_url)
+        return found
 
     @property
     def destination_reagent(self) -> str:
@@ -563,13 +562,17 @@ def as_platform(pair: ReadPair | None) -> str:
     return "" if pair is None else f" as a {pair.platform}"
 
 
-def marks_sentence(constructs: int, marks: RepresentationMarks, what: str) -> str:
-    """State the three marks the counts are judged on, and the depth they are judged at."""
+def marks_sentence(constructs: int, marks: RepresentationMarks, what: str) -> Expectation:
+    """State the three marks the counts are judged on, and the depth they are judged at.
+
+    The three are a pooled library's acceptance bar, so the line carries where they were read.
+    """
     depth = reads_for_representation(constructs, marks.reads_per_member) if constructs else 0
     at = f", which is {depth:,} reads over {constructs:,} combinations" if depth else ""
-    return (
+    return Expectation(
         f"At least {marks.seen:.1%} {what} seen; a 90th/10th percentile skew ratio below "
-        f"{marks.skew:g}, judged at {marks.reads_per_member} or more reads a member{at}."
+        f"{marks.skew:g}, judged at {marks.reads_per_member} or more reads a member{at}.",
+        citation=MARKS_CITATION,
     )
 
 

@@ -116,7 +116,7 @@ class Scheme:
     source
         Where these values came from, so provenance travels with the method.
     source_url
-        Where `source` can be read, where it is a page with an address. A reference list prints
+        Where `source` can be read, where it is a page with an address. A sources list prints
         a bare path as text, so a method naming one of this site's pages gives the link too.
     reserved
         The names of further enzymes a block must be free of, beyond the ones above. A step

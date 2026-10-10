@@ -43,8 +43,8 @@ they have the run.
 
 [The way in](../examples/ap1-library/protocol/index.html) draws the chain, lists the checks on
 the design, and collects every number the run has no source for.
-[The references](../examples/ap1-library/protocol/references.html) say where each number was
-read from, and every page in the chain shares them.
+[The references](../examples/ap1-library/protocol/references.html) list every document the run
+cites, with where in each it is cited, and every page in the chain shares them.
 
 ## Three more methods write one
 

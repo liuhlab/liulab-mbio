@@ -102,6 +102,10 @@ plugins:
             show_root_heading: true
             signature_crossrefs: true
 
+# Declaring this key at all REPLACES zensical's default extensions rather than merging with
+# them, so every default not listed here is off. `custom_fences` below is one: without it a
+# ```mermaid fence renders as a grey code block and `--strict` stays green, so deleting it
+# turns every diagram on the site back into source text with nothing failing.
 markdown_extensions:
   - admonition
   - attr_list
@@ -109,6 +113,9 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight
   - pymdownx.inlinehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
   - toc:
       permalink: true

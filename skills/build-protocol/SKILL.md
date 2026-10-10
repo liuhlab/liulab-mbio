@@ -31,7 +31,8 @@ write_html(Protocol(title="...", steps=(...)), "protocol.html")  # built in code
 ```
 
 The page needs no network, keeps check marks in the browser, rescales its tables and prints.
-Never hand-edit the HTML: change the data and render again.
+Never hand-edit the HTML: change the data and render again. Keep each `NAME-map.html` beside
+the page: its figures open them.
 
 ## The data format
 
@@ -72,14 +73,18 @@ Rule 4 of `docs/agents/writing.md` says how each field is worded; read it before
   step the reader could split in two usually should be.
 - **Volumes in a reaction table**, never buried in a sentence: the reader scales it to their
   reaction count and pipettes from it. Mark anything added to each tube separately, such as
-  template, as not part of the master mix.
+  template, as not part of the master mix. A DNA row the bench measures carries a
+  `calculator`, not a `stock`: its nanograms, the row making it up, and the problem shown once
+  it stops fitting. A count against a floor is a step's own. Rename either, change it.
 - **Thermocycler programs as programs**, with stages, cycles and the lid temperature.
-- **Timers** for any wait the reader has to track.
+- **Timers** for any wait the reader has to track. A program gets its own from its run time,
+  so add none for one. Give no timer to a time stated only in words, such as overnight.
 - **Expected result at every step**, so the reader knows whether to carry on. Where the answer
   is a gel, give the gel: band sizes per lane and a named ladder.
 - **Troubleshooting** for what actually goes wrong at that step, each with what to do.
 - **Cautions** before a step, **notes** after it.
-- **References** for numbers you took from a vendor protocol or a paper.
+- **Sources** for what a vendor protocol or paper gave: each document once in `sources`, cited
+  by key where used. An uncited one does not show.
 
 ## Change a protocol a pipeline wrote
 
@@ -116,8 +121,7 @@ write_protocol(dataclasses.replace(protocol, steps=steps), "protocol.json")
 - **When a step changes or goes, fix everything that mentions it**: the materials, other steps'
   notes and troubleshooting, and the `oligos` rows only that step used. The loader refuses a
   wrong type, but nothing catches a stale mention.
-- **Cite a written step.** One the user described, or took from a document they named, says
-  where it came from in its notes and in `references`.
+- **Cite a written step** taken from a document the user named, as Sources says.
 - **Never produce, from your own knowledge, a number or a verdict the package computes or
   checks.** A value the user gives, such as another amount of DNA, goes in through the package,
   so everything that depends on it follows. When a request needs what the package cannot

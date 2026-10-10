@@ -10,8 +10,8 @@ nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run mbio cloning restriction plan vector.dna insert.dna --out plan/
-pixi run mbio cloning restriction plan vector.dna source.dna --out plan/ --enzyme EcoRI --enzyme BamHI
+pixi run mbio cloning restriction plan vector.dna insert.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning restriction plan vector.dna source.dna --out plan/ --enzyme EcoRI --enzyme BamHI --cleanup-kit D4003
 ```
 
 The second argument is the insert, or the plasmid it is cut out of. Name no enzyme and the pair
@@ -21,15 +21,16 @@ the plan dephosphorylates it and screens for an insert that went in the other wa
 
 It plans both digests and the gel that separates their fragments, works the ligation out in
 picomoles, and designs the colony PCR, the diagnostic digest and the sequencing that confirm the
-clone. Four files land in the directory you name:
+clone. These files land in the directory you name:
 
 - `product.dna` — the finished plasmid, features carried over and each junction annotated
 - `primers.tsv` — every oligo it designed, with length and Tm
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, reaction
   tables, thermocycler programs, expected bands, a simulated gel and troubleshooting
+- `NAME-map.html` — beside each record a step's figure draws, the map that figure opens
 
-The command prints a summary line and the four paths. The same inputs write the same bytes.
+The command prints a summary line and every path. The same inputs write the same bytes.
 
 ## Which route the insert takes
 
@@ -58,6 +59,7 @@ the user that before they order, not after they sequence.
 | `--enzyme` | An enzyme both digests use; give it once or twice. Chosen for you when you name none |
 | `--polymerase` | For the insert's PCR, where one runs |
 | `--host` | The strain the protocol names |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name. `D4003`, Zymo's, is the lab's |
 | `--name` | What to call the product |
 
 ## What carries no verdict
@@ -82,7 +84,7 @@ from mbio.cloning.restriction import plan_restriction
 
 plan = plan_restriction("vector.dna", "insert.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every oligo
-plan.write("plan/")  # the same four files
+plan.write("plan/")  # the same files
 ```
 
 `plan.enzymes` is the pair, `plan.refusals` every pair weighed against it with the rule that

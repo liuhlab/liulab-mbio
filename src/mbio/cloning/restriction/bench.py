@@ -21,20 +21,26 @@ from mbio.protocol.model import (
     Caution,
     Citation,
     Component,
+    Expectation,
     Incubation,
     ReactionTable,
-    Reference,
     Source,
     Stage,
     ThermocyclerProgram,
 )
 
-#: The documents a caution here is read from, so the sentence carries a link and not a vendor's
-#: name. They are declared here rather than in `steps`: `steps` imports this module, so a source
-#: a constant here cites can have no other home. Read through
+#: The documents a row or a caution here is read from, so the sentence carries a link and not a
+#: vendor's name. They are declared here rather than in `steps`: `steps` imports this module, so
+#: a source a constant here cites can have no other home. Read through
 #: ``docs/research/restriction-ligation.md`` sections 2 and 7.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
+        "NEB-optimizing": Source(
+            "New England Biolabs usage guideline, Optimizing Restriction Endonuclease Reactions",
+            url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/optimizing-restriction-endonuclease-reactions",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
         "NEB-technical-guide": Source(
             "New England Biolabs, Restriction Endonuclease Technical Guide",
             edition="version 5.0 - 7/17",
@@ -69,6 +75,9 @@ ENZYME_UL = 1.0
 #: The 10X buffer in it, µL. §2.
 BUFFER_UL = 5.0
 
+#: Where that table stands, which every row of a digest cites.
+DIGEST_CITATION = Citation("NEB-optimizing", "typical reaction conditions")
+
 #: What a digest's buffer line is called where nothing sourced says the enzymes share one.
 UNNAMED_BUFFER = "restriction enzyme buffer"
 
@@ -99,15 +108,6 @@ SALT_CAUTION = Caution(
     f"Keep the DNA solution under {MAX_DNA_FRACTION:.0%} of the reaction; a column eluate "
     "carries salt, and salt leaves the digest incomplete.",
     citation=Citation("NEB-technical-guide", SALT_LOCATOR),
-)
-
-#: What NEB asks for between a recognition site and the end of a PCR product, and what its own
-#: per-enzyme table measures: at one or two spacer bases most of these enzymes cut poorly, and
-#: only SmaI and XmaI cut well at one. §2, and the value is `mbio.sites.SPACER_LENGTH`.
-CLEAVAGE_REFERENCE = Reference(
-    "NEB, Cleavage Close to the End of DNA Fragments, for the bases a site needs 5' of it to be "
-    "cut on a PCR product",
-    url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
 )
 
 #: Where in the guide the conditions and their countermeasures are tabled.
@@ -211,9 +211,15 @@ def digest_reaction(
             BUFFER_UL,
             stock="10X",
             final="1X",
+            citation=DIGEST_CITATION,
         ),
         *(
-            Component(enzyme.supplier_label, ENZYME_UL, final=f"{DIGEST_UNITS} units")
+            Component(
+                enzyme.supplier_label,
+                ENZYME_UL,
+                final=f"{DIGEST_UNITS} units",
+                citation=DIGEST_CITATION,
+            )
             for enzyme in enzymes
         ),
     ]
@@ -242,13 +248,6 @@ PHOSPHATASE_CELSIUS = 37.0
 PHOSPHATASE_SECONDS = 1800
 PHOSPHATASE_KILL_CELSIUS = 65.0
 PHOSPHATASE_KILL_SECONDS = 300
-
-#: What a protocol cites when it dephosphorylates the backbone.
-PHOSPHATASE_REFERENCE = Reference(
-    "NEB, Protocol for Dephosphorylation of 5' ends of DNA using rSAP (NEB #M0371), for the "
-    "phosphatase, its dose and how it is stopped",
-    url="https://www.neb.com/en-us/protocols/protocol-for-dephosphorylation-of-5-ends-of-dna-neb-m0371",
-)
 
 
 def phosphatase_units(amount: Amount) -> float:
@@ -303,8 +302,10 @@ RATIO_RANGE = (1.0, 10.0)
 #: concentrations the bench will measure.
 LIGATION_NG_UL = (1.0, 10.0)
 
-#: Where on NEB's ligation protocol that range and its floor stand.
+#: Where on NEB's ligation protocol that range and its floor stand, and where its reaction and
+#: incubations do.
 LIGATION_LOCATOR = "General Guidelines, DNA"
+LIGATION_CITATION = Citation("M0202", "protocol")
 
 #: The incubations NEB's own table gives at room temperature, seconds: cohesive ends, and blunt
 #: ends or a single-base overhang. The twelvefold difference is the only cost a supplier states
@@ -370,9 +371,15 @@ def ligation_amounts(
 
 
 def ligation_reaction(
-    amounts: Sequence[Amount], *, volume_ul: float = LIGATION_VOLUME_UL, reactions: int = 1
+    amounts: Sequence[Amount],
+    *,
+    volume_ul: float = LIGATION_VOLUME_UL,
+    reactions: int = 1,
+    measured: bool = False,
 ) -> ReactionTable:
     """Return the ligation reaction for these fragments, the backbone first.
+
+    `measured` is `reaction_table`'s.
 
     Raises
     ------
@@ -382,12 +389,19 @@ def ligation_reaction(
     if len(amounts) < 2:
         raise ValueError("a ligation joins at least two fragments")
     components = [
-        Component("T4 DNA Ligase Buffer", LIGATION_BUFFER_UL, stock="10X", final="1X"),
+        Component(
+            "T4 DNA Ligase Buffer",
+            LIGATION_BUFFER_UL,
+            stock="10X",
+            final="1X",
+            citation=LIGATION_CITATION,
+        ),
         Component(
             "T4 DNA Ligase",
             LIGASE_UL,
             stock=f"{LIGASE_UNITS_UL:g} U/µL",
             final=f"{LIGASE_UNITS_UL * LIGASE_UL:g} units",
+            citation=LIGATION_CITATION,
         ),
     ]
     return reaction_table(
@@ -396,6 +410,7 @@ def ligation_reaction(
         volume_ul=volume_ul,
         title="Ligation, T4 DNA Ligase (NEB #M0202)",
         reactions=reactions,
+        measured=measured,
     )
 
 
@@ -408,9 +423,13 @@ def ligation_program(*, blunt: bool = False) -> ThermocyclerProgram:
     return ThermocyclerProgram(
         (
             Stage(
-                (Incubation("Ligate", ROOM_CELSIUS, BLUNT_SECONDS if blunt else COHESIVE_SECONDS),)
+                (Incubation("Ligate", ROOM_CELSIUS, BLUNT_SECONDS if blunt else COHESIVE_SECONDS),),
+                citation=LIGATION_CITATION,
             ),
-            Stage((Incubation("Heat inactivation", LIGASE_KILL_CELSIUS, LIGASE_KILL_SECONDS),)),
+            Stage(
+                (Incubation("Heat inactivation", LIGASE_KILL_CELSIUS, LIGASE_KILL_SECONDS),),
+                citation=LIGATION_CITATION,
+            ),
         ),
         title="Ligation",
     )
@@ -450,57 +469,20 @@ def gel_recovery(length_bp: int) -> tuple[float, float]:
 #: DNA solution under `MAX_DNA_FRACTION`. Monarch Spin PCR & DNA Cleanup Kit (NEB #T1130), §10.
 COLUMN_RECOVERY = (0.70, 0.90)
 
-#: What a protocol cites when it cleans a reaction up on a column.
-COLUMN_REFERENCE = Reference(
-    "NEB, Monarch Spin PCR & DNA Cleanup Kit instruction manual, NEB #T1130, version 1.0 06.24, "
-    "for what a spin column recovers",
-    url="https://www.neb.com/-/media/nebus/files/manuals/manualt1130.pdf",
-)
 
+#: Where those controls stand in the cloning troubleshooting guide `mbio.bench.steps` names.
+CONTROLS_CITATION = Citation("NEB-cloning", "transformation controls")
 
 #: NEB's four transformation controls and what each should give relative to the others. No
-#: supplier states an absolute colony count for this method, so what a plan promises is a ratio.
-#: §12.
-CONTROLS: tuple[str, ...] = (
-    "Uncut vector, 100 pg to 1 ng: the cells are viable and the antibiotic is right.",
-    "Cut vector, no ligase: under 1% of the colonies the uncut vector gave.",
-    "Vector-only ligation: the same as the cut-vector control, its ends being unable to rejoin.",
-    "A transformation efficiency under 10⁴ cfu/µg means the cells, not the ligation.",
-)
-
-
-#: Where the numbers above come from, ready for a protocol's reference list.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "NEB, Optimizing Restriction Endonuclease Reactions, for the digest and the star-activity "
-        "conditions",
-        url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/optimizing-restriction-endonuclease-reactions",
-    ),
-    Reference(
-        "NEB, Double Digests, for cutting with two enzymes in one buffer",
-        url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/double-digests",
-    ),
-    Reference(
-        "NEB, Ligation Protocol with T4 DNA Ligase (NEB #M0202), for the ligation, its ratios "
-        "and both incubations",
-        url="https://www.neb.com/en-us/protocols/dna-ligation-with-t4-dna-ligase-m0202",
-    ),
-    Reference(
-        "NEB, Monarch Spin DNA Gel Extraction Kit instruction manual, NEB #T1120, version "
-        "2.0 10.25, for what a gel extraction recovers",
-        url="https://www.neb.com/-/media/nebus/files/manuals/manualt1120.pdf",
-    ),
-    Reference(
-        "NEB, Heat Inactivation, for stopping a digest and for the enzymes heat does not stop",
-        url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation",
-    ),
-    Reference(
-        "NEB, Restriction Endonuclease Technical Guide, version 5.0 - 7/17, for what Dam and Dcm "
-        "methylate and for the strain to grow a blocked plasmid in",
-        url="https://www.neb-online.de/literatur/pdf/Restriction_Endonuclease_Technical_Guide.pdf",
-    ),
-    Reference(
-        "NEB, Troubleshooting Guide for Cloning, for the four transformation controls",
-        url="https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
-    ),
+#: supplier states an absolute colony count for this method, so what each line promises is a
+#: ratio, and each carries where it was read. §12.
+CONTROLS: tuple[Expectation, ...] = tuple(
+    Expectation(text, citation=CONTROLS_CITATION)
+    for text in (
+        "Uncut vector, 100 pg to 1 ng: the cells are viable and the antibiotic is right.",
+        "Cut vector, no ligase: under 1% of the colonies the uncut vector gave.",
+        "Vector-only ligation: the same as the cut-vector control, its ends being unable to "
+        "rejoin.",
+        "A transformation efficiency under 10⁴ cfu/µg means the cells, not the ligation.",
+    )
 )

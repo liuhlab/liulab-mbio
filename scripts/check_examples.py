@@ -82,7 +82,17 @@ GENERATORS: tuple[Generator, ...] = (
         commands=(
             f"mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out {OUT}",
         ),
-        writes=("primers.tsv", "product.dna", "protocol.html", "protocol.json"),
+        writes=(
+            "gfp-amplicon-map.html",
+            "gfp-amplicon.dna",
+            "primers.tsv",
+            "product-map.html",
+            "product.dna",
+            "protocol.html",
+            "protocol.json",
+            "puc19-backbone-amplicon-map.html",
+            "puc19-backbone-amplicon.dna",
+        ),
     ),
     Generator(
         what="the iGGA destination",
@@ -136,10 +146,15 @@ GENERATORS: tuple[Generator, ...] = (
             "protocol/05-cargo-validation-index-pcr.html",
             "protocol/06-library-assembly-in-rounds.html",
             "protocol/07-final-cargo-ligation.html",
+            "protocol/block-vector-1-map.html",
             "protocol/index.html",
+            "protocol/oligo-map.html",
+            "protocol/product-map.html",
             "protocol/project.json",
             "protocol/reagents.html",
             "protocol/references.html",
+            "protocol/round-1-map.html",
+            "protocol/round-2-map.html",
             "round-1.dna",
             "round-2.dna",
             "working-vector-ccdb.dna",
@@ -181,7 +196,7 @@ GENERATORS: tuple[Generator, ...] = (
         what="the pUC19-GFP Gibson plan",
         directory=REPO / PUC19 / "gibson",
         commands=(f"mbio cloning gibson plan tests/data/pUC19.dna tests/data/GFP.dna --out {OUT}",),
-        writes=("primers.tsv", "product.dna", "protocol.html", "protocol.json"),
+        writes=("primers.tsv", "product-map.html", "product.dna", "protocol.html", "protocol.json"),
     ),
     Generator(
         what="the pUC19-GFP restriction and ligation plan",
@@ -189,7 +204,7 @@ GENERATORS: tuple[Generator, ...] = (
         commands=(
             f"mbio cloning restriction plan tests/data/pUC19.dna tests/data/GFP.dna --out {OUT}",
         ),
-        writes=("primers.tsv", "product.dna", "protocol.html", "protocol.json"),
+        writes=("primers.tsv", "product-map.html", "product.dna", "protocol.html", "protocol.json"),
     ),
     Generator(
         what="the Gateway donor and destination",
@@ -206,8 +221,10 @@ GENERATORS: tuple[Generator, ...] = (
         ),
         reads=(f"{GATEWAY}/destination.gb", f"{GATEWAY}/donor.gb"),
         writes=(
+            "entry-clone-map.html",
             "entry-clone.dna",
             "primers.tsv",
+            "product-map.html",
             "product.dna",
             "protocol.html",
             "protocol.json",
@@ -243,7 +260,9 @@ GENERATORS: tuple[Generator, ...] = (
         commands=(
             f"mbio plot map tests/data/pUC19.dna -o {OUT}/puc19-map.pdf",
             f"mbio plot map {PUC19}/product.dna --region GFP -o {OUT}/product-insert.pdf",
-            f"mbio plot map {PUC19}/product.dna --sequence-view -o {OUT}/product-map.html",
+            # The page the plan's figure opens to, which the plan writes too: one command shown on
+            # the maps page is proved to make the same bytes.
+            f"mbio plot map {PUC19}/product.dna --enzyme BbsI -o {OUT}/product-map.html",
         ),
         reads=(f"{PUC19}/product.dna",),
         writes=("product-insert.pdf", "product-map.html", "puc19-map.pdf"),

@@ -5,17 +5,17 @@ and pulled apart into blocks in another. Without one the blocks are bought whole
 the only protocol before the rounds.
 
 What the pool route buys sits here, because this is the protocol that buys it: the polymerase
-the two amplifications run in, the primers that pull a block out, and the references both
-protocols print.
+the two amplifications run in, the primers that pull a block out, and the documents both
+protocols cite.
 """
 
-from mbio.bench.gels import REFERENCES as GEL_REFERENCES
-from mbio.bench.pcr import REFERENCES as PCR_REFERENCES
+from mbio.bench.gels import SOURCES as GEL_SOURCES
+from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.pcr import polymerase_name
 from mbio.bench.steps import catalogued, listed
 from mbio.primers.polymerase import Q5, Polymerase
+from mbio.protocol.model import Citation, Material, Note, Source, Step, Troubleshooting, sectioned
 from mbio.protocol.model import Item as Handed
-from mbio.protocol.model import Material, Reference, Step, Troubleshooting, sectioned
 from synbio.igga.cargo import PoolPlan
 from synbio.igga.method import SYNTHESIS_ENZYME
 from synbio.igga.protocols.protocol import Protocol
@@ -43,30 +43,25 @@ POOL_POLYMERASE_PRODUCT = f"{polymerase_name(POOL_POLYMERASE)} (M0491)"
 POOL_STOCK_BUFFER = "10 mM Tris buffer, pH 8.0"
 POOL_STOCK_NG_PER_UL = 20.0
 
-#: Where the dried pool's own buffer and floor are read. The same document carries the cycle
-#: bands, so the protocol that amplifies the pool cites it too.
-POOL_STOCK_REFERENCE = Reference(
-    "Twist Bioscience, Twist Oligo Pools Amplification Protocol, DOC-4060 REV 1.0, for the "
-    "buffer a dried pool is dissolved in and the least it may be left at, for the three cycle "
-    "bands, and for the FAQ answering that more cycles give worse uniformity"
-)
+#: The document the dried pool's own buffer and floor are read from. It carries the cycle
+#: bands too, so the protocol that amplifies the pool cites it as well.
+POOL_STOCK_SOURCE_KEY = "DOC-4060"
 
-#: Where PCR1's cycle count is read. Two independently revised Twist documents give the same
-#: three length bands, and the second's appendix answers what more cycles cost.
-POOL_CYCLE_REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Twist Bioscience, Amplifying Twist Oligo Pools, FRM-001034 REV 8, p. 2, for the cycle "
-        "count banded by the pool's length"
+#: Where the pool's buffer and floor stand in it, and where its answer on cycle count does.
+POOL_STOCK_CITATION = Citation(POOL_STOCK_SOURCE_KEY, "Before You Begin")
+POOL_UNIFORMITY_CITATION = Citation(POOL_STOCK_SOURCE_KEY, "Appendix B")
+
+#: What the pool route's own rows and sentences are cited to, beside the round's own.
+POOL_SOURCES: dict[str, Source] = {
+    **PCR_SOURCES,
+    **GEL_SOURCES,
+    POOL_STOCK_SOURCE_KEY: Source(
+        "Twist Bioscience, Twist Oligo Pools Amplification Protocol",
+        edition="DOC-4060 REV 1.0",
+        read_as="held under reference_docs/",
+        note="docs/research/oligo-pool-pcr-cycles.md",
     ),
-    POOL_STOCK_REFERENCE,
-)
-
-#: What the two PCRs and their gel cite, beside the round's own references.
-POOL_REFERENCES: tuple[Reference, ...] = (
-    *PCR_REFERENCES,
-    *GEL_REFERENCES,
-    *POOL_CYCLE_REFERENCES,
-)
+}
 
 
 class Ordering(Protocol):
@@ -109,13 +104,13 @@ class Ordering(Protocol):
             return tuple(one for one in bought if one.name != PRIMER_MATERIAL)
         return bought
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Return the one document this page's own numbers are read from.
+    def sources(self, run: Run) -> dict[str, Source]:
+        """Return the documents this page could cite.
 
         Ordering a pool and resuspending it runs no PCR and pours no gel, so the cycle count,
-        the ladders and the gel resolution belong to the protocol after it and not here.
+        the ladders and the gel resolution are cited by the protocol after it and not here.
         """
-        return (POOL_STOCK_REFERENCE,) if run.pool else ()
+        return dict(POOL_SOURCES)
 
 
 def pool_materials(pool: PoolPlan, pool_sheet: str, primer_sheet: str) -> tuple[Material, ...]:
@@ -265,8 +260,10 @@ def _pool_resuspend_step() -> Step:
             "undissolved on the wall of the tube.",
         ),
         notes=(
-            f"Dividing by {floor} is what the vendor's own floor of at least {floor} ng/µL "
-            f"comes to, and the amplification then pipettes 1 µL of {floor} ng/µL: Twist Oligo "
-            'Pools Amplification Protocol DOC-4060 REV 1.0, "Before You Begin".',
+            Note(
+                f"Dividing by {floor} is what the floor of at least {floor} ng/µL comes to, "
+                f"and the amplification then pipettes 1 µL of {floor} ng/µL.",
+                citation=POOL_STOCK_CITATION,
+            ),
         ),
     )

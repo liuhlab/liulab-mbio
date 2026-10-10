@@ -75,7 +75,8 @@ def test_a_callers_note_sits_after_the_steps_own() -> None:
     assert step.noted == (
         Note(
             "DpnI cuts GATC only where Dam has methylated it, so it cuts pUC19 (19 Dam sites) "
-            "and leaves the PCR product, which carries no methylation."
+            "and leaves the PCR product, which carries no methylation.",
+            citation=Citation("REBASE-DpnI", "DpnI"),
         ),
         Note("This pipeline's own reason for the digest."),
     )

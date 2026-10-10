@@ -15,18 +15,21 @@ it.
 """
 
 import dataclasses
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from mbio.bench import plates
 from mbio.checks import counted
 from mbio.edits import EditReport, insert, ordered
 from mbio.protocol.model import (
     FORMATS,
+    Citation,
     Material,
     Plate,
-    Reference,
+    Source,
     Step,
+    Timer,
     Troubleshooting,
 )
 from mbio.sequence import Feature, Segment, SequenceRecord, Strand, position_text
@@ -45,13 +48,17 @@ CARRIER_KIT = "Zero Blunt TOPO PCR Cloning Kit"
 
 #: Where the reaction's own numbers are read from: the kit's user guide, which
 #: ``docs/research/synthesis-and-assembly.md`` section 6.11 reads the blunt point against.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide, for a vector "
-        "supplied linearised with topoisomerase I bound to each 3' end and a 5 min "
-        "room-temperature reaction"
-    ),
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "zero-blunt-topo": Source(
+            "Thermo Fisher Scientific, Zero Blunt TOPO PCR Cloning Kit user guide",
+            note="docs/research/synthesis-and-assembly.md",
+        )
+    }
 )
+
+#: How long the reaction stands at room temperature, as the user guide in `SOURCES` gives.
+SEAT_SECONDS = 300
 
 #: The head-to-head pair topoisomerase I sits either side of. The enzyme cleaves after 5'-CCCTT
 #: on each strand, so a carrier is supplied opened halfway through this run.
@@ -280,6 +287,7 @@ def materials() -> tuple[Material, ...]:
                 "supplies the carrier already linearised with topoisomerase I bound to each 3' "
                 "end, so the reaction adds no ligase and no other enzyme"
             ),
+            citation=Citation("zero-blunt-topo", "TOPO cloning reaction"),
         ),
     )
 
@@ -292,10 +300,11 @@ def carrier_step(seated: SeatedParts) -> Step:
         instructions=(
             f"Set up one {CARRIER_KIT} reaction per well of {seated.plate.name}, each holding "
             "one blunt part, the linearised carrier and the kit's salt solution.",
-            "Leave 5 min at room temperature. Topoisomerase I comes bound to the carrier, so "
-            "nothing is added to join the two.",
+            f"Leave {SEAT_SECONDS // 60} min at room temperature. Topoisomerase I comes bound "
+            "to the carrier, so nothing is added to join the two.",
             f"Transform each well on its own and select on {CARRIER_MARKER}.",
         ),
+        timers=(Timer("TOPO reaction", SEAT_SECONDS),),
         expected=(
             f"{counted(seated.products, 'carrier plasmid')}, one a part, each still named by "
             "the well it sits in.",

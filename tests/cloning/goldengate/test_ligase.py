@@ -266,7 +266,7 @@ def test_the_pipeline_scores_an_unmeasured_enzyme_on_the_profile_and_says_so(
     assert not scored.enzyme_specific
     protocol = made.protocol()
     assert "not specific to PaqCI" in protocol.overview["Fidelity"]
-    assert NAMED in " ".join(one.text for one in protocol.references)
+    assert NAMED in " ".join(one.document for one in protocol.sources.values())
 
 
 def test_without_a_matrix_the_pipeline_scores_that_enzyme_on_a_stand_in(puc19, gfp) -> None:

@@ -1,5 +1,5 @@
 import re
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -8,10 +8,13 @@ from mbio.bench import plates
 from mbio.plot import layers
 from mbio.protocol import (
     OVERVIEW_CHARS,
+    AmountToVolume,
     Caution,
     Check,
     Citation,
     Component,
+    CountToNet,
+    Expectation,
     Figure,
     Folder,
     Incubation,
@@ -36,7 +39,7 @@ from mbio.protocol import (
     render_html,
     write_html,
 )
-from mbio.protocol.render import NO_NUMBER, page_key
+from mbio.protocol.render import FIELD_HELD, HIGHLIGHTS_HEADING, NO_NUMBER, page_key
 
 from ..html import Node, parse
 
@@ -76,10 +79,11 @@ def test_text_from_the_protocol_is_escaped() -> None:
     assert page.find_all("button", cls="copy")[0].attrs["data-copy"] == 'AC"GT'
 
 
-def test_the_header_reads_title_summary_facts_sentences_then_badges(page: Node) -> None:
+def test_the_header_reads_in_bands_and_its_sentences_carry_a_heading(page: Node) -> None:
     header = page.find_all("header", cls="intro")[0]
     blocks = [n.attrs.get("class") or n.tag for n in header.children if isinstance(n, Node)]
-    assert blocks[:5] == ["h1", "summary", "overview", "highlights", "checks"]
+    assert blocks == ["h1", "summary", "overview", "highlights", "status", "toolbar"]
+    assert header.find_all(cls="highlights")[0].find_all("h3")[0].text == HIGHLIGHTS_HEADING
 
 
 def test_a_card_holds_a_fact_and_a_sentence_is_prose(page: Node) -> None:
@@ -114,8 +118,12 @@ def test_a_check_no_threshold_judges_shows_as_unjudged_and_never_as_a_pass() -> 
 
 
 def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:
+    """`protocol.js` ticks a step from the boxes in its instructions list, and they from it."""
     steps = page.find_all("section", cls="step")
     assert [len(s.find_all("input", type="checkbox")) for s in steps] == [1 + 3, 1 + 1, 1 + 2]
+    assert [len(s.find_all("input", cls="done")) for s in steps] == [1, 1, 1]
+    lists = [s.find_all("ol", cls="instructions")[0] for s in steps]
+    assert [len(one.find_all("input", type="checkbox")) for one in lists] == [3, 1, 2]
     keys = [box.attrs["data-key"] for box in page.find_all("input", type="checkbox")]
     assert len(set(keys)) == len(keys)
 
@@ -143,7 +151,10 @@ def reworded() -> tuple[Protocol, Protocol]:
 def test_a_step_is_addressed_by_its_key_so_a_reworded_title_keeps_its_ticks() -> None:
     """ADR 0002's own case: an agent rewords the steps, renders again, nothing is ticked twice."""
     marks = [
-        sorted(box.attrs["data-key"] for box in parse(render_html(one)).find_all("input"))
+        sorted(
+            box.attrs["data-key"]
+            for box in parse(render_html(one)).find_all("input", type="checkbox")
+        )
         for one in reworded()
     ]
     assert marks[0] == ["step-cycle", "step-set-up", "step-set-up.1"]
@@ -160,6 +171,25 @@ def test_a_page_remembers_under_the_key_its_protocol_carries() -> None:
     # A protocol nobody has keyed falls back to a digest of its content, which an edit changes.
     unkeyed = [replace(one, key="") for one in (before, after)]
     assert page_key(unkeyed[0]) != page_key(unkeyed[1])
+
+
+def test_renaming_a_model_class_leaves_a_page_key_where_it_was() -> None:
+    class Observation(Expectation):
+        """`Expectation` under another name."""
+
+    def gel(line: Expectation) -> Protocol:
+        return Protocol("Demo", steps=(Step("Run the gel", expected=(line,)),))
+
+    assert page_key(gel(Observation("One band"))) == page_key(gel(Expectation("One band")))
+
+
+def test_a_field_a_class_gains_counts_toward_a_page_key_only_once_it_is_set() -> None:
+    @dataclass(frozen=True, slots=True)
+    class Grown(Protocol):
+        waste: str = ""
+
+    assert page_key(Grown("Demo")) == page_key(Protocol("Demo"))
+    assert page_key(Grown("Demo", waste="Bin the gel")) != page_key(Protocol("Demo"))
 
 
 def test_no_two_marks_of_one_page_are_alike_however_its_steps_are_keyed() -> None:
@@ -207,7 +237,7 @@ def rounds() -> Protocol:
 
 
 def test_the_navigation_groups_the_steps_under_the_section_each_belongs_to() -> None:
-    [nav] = parse(render_html(rounds())).find_all("nav", cls="toc")
+    [nav] = parse(render_html(rounds())).find_all("nav", cls="within")
     groups = nav.find_all("details")
     assert [g.attrs["data-steps"] for g in groups] == [
         "round-1-open round-1-ligate",
@@ -227,22 +257,26 @@ def test_the_navigation_groups_the_steps_under_the_section_each_belongs_to() -> 
     assert nav.find_all("a")[-1].text == "6 Read the library back"
 
 
-def test_both_navigation_lists_of_one_page_are_the_same_list() -> None:
-    """The right column of a page in a run and the standalone list it shows alone, alike."""
+def test_a_page_lists_its_steps_in_the_column_beside_it_alone_or_in_a_run() -> None:
+    """A page lists its steps in the column beside it; a page alone has no run's left column."""
     one = rounds()
-    [standalone] = parse(render_html(one)).find_all("nav", cls="toc")
+    alone = parse(render_html(one))
+    [frame] = alone.find_all("div", cls="alone")
+    kinds = [n.attrs.get("class", "") for n in frame.children if isinstance(n, Node)]
+    assert kinds == ["page", "column within"]
     [column] = parse(
         render_html(one, folder=Folder((Page.of(1, one),)), here="01-x.html")
     ).find_all("nav", cls="within")
+    [beside] = frame.find_all("nav", cls="within")
     assert [g.attrs["data-steps"] for g in column.find_all("details")] == [
-        g.attrs["data-steps"] for g in standalone.find_all("details")
+        g.attrs["data-steps"] for g in beside.find_all("details")
     ]
-    # One or the other: a page shows the list in its header or in its column, never twice.
-    assert not parse(render_html(one)).find_all("nav", cls="within")
+    # One list of steps a page, and it is the column's.
+    assert len(alone.find_all("nav")) == 1
 
 
 def test_steps_naming_no_section_stay_the_one_list_they_were(page: Node) -> None:
-    [nav] = page.find_all("nav", cls="toc")
+    [nav] = page.find_all("nav", cls="within")
     assert not nav.find_all("details")
     assert next(a.attrs["href"] for a in nav.find_all("a")).startswith("#step-")
 
@@ -366,6 +400,69 @@ def test_a_reaction_table_opens_scaled_to_its_reaction_count(page: Node) -> None
     assert "each tube" in template.text
 
 
+def test_a_measured_row_opens_at_the_concentration_its_volume_assumes() -> None:
+    """The plan's numbers stand until the reader types; the warning is another step's own entry."""
+    calculator = AmountToVolume(81.98, made_up_by="Water", too_dilute="Too dilute")
+    row = Component("pUC19", 2.0, master_mix=False, calculator=calculator)
+    measure = Step("Measure", troubleshooting=(Troubleshooting("Too dilute", "Concentrate it."),))
+    protocol = Protocol(
+        "t", steps=(measure, Step("Mix", tables=(ReactionTable((row, Component("Water", 13.0))),)))
+    )
+    figure = parse(render_html(protocol)).find_all(cls="reaction")[0]
+
+    [measured] = figure.find_all("tr", cls="measured")
+    assert measured.attrs["data-fill"] == "1"
+    [field] = measured.find_all("input", cls="calc-value")
+    assert (field.attrs["data-plan"], field.attrs["value"]) == ("40.99", "41")
+    [held] = measured.find_all(cls="calc-held")
+    assert (held.text, "hidden" in held.attrs) == (FIELD_HELD, True)
+    [warning] = figure.find_all(cls="calc-warning")
+    assert "hidden" in warning.attrs
+    assert warning.text == "Too dilute. Concentrate it."
+
+
+def test_a_plate_nobody_counted_shows_no_net_and_no_verdict() -> None:
+    """An uncounted plate reads as a dash, and the short verdict is the step's own."""
+    count = CountToNet(
+        183,
+        counted="round 1 titre",
+        counting="colonies",
+        control="round 1 no-donor control",
+        below_floor="Fewer net colonies",
+    )
+    protocol = Protocol(
+        "t",
+        steps=(
+            Step(
+                "Grow",
+                expected=("At least 183 net colonies.",),
+                calculator=count,
+                troubleshooting=(Troubleshooting("Fewer net colonies", "Run it again."),),
+            ),
+        ),
+    )
+    [block] = parse(render_html(protocol)).find_all(cls="net-count")
+
+    assert block.attrs["data-floor"] == "183"
+    fields = block.find_all("input", cls="calc-value")
+    assert [one.attrs["value"] for one in fields] == ["", "0", "1"]
+    # The floor stands in the counted field as the number to beat, not as a number counted.
+    assert "data-plan" not in fields[0].attrs
+    assert fields[0].attrs["placeholder"] == "183"
+    # A count is read rather than pipetted against, so no tick of the step holds it still.
+    assert block.find_all(cls="calc-held") == []
+    [said] = block.find_all(cls="net-sum")
+    assert said.text.startswith("— net colonies")
+    # Both verdicts are written for the page to pick from, and neither stands until it counts.
+    [held_back] = block.find_all(cls="net-said")
+    assert "hidden" in held_back.attrs
+    assert block.find_all(cls="net-verdict")[0].text == ""
+    assert said.attrs["data-clears"] == "at least the floor of 183"
+    assert said.attrs["data-short"] == "short of the floor of 183"
+    [warning] = block.find_all(cls="calc-warning")
+    assert warning.text == "Fewer net colonies. Run it again."
+
+
 def volume_cells(volume_ul: float) -> list[str]:
     """Every number a one-component reaction table of `volume_ul` prints, and its dispense line."""
     table = ReactionTable((Component("Water", volume_ul),), reactions=1, overage=0.1)
@@ -421,6 +518,9 @@ def test_a_thermocycler_program_lists_temperatures_times_and_cycles(page: Node) 
     caption = program.find_all("figcaption")[0].text
     assert "105 °C" in caption
     assert "50 min 30 s" in caption
+    # The run the caption times is the program's own timer, so no step has to add one.
+    [timer] = program.find_all(cls="timer")
+    assert timer.attrs["data-seconds"] == "3030.0"
 
 
 def _program_rows(program: ThermocyclerProgram) -> tuple[Node, list[list[str]]]:
@@ -450,9 +550,11 @@ def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_e
         ["Anneal", "68 °C-0.5 °C a cycle", "20 s", NO_NUMBER],
     ]
     # One source behind every row is the program's, so the rows carry no citation of their own.
-    assert [cited.text for cited in figure.find_all("a", cls="cite")] == [
-        "LevSeq thermal cycler table"
+    assert [cited.attrs["title"] for cited in figure.find_all("a", cls="cite")] == [
+        "LevSeq · thermal cycler table"
     ]
+    # A blank count bounds no run, so no timer stands in for one.
+    assert not figure.find_all(cls="timer")
 
 
 def test_a_program_held_at_one_temperature_is_not_given_ramps_it_does_not_run() -> None:
@@ -490,24 +592,35 @@ def test_a_gel_draws_each_band_at_a_height_set_by_log_size(page: Node) -> None:
     assert "No template: no band" in legend
 
 
-def test_a_timer_starts_from_its_duration(page: Node) -> None:
-    timer = page.find_all("button", cls="timer")[0]
+def test_a_timer_starts_from_the_plans_time_in_a_field_the_reader_may_type_over(
+    page: Node,
+) -> None:
+    """`data-seconds` keeps the plan's time, which the page offers back once the reader's differs."""
+    [timer] = [one for one in page.find_all(cls="timer") if "Gel run" in one.text]
     assert timer.attrs["data-seconds"] == "1800"
-    assert "30:00" in timer.text
+    [field] = timer.find_all("input", cls="timer-time")
+    assert field.attrs["value"] == "30:00"
+    assert "readonly" not in field.attrs
 
 
 def test_each_timer_is_keyed_so_a_running_one_survives_a_page_turn() -> None:
     """`protocol.js` keeps a deadline under this key, so a key is a timer's own and no other's."""
+    ligate = ThermocyclerProgram((Stage((Incubation("ligate", 25.0, 60),)),))
     protocol = Protocol(
         "Incubate",
         steps=(
             Step("Digest", timers=(Timer("digest", 60), Timer("heat", 120))),
-            Step("Ligate", timers=(Timer("ligate", 60),)),
+            Step("Ligate", programs=(ligate,), timers=(Timer("ligate", 60),)),
         ),
     )
     page = parse(render_html(protocol))
-    keys = [button.attrs["data-key"] for button in page.find_all("button", cls="timer")]
-    assert keys == ["step-digest.timer.1", "step-digest.timer.2", "step-ligate.timer.1"]
+    keys = [timer.attrs["data-key"] for timer in page.find_all(cls="timer")]
+    assert keys == [
+        "step-digest.timer.1",
+        "step-digest.timer.2",
+        "step-ligate.program.1",
+        "step-ligate.timer.1",
+    ]
 
 
 def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:
@@ -525,7 +638,7 @@ def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:
     assert "59 s" in times
 
 
-def test_expected_results_troubleshooting_and_references_are_shown(page: Node) -> None:
+def test_expected_results_troubleshooting_and_sources_are_shown(page: Node) -> None:
     expected = page.find_all(cls="expected")[0].text
     assert "One band at 500 bp" in expected
     assert "Band in the no-template lane" in page.find_all(cls="trouble")[0].text
@@ -598,6 +711,59 @@ def test_a_figure_reads_its_record_from_beside_the_page(data_dir: Path, tmp_path
     (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
     path = write_html(_drawn("pUC19"), tmp_path / "protocol.html")
     assert "<svg" in path.read_text(encoding="utf-8")
+
+
+def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Path) -> None:
+    """ "Run the program below" names the program, so nothing stands between the two."""
+    program = ThermocyclerProgram((Stage((Incubation("Hold", 37.0, 60),)),), title="Assembly")
+    step = Step(
+        "Run it",
+        instructions=("Run the program below.",),
+        programs=(program,),
+        figures=(Figure(("pUC19.dna",), "The product"),),
+    )
+    page = parse(render_html(Protocol("Clone", steps=(step,)), base=data_dir))
+
+    [section] = page.find_all("section", cls="step")
+    order = [
+        n.attrs["class"] for n in section.children if isinstance(n, Node) and n.tag == "figure"
+    ]
+    assert order == ["program", "drawing map"]
+
+
+def test_a_figure_opens_to_its_record_s_map_written_beside_the_page(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    """One map a record, with every enzyme its figures name, beside the page that opens it.
+
+    A record of the same name in another folder is another record, so its map is numbered.
+    """
+    for folder in ("records", "other"):
+        (tmp_path / folder).mkdir()
+        (tmp_path / folder / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    figures = (
+        *(
+            Figure(("../records/pUC19.dna",), f"Cut by {enzyme}", enzymes=(enzyme,))
+            for enzyme in ("EcoRI", "HindIII")
+        ),
+        Figure(("../other/pUC19.dna",), "The other copy", enzymes=()),
+    )
+    one = Protocol("Clone", steps=(Step("Cut", figures=figures),))
+    (tmp_path / "pages").mkdir()
+
+    page = parse(write_html(one, tmp_path / "pages" / "protocol.html").read_text("utf-8"))
+
+    written = (tmp_path / "pages" / "pUC19-map.html").read_text(encoding="utf-8")
+    assert all(f'data-name="{enzyme}"' in written for enzyme in ("EcoRI", "HindIII"))
+    opened = [figure.find_all("details", cls="opener")[0] for figure in page.find_all("figure")]
+    assert [d.find_all("iframe")[0].attrs["data-src"] for d in opened] == [
+        "pUC19-map.html",
+        "pUC19-map.html",
+        "pUC19-2-map.html",
+    ]
+    assert (tmp_path / "pages" / "pUC19-2-map.html").is_file()
+    # A page rendered with no map written has nothing to open.
+    assert not parse(render_html(one, base=tmp_path / "pages")).find_all("details", cls="opener")
 
 
 def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path: Path) -> None:
@@ -781,9 +947,41 @@ def test_a_note_that_cites_a_document_anchors_it_where_a_troubleshooting_row_doe
     notes = parse(render_html(one)).find_all(cls="notes")[0]
     assert [item.text for item in notes.find_all("li")] == [
         "This run chose 2 hours.",
-        "Glycerol above 5% is what stars. NEB §2",
+        "Glycerol above 5% is what stars.[1]",
     ]
     assert [a.attrs["href"] for a in notes.find_all("a", cls="cite")] == ["#source-neb"]
+
+
+def test_a_citation_is_one_number_a_document_and_its_entry_names_where_the_page_cites_it() -> None:
+    """Numbered by first citation, so the list reads in order and lands each click on its entry.
+
+    A document nothing on the page cites is not listed, so no entry is one no mark points at.
+    """
+    one = Protocol(
+        "Digest",
+        sources={"MAN": Source("Kit manual"), "NEB": Source("Guide"), "OLD": Source("Unread")},
+        steps=(
+            Step(
+                "Set up the digest",
+                notes=(
+                    Note("Glycerol above 5% is what stars.", citation=Citation("NEB", "§2")),
+                    Note("The buffer comes with the kit.", citation=Citation("MAN")),
+                    Note("Heat stops the enzyme.", citation=Citation("NEB", "§5")),
+                ),
+            ),
+        ),
+    )
+    page = parse(render_html(one))
+    assert [(a.text, a.attrs["href"]) for a in page.find_all("a", cls="cite")] == [
+        ("[1]", "#source-neb"),
+        ("[2]", "#source-man"),
+        ("[1]", "#source-neb"),
+    ]
+    [listed] = page.find_all("section", cls="sources")[0].find_all("ol")
+    assert [
+        (item.attrs["id"], [at.text for at in item.find_all(cls="cited-at")])
+        for item in listed.find_all("li")
+    ] == [("source-neb", ["cited at §2 · §5"]), ("source-man", [])]
 
 
 def test_a_caution_that_cites_a_document_anchors_it_where_a_note_does() -> None:
@@ -805,7 +1003,7 @@ def test_a_caution_that_cites_a_document_anchors_it_where_a_note_does() -> None:
     said = [one.text for one in page.find_all(cls="caution")]
     assert said == [
         "Caution: Keep the enzyme mix on ice.",
-        "Caution: Excess DNA inhibits it. MAN p. 21",
+        "Caution: Excess DNA inhibits it.[1]",
     ]
     assert [a.attrs["href"] for a in page.find_all("a", cls="cite")] == ["#source-man"]
 

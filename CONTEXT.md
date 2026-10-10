@@ -147,9 +147,9 @@ _Avoid_: validation, rule, test
 ### Protocol
 
 A bench procedure someone can follow without asking anything: summary, materials, numbered
-steps, expected results and references. Rendered as one self-contained HTML page. It declares
-what it consumes and what it produces, and nothing else about the run it belongs to: everything
-else it needs it holds itself.
+steps, expected results and the sources they cite. Rendered as one self-contained HTML page. It
+declares what it consumes and what it produces, and nothing else about the run it belongs to:
+everything else it needs it holds itself.
 _Avoid_: SOP, recipe, method
 
 ### Item
@@ -197,15 +197,24 @@ _Package_: synbio
 
 ### Step
 
-One numbered unit of a protocol: what to do, what it needs, what a successful result looks
-like, and what to do when the result is wrong.
+One numbered unit of a protocol: what to do, what it needs, the **expectations** it ends with,
+and what to do when the result is wrong.
 _Avoid_: task, procedure
+
+### Expectation
+
+What a step's reader should see if it worked, written before anyone looks: one sentence naming
+the result, never an instruction and never a hazard. Where a document states it, it carries that
+document's **citation**; where this run computed or chose the result, it cites nothing. A step
+ends with its expectations, and where the reader has a count of their own to work out, the
+**calculator** beside them is what they read it against.
+_Avoid_: observation, assertion, acceptance criterion
 
 ### Section
 
 Where in a protocol a step belongs, such as `Day 1` or `Round 2`. A label, not a container: the
-steps stay one list and the numbering runs through them. Both navigation lists group by it, one
-collapsible group each, counted from the bench's own marks.
+steps stay one list and the numbering runs through them. The column listing a page's steps groups
+by it, one collapsible group each, counted from the bench's own marks.
 
 It is written in sentence case, in the voice a step title has, naming what the bench achieves
 over that stretch. It labels a run of consecutive steps, so `sectioned` names it once where the
@@ -245,6 +254,19 @@ _Avoid_: delay, downtime, lead time, incubation
 The volumes of one reaction, scaled to a master mix for several reactions plus an overage. A
 component marked per-tube, such as template, is added to each tube instead of to the mix.
 _Avoid_: mix table, recipe
+
+### Calculator
+
+A named calculation a step shows: a default the package wrote where it has one, a number the
+reader types over, and a result the page works out again from the two. It is a view and never a
+store: what the reader types is the page's to keep, as a timer's time is, and the protocol never
+holds it. A field the package can default nothing to, such as a plate nobody has counted, opens
+empty, and the calculation reads as a dash until it is filled. Its warning is a troubleshooting
+entry a step already carries. Its kinds are a closed set, each named: a reaction row whose DNA
+the bench measured, which gives the volume that carries the row's amount while another row makes
+up the difference; and a plated count, which takes the control off, scales by the dilution and
+says whether the net clears the floor the design asked for.
+_Avoid_: widget, formula, converter, panel
 
 ### Thermocycler program
 
@@ -1012,11 +1034,12 @@ _Avoid_: dispense, reformat
 
 ### Source
 
-A document a number was read from: what it is, its edition, where it was read, how, when, and
-the research note under `docs/research/` it was read into, where it has one. A protocol names
+A document a claim on the page rests on: what it is, its edition, where it was read, how, when,
+and the research note under `docs/research/` it was read into, where it has one. A protocol names
 each one once, and a run names the ones its own shared pages cite, such as the record pricing
-its bill; a **citation** of a source and a locator hangs on the row that carries the number.
-_Avoid_: reference (the protocol's own bibliography entry), provenance
+its bill; a **citation** of a source and a locator hangs on the row or sentence making the claim.
+A page lists only the sources its citations name.
+_Avoid_: reference, bibliography, provenance
 
 ### Store
 

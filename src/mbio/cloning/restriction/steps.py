@@ -17,10 +17,10 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 
 from mbio import checks as judged
-from mbio.bench import REFERENCES as BENCH_REFERENCES
 from mbio.bench.amounts import Amount
-from mbio.bench.gels import agarose_percent, choose_ladder
+from mbio.bench.gels import agarose_percent, choose_ladder, resolution_note
 from mbio.bench.inactivation import heat_inactivation
+from mbio.bench.materials import kit
 from mbio.bench.oligos import oligo_row
 from mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
@@ -33,20 +33,19 @@ from mbio.bench.phenotype import Phenotype
 from mbio.bench.steps import (
     CELLS_UL,
     COLONY_PCR_TITLE,
-    DPNI_REFERENCE,
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
-    IPTG_UM,
+    MINIPREP_KIT,
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
-    PLATE_REFERENCE,
+    QUANTIFY_EQUIPMENT,
     SEQUENCING_TITLE,
-    XGAL_UG_ML,
     badges,
     card,
     catalogued,
     cleanup_step,
     colony_pcr_step,
+    column,
     dam_sites,
     dpni_step,
     enzyme_material,
@@ -55,6 +54,7 @@ from mbio.bench.steps import (
     pcr_step,
     pcr_title,
     phenotype_sentences,
+    plate_material,
     quantify_step,
     sequencing_step,
     transform_step,
@@ -71,10 +71,8 @@ from mbio.cloning.restriction.amplify import Amplicon
 from mbio.cloning.restriction.bench import (
     BLUNT_SECONDS,
     BUFFER_FINDER,
-    CLEAVAGE_REFERENCE,
     COHESIVE_SECONDS,
     COLUMN_RECOVERY,
-    COLUMN_REFERENCE,
     CONTROLS,
     DIGEST_SECONDS,
     ELUATE_CAUTION,
@@ -87,9 +85,7 @@ from mbio.cloning.restriction.bench import (
     PHOSPHATASE_CELSIUS,
     PHOSPHATASE_KILL_CELSIUS,
     PHOSPHATASE_KILL_SECONDS,
-    PHOSPHATASE_REFERENCE,
     PHOSPHATASE_SECONDS,
-    REFERENCES,
     ROOM_CELSIUS,
     SALT_CAUTION,
     STAR_ACTIVITY,
@@ -120,7 +116,6 @@ from mbio.protocol.model import (
     Material,
     Note,
     Protocol,
-    Reference,
     Source,
     Step,
     Timer,
@@ -139,23 +134,11 @@ SUPPLIER = "New England Biolabs"
 #: read into `docs/research/restriction-ligation.md`, which names where it was fetched from.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
-        "T1120": Source(
-            "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
-            edition="version 2.0 10.25",
-            date="2026-09-18",
-            note="docs/research/restriction-ligation.md",
-        ),
         "NEB-background-faq": Source(
             "New England Biolabs FAQ, How can I reduce the number of vector-only background "
             "colonies?",
             edition="capture 2019-11-23",
             read_as="Wayback Machine",
-            date="2026-09-18",
-            note="docs/research/restriction-ligation.md",
-        ),
-        "T1130": Source(
-            "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
-            edition="version 1.0 06.24",
             date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
@@ -168,6 +151,14 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
         "NEB-cleavage": Source(
             "New England Biolabs usage guideline, Cleavage Close to the End of DNA Fragments",
             url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/cleavage-close-to-the-end-of-dna-fragments",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "NEB-heat-inactivation": Source(
+            "New England Biolabs usage guideline, Heat Inactivation",
+            url="https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation",
+            edition="capture 2021-04-20",
+            read_as="Wayback Machine",
             date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
@@ -185,13 +176,19 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
 #: that supplies the rest of the lacZ fragment the vector carries, which this one does.
 DEFAULT_HOST = "NEB 5-alpha Competent E. coli (C2987)"
 
+#: The two kits this method's own numbers were read off: the gel extraction every run does, and
+#: the reaction clean-up `COLUMN_RECOVERY` states a recovery for. The run names its own
+#: clean-up kit; the gel one is the method's, its manual being where the gel numbers come from.
+GEL_KIT = "T1120"
+COLUMN_KIT = "T1130"
+
 #: The hardware a run needs, which no reagent table covers.
 EQUIPMENT: tuple[str, ...] = (
     "Thermocycler with a heated lid",
     "Agarose gel rig, power supply and a gel imager",
     "Scalpel or gel cutting tips, and a clean cutting surface",
     "Microcentrifuge",
-    "Spectrophotometer or fluorometer",
+    QUANTIFY_EQUIPMENT,
     f"Heat block or water bath at {HEAT_SHOCK_CELSIUS:g} °C",
     f"Shaking incubator and a plate incubator at {OUTGROWTH_CELSIUS:g} °C",
 )
@@ -217,6 +214,7 @@ def protocol(
     refusals: Sequence[Refusal],
     host: str,
     polymerase: Polymerase,
+    cleanup_kit: Material,
     thresholds: Mapping[PrimerRole, Thresholds],
 ) -> Protocol:
     """Return the bench protocol for one planned cloning, ready to render.
@@ -254,6 +252,7 @@ def protocol(
             phenotype=phenotype,
             sizes=_sizes(vector_pieces, source_pieces),
             dephosphorylate=dephosphorylate,
+            cleanup_kit=cleanup_kit,
         ),
         oligos=tuple(
             oligo_row(one.report, purpose=_purpose(one, amplicon), thresholds=thresholds[one.role])
@@ -277,8 +276,8 @@ def protocol(
             host=host,
             polymerase=polymerase,
             dephosphorylate=dephosphorylate,
+            cleanup_kit=cleanup_kit,
         ),
-        references=_references(amplicon, phenotype, dephosphorylate=dephosphorylate),
         sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
@@ -441,6 +440,7 @@ def _materials(
     phenotype: Phenotype,
     sizes: tuple[int, ...],
     dephosphorylate: bool,
+    cleanup_kit: Material,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
     ladders = dict.fromkeys((choose_ladder(sizes).name, colony.ladder.name))
@@ -475,12 +475,8 @@ def _materials(
         ),
         Material("Agarose, 1X TAE or TBE, and a DNA stain"),
         *(catalogued(name, supplier=SUPPLIER) for name in ladders),
-        Material("Gel extraction spin columns", supplier=SUPPLIER, catalog="T1120"),
-        *(
-            ()
-            if amplicon is None
-            else (Material("PCR cleanup spin columns", supplier=SUPPLIER, catalog="T1130"),)
-        ),
+        kit(GEL_KIT, note="recovers each band off the gel"),
+        *(() if amplicon is None else (cleanup_kit,)),
         Material(
             host,
             supplier=SUPPLIER if host == DEFAULT_HOST else "",
@@ -491,7 +487,8 @@ def _materials(
             "SOC or NEB 10-beta/Stable Outgrowth Medium",
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
-        Material(_plate(phenotype), amount="one plate per transformation"),
+        plate_material(phenotype),
+        MINIPREP_KIT,
         catalogued(
             COLONY_PCR_MASTER_MIX,
             supplier=SUPPLIER,
@@ -558,17 +555,6 @@ def _buffer_material(enzymes: Sequence[Enzyme]) -> Material:
     )
 
 
-def _plate(phenotype: Phenotype) -> str:
-    """Return what to pour the selection plates with."""
-    antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
-    if phenotype.blue_white:
-        return (
-            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
-            f"and {IPTG_UM} µM IPTG"
-        )
-    return f"{phenotype.medium} agar plates with {antibiotic}"
-
-
 def _steps(
     *,
     vector: SequenceRecord,
@@ -587,11 +573,12 @@ def _steps(
     host: str,
     polymerase: Polymerase,
     dephosphorylate: bool,
+    cleanup_kit: Material,
 ) -> tuple[Step, ...]:
     """Return the steps in the order they happen, the shared ones carrying this method's notes."""
     backbone, insert = ligation.pieces
     return (
-        *sectioned(MAKE_SECTION, *_amplify_steps(amplicon, polymerase)),
+        *sectioned(MAKE_SECTION, *_amplify_steps(amplicon, polymerase, cleanup_kit)),
         *sectioned(
             "Cut and recover",
             _digest_step(
@@ -669,6 +656,7 @@ def _diagnostic_step(diagnostic: Diagnostic, *, product: SequenceRecord) -> Step
         notes=(
             "The junctions put both recognition sites back, so the pair that made the clone is "
             "what cuts the insert out of it again.",
+            resolution_note(percent),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -726,8 +714,12 @@ def _phosphatase_steps(
                 f"{backbone.name} is cut to {said_ends(backbone)}, which anneal to each other, "
                 "so without this the vector closes on itself and the plate fills with empty "
                 "vector.",
-                "rSAP is active in every restriction enzyme buffer, so it goes into the digest "
-                "as it stands; one unit takes the phosphates off one picomole of DNA ends.",
+                Note(
+                    "rSAP is active in every restriction enzyme buffer, so it goes into the "
+                    "digest as it stands; one unit takes the phosphates off one picomole of DNA "
+                    "ends.",
+                    citation=Citation("M0371", "dephosphorylation of 5'-ends"),
+                ),
                 Note(
                     "The heat step takes the restriction enzymes with it, which is what the "
                     "protocol asks for; the gel purification is what stops any of them heat "
@@ -766,7 +758,9 @@ def _stubs(amplicon: Amplicon | None, insert: Piece) -> tuple[str, ...]:
     )
 
 
-def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[Step, ...]:
+def _amplify_steps(
+    amplicon: Amplicon | None, polymerase: Polymerase, cleanup_kit: Material
+) -> tuple[Step, ...]:
     """Make the insert by PCR, check it, take the template away, and clean it up for the digest.
 
     Nothing at all where the insert was cut out of a plasmid instead.
@@ -774,7 +768,6 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
     if amplicon is None:
         return ()
     report = amplicon.report
-    low, high = COLUMN_RECOVERY
     ends = listed([f"{enzyme.name} on the {which} end" for which, _, enzyme in amplicon.ends])
     return (
         pcr_step(
@@ -814,16 +807,28 @@ def _amplify_steps(amplicon: Amplicon | None, polymerase: Polymerase) -> tuple[S
             else ()
         ),
         cleanup_step(
+            kit=cleanup_kit,
             cautions=(ELUATE_CAUTION,),
-            notes=(
-                Note(
-                    f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
-                    "polymerase, the primers and the dNTPs away, so the digest cuts the "
-                    "amplicon and nothing else.",
-                    citation=Citation("T1130", "typical recovery"),
-                ),
-                *_template_note(amplicon),
-            ),
+            notes=(*_recovery_note(cleanup_kit), *_template_note(amplicon)),
+        ),
+    )
+
+
+def _recovery_note(cleanup_kit: Material) -> tuple[Note, ...]:
+    """Say what fraction the column recovers, where the run cleans up on the kit that states one.
+
+    `COLUMN_RECOVERY` is NEB #T1130's. A run on another kit gets no sentence rather than that
+    kit's number guessed; what the column is for is the step's own `expected`.
+    """
+    if not cleanup_kit.catalog.startswith(COLUMN_KIT):
+        return ()
+    low, high = COLUMN_RECOVERY
+    return (
+        Note(
+            f"A column recovers {low:.0%} to {high:.0%} of the reaction and takes the "
+            "polymerase, the primers and the dNTPs away, so the digest cuts the amplicon and "
+            "nothing else.",
+            citation=Citation(COLUMN_KIT, "typical recovery"),
         ),
     )
 
@@ -937,11 +942,12 @@ def _purify_step(
         "Separate the digests on a gel and recover the two fragments",
         key="gel-purify",
         instructions=(
-            f"Pour a {percent:g}% agarose gel and load each whole digest beside the ladder.",
+            f"Use a {percent:g}% agarose gel and load each whole digest beside the ladder.",
             "Run until the bands below are apart.",
             f"Cut out the {backbone.length} bp {backbone.name} band and the "
             f"{insert.length} bp {insert.name} band.",
-            "Recover each slice on a spin column and elute in the smallest volume the kit allows.",
+            f"Recover each slice on a {column(kit(GEL_KIT))} and elute in the smallest "
+            "volume the kit allows.",
         ),
         cautions=(
             "Keep the gel off the ultraviolet box for as long as you can; use blue light where "
@@ -966,19 +972,24 @@ def _purify_step(
         notes=(
             "A gel is what separates the two pieces of each digest from one another, so a piece "
             "that is not wanted cannot religate into the backbone.",
-            "It also takes the enzymes away, so nothing has to be heat inactivated before the "
-            f"ligation.{_heat(vector_pieces, source_pieces)}",
+            Note(
+                "It also takes the enzymes away, so nothing has to be heat inactivated before "
+                f"the ligation.{_heat(vector_pieces, source_pieces)}",
+                citation=Citation("NEB-heat-inactivation", "enzymes heat does not inactivate"),
+            ),
+            resolution_note(percent),
         ),
         troubleshooting=(
             Troubleshooting(
                 "Two bands did not separate",
-                "Run the gel further, or pour it at a percentage that resolves that size range.",
-                citation=Citation("T1120", "agarose concentration, p. 6"),
+                "Run the gel further, or use a percentage that resolves that size range.",
+                citation=Citation(GEL_KIT, "agarose concentration, p. 6"),
             ),
             Troubleshooting(
                 "Little DNA comes off the column",
-                "Elute twice through the same column, and keep the agarose percentage low.",
-                citation=Citation("T1020", "troubleshooting, low DNA yield"),
+                "Elute in a larger volume, leave it on the column longer, and keep the agarose "
+                "percentage low.",
+                citation=Citation(GEL_KIT, "troubleshooting, low DNA yield"),
             ),
         ),
     )
@@ -1033,7 +1044,7 @@ def _ligation_step(ligation: Ligation, amounts: Sequence[Amount]) -> Step:
             f"{OVERNIGHT_CELSIUS:g} °C.",
             "Then run the heat step below, and chill on ice.",
         ),
-        tables=(ligation_reaction(amounts),),
+        tables=(ligation_reaction(amounts, measured=True),),
         programs=(ligation_program(blunt=ligation.blunt),),
         expected=(
             *(
@@ -1102,19 +1113,3 @@ def _blunt_cost(ligation: Ligation) -> tuple[str, ...]:
         f"{HIGH_LIGASE_UNITS_UL:g} U/µL ligase in place of the {LIGASE_UNITS_UL:g} U/µL one. "
         "The time is the only cost any supplier states for it.",
     )
-
-
-def _references(
-    amplicon: Amplicon | None, phenotype: Phenotype, *, dephosphorylate: bool
-) -> tuple[Reference, ...]:
-    """Where the numbers come from."""
-    items = [*REFERENCES, *BENCH_REFERENCES]
-    if dephosphorylate:
-        items.append(PHOSPHATASE_REFERENCE)
-    if amplicon is not None:
-        items.extend((CLEAVAGE_REFERENCE, COLUMN_REFERENCE))
-        if amplicon.dpni:
-            items.append(DPNI_REFERENCE)
-    if phenotype.blue_white:
-        items.append(PLATE_REFERENCE)
-    return tuple(items)

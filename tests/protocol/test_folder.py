@@ -215,12 +215,11 @@ def test_the_two_shared_pages_say_so_where_no_protocol_of_the_run_lists_anything
         assert empty in main.find_all("p")[0].text
 
 
-def test_a_protocol_written_on_its_own_carries_no_frame(tmp_path: Path) -> None:
+def test_a_protocol_written_on_its_own_carries_no_run(tmp_path: Path) -> None:
     written = write_protocol_files(chain().protocols[0], tmp_path)
     page = parse(written.page.read_text(encoding="utf-8"))
     assert not page.find_all("nav", cls="site")
-    assert not page.find_all("div", cls="frame")
-    assert page.find_all("nav", cls="toc")
+    assert not page.find_all("nav", cls="chain")
 
 
 def test_the_shape_written_follows_the_chain_length_and_not_the_pipeline(tmp_path: Path) -> None:

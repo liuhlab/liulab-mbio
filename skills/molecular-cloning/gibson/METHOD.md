@@ -10,8 +10,8 @@ documented numbers, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run mbio cloning gibson plan vector.dna insert.dna --out plan/
-pixi run mbio cloning gibson plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run mbio cloning gibson plan vector.dna insert.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning gibson plan vector.dna first.dna second.dna third.dna --out plan/ --cleanup-kit D4003
 ```
 
 Give the inserts in the order they go round the product. The vector is opened by PCR across the
@@ -19,7 +19,7 @@ span they replace; a vector handed in already linear is taken as it is, and then
 
 It chooses the overlap at every junction, designs the primers that carry it as a tail, simulates
 the product, sizes the one assembly reaction, and designs the colony PCR and the sequencing that
-confirm the clone. Four files land in the directory you name:
+confirm the clone. These files land in the directory you name:
 
 - `product.dna` — the assembled plasmid, features carried over and each junction annotated
 - `primers.tsv` — every oligo it designed, with length and Tm; it stays whole when a step
@@ -27,8 +27,9 @@ confirm the clone. Four files land in the directory you name:
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, the
   reaction table, the incubation, expected bands, a simulated gel and troubleshooting
+- `NAME-map.html` — beside each record a step's figure draws, the map that figure opens
 
-The command prints a summary line and the four paths. The same inputs write the same bytes.
+The command prints a summary line and every path. The same inputs write the same bytes.
 
 ## Ask only for what the files do not settle
 
@@ -43,6 +44,7 @@ Every option has a default; a vector and one insert are enough on their own.
 | `--product` | The kit on your bench. The start of a name is enough: `nebuilder`, `gibson`, `in-fusion` |
 | `--polymerase` | For the PCRs |
 | `--host` | The strain the protocol names |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name. `D4003`, Zymo's, is the lab's |
 | `--name` | What to call the product |
 
 ## The kit decides the numbers
@@ -86,7 +88,7 @@ from mbio.cloning.gibson import plan_gibson
 
 plan = plan_gibson("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every oligo
-plan.write("plan/")  # the same four files
+plan.write("plan/")  # the same files
 ```
 
 `plan.product` is the kit; `plan.plasmid` is the assembled plasmid. `plan.overlaps` gives the

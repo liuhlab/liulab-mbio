@@ -118,19 +118,22 @@ def test_the_plan_status_is_the_worst_of_its_checks(made):
     assert [one.status for one in made.protocol().checks] == [one.status for one in made.checks]
 
 
-def test_the_four_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
+def test_the_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
     outputs = made.write(tmp_path / "run")
     assert [(path.parent, path.name) for path in outputs.paths] == [
         (tmp_path / "run", "product.dna"),
         (tmp_path / "run", "primers.tsv"),
         (tmp_path / "run", "protocol.json"),
+        (tmp_path / "run", "product-map.html"),
         (tmp_path / "run", "protocol.html"),
     ]
     assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == made.product
     assert read_protocol(outputs.protocol_data) == minted(made.protocol())
     assert outputs.protocol.read_text(encoding="utf-8") == render_html(
-        read_protocol(outputs.protocol_data), base=outputs.protocol.parent
+        read_protocol(outputs.protocol_data),
+        base=outputs.protocol.parent,
+        maps={"product.dna": "product-map.html"},
     )
 
 
@@ -187,7 +190,7 @@ def test_the_protocol_runs_the_bench_from_the_digests_to_the_sequencing(made):
     assert lanes["pUC19"] == (made.backbone.length, STUFFER)
     assert lanes["pTrc-GFP"] == (made.insert.length, made.source_pieces[1].length)
     # No supplier states a colony count for this method, so the plate promises a ratio.
-    plate = " ".join(steps["Transform and plate"].expected)
+    plate = " ".join(one.text for one in steps["Transform and plate"].expectations)
     assert "No supplier states a colony count" in plate
     assert "under 1% of the colonies the uncut vector gave" in plate
 
@@ -223,7 +226,7 @@ def test_no_reversed_lane_is_invented_where_the_insert_cannot_go_in_backwards(ma
 
 
 def test_the_protocol_cites_the_note_the_bench_numbers_came_from(made):
-    citations = " ".join(reference.text for reference in made.protocol().references)
+    citations = " ".join(source.document for source in made.protocol().sources.values())
     assert "Optimizing Restriction Endonuclease Reactions" in citations
     assert "T4 DNA Ligase" in citations
     assert "Monarch Spin DNA Gel Extraction Kit" in citations
@@ -328,7 +331,7 @@ def test_one_enzyme_leaves_a_backbone_that_closes_on_itself_and_the_plan_dephosp
         PHOSPHATASE_SECONDS,
         PHOSPHATASE_KILL_SECONDS,
     ]
-    assert any("rSAP" in one.text for one in protocol.references)
+    assert any("rSAP" in one.document for one in protocol.sources.values())
     # The page says the risk plainly, not only in the badge.
     assert "closes on itself with no insert" in " ".join(protocol.highlights)
     assert blunt.status == "pass"
@@ -397,6 +400,7 @@ def test_the_protocol_gains_the_pcr_its_program_the_amplicon_gel_and_the_templat
     assert [lane.bands_bp for lane in gel.gels[0].lanes] == [(tailed.amplicon.length,)]
     # A linear template neither transforms nor ligates, so the column is what takes it away.
     assert "take GFP away" in " ".join(n.text for n in cleanup.noted)
+    assert any("PCR & DNA Cleanup Kit" in one.document for one in protocol.sources.values())
     assert [row.purpose for row in protocol.oligos][:2] == ["Amplify GFP"] * 2
     said = " ".join(protocol.highlights)
     assert "forward primer, 6 spacer bases and the EcoRI site" in said

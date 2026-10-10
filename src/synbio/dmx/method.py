@@ -27,7 +27,6 @@ from mbio.protocol.model import (
     Material,
     Plate,
     ReactionTable,
-    Reference,
     Source,
     Stage,
     ThermocyclerProgram,
@@ -65,6 +64,9 @@ BARCODE_UL = 0.5
 WATER_UL = 0.5
 MASTERMIX_UL = 0.5
 WELL_UL = LYSATE_UL + BARCODE_UL + WATER_UL + MASTERMIX_UL
+
+#: How long the picked plates stand inverted before they are compressed. Qian SI Day 4.1.
+INVERT_SECONDS = 1800
 
 #: What moves the liquid, and what the colonies are picked with, both Qian's. The handler is
 #: cited on the move it makes; the picker is equipment, which carries no citation, so the page
@@ -127,13 +129,22 @@ SOURCES: dict[str, Source] = {
     "Qian SI": Source(
         "Qian et al. 2026, Supplementary Information",
         edition="Nat. Commun. 10.1038/s41467-026-76740-9",
+        url="https://doi.org/10.1038/s41467-026-76740-9",
         read_as="held under reference_docs/",
         date="2026-10-06",
     ),
     "LevSeq": Source(
         "Long, Y. et al. 2025, LevSeq, Supporting Information",
+        url="https://doi.org/10.1021/acssynbio.4c00625",
         read_as="held under reference_docs/",
         date="2026-10-06",
+    ),
+    "lund-2024": Source(
+        "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost "
+        "oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS "
+        "Synth. Biol. 13, 745-751",
+        url="https://doi.org/10.1021/acssynbio.3c00694",
+        note="docs/research/synthesis-and-assembly.md",
     ),
     TAQ_SOURCE_KEY: Source(
         "New England Biolabs, Product Specification: Taq DNA Polymerase with ThermoPol Buffer",
@@ -627,7 +638,10 @@ def compression(picked: Sequence[Plate], compressed: Plate) -> Transfer:
         LYSATE_UL,
         title=f"Compress {len(picked)} picked plates into {compressed.name}",
         instrument=ACOUSTIC,
-        note="Invert the picked plates for 30 minutes first, so the cells gather at the meniscus",
+        note=(
+            f"Invert the picked plates for {INVERT_SECONDS // 60} minutes first, so the cells "
+            "gather at the meniscus"
+        ),
         citation=Citation("Qian SI", "Day 4.1"),
     )
 
@@ -1075,28 +1089,3 @@ def validation_equipment(one: Validation) -> tuple[str, ...]:
         "Incubator at 37 °C",
         "A sequencer, and a demultiplexer that can check an address",
     )
-
-
-#: Where the numbers above come from, ready for a protocol's reference list.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental "
-        "characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in "
-        "lysate, and a consensus called above 150 reads",
-        url="https://doi.org/10.1038/s41467-026-76740-9",
-    ),
-    Reference(
-        "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for "
-        "directed evolution and machine learning, for index PCR marking a well on one "
-        "barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and "
-        "ten tolerable, twenty to exceed and ten to reach",
-        url="https://doi.org/10.1021/acssynbio.4c00625",
-    ),
-    Reference(
-        "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost "
-        "oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS "
-        "Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, "
-        "and the clean rate against the number of fragments a design is built from",
-        url="https://doi.org/10.1021/acssynbio.3c00694",
-    ),
-)

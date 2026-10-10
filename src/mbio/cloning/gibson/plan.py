@@ -5,7 +5,8 @@ replace, choose the overlap at each junction, design the primers that carry it, 
 product, work out what the assembly reaction takes, and design the colony PCR and the
 sequencing that say whether the clone is the one the design asked for. `Plan.write` puts four
 files in one directory -- the annotated product, an oligo order sheet, the protocol as JSON
-data, and the interactive HTML page rendered from that data.
+data, and the interactive HTML page rendered from that data -- with a map of each record its
+figures draw beside them.
 
 Every number the protocol prints is computed here or by the modules this one calls, and every
 supplier's number behind them is `mbio.cloning.gibson.bench`, through
@@ -16,11 +17,12 @@ supplier's number behind them is `mbio.cloning.gibson.bench`, through
 import dataclasses
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
 from mbio.bench.amounts import Amount
+from mbio.bench.materials import kit
 from mbio.bench.oligos import OrderedOligo, primer_sheet
 from mbio.bench.phenotype import Phenotype, read_phenotype
 from mbio.bench.validation import (
@@ -81,7 +83,7 @@ from mbio.edits import flipped
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
-from mbio.protocol.model import Protocol
+from mbio.protocol.model import Material, Protocol
 from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord
 from mbio.snapgene import write_dna
@@ -92,7 +94,7 @@ type Route = Literal["amplify", "stitch"]
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The four files a plan writes.
+    """The files a plan writes: four, and a map of each record a figure draws.
 
     Parameters
     ----------
@@ -105,17 +107,20 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    maps
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     product: Path
     primers: Path
     protocol_data: Path
     protocol: Path
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """The four, in the order they were written."""
-        return (self.product, self.primers, self.protocol_data, self.protocol)
+        """Every file, in the order they were written."""
+        return (self.product, self.primers, self.protocol_data, *self.maps, self.protocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +160,8 @@ class Plan:
         oligo. Nothing measures one, so its row carries no verdict.
     host, polymerase
         The choices the protocol names.
+    cleanup_kit
+        The spin-column kit the protocol names, as `mbio.bench.materials.kit` resolves it.
     thresholds
         What those oligos were designed and judged by, for each role, so a page prints the band
         beside the value.
@@ -175,6 +182,7 @@ class Plan:
     ordered_oligos: tuple[OrderedOligo, ...]
     host: str
     polymerase: Polymerase
+    cleanup_kit: Material = field(default_factory=kit)
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
@@ -252,14 +260,15 @@ class Plan:
             checks=self.checks,
             host=self.host,
             polymerase=self.polymerase,
+            cleanup_kit=self.cleanup_kit,
             thresholds=self.thresholds,
         )
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the plasmid, the oligo sheet, the protocol data and its page into `directory`.
+        """Write the plasmid, the oligo sheet, the protocol, its page and its maps into `directory`.
 
-        The directory is made when it is not there. The four files are named by
+        The directory is made when it is not there. The files are named by
         `mbio.cloning.plan` and `mbio.protocol.render`, and a second run over the same inputs
         writes the same bytes.
         """
@@ -270,7 +279,7 @@ class Plan:
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports, oligos=self.ordered_oligos), encoding="utf-8")
         written = write_run_files(as_project(self.protocol()), out)
-        return Files(plasmid, sheet, written.data, written.page)
+        return Files(plasmid, sheet, written.data, written.page, written.maps)
 
 
 def plan_gibson(
@@ -283,6 +292,7 @@ def plan_gibson(
     product: AssemblyProduct = NEBUILDER_HIFI,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
+    cleanup_kit: str = "",
     name: str = "",
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Plan:
@@ -329,6 +339,9 @@ def plan_gibson(
         For the PCRs.
     host, name
         The strain the protocol names, and what to call the plasmid.
+    cleanup_kit
+        The spin-column kit the protocol names, by catalogue number or by name, as
+        `mbio.bench.materials.kit` reads it. Empty takes that function's default.
     thresholds
         For each role, what its oligos are designed and judged by in `mbio.primers`.
 
@@ -453,6 +466,7 @@ def plan_gibson(
         _ordered_oligos(parts, bridges),
         host,
         polymerase,
+        kit(cleanup_kit),
         thresholds,
     )
 

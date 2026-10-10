@@ -12,7 +12,8 @@ from mbio.bench.coverage import (
     absent_probability,
     colonies_for_completeness,
 )
-from mbio.bench.goldengate import assembly_program, program_references
+from mbio.bench.goldengate import SOURCES as GOLDEN_GATE_SOURCES
+from mbio.bench.goldengate import assembly_program
 from mbio.bench.inactivation import heat_inactivations
 from mbio.bench.steps import listed
 from mbio.cloning.plan import PRODUCT_FILE
@@ -21,9 +22,9 @@ from mbio.protocol.figures import LIGATION_CITATION, ligation_figure
 from mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
 from mbio.protocol.model import (
+    CountToNet,
     Figure,
     Incubation,
-    Reference,
     Source,
     Stage,
     Step,
@@ -72,6 +73,10 @@ from synbio.igga.vector import Working, released_cargo
 
 #: What the page is headed and what the chain names it by.
 FINAL = "Final cargo ligation"
+
+#: What the plates beside the library's own are called, by the expected result and by the count
+#: that takes them off.
+NO_CARGO_CONTROL = "the no-cargo control"
 
 
 class FinalLigation(Protocol):
@@ -141,19 +146,19 @@ class FinalLigation(Protocol):
         reads = run.reads
         return round_equipment(None if reads is None else reads.final_representation)
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Where the numbers come from, and where the scheme itself came from.
-
-        This protocol borrows one thing from the Golden Gate kit module and nothing else: the
-        cycling the one-pot assembly runs. It cites that cycling's own documents, so no kit the
-        run never buys is named here.
-        """
-        borrowed = () if run.working is None else program_references(run.working.enzyme)
-        return (*run.round_references, *borrowed)
-
     def sources(self, run: Run) -> dict[str, Source]:
-        """Return what the method's own materials and the junction figure are cited to."""
-        return dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
+        """Return what this protocol's rows, materials and figures are cited to.
+
+        This protocol borrows one thing from the Golden Gate module and nothing else: the
+        cycling the one-pot assembly runs. Each stage of it carries its own citation, so no
+        kit the run never buys is named here.
+        """
+        return (
+            run.round_sources
+            | dict(stages.SOURCES)
+            | dict(GOLDEN_GATE_SOURCES)
+            | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
+        )
 
 
 def _shredders(scheme: Scheme, product: SequenceRecord, span: Segment | None) -> tuple[Enzyme, ...]:
@@ -440,8 +445,15 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
             "equally represented.",
             f"At that count the chance a named member is missing is "
             f"{number(absent_probability(constructs, colonies))}.",
-            "Near-empty plates from a no-cargo control beside it; what grows there is working "
-            "vector that kept its ccdB cassette.",
+            f"Near-empty plates from {NO_CARGO_CONTROL} beside it; what grows there is "
+            "working vector that kept its ccdB cassette.",
+        ),
+        calculator=CountToNet(
+            colonies,
+            counted="the plates",
+            counting="colonies",
+            control=NO_CARGO_CONTROL,
+            below_floor=stages.SHORT_OF_THE_FLOOR,
         ),
         notes=(
             "This is a bottleneck like a round's, and the library can only lose members here. "
@@ -459,7 +471,7 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
         ),
         troubleshooting=(
             Troubleshooting(
-                "Fewer net colonies than the count above",
+                stages.SHORT_OF_THE_FLOOR,
                 "The library has lost members in the transfer. Nothing downstream puts them "
                 "back; repeat the assembly from more of the released cargo.",
             ),

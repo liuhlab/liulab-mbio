@@ -5,7 +5,8 @@ from typing import Annotated
 
 import typer
 
-from mbio.cloning.cli import plan_command
+from mbio.bench.materials import DEFAULT_CLEANUP_KIT
+from mbio.cloning.cli import CleanupKit, plan_command
 from mbio.cloning.gateway.design import FUSIONS, Fusion
 from mbio.cloning.gateway.plan import DEFAULT_HOST, Plan, plan_gateway
 from mbio.primers.polymerase import Q5, get_polymerase
@@ -56,6 +57,7 @@ def plan(
     ] = "none",
     polymerase: Annotated[str, typer.Option(help="Polymerase for the attB PCR.")] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
+    cleanup_kit: CleanupKit = DEFAULT_CLEANUP_KIT,
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
     """Plan the Gateway reactions and write the clones and the protocol into OUT."""
@@ -68,6 +70,7 @@ def plan(
             fusion=_fusion(fusion),
             polymerase=get_polymerase(polymerase),
             host=host,
+            cleanup_kit=cleanup_kit,
             name=name,
         ),
         out,

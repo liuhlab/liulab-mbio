@@ -10,20 +10,19 @@ carry their own enzyme mix and so exist only for BsaI-HFv2 and BsmBI-v2.
 """
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from types import MappingProxyType
 from typing import Literal
 
 from mbio.bench.amounts import Amount, dna_amount
 from mbio.bench.reactions import reaction_table
 from mbio.enzymes import Enzyme
-from mbio.overhangs import ligation_source
+from mbio.overhangs import FidelityReport, ligation_source
 from mbio.protocol.model import (
     Citation,
     Component,
     Incubation,
     ReactionTable,
-    Reference,
     Source,
     Stage,
     ThermocyclerProgram,
@@ -150,7 +149,8 @@ END_SOAK_SECONDS = 300
 GOLDEN_GATE_PCR_CYCLES = 20
 GOLDEN_GATE_PCR_CYCLES_CITATION = Citation("E1601", "FAQ 11")
 
-#: The documents a citation in a Golden Gate protocol resolves against.
+#: The documents a citation in a Golden Gate protocol resolves against, each cited by the row
+#: that rests on it, so a protocol borrowing one part of this module lists that part's own.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
         "E1601": Source(
@@ -159,9 +159,88 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             edition="version 5.0_6/26",
             url="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
             date="2026-09-12",
-        )
+        ),
+        "E1602": Source(
+            "New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) "
+            "instruction manual",
+            edition="version 3.0_6/26",
+            url="https://www.neb.com/-/media/nebus/files/manuals/manuale1602.pdf",
+            date="2026-09-12",
+            note="docs/research/golden-gate-assembly.md",
+        ),
+        "M1100": Source(
+            "New England Biolabs, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
+            edition="capture 2023-03-31",
+            url="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100",
+            read_as="Wayback Machine",
+            note="docs/research/golden-gate-assembly.md",
+        ),
+        "M1100-guidelines": Source(
+            "New England Biolabs, NEBridge Ligase Master Mix Protocol Guidelines",
+            edition="capture 2025-07-13",
+            url="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines",
+            read_as="Wayback Machine",
+            note="docs/research/golden-gate-assembly.md",
+        ),
+        "pryor-2020": Source(
+            ligation_source().citation,
+            url=ligation_source().doi_url,
+            note="docs/research/ligation-fidelity.md",
+        ),
     }
 )
+
+#: Where each system's reaction and cycling are read. A kit's numbers come from that kit's own
+#: manual, so the citation is keyed by the kit the enzyme is sold in.
+_MIX_REACTION = Citation("M1100", "reaction")
+_MIX_DOSE = Citation("M1100", "enzyme amounts")
+_MIX_CYCLING = Citation("M1100", "cycling")
+_ACTIVATOR_CITATION = Citation("M1100-guidelines", "PaqCI Activator")
+
+
+#: The key a ligase profile the user holds is cited under, where one scored a set.
+PROFILE_KEY = "ligase-profile"
+
+
+def fidelity_sources(report: FidelityReport) -> dict[str, Source]:
+    """Return the document this fidelity score was read from, or nothing where the rules scored it.
+
+    A protocol merges it into its `sources`, where `fidelity_citation`'s key resolves against it.
+    """
+    cited = fidelity_citation(report)
+    if cited is None:
+        return {}
+    if cited.source == PROFILE_KEY:
+        return {PROFILE_KEY: Source(f"Ligase profile, {report.source}")}
+    return {"pryor-2020": SOURCES["pryor-2020"]}
+
+
+def fidelity_citation(report: FidelityReport) -> Citation | None:
+    """Return where a fidelity score was read, or ``None`` where the rules scored the set.
+
+    Examples
+    --------
+    >>> from mbio.overhangs import fidelity
+    >>> fidelity_citation(fidelity(["AATG", "GCTT"], "BsaI-HFv2")).source
+    'pryor-2020'
+    """
+    if not report.measured:
+        return None
+    if report.enzyme_specific or report.stand_in:
+        return Citation("pryor-2020", report.source)
+    return Citation(PROFILE_KEY)
+
+
+def kit_citation(enzyme: Enzyme) -> Citation:
+    """Return where the kit reaction for this enzyme is read: that kit's own manual.
+
+    Examples
+    --------
+    >>> from mbio.enzymes import get_enzyme
+    >>> kit_citation(get_enzyme("BsmBI-v2")).source
+    'E1602'
+    """
+    return Citation(_KIT_CATALOG[enzyme.name], "assembly protocol")
 
 
 def golden_gate_temperature(enzyme: Enzyme) -> float:
@@ -189,11 +268,12 @@ def assembly_reaction(
     *,
     system: System = LIGASE_MASTER_MIX,
     reactions: int = 1,
+    measured: bool = False,
 ) -> ReactionTable:
     """Return the Golden Gate reaction for these fragments, the vector counted among them.
 
     DNA goes in each tube, everything else into the master mix, which is the order NEB asks for.
-    The PaqCI activator line appears only for PaqCI.
+    The PaqCI activator line appears only for PaqCI. `measured` is `reaction_table`'s.
 
     Raises
     ------
@@ -216,6 +296,7 @@ def assembly_reaction(
         volume_ul=total,
         title=_reaction_title(enzyme, system),
         reactions=reactions,
+        measured=measured,
     )
 
 
@@ -236,6 +317,7 @@ def _master_mix_components(enzyme: Enzyme, fragments: int) -> tuple[float, list[
                 _ACTIVATOR_UL[tier],
                 stock=f"{ACTIVATOR_UM:g} µM",
                 final=f"{_ACTIVATOR_UL[tier] * ACTIVATOR_UM:g} pmol",
+                citation=_ACTIVATOR_CITATION,
             )
         )
     return total, components
@@ -244,7 +326,9 @@ def _master_mix_components(enzyme: Enzyme, fragments: int) -> tuple[float, list[
 def ligase_master_mix_component(fragments: int) -> Component:
     """Return the NEBridge Ligase Master Mix component of a reaction joining `fragments`."""
     _, volume = _master_mix_volumes(fragments)
-    return Component("NEBridge Ligase Master Mix", volume, stock="3X", final="1X")
+    return Component(
+        "NEBridge Ligase Master Mix", volume, stock="3X", final="1X", citation=_MIX_REACTION
+    )
 
 
 def enzyme_component(enzyme: Enzyme, fragments: int) -> Component:
@@ -263,6 +347,7 @@ def enzyme_component(enzyme: Enzyme, fragments: int) -> Component:
         dose.volume_ul,
         stock=f"{dose.units / dose.volume_ul:g} U/µL",
         final=f"{dose.units:g} units",
+        citation=_MIX_DOSE,
     )
 
 
@@ -273,9 +358,14 @@ def _master_mix_volumes(fragments: int) -> tuple[float, float]:
 def _kit_components(enzyme: Enzyme, fragments: int) -> tuple[float, list[Component]]:
     if enzyme.name not in _KIT_CATALOG:
         raise ValueError(f"no NEBridge kit carries {enzyme.name}; use the Ligase Master Mix system")
+    cited = kit_citation(enzyme)
     components = [
-        Component("T4 DNA Ligase Buffer", _KIT_BUFFER_UL, stock="10X", final="1X"),
-        Component("NEBridge Golden Gate Enzyme Mix", 1.0 if fragments - 1 <= 10 else 2.0),
+        Component("T4 DNA Ligase Buffer", _KIT_BUFFER_UL, stock="10X", final="1X", citation=cited),
+        Component(
+            "NEBridge Golden Gate Enzyme Mix",
+            1.0 if fragments - 1 <= 10 else 2.0,
+            citation=cited,
+        ),
     ]
     return _KIT_VOLUME_UL, components
 
@@ -312,7 +402,11 @@ def assembly_program(
         else _master_mix_stages(celsius, fragments, library=library)
     )
     end_soak = Stage((Incubation("End soak", END_SOAK_CELSIUS, END_SOAK_SECONDS),))
-    return ThermocyclerProgram((*stages, end_soak), title="Golden Gate assembly")
+    cited = kit_citation(enzyme) if system == KIT else _MIX_CYCLING
+    return ThermocyclerProgram(
+        tuple(replace(stage, citation=cited) for stage in (*stages, end_soak)),
+        title="Golden Gate assembly",
+    )
 
 
 def _cycle(celsius: float, seconds: int, cycles: int) -> Stage:
@@ -337,56 +431,3 @@ def _kit_stages(celsius: float, fragments: int, *, library: bool) -> tuple[Stage
     if inserts == 1:
         return (Stage((Incubation("Assembly", celsius, 3600 if library else 300),)),)
     return (_cycle(celsius, 60 if inserts <= 10 else 300, 30),)
-
-
-def _ligation_reference() -> Reference:
-    """Return the paper every fidelity score is read from, quoted from the data that ships it."""
-    source = ligation_source()
-    return Reference(
-        f"{source.citation} Its S1-S5 Tables are what every ligation fidelity score is read from",
-        url=source.doi_url,
-    )
-
-
-#: Each document the numbers above are read from, named one at a time so that a protocol
-#: borrowing one part of this module cites that part's own source and not the whole kit.
-KIT_MANUAL = Reference(
-    "NEB, NEBridge Golden Gate Assembly Kit (BsaI-HFv2) instruction manual, NEB #E1601S/L, "
-    "version 5.0_6/26",
-    url="https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf",
-)
-MASTER_MIX_PROTOCOL = Reference(
-    "NEB, Protocol for NEBridge Ligase Master Mix (NEB #M1100)",
-    url="https://web.archive.org/web/20230331002719id_/https://www.neb.com/protocols/2021/09/14/protocol-for-nebridge-ligase-master-mix-neb-m1100",
-)
-MASTER_MIX_GUIDELINES = Reference(
-    "NEB, NEBridge Ligase Master Mix Protocol Guidelines",
-    url="https://web.archive.org/web/20250713174145id_/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/nebridge-ligase-master-mix-protocol-guidelines",
-)
-PAQCI_GUIDELINES = Reference(
-    "NEB, Usage Guidelines for Golden Gate Assembly with PaqCI",
-    url="https://web.archive.org/web/20210615031818id_/https://www.neb.com/tools-and-resources/usage-guidelines/usage-guidelines-for-golden-gate-assembly-with-paqci",
-)
-
-#: Where the numbers above come from, ready for a protocol's reference list.
-REFERENCES: tuple[Reference, ...] = (
-    KIT_MANUAL,
-    MASTER_MIX_PROTOCOL,
-    MASTER_MIX_GUIDELINES,
-    PAQCI_GUIDELINES,
-    # A ligation fidelity check names this in passing; here is the reference it names.
-    _ligation_reference(),
-)
-
-
-def program_references(
-    enzyme: Enzyme, *, system: System = LIGASE_MASTER_MIX
-) -> tuple[Reference, ...]:
-    """Return the documents `assembly_program`'s cycling for this enzyme is read from.
-
-    A protocol that borrows the cycling and runs none of the kit's own chemistry cites these
-    and not `REFERENCES`: the kit manual answers for a reaction that protocol never sets up,
-    and naming a kit a run does not buy sends its reader to the wrong document.
-    """
-    read = (KIT_MANUAL,) if system == KIT else (MASTER_MIX_PROTOCOL, MASTER_MIX_GUIDELINES)
-    return (*read, *((PAQCI_GUIDELINES,) if enzyme.name in _NEEDS_ACTIVATOR else ()))

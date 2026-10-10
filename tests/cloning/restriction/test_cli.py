@@ -38,7 +38,7 @@ def plain(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
-def test_the_cli_writes_the_four_outputs_with_every_option_it_was_handed(
+def test_the_cli_writes_the_outputs_with_every_option_it_was_handed(
     puc19_file: Path, gfp_file: Path, tmp_path: Path
 ) -> None:
     out = tmp_path / "run"
@@ -55,12 +55,14 @@ def test_the_cli_writes_the_four_outputs_with_every_option_it_was_handed(
         "phusion",
         "--host",
         HOST,
+        "--cleanup-kit",
+        "D4003",
         "--name",
         "pUC19-GFP",
     )
     assert result.exit_code == 0, result.output
     summary, *paths = plain(result.output).splitlines()
-    names = ["product.dna", "primers.tsv", "protocol.json", "protocol.html"]
+    names = ["product.dna", "primers.tsv", "protocol.json", "product-map.html", "protocol.html"]
     assert paths == [str(out / name) for name in names]
     assert all((out / name).exists() for name in names)
     assert summary.startswith("pUC19-GFP: 3388 bp, EcoRI, BamHI")
@@ -70,6 +72,12 @@ def test_the_cli_writes_the_four_outputs_with_every_option_it_was_handed(
     materials = [one.name for one in read_protocol(out / "protocol.json").materials]
     assert "Phusion DNA Polymerase and its reaction buffer" in materials
     assert HOST in materials
+    # The clean-up kit the run named is the one listed; the gel kit is the method's own.
+    assert "DNA Clean & Concentrator-5" in materials
+    assert "Monarch Spin DNA Gel Extraction Kit" in materials
+    # Nothing on the page quotes the NEB column's recovery, so its manual is not cited.
+    cited = " ".join(one.document for one in read_protocol(out / "protocol.json").sources.values())
+    assert "PCR & DNA Cleanup Kit" not in cited
 
 
 def test_an_enzyme_that_cuts_the_insert_twice_is_refused_before_anything_is_written(

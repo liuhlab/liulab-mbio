@@ -25,7 +25,7 @@ from mbio.checks import Check, Status, worst, worst_of
 from mbio.io import read_record
 from mbio.primers.evaluation import PrimerReport
 from mbio.primers.thresholds import reading
-from mbio.protocol.model import Project, Protocol
+from mbio.protocol.model import Project, Protocol, slug
 from mbio.sequence import Feature, SequenceRecord, across_the_origin
 
 #: What a plan calls the product it writes: the annotated plasmid the design makes.
@@ -33,6 +33,9 @@ PRODUCT_FILE = "product.dna"
 
 #: What a plan calls the sheet it orders its oligos from.
 PRIMER_FILE = "primers.tsv"
+
+#: What a plan calls the record of one amplicon a step makes, after the part it makes.
+AMPLICON_FILE = "{name}-amplicon.dna"
 
 #: The stretch where the pieces to be joined are made, named by every method that amplifies one.
 MAKE_SECTION = "Make the fragments"
@@ -72,6 +75,27 @@ class Planned(typing.Protocol):
     def write(self, directory: str | os.PathLike[str], /) -> Written:
         """Write every file into `directory`, and say where each one went."""
         ...
+
+
+def amplicon_files(names: Iterable[str]) -> tuple[str, ...]:
+    """Return what a plan calls the amplicon of each part named, in order and no two alike.
+
+    Examples
+    --------
+    >>> amplicon_files(["pUC19 backbone", "GFP", "GFP"])
+    ('puc19-backbone-amplicon.dna', 'gfp-amplicon.dna', 'gfp-2-amplicon.dna')
+    """
+    taken: set[str] = set()
+    files = []
+    for name in names:
+        stem = slug(name) or "part"
+        chosen, n = stem, 1
+        while chosen in taken:
+            n += 1
+            chosen = f"{stem}-{n}"
+        taken.add(chosen)
+        files.append(AMPLICON_FILE.format(name=chosen))
+    return tuple(files)
 
 
 def ordered_from_sheet(protocol: Protocol) -> Protocol:

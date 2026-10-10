@@ -4,7 +4,7 @@
 to the same two ends, check they anneal, simulate the ligation, and design the colony PCR and
 the sequencing that confirm the clone. `Plan.write` puts four files in one directory -- the
 annotated product, an oligo order sheet, the protocol as JSON data, and the interactive HTML page
-rendered from that data.
+rendered from that data -- with a map of each record its figures draw beside them.
 
 There are two routes to the insert and the record handed in picks one. A record already carrying
 the enzymes' sites is cut and the piece between them goes in. A record carrying none is amplified
@@ -20,10 +20,11 @@ product's own features.
 import dataclasses
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from mbio.bench.amounts import Amount
+from mbio.bench.materials import kit
 from mbio.bench.oligos import primer_sheet
 from mbio.bench.phenotype import Phenotype, read_phenotype
 from mbio.bench.validation import (
@@ -76,7 +77,7 @@ from mbio.enzymes import Enzyme
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
-from mbio.protocol.model import Protocol
+from mbio.protocol.model import Material, Protocol
 from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord, counted_round
 from mbio.sites import EnzymeLike, find_sites
@@ -85,7 +86,7 @@ from mbio.snapgene import write_dna
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The four files a plan writes.
+    """The files a plan writes: four, and a map of each record a figure draws.
 
     Parameters
     ----------
@@ -98,17 +99,20 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    maps
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     product: Path
     primers: Path
     protocol_data: Path
     protocol: Path
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """The four, in the order they were written."""
-        return (self.product, self.primers, self.protocol_data, self.protocol)
+        """Every file, in the order they were written."""
+        return (self.product, self.primers, self.protocol_data, *self.maps, self.protocol)
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,6 +153,8 @@ class Plan:
         What the product says about itself.
     host, polymerase
         The competent strain the protocol names, and what the insert is amplified with.
+    cleanup_kit
+        The spin-column kit the protocol names, as `mbio.bench.materials.kit` resolves it.
     thresholds
         What the oligos were designed and judged by, for each role, so a page prints the band
         beside the value.
@@ -174,6 +180,7 @@ class Plan:
     phenotype: Phenotype
     host: str
     polymerase: Polymerase
+    cleanup_kit: Material = field(default_factory=kit)
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
     refusals: tuple[Refusal, ...] = ()
 
@@ -271,12 +278,13 @@ class Plan:
             refusals=self.refusals,
             host=self.host,
             polymerase=self.polymerase,
+            cleanup_kit=self.cleanup_kit,
             thresholds=self.thresholds,
         )
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the product, the oligo sheet, the protocol data and its page into `directory`.
+        """Write the product, the oligo sheet, the protocol, its page and its maps into `directory`.
 
         The directory is made when it is not there. The names are `mbio.cloning.plan`'s and
         `mbio.protocol.render`'s, and a second run over the same inputs writes the same bytes.
@@ -288,7 +296,7 @@ class Plan:
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         written = write_run_files(as_project(self.protocol()), out)
-        return Files(product, sheet, written.data, written.page)
+        return Files(product, sheet, written.data, written.page, written.maps)
 
 
 def plan_restriction(
@@ -298,6 +306,7 @@ def plan_restriction(
     enzymes: Sequence[EnzymeLike] = (),
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
+    cleanup_kit: str = "",
     name: str = "",
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Plan:
@@ -342,6 +351,9 @@ def plan_restriction(
     host, name
         The competent strain the protocol names, and what to call the product. The colony PCR
         uses OneTaq, which is what NEB's protocol asks for.
+    cleanup_kit
+        The spin-column kit the protocol names, by catalogue number or by name, as
+        `mbio.bench.materials.kit` reads it. Empty takes that function's default.
     thresholds
         For each role, what its oligos are designed and judged by in `mbio.primers`.
 
@@ -416,6 +428,7 @@ def plan_restriction(
         read_phenotype(built.product, (junctions[0], junctions[-1]), vector=into, span=span),
         host,
         polymerase,
+        kit(cleanup_kit),
         thresholds,
         refusals,
     )

@@ -24,10 +24,10 @@ from mbio.bench.amounts import Amount, dna_amount, to_pmol
 from mbio.bench.reactions import reaction_table
 from mbio.checks import Check
 from mbio.protocol.model import (
+    Citation,
     Component,
     Incubation,
     ReactionTable,
-    Reference,
     Source,
     Stage,
     ThermocyclerProgram,
@@ -113,8 +113,8 @@ class AssemblyProduct:
     single_stranded_oligos
         Whether the supplier documents single-stranded oligos going into the reaction. Both
         oligo routes need them, so a product answering ``False`` supports neither.
-    references
-        Where the numbers above come from.
+
+    Every number above is read from the product's manual, which `SOURCES` keys by `catalog`.
     """
 
     name: str
@@ -132,7 +132,6 @@ class AssemblyProduct:
     short_insert_ratio: float
     unpurified_fraction: float | None
     single_stranded_oligos: bool
-    references: tuple[Reference, ...]
 
     def tier(self, fragments: int) -> Tier:
         """Return what this product documents for a reaction of `fragments` fragments.
@@ -156,21 +155,6 @@ class AssemblyProduct:
             return None
         return round(self.reaction_ul * self.unpurified_fraction, 2)
 
-
-#: The NEBuilder HiFi manual and NEB's own posting of its reaction, which is the one document
-#: here whose licence lets its table be reproduced. Note §1 records the verdict for each.
-NEBUILDER_REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "NEB, NEBuilder HiFi DNA Assembly Master Mix / Cloning Kit instruction manual, "
-        "NEB #E2621S/L/X and #E5520S, version 6.0_1/26",
-        url="https://www.neb.com/-/media/nebus/files/manuals/manuale2621_e5520.pdf",
-    ),
-    Reference(
-        "New England Biolabs (2022) NEBuilder HiFi DNA Assembly Reaction (E2621), protocols.io, "
-        "under CC BY",
-        url="https://dx.doi.org/10.17504/protocols.io.bfhrjj56",
-    ),
-)
 
 #: NEBuilder HiFi, the product a plan assumes. Its two tiers are the two columns of the manual's
 #: reaction table: overlap bands from note §3, incubations from §7, totals and ratios from §8,
@@ -196,11 +180,10 @@ NEBUILDER_HIFI = AssemblyProduct(
     5.0,
     0.2,
     True,
-    NEBUILDER_REFERENCES,
 )
 
-#: The manual of each product, keyed by its catalogue number, so a note citing what the
-#: manual states resolves on the page. A run cites one of them and `citing` drops the other.
+#: The manual of each product, keyed by its catalogue number, so a row or note citing what the
+#: manual states resolves on the page. A run cites one of them and `citing` drops the others.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
         "E2621": Source(
@@ -215,21 +198,12 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             edition="version 3.0_1/26",
             url="https://www.neb.com/-/media/nebus/files/manuals/manuale2611_e5510.pdf",
         ),
+        "638947": Source(
+            "Takara Bio, In-Fusion Snap Assembly User Manual",
+            edition="060822",
+            url="https://www.takarabio.com/documents/User%20Manual/In/In-Fusion%20Snap%20Assembly%20User%20Manual.pdf",
+        ),
     }
-)
-
-#: The Gibson Assembly Master Mix manual, and NEB's own CC BY posting of its reaction (§1).
-GIBSON_REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "NEB, Gibson Assembly Master Mix / Gibson Assembly Cloning Kit instruction manual, "
-        "NEB #E2611S/L and #E5510S, version 3.0_1/26",
-        url="https://www.neb.com/-/media/nebus/files/manuals/manuale2611_e5510.pdf",
-    ),
-    Reference(
-        "New England Biolabs (2022) Gibson Assembly Master Mix - Assembly (E2611), "
-        "protocols.io, under CC BY",
-        url="https://www.protocols.io/view/gibson-assembly-master-mix-assembly-e2611-bdd8i29w",
-    ),
 )
 
 #: The Gibson Assembly Master Mix, which takes more insert than NEBuilder at low fragment counts
@@ -257,19 +231,6 @@ GIBSON_MASTER_MIX = AssemblyProduct(
     5.0,
     0.2,
     True,
-    GIBSON_REFERENCES,
-)
-
-#: Takara's manuals for In-Fusion, whose rules are its own throughout (§1, §2).
-IN_FUSION_REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Takara Bio, In-Fusion Snap Assembly User Manual (060822)",
-        url="https://www.takarabio.com/documents/User%20Manual/In/In-Fusion%20Snap%20Assembly%20User%20Manual.pdf",
-    ),
-    Reference(
-        "Takara Bio, In-Fusion Cloning FAQs, retrieved 2026-09-18",
-        url="https://www.takarabio.com/learning-centers/cloning/in-fusion-cloning-faqs",
-    ),
 )
 
 #: In-Fusion, whose mechanism is not NEB's and which inherits none of NEB's numbers (§2). Takara
@@ -298,7 +259,6 @@ IN_FUSION = AssemblyProduct(
     3.0,
     None,
     False,
-    IN_FUSION_REFERENCES,
 )
 
 #: Every assembly product a plan can be run with, the default first.
@@ -428,12 +388,16 @@ def assembly_dna_check(product: AssemblyProduct, amounts: Sequence[Amount]) -> C
 
 
 def assembly_reaction(
-    product: AssemblyProduct, amounts: Sequence[Amount], *, reactions: int = 1
+    product: AssemblyProduct,
+    amounts: Sequence[Amount],
+    *,
+    reactions: int = 1,
+    measured: bool = False,
 ) -> ReactionTable:
     """Return the one-tube assembly reaction this product's manual sets up.
 
     The DNA goes in each tube and the master mix is half the reaction, which is the order and
-    the proportion NEB's table gives.
+    the proportion NEB's table gives. `measured` is `reaction_table`'s.
 
     Raises
     ------
@@ -450,11 +414,13 @@ def assembly_reaction(
                 product.master_mix_ul,
                 stock=product.master_mix_fold,
                 final="1X",
+                citation=Citation(product.catalog, "reaction setup"),
             ),
         ),
         volume_ul=product.reaction_ul,
         title=f"{product.name} reaction",
         reactions=reactions,
+        measured=measured,
     )
 
 
@@ -477,7 +443,10 @@ def assembly_program(product: AssemblyProduct, *, fragments: int) -> Thermocycle
     tier = product.tier(fragments)
     return ThermocyclerProgram(
         (
-            Stage((Incubation("Assembly", product.celsius, tier.incubation_seconds),)),
+            Stage(
+                (Incubation("Assembly", product.celsius, tier.incubation_seconds),),
+                citation=Citation(product.catalog, "incubation"),
+            ),
             Stage((Incubation("Hold", 4.0, None),)),
         ),
         title="Assembly incubation",

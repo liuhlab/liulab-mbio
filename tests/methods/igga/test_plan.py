@@ -305,7 +305,7 @@ def test_the_protocol_carries_the_traps_this_method_has(protocol):
     # because a set designed on mismatches alone leaves a share that is not. Exactly none reads
     # as none; a share merely rounding to 0.0% still prints the figure.
     assert "None of the single-base deletions" in linkage
-    assert "keep the barcodes away from where a primer anneals" in representation
+    assert "Keep the barcodes away from where a primer anneals" in representation
 
 
 def test_the_finished_library_is_read_for_linkage_and_for_representation(protocol):
@@ -338,7 +338,11 @@ def test_a_build_may_state_the_four_numbers_the_method_leaves_open(pooled):
     said = " ".join(
         text
         for step in after.steps
-        for text in (*step.instructions, *(n.text for n in step.noted), *step.expected)
+        for text in (
+            *step.instructions,
+            *(n.text for n in step.noted),
+            *(one.text for one in step.expectations),
+        )
     )
 
     assert [hole.id for step in before.steps for hole in step.holes] == [
@@ -400,7 +404,7 @@ def test_every_sheet_the_run_writes_is_one_its_pages_can_link(plan, pooled):
 
 def test_the_representation_step_states_the_marks_and_the_depth_they_take(protocol):
     """Joung's three, and the read depth that follows from the library's own width."""
-    said = " ".join(protocol.steps[-6].expected)
+    said = " ".join(one.text for one in protocol.steps[-6].expectations)
 
     assert "99.5%" in said
     assert "skew ratio below 10" in said
@@ -644,6 +648,11 @@ def test_the_protocol_reads_the_colony_count_as_a_floor_and_not_a_multiple(proto
         "At least 51 net colonies: the floor for the 0.99 chance this design asked for"
         in final.expected[0]
     )
+    # The count the reader works out is read against the same floor, on both steps.
+    assert growth.calculator is not None
+    assert final.calculator is not None
+    assert (growth.calculator.floor, final.calculator.floor) == (51, 51)
+    assert growth.calculator.counted == "round 3 titre"
 
 
 #: A price record as a user writes one: the synthesis order banded by count and by length, and

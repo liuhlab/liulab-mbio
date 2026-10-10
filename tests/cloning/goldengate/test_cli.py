@@ -50,6 +50,8 @@ def planned(puc19_file: Path, insert_files: tuple[Path, ...], tmp_path_factory):
         "phusion",
         "--host",
         HOST,
+        "--cleanup-kit",
+        "D4003",
         "--name",
         NAME,
     )
@@ -57,12 +59,12 @@ def planned(puc19_file: Path, insert_files: tuple[Path, ...], tmp_path_factory):
     return out, plain(result.output)
 
 
-def test_one_run_writes_the_four_outputs_the_options_asked_for(planned) -> None:
+def test_one_run_writes_the_outputs_the_options_asked_for(planned) -> None:
     out, output = planned
     summary, *paths = output.splitlines()
-    names = ["product.dna", "primers.tsv", "protocol.json", "protocol.html"]
-    assert paths == [str(out / name) for name in names]
-    assert all((out / name).exists() for name in names)
+    names = ["product.dna", "primers.tsv", "protocol.json", "product-map.html", "protocol.html"]
+    assert [path for path in paths if "-amplicon" not in path] == [str(out / n) for n in names]
+    assert all(Path(path).exists() for path in paths)
     # The span was read as coordinates, the enzyme was taken as given, and the product is the
     # one the plan tests read, under the name this run asked for.
     assert summary.startswith(f"{NAME}: 3645 bp, BbsI, 4 fragments")
@@ -75,6 +77,9 @@ def test_one_run_writes_the_four_outputs_the_options_asked_for(planned) -> None:
     page = (out / "protocol.html").read_text(encoding="utf-8")
     assert "Phusion DNA Polymerase" in page
     assert HOST in page
+    # The clean-up kit the run named is the one the page's step and its materials row name.
+    assert "DNA Clean &amp; Concentrator-5 column" in page
+    assert "Monarch Spin PCR &amp; DNA Cleanup Kit" not in page
 
 
 def test_a_step_deleted_from_the_protocol_data_is_gone_from_the_page_rendered_again(

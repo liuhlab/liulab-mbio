@@ -13,16 +13,19 @@ saying so rather than a number invented here.
 from collections.abc import Mapping, Sequence
 
 from mbio.barcodes import deletion_ambiguity
-from mbio.bench.amounts import Amount, to_nanograms
+from mbio.bench.amounts import CONVERSION_CITATION, Amount, to_nanograms
+from mbio.bench.coverage import COMPLETENESS_CITATION, SKEW_COST_CITATION
 from mbio.bench.steps import card, listed
 from mbio.checks import counted
 from mbio.enzymes import Enzyme
 from mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
 from mbio.protocol.model import (
+    Citation,
+    CountToNet,
     Figure,
     Hole,
-    Reference,
+    Note,
     Source,
     Step,
     Timer,
@@ -41,6 +44,7 @@ from synbio.igga.bench import (
     GROWTH_CELSIUS,
     LIGASE,
     LIGASE_BUFFER,
+    LIGATION_CITATION,
     LIGATION_SECONDS,
     MOLAR_RATIO,
     OUTGROWTH_SECONDS,
@@ -63,8 +67,13 @@ from synbio.igga.method import Scheme
 from synbio.igga.parts import Part
 from synbio.igga.protocols.protocol import READ_BACK_SECTION, Protocol
 from synbio.igga.protocols.run import (
+    BARCODE_DISTANCE_CITATION,
     CUVETTES,
+    INDEX_ON_PRIMER_CITATION,
     PREP_KIT,
+    RESUSPENSION_BUFFER_CITATION,
+    RESUSPENSION_WARMING_CITATION,
+    SCHEME_SOURCE_KEY,
     SELECTIVE,
     Run,
     as_platform,
@@ -138,13 +147,9 @@ class Assembly(Protocol):
             return round_equipment()
         return round_equipment(reads.linkage, reads.representation)
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Where a round's numbers come from, and where the scheme itself came from."""
-        return run.round_references
-
     def sources(self, run: Run) -> dict[str, Source]:
-        """Return what the method's own materials and the step figures are cited to."""
-        return dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
+        """Return what this protocol's rows, materials and figures are cited to."""
+        return run.round_sources | dict(stages.SOURCES) | {FIGURE_SOURCE_KEY: FIGURE_SOURCE}
 
     def holes(self, run: Run) -> tuple[Hole, ...]:
         """Return what the destination's own record leaves unanswered."""
@@ -228,6 +233,20 @@ def _pool_step(run: Run) -> Step:
         else "Spin each tube down, resuspend in TE pH 8.0 or 10 mM Tris-HCl pH 8.0, 50 °C for "
         "15-20 min, and measure each concentration."
     )
+    resuspended: tuple[Note, ...] = (
+        ()
+        if pool
+        else (
+            Note(
+                "Either buffer is what a synthesised block is shipped to be dissolved in.",
+                citation=RESUSPENSION_BUFFER_CITATION,
+            ),
+            Note(
+                "The warming step is what takes a dried block fully into solution.",
+                citation=RESUSPENSION_WARMING_CITATION,
+            ),
+        )
+    )
     return Step(
         "Pool each part list",
         key="pool-part-lists",
@@ -251,13 +270,18 @@ def _pool_step(run: Run) -> Step:
         notes=(
             "Library coverage is counted on equally represented members, so an uneven pool loses "
             "members that no later round can put back.",
-            "Equal picomoles are unequal masses: a short member weighs less than a long one for "
-            "the same number of molecules, and weighing them equally would not pool them equally.",
+            Note(
+                "Equal picomoles are unequal masses: a short member weighs less than a long one "
+                "for the same number of molecules, and weighing them equally would not pool "
+                "them equally.",
+                citation=CONVERSION_CITATION,
+            ),
             f"Every round's digest table is laid out at {floor:g} ng/µL, which is the floor and "
             "not a target: at it the pool takes almost the whole tube and the buffer and water "
             "line all but disappears. Concentrate well above it and pipette less pool; the "
             "buffer and water line makes the volume up either way.",
             *_pool_masses(bench, members),
+            *resuspended,
         ),
         troubleshooting=(
             Troubleshooting(
@@ -397,8 +421,11 @@ def _release_step(
             f"{chopped} cuts the two external stuffers left behind, so neither can ligate back.",
         ),
         notes=(
-            "One tube takes the whole part list: every member carries the same stuffers and "
-            "differs only in its coding bases and its barcode.",
+            Note(
+                "One tube takes the whole part list: every member carries the same stuffers "
+                "and differs only in its coding bases and its barcode.",
+                citation=Citation(SCHEME_SOURCE_KEY) if scheme.source else None,
+            ),
             "The amounts are weighed at the pool's mean block length, "
             f"{row.donor_digest.length_bp} bp.",
         ),
@@ -457,7 +484,11 @@ def _ligation_step(row: RoundBench, opened: Amount, released: Amount) -> Step:
             f"{MOLAR_RATIO:g}:1 molar ratio.",
         ),
         notes=(
-            "Picomoles, not nanograms: the shorter fragment weighs less at the same ratio.",
+            Note(
+                f"The {MOLAR_RATIO:g}:1 ratio is the method's, and it is a molar ratio: the "
+                "shorter fragment weighs less at the same one.",
+                citation=LIGATION_CITATION,
+            ),
             f"The method names {LIGASE} and {LIGASE_BUFFER} and publishes neither the units nor "
             "the volume, so the last line of the table is the supplier's own.",
         ),
@@ -552,7 +583,14 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
             f"its {coverage.products:,} distinct products is missing, equally represented.",
             f"At that count the chance a named product is missing is "
             f"{number(coverage.absent_probability)}.",
-            f"{control.name} should be near empty beside it; its colonies come off the count.",
+            f"The {control.name} should be near empty beside it; its colonies come off the count.",
+        ),
+        calculator=CountToNet(
+            coverage.colonies,
+            counted=dilution.name,
+            counting="colonies",
+            control=control.name,
+            below_floor=stages.SHORT_OF_THE_FLOOR,
         ),
         notes=(
             f"Both steps run at {GROWTH_CELSIUS:g} °C and not at 37 °C. That is a library "
@@ -562,12 +600,17 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
             f"The {coverage.completeness:g} was chosen for this run, and follows from the "
             "representation the screen downstream asks for. No source sets it, and nothing here "
             f"defaults it; it works out at {coverage.coverage:.0f}x this round's products.",
+            Note(
+                "The colony floor is what the chance of a missing member comes to over a "
+                "library whose members are equally represented.",
+                citation=COMPLETENESS_CITATION,
+            ),
             "The control measures the chain the design rests on — two cuts, a blunt chopper, a "
             "ligase that refuses blunt ends and the 2x clean-up — rather than assuming it.",
         ),
         troubleshooting=(
             Troubleshooting(
-                "Fewer net colonies than the count above",
+                stages.SHORT_OF_THE_FLOOR,
                 "The round has lost library members and no later round can put them back. "
                 "Electroporate more of the ligation, or run the round again.",
             ),
@@ -735,9 +778,18 @@ def _representation_step(run: Run, pair: ReadPair | None) -> Step:
             "read at each.",
             "The short amplicon is what makes repeating it cheap: linkage spans the whole cargo, "
             "this spans the block.",
-            "Where you amplify the block to read it, carry any sample index on a primer "
-            "rather than ligating it on, and keep the barcodes away from where a primer "
-            "anneals: both cost more read counts than what a barcode spells does.",
+            Note(
+                "Where you amplify the block to read it, carry any sample index on a primer "
+                "rather than ligating it on: a ligated barcode spreads read counts about "
+                "twofold where the same one amplified on did not.",
+                citation=INDEX_ON_PRIMER_CITATION,
+            ),
+            Note(
+                "Keep the barcodes away from where a primer anneals: a barcode 3 bp from the "
+                "insert gave up to 100-fold differences in read counts, where one 34 bp away "
+                "did not.",
+                citation=BARCODE_DISTANCE_CITATION,
+            ),
         ),
         troubleshooting=(
             Troubleshooting(
@@ -747,10 +799,11 @@ def _representation_step(run: Run, pair: ReadPair | None) -> Step:
             ),
             Troubleshooting(
                 "The counts are heavily skewed",
-                "Members differ in length and a bottleneck can favour the short ones. Imkeller's "
-                "Table 2 prices the skew in screen coverage: a 90th/10th ratio of 2.5 wants "
-                "200-fold, 5 wants 300-fold and 10 wants 400-fold, so a skewed library costs "
-                "cells downstream rather than failing here.",
+                "Members differ in length and a bottleneck can favour the short ones. The skew "
+                "is priced in screen coverage: a 90th/10th ratio of 2.5 wants 200-fold, 5 wants "
+                "300-fold and 10 wants 400-fold, so a skewed library costs cells downstream "
+                "rather than failing here.",
+                citation=SKEW_COST_CITATION,
             ),
         ),
     )

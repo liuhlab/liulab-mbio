@@ -102,6 +102,7 @@ block spells cannot be the one that admits the library.
 | [block-vector-1.dna](../examples/ap1-library/block-vector-1.dna), [-2](../examples/ap1-library/block-vector-2.dna), [-3](../examples/ap1-library/block-vector-3.dna) | the vector each position's blocks are built in, one a position |
 | [working-vector-ccdb.dna](../examples/ap1-library/working-vector-ccdb.dna) | the backbone with a ccdB cassette put in at `--working-site`, 10,284 bases: what the last sitting opens |
 | [library-read-primers.tsv](../examples/ap1-library/library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
+| [protocol/round-1-map.html](../examples/ap1-library/protocol/round-1-map.html) and one like it for each record a figure draws | that record as a map you can explore, which the figure on the protocol page opens |
 | [protocol/](../examples/ap1-library/protocol/index.html) | the bench pages, and `project.json`, the whole chain as data |
 
 Each name links to what that run wrote, published here unedited. Nothing is typed by hand, so
@@ -139,9 +140,9 @@ The run is not one sitting. The `protocol/` folder holds a page for each, in ord
 
 Reading every well back has a page for each route, and the bench does one, never both;
 [DMX](dmx.md) covers that job.
-[The way in](../examples/ap1-library/protocol/index.html) draws the chain, lists the checks and
-names every number with no source: 49 steps, 31 of which hold the bench. Each page names the
-one before and after it, so you can mail one to whoever runs that sitting.
+[The way in](../examples/ap1-library/protocol/index.html) draws the chain, lists the checks,
+names every number with no source, and schedules the run: 49 steps, 19 of which hold the bench.
+Each page names the one before and after it, so you can mail one to whoever runs that sitting.
 
 ## Before you order
 
@@ -163,8 +164,10 @@ fold to work: removing a site there changes a shape the virus needs. **Whether i
 is open** — the one published backbone carrying that change reports no titre. Measure it.
 
 **A round comes up short of colonies.** Plate a dilution of every round beside a no-donor
-control, and subtract the control. Run the round again rather than carrying on: members lost
-in one round are missing from all of them after it.
+control, and subtract the control. The round's page does that sum for you: type both counts and
+the dilution into its expected result and it says whether the net clears the floor. Run the
+round again rather than carrying on: members lost in one round are missing from all of them
+after it.
 
 **A part's protein comes back changed.** A junction spells whole codons, so the overhang
 decides the residues either side of it. The planner scores every candidate set across all the
@@ -179,9 +182,9 @@ in, so the digest fixes how much meets the vector. The pages label each of those
 own figure. Copy the file without replacing them and you carry someone else's settings.
 
 Volumes, units, times and temperatures are cited step by step inside each page, and
-`references.html` lists every document. Where nothing publishes a number the page prints a
-hole, not a guess: 35 here, four at the bench and 31 prices, since this lab priced nine of the
-bill's 40 rows. Round fidelity is measured ligation data — see
+`references.html` lists every document the run cites. Where nothing publishes a number the page
+prints a hole, not a guess: 35 here, four at the bench and 31 prices, since this lab priced nine
+of the bill's 40 rows. Round fidelity is measured ligation data — see
 [how fidelity is predicted](../reference/ligation-fidelity.md). A **barcode** names a library
 part here, where a barcode-kit member marks a well;
 [barcode sets](../methods/barcodes.md) says how a set is drawn.

@@ -10,8 +10,8 @@ it, and nothing checks a number you made up.
 ## Run it
 
 ```bash
-pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/
-pixi run mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/
+pixi run mbio cloning goldengate plan vector.dna insert.dna --out plan/ --cleanup-kit D4003
+pixi run mbio cloning goldengate plan vector.dna first.dna second.dna third.dna --out plan/ --cleanup-kit D4003
 ```
 
 One reaction joins as many inserts as the overhangs allow. Give them in the order they go round
@@ -20,7 +20,7 @@ before it. A single insert is the ordinary case, not a special one.
 
 It chooses the enzyme, designs every junction's overhang together, simulates the PCRs and the
 ligation, works out the bench quantities, and designs the colony PCR and sequencing that confirm
-the clone. Four files land in the directory you name:
+the clone. These files land in the directory you name:
 
 - `product.dna` — the assembled plasmid, features carried over and each junction annotated
 - `primers.tsv` — every oligo it designed, with length and Tm; it stays whole when a step
@@ -28,8 +28,10 @@ the clone. Four files land in the directory you name:
 - `protocol.json` — the protocol as data: a draft you may edit through `build-protocol`
 - `protocol.html` — the page rendered from `protocol.json`, self-contained: reagents, reaction
   tables, thermocycler programs, expected bands, a simulated gel and troubleshooting, step by step
+- `NAME-amplicon.dna` — each fragment's amplicon, whose end its PCR step draws
+- `NAME-map.html` — beside each record a step's figure draws, the map that figure opens
 
-The command prints a summary line and the four paths. The same inputs write the same bytes.
+The command prints a summary line and every path. The same inputs write the same bytes.
 
 ## What the fragment count changes
 
@@ -56,6 +58,7 @@ Every option below has a default; a vector and one insert are enough on their ow
 | `--codon-table` | Whose codon usage a proposed domestication picks its codons from, such as `human`. Not the strain |
 | `--polymerase` | For the PCRs |
 | `--host` | The strain the protocol names |
+| `--cleanup-kit` | The spin-column kit the protocol names: a catalogue number or a kit's own name. `D4003`, Zymo's, is the lab's |
 | `--name` | What to call the product |
 
 ## From Python
@@ -67,7 +70,7 @@ from mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every primer
-plan.write("plan/")  # the same four files
+plan.write("plan/")  # the same files
 ```
 
 `plan.assembly.checks` carries one verdict per part beside the product's own,

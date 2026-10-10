@@ -38,7 +38,6 @@ def whole(project: Project) -> Protocol:
         vessels=_once(one for p in project.protocols for one in p.vessels),
         plates=_once(one for p in project.protocols for one in p.plates),
         steps=tuple(one for p in project.protocols for one in p.steps),
-        references=_once(one for p in project.protocols for one in p.references),
         sources=dict(project.sources)
         | {key: value for p in project.protocols for key, value in p.sources.items()},
         holes=_once(one for p in project.protocols for one in p.holes),

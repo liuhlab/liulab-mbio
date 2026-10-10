@@ -1,6 +1,6 @@
 {
   "title": "AP-1 cargo read-back",
-  "key": "1e8f766450d1f651",
+  "key": "781eedf6c51221ca",
   "summary": "Take 32 archived designs to 128 clonal wells, mark each well so sequencing says which well it came from, and call a pass or a fail per well.",
   "overview": {
     "Designs": "32 of 72 on the sheet",
@@ -516,6 +516,7 @@
       "expected": [
         "One spot a design, at about 2,500 colonies a plate, which is the density picking wants."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "A spot grows nothing",
@@ -536,7 +537,13 @@
       ],
       "cautions": [],
       "notes": [
-        "4 colonies a design is Lund's anchor and the only measured one; four gave a clean copy of 343 of 458 genes.",
+        {
+          "text": "4 colonies a design is the only count measured: four gave a clean copy of 343 of 458 genes.",
+          "citation": {
+            "source": "lund-2024",
+            "locator": "colonies screened per gene"
+          }
+        },
         "2 fragments: 16 designs, 100.0% of picks clean",
         "3 fragments: 6 designs, 93.8% of picks clean",
         "4 fragments: 9 designs, 89.2% of picks clean",
@@ -555,6 +562,7 @@
         "128 wells over 1 plate: 128 picked.",
         "Every colony of one design sits on one plate."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "A design in many fragments gives no clean colony",
@@ -2017,6 +2025,7 @@
       "expected": [
         "2 index plates, 128 reactions in all."
       ],
+      "calculator": null,
       "troubleshooting": [],
       "holes": []
     },
@@ -2049,7 +2058,8 @@
               "citation": {
                 "source": "LevSeq",
                 "locator": "step 1"
-              }
+              },
+              "calculator": null
             },
             {
               "name": "dNTP mix",
@@ -2060,7 +2070,8 @@
               "citation": {
                 "source": "LevSeq",
                 "locator": "step 1"
-              }
+              },
+              "calculator": null
             },
             {
               "name": "Taq DNA Polymerase",
@@ -2071,7 +2082,8 @@
               "citation": {
                 "source": "LevSeq",
                 "locator": "step 1"
-              }
+              },
+              "calculator": null
             },
             {
               "name": "DMSO",
@@ -2082,7 +2094,8 @@
               "citation": {
                 "source": "LevSeq",
                 "locator": "step 1"
-              }
+              },
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -2093,7 +2106,8 @@
               "citation": {
                 "source": "LevSeq",
                 "locator": "step 1"
-              }
+              },
+              "calculator": null
             },
             {
               "name": "Barcoded primer mix",
@@ -2104,7 +2118,8 @@
               "citation": {
                 "source": "LevSeq",
                 "locator": "step 3"
-              }
+              },
+              "calculator": null
             },
             {
               "name": "Overnight culture",
@@ -2115,7 +2130,8 @@
               "citation": {
                 "source": "LevSeq",
                 "locator": "step 4"
-              }
+              },
+              "calculator": null
             }
           ],
           "title": "Index PCR, one well a sample",
@@ -2251,6 +2267,7 @@
         "One barcoded amplicon a well. A well's own place in the plate names its forward mark — the first well the first mark — and every well of one plate takes that plate's own reverse mark.",
         "One band a well, the design plus about 100 bp: the two marks, and the stretch between the primer sites and the reading frame."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "A plate reads back far fewer wells than the others",
@@ -2283,6 +2300,7 @@
       "expected": [
         "Reads for 128 wells, every well told from the rest by the marks it carries."
       ],
+      "calculator": null,
       "troubleshooting": [],
       "holes": []
     },
@@ -2313,6 +2331,7 @@
         "A well read more than 20 times is called; the index PCR route tolerates 10 reads and warns between the two.",
         "A pass matches across the whole designed region: both entry overhangs, the fragment, the stuffer and the barcode."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "A well's call is the right protein and the wrong barcode",
@@ -2323,25 +2342,11 @@
       "holes": []
     }
   ],
-  "references": [
-    {
-      "text": "Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. Nat. Commun., for the DMX barcode kit, the 1536-well barcoding in lysate, and a consensus called above 150 reads",
-      "url": "https://doi.org/10.1038/s41467-026-76740-9"
-    },
-    {
-      "text": "Long, Y. et al. (2025) LevSeq: rapid generation of sequence-function data for directed evolution and machine learning, for index PCR marking a well on one barcoded primer pair, its reaction and touchdown cycling, twenty reads wanted and ten tolerable, twenty to exceed and ten to reach",
-      "url": "https://doi.org/10.1021/acssynbio.4c00625"
-    },
-    {
-      "text": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751, for four colonies giving a clean copy of 343 of 458 genes, and the clean rate against the number of fragments a design is built from",
-      "url": "https://doi.org/10.1021/acssynbio.3c00694"
-    }
-  ],
   "sources": {
     "Qian SI": {
       "document": "Qian et al. 2026, Supplementary Information",
       "edition": "Nat. Commun. 10.1038/s41467-026-76740-9",
-      "url": "",
+      "url": "https://doi.org/10.1038/s41467-026-76740-9",
       "read_as": "held under reference_docs/",
       "date": "2026-10-06",
       "note": ""
@@ -2349,10 +2354,18 @@
     "LevSeq": {
       "document": "Long, Y. et al. 2025, LevSeq, Supporting Information",
       "edition": "",
-      "url": "",
+      "url": "https://doi.org/10.1021/acssynbio.4c00625",
       "read_as": "held under reference_docs/",
       "date": "2026-10-06",
       "note": ""
+    },
+    "lund-2024": {
+      "document": "Lund, S. et al. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. ACS Synth. Biol. 13, 745-751",
+      "edition": "",
+      "url": "https://doi.org/10.1021/acssynbio.3c00694",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/synthesis-and-assembly.md"
     },
     "PS-M0267": {
       "document": "New England Biolabs, Product Specification: Taq DNA Polymerase with ThermoPol Buffer",

@@ -39,11 +39,14 @@ from mbio.enzymes import Enzyme, enzymes, get_enzyme
 from mbio.io import read_record
 from mbio.protocol.model import (
     Check,
+    Citation,
     Hole,
     Item,
+    Note,
     Protocol,
-    Reference,
+    Source,
     Step,
+    Timer,
     read_protocol,
     sectioned,
     write_protocol,
@@ -71,6 +74,11 @@ PROTOCOL_FILE = "working-vector-domestication.html"
 CLEARED = ("BsaI", "BsmBI")
 
 NAME = "pLVX-TetOne-dom"
+
+#: How long each enzyme the vector is cleared of digests the miniprep for, to show it no longer
+#: cuts: the time New England Biolabs' single enzyme digest protocol gives, which the step's
+#: note cites.
+CONFIRM_DIGEST_SECONDS = 3600
 
 
 @dataclass(frozen=True)
@@ -118,32 +126,35 @@ PROMOTER_HOLE = Hole(
     filled_by="a reporter assay reading this promoter beside the parent's",
 )
 
-REFERENCES = (
-    Reference(
-        "Addgene 171123, pLVX-TetOne-Puro-GFP: the parent plasmid and its verified sequence.",
+#: The documents this build's sentences rest on, keyed as a `Citation` names them.
+SOURCES = {
+    "addgene-171123": Source(
+        "Addgene 171123, pLVX-TetOne-Puro-GFP",
         url="https://www.addgene.org/171123/",
+        note="docs/research/working-vector-plvx-tetone.md",
     ),
-    Reference(
+    "haellman-2021": Source(
         "Haellman, V. et al. (2021) Mammalian synthetic biology platform VAMSyB. "
-        "Metabolic Engineering 66, 41-50. The vector carrying the same change in both repeats.",
+        "Metabolic Engineering 66, 41-50",
         url="https://doi.org/10.1016/j.ymben.2021.04.003",
+        note="docs/research/working-vector-plvx-tetone.md",
     ),
-    Reference(
-        "Peterman, N. et al. (2025) Nucleic Acids Research 53, gkaf528. The hPGK promoter of "
-        "Addgene 239691 carries the same change at the same base.",
+    "peterman-2025": Source(
+        "Peterman, N. et al. (2025) Nucleic Acids Research 53, gkaf528",
         url="https://doi.org/10.1093/nar/gkaf528",
+        note="docs/research/working-vector-plvx-tetone.md",
     ),
-    Reference(
-        "New England Biolabs, Protocol for a single restriction enzyme digest: 10 units an "
-        "hour for 1 microgram of DNA.",
+    "NEB-single-digest": Source(
+        "New England Biolabs, Protocol for a single restriction enzyme digest",
         url="https://www.neb.com/en-us/protocols/0001/01/01/optimizing-restriction-enzyme-reactions",
+        note="docs/research/working-vector-plvx-tetone.md",
     ),
-    Reference(
-        "Twist Bioscience, gene synthesis sequence acceptance criteria: a direct repeat longer "
-        "than 200 bases is a high-complexity sequence.",
+    "twist-synthesis": Source(
+        "Twist Bioscience, gene synthesis sequence acceptance criteria",
         url="https://www.twistbioscience.com/faq/gene-synthesis",
+        note="docs/research/working-vector-plvx-tetone.md",
     ),
-)
+}
 
 
 def rebuild(parent: SequenceRecord) -> tuple[SequenceRecord, DomesticationReport]:
@@ -336,7 +347,7 @@ def protocol(
         ),
         files=(RECORD_FILE,),
         steps=_steps(record, control, length),
-        references=REFERENCES,
+        sources=SOURCES,
         holes=(LTR_HOLE, PROMOTER_HOLE),
     )
 
@@ -415,13 +426,28 @@ def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, 
                     "a long-construct quote before ordering.",
                 ),
                 notes=(
-                    "A direct repeat longer than 200 bases is a high-complexity sequence, which is "
-                    "priced and scheduled apart from the rest, so declaring it up front saves a "
-                    "rejected order (Twist Bioscience, gene synthesis sequence acceptance "
-                    "criteria).",
-                    "The change at transcript position +4 goes into both repeats because a vector "
-                    "whose two repeats differ there changes what reverse transcription copies "
-                    "(Haellman et al. 2021, which made the same change in both).",
+                    Note(
+                        "A direct repeat longer than 200 bases is a high-complexity sequence, "
+                        "which is priced and scheduled apart from the rest, so declaring it up "
+                        "front saves a rejected order.",
+                        citation=Citation("twist-synthesis", "sequence complexity"),
+                    ),
+                    Note(
+                        "The change at transcript position +4 goes into both repeats because a "
+                        "vector whose two repeats differ there changes what reverse "
+                        "transcription copies; the published vector made the same change in both.",
+                        citation=Citation("haellman-2021", "vector construction"),
+                    ),
+                    Note(
+                        "The change at the hPGK promoter's BsaI site is the one a published "
+                        "vector already carries at the same base.",
+                        citation=Citation("peterman-2025", "Addgene 239691"),
+                    ),
+                    Note(
+                        f"{RECORD_FILE} is the depositor's own verified sequence with the "
+                        "changes above made on it.",
+                        citation=Citation("addgene-171123", "full sequence"),
+                    ),
                 ),
                 expected=("The supplier accepts the sequence and quotes a build.",),
             ),
@@ -450,20 +476,27 @@ def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, 
                 key="confirm-digest",
                 instructions=(
                     "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for "
-                    "1 hour at 37 °C.",
-                    "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 1 hour at "
-                    "55 °C.",
+                    f"{CONFIRM_DIGEST_SECONDS // 60} minutes at 37 °C.",
+                    "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for "
+                    f"{CONFIRM_DIGEST_SECONDS // 60} minutes at 55 °C.",
                     f"Digest a third 1 µg with 10 units of {control.commercial_name or control.name}.",
                     "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel.",
+                ),
+                timers=(
+                    Timer("BsaI-HFv2 digest", CONFIRM_DIGEST_SECONDS),
+                    Timer("BsmBI-v2 digest", CONFIRM_DIGEST_SECONDS),
                 ),
                 expected=(
                     "The BsaI and BsmBI lanes look like the undigested lane.",
                     f"The control lane is one band at about {length} bp.",
                 ),
                 notes=(
-                    "An enzyme that did not cut and an enzyme nobody added look the same on a gel, "
-                    "which is what the control lane tells apart (New England Biolabs, single "
-                    "enzyme digest protocol).",
+                    Note(
+                        "An enzyme that did not cut and an enzyme nobody added look the same on "
+                        "a gel, which is what the control lane tells apart. The dose is 10 "
+                        "units an hour for one microgram.",
+                        citation=Citation("NEB-single-digest", "reaction setup"),
+                    ),
                 ),
             ),
             Step(

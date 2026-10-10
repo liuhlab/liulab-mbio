@@ -101,28 +101,36 @@ rules draw the same set again.
 ## Plan a cloning experiment
 
 Four methods, one command each, all under `mbio cloning`. Each reads SnapGene `.dna`, GenBank or
-FASTA files, and writes four files into `--out`:
+FASTA files, and writes five files into `--out`:
 
 | File | What it holds |
 | --- | --- |
 | `product.dna` | the plasmid the design makes, annotated |
 | `primers.tsv` | the oligos to order |
 | `protocol.json` | the bench protocol as data you can edit |
+| `product-map.html` | the product as a map you can explore, which the page's figure opens |
 | `protocol.html` | that protocol as one page, which opens offline |
 
-Gateway writes a fifth file, `entry-clone.dna`, where it also plans a BP reaction.
+Gateway also writes `entry-clone.dna` and its map, `entry-clone-map.html`, where it plans a BP
+reaction. Golden Gate also writes each amplicon, `NAME-amplicon.dna`, and its map, which the
+PCR step's figure opens.
 
-Every one of the four prints a summary line, then each file it wrote. Four options are shared:
+Every one of the four prints a summary line, then each file it wrote. Five options are shared:
 
 | Option | Default | What it is |
 | --- | --- | --- |
 | `--out`, `-o` | required | Folder to write into |
 | `--polymerase` | `Q5` | Polymerase for the PCRs. Also `Phusion`, `Taq` and `OneTaq` |
 | `--host` | `NEB 5-alpha Competent E. coli (C2987)` | Strain the protocol names |
+| `--cleanup-kit` | `T1130` (Monarch Spin PCR & DNA Cleanup Kit) | Spin-column kit the protocol names, by catalogue number or by name |
 | `--name` | the parts' names, joined | What to call the product |
 
 Gateway's `--host` starts at `TOP10 chemically competent E. coli` instead. A strain it
 recognises also gets its ccdB selection checked.
+
+`--cleanup-kit` takes a catalogue number the package knows — `T1130`, the Monarch Spin PCR &
+DNA Cleanup Kit, or `D4003`, Zymo Research's DNA Clean & Concentrator-5 — or any other kit's own
+name, which the page then names with no catalogue number beside it.
 
 ### Golden Gate
 

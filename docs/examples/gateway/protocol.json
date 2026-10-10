@@ -1,6 +1,6 @@
 {
   "title": "Gateway BP then LR: attB-GFP into pDEST-demo",
-  "key": "b538f4e77dc356ee",
+  "key": "71d581ec3bd90d06",
   "summary": "Recombine the 751 bp between attB-GFP's attB sites into pDONR-demo, giving the entry clone pDONR-demo-attB-GFP; grow that up and recombine it into pDEST-demo. Two staged reactions, each with its own incubation, stop, transformation and plate.",
   "overview": {
     "attB PCR": "775 bp product, 29 and 29 bp tails",
@@ -105,9 +105,9 @@
       }
     },
     {
-      "name": "PCR and gel cleanup spin columns",
-      "supplier": "",
-      "catalog": "",
+      "name": "Monarch Spin PCR & DNA Cleanup Kit",
+      "supplier": "New England Biolabs",
+      "catalog": "T1130",
       "storage": "",
       "amount": "",
       "note": "",
@@ -294,7 +294,10 @@
       "contains": [],
       "rules": [],
       "cautions": [],
-      "citation": null
+      "citation": {
+        "source": "N3231",
+        "locator": "band sizes"
+      }
     },
     {
       "name": "Plasmid miniprep kit",
@@ -398,7 +401,7 @@
     "primers.tsv"
   ],
   "equipment": [
-    "Spectrophotometer or fluorometer",
+    "Spectrophotometer (NanoDrop) or fluorometer (Qubit)",
     "Water bath or heat block at 25 °C",
     "Water bath or heat block at 37 °C",
     "Heat block or water bath at 42 °C",
@@ -416,7 +419,7 @@
       "section": "Make the fragments",
       "instructions": [
         "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
-        "Mix the master mix and put it in each tube, then add the GFP template.",
+        "Mix the master mix, dispense it into each tube, then add the GFP template.",
         "Run the program below: 63 °C annealing and 20 s extension for a 775 bp product."
       ],
       "cautions": [
@@ -448,7 +451,8 @@
               "stock": "5X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "dNTP mix",
@@ -456,7 +460,8 @@
               "stock": "10 mM each",
               "final": "200 µM each",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Forward primer",
@@ -464,7 +469,8 @@
               "stock": "10 µM",
               "final": "500 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Reverse primer",
@@ -472,7 +478,8 @@
               "stock": "10 µM",
               "final": "500 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Template DNA",
@@ -480,7 +487,8 @@
               "stock": "",
               "final": "",
               "master_mix": false,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Q5 DNA Polymerase",
@@ -488,7 +496,8 @@
               "stock": "2 U/µL",
               "final": "1 unit",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -496,7 +505,8 @@
               "stock": "",
               "final": "to 50 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "attB-GFP PCR",
@@ -590,6 +600,7 @@
       "expected": [
         "One band at 775 bp."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No band",
@@ -615,7 +626,7 @@
       "key": "purify-amplicons",
       "section": "Make the fragments",
       "instructions": [
-        "Run each reaction over a spin column and elute in the smallest volume the kit allows."
+        "Run each reaction over a Monarch Spin PCR & DNA Cleanup column and elute in the smallest volume the kit allows."
       ],
       "cautions": [],
       "notes": [
@@ -638,12 +649,13 @@
       "expected": [
         "Clean DNA, free of polymerase, primers and dNTPs."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "Low recovery",
-          "solution": "Elute twice through the same column, or pool two reactions before purifying.",
+          "solution": "Elute in a larger volume and leave the buffer on the column longer.",
           "citation": {
-            "source": "T1020",
+            "source": "T1130",
             "locator": "troubleshooting, low DNA yield"
           }
         },
@@ -702,7 +714,11 @@
               "stock": "",
               "final": "0.05 pmol (23.87 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": null
             },
             {
               "name": "pDONR-demo",
@@ -710,7 +726,11 @@
               "stock": "",
               "final": "0.05 pmol (20.36 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": null
             },
             {
               "name": "TE buffer, pH 8.0",
@@ -718,7 +738,8 @@
               "stock": "",
               "final": "to 8 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Gateway BP Clonase II enzyme mix",
@@ -726,7 +747,11 @@
               "stock": "",
               "final": "to 10 µL",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "11789",
+                "locator": "p. 3"
+              },
+              "calculator": null
             }
           ],
           "title": "BP reaction",
@@ -744,6 +769,7 @@
       "expected": [
         "A 10 µL reaction holding both DNAs."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "The DNA does not fit the reaction volume",
@@ -767,6 +793,13 @@
           "citation": {
             "source": "MAN0000470",
             "locator": "p. 23"
+          }
+        },
+        {
+          "text": "Each att site is named by matching its 25 bp recombination region to that site's published sequence.",
+          "citation": {
+            "source": "US7670823",
+            "locator": "FIG. 9"
           }
         },
         "Junction positions are 1-based, on the entry clone."
@@ -805,6 +838,7 @@
         "The entry clone carries attL1 at 136, spelling CCAACTTTGTACAAAAAAGCAGGCT: its first bases from pDONR-demo and the rest from attB-GFP.",
         "The entry clone carries attL2 at 878, spelling CCAACTTTGTACAAGAAAGCTGGGT: its first bases from pDONR-demo and the rest from attB-GFP."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "Few or no colonies later, though the transformation control worked",
@@ -851,6 +885,7 @@
       "expected": [
         "A reaction that can go straight into competent cells."
       ],
+      "calculator": null,
       "troubleshooting": [],
       "holes": []
     },
@@ -873,7 +908,14 @@
       "notes": [
         "Colour does not report this insertion; screen every colony by PCR.",
         "The clone is not expected to make GFP: no ribosome binding site is annotated ahead of it.",
-        "Unreacted donor vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F' would supply ccdA and cancel that."
+        "Unreacted donor vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F' would supply ccdA and cancel that.",
+        {
+          "text": "No manual states what fraction of the colonies is correct; the one count published found 195 of 197 correct after BP.",
+          "citation": {
+            "source": "hartley-2000",
+            "locator": "Results"
+          }
+        }
       ],
       "tables": [],
       "programs": [],
@@ -887,6 +929,10 @@
           "seconds": 30
         },
         {
+          "label": "Back on ice",
+          "seconds": 120
+        },
+        {
           "label": "Outgrowth",
           "seconds": 3600
         }
@@ -897,8 +943,9 @@
       "figures": [],
       "gels": [],
       "expected": [
-        "More than 1,500 colonies where the whole reaction is transformed and plated, with cells at 100,000,000 cfu/µg or better. What fraction of them is correct is not published; Hartley 2000 counted 195 of 197."
+        "More than 1,500 colonies where the whole reaction is transformed and plated, with cells at 100,000,000 cfu/µg or better."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No colonies",
@@ -962,6 +1009,7 @@
       "expected": [
         "Supercoiled pDONR-demo-attB-GFP, concentrated enough to weigh 150 ng into the volume the LR table leaves for it."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "The prep is too dilute for the reaction",
@@ -1023,7 +1071,11 @@
               "stock": "",
               "final": "0.235 pmol (150 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": null
             },
             {
               "name": "pDEST-demo",
@@ -1031,7 +1083,11 @@
               "stock": "",
               "final": "0.515 pmol (150 ng)",
               "master_mix": false,
-              "citation": null
+              "citation": {
+                "source": "NEBioCalculator",
+                "locator": "dsDNA molecular weight"
+              },
+              "calculator": null
             },
             {
               "name": "TE buffer, pH 8.0",
@@ -1039,7 +1095,8 @@
               "stock": "",
               "final": "to 8 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Gateway LR Clonase II enzyme mix",
@@ -1047,7 +1104,11 @@
               "stock": "",
               "final": "to 10 µL",
               "master_mix": true,
-              "citation": null
+              "citation": {
+                "source": "MAN0001032",
+                "locator": "p. 3"
+              },
+              "calculator": null
             }
           ],
           "title": "LR reaction",
@@ -1065,6 +1126,7 @@
       "expected": [
         "A 10 µL reaction holding both plasmids."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "The DNA does not fit the reaction volume",
@@ -1088,6 +1150,13 @@
           "citation": {
             "source": "MAN0000470",
             "locator": "p. 32"
+          }
+        },
+        {
+          "text": "Each att site is named by matching its 25 bp recombination region to that site's published sequence.",
+          "citation": {
+            "source": "US7670823",
+            "locator": "FIG. 9"
           }
         },
         "Junction positions are 1-based, on the expression clone."
@@ -1126,6 +1195,7 @@
         "The expression clone carries attB1 at 89, spelling ACAAGTTTGTACAAAAAAGCAGGCT: its first bases from pDEST-demo and the rest from pDONR-demo-attB-GFP.",
         "The expression clone carries attB2 at 831, spelling ACCACTTTGTACAAGAAAGCTGGGT: its first bases from pDEST-demo and the rest from pDONR-demo-attB-GFP."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "Few or no colonies later, though the transformation control worked",
@@ -1172,6 +1242,7 @@
       "expected": [
         "A reaction that can go straight into competent cells."
       ],
+      "calculator": null,
       "troubleshooting": [],
       "holes": []
     },
@@ -1194,6 +1265,13 @@
       "notes": [
         "Colour does not report this insertion; screen every colony by PCR.",
         "Unreacted destination vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F' would supply ccdA and cancel that.",
+        {
+          "text": "No manual states what fraction of the colonies is correct; the one count published found 96 of 102 correct after LR.",
+          "citation": {
+            "source": "hartley-2000",
+            "locator": "Results"
+          }
+        },
         "The expression clone lost the chloramphenicol cassette with the by-product, so restreaking a colony on 30 µg/mL chloramphenicol confirms it: a true expression clone does not grow there, and one carrying a mutated ccdB gene does."
       ],
       "tables": [],
@@ -1208,6 +1286,10 @@
           "seconds": 30
         },
         {
+          "label": "Back on ice",
+          "seconds": 120
+        },
+        {
           "label": "Outgrowth",
           "seconds": 3600
         }
@@ -1218,8 +1300,9 @@
       "figures": [],
       "gels": [],
       "expected": [
-        "More than 5,000 colonies where the whole reaction is transformed and plated, with cells at 100,000,000 cfu/µg or better. What fraction of them is correct is not published; Hartley 2000 counted 96 of 102."
+        "More than 5,000 colonies where the whole reaction is transformed and plated, with cells at 100,000,000 cfu/µg or better."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No colonies",
@@ -1276,7 +1359,8 @@
               "stock": "2X",
               "final": "1X",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Forward primer",
@@ -1284,7 +1368,8 @@
               "stock": "10 µM",
               "final": "200 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Reverse primer",
@@ -1292,7 +1377,8 @@
               "stock": "10 µM",
               "final": "200 nM",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             },
             {
               "name": "Nuclease-free water",
@@ -1300,7 +1386,8 @@
               "stock": "",
               "final": "to 25 µL",
               "master_mix": true,
-              "citation": null
+              "citation": null,
+              "calculator": null
             }
           ],
           "title": "Colony PCR",
@@ -1431,6 +1518,7 @@
         "Correct clone: 871 bp.",
         "Empty vector: 429 bp."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "No band in any lane",
@@ -1457,7 +1545,7 @@
       "section": "Transform and screen",
       "instructions": [
         "Miniprep two or three colonies that read as correct.",
-        "Send each with both sequencing primers.",
+        "Send each miniprep with both sequencing primers.",
         "Send at least 500 ng of plasmid with 5-50 pmol of each primer.",
         "Check the read across every junction and the whole of each insert."
       ],
@@ -1486,6 +1574,7 @@
         "Sequencing reverse anneals 117 bp from its own junction and has to read 868 bp to cover the far one.",
         "The junctions read as ACAAGTTTGTACAAAAAAGCAGGCT and ACCACTTTGTACAAGAAAGCTGGGT, and the parts match pDONR-demo-attB-GFP."
       ],
+      "calculator": null,
       "troubleshooting": [
         {
           "problem": "The read starts too close to the junction",
@@ -1499,53 +1588,31 @@
       "holes": []
     }
   ],
-  "references": [
-    {
-      "text": "Invitrogen, Gateway BP Clonase II Enzyme Mix, product sheet 11789.II.pps revision 31 October 2010, for the BP reaction, its incubation and how it is stopped",
-      "url": ""
-    },
-    {
-      "text": "Invitrogen, Gateway LR Clonase II Enzyme Mix, MAN0001032 revision A.0, for the reaction, its incubation and how it is stopped",
-      "url": ""
-    },
-    {
-      "text": "Invitrogen, Gateway pDONR Vectors, MAN0000291, revised 29 March 2012, for what an entry clone is selected on and grown up from, and for the colony PCR it describes",
-      "url": ""
-    },
-    {
-      "text": "Invitrogen, pCR8/GW/TOPO TA Cloning Kit, MAN0000437, for the vendor's own sequencing primers and what each of them reads",
-      "url": ""
-    },
-    {
-      "text": "Invitrogen, Gateway Technology with Clonase II, MAN0000470, revised 2 April 2012, for the transformation, the plating and the strains",
-      "url": ""
-    },
-    {
-      "text": "Hartley, J.L., Temple, G.F. and Brasch, M.A. (2000) DNA cloning using in vitro site-specific recombination. Genome Res. 10, 1788-1795",
-      "url": "https://doi.org/10.1101/gr.143000"
-    },
-    {
-      "text": "Brasch, M., Cheo, D., Hartley, J. and Temple, G., US 7,670,823 B1, FIG. 9, for the att site sequences",
-      "url": ""
-    },
-    {
-      "text": "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes (Y. Xu, 11/13)",
-      "url": ""
-    },
-    {
-      "text": "NEB, Nucleic Acid Data, and NEBioCalculator for the ng to pmol conversion",
-      "url": ""
-    },
-    {
-      "text": "NEB product pages: 1 kb Plus DNA Ladder (N3200), 100 bp DNA Ladder (N3231)",
-      "url": ""
-    },
-    {
-      "text": "NEB, Agarose Gel Resolution, for the percentage a band range resolves on",
-      "url": ""
-    }
-  ],
   "sources": {
+    "NEBioCalculator": {
+      "document": "New England Biolabs NEBioCalculator",
+      "edition": "script main-6f3020c533.js, capture 2026-08-28",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "N3231": {
+      "document": "New England Biolabs #N3231 100 bp DNA Ladder product page",
+      "edition": "capture 2025-10-31",
+      "url": "",
+      "read_as": "Wayback Machine",
+      "date": "",
+      "note": "docs/research/primer-design-and-pcr.md"
+    },
+    "T1130": {
+      "document": "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+      "edition": "version 1.0 06.24",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/restriction-ligation.md"
+    },
     "M0491": {
       "document": "New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page",
       "edition": "capture 2024-08-04",
@@ -1558,14 +1625,6 @@
       "document": "New England Biolabs, Troubleshooting Guide for Cloning",
       "edition": "",
       "url": "https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
-      "read_as": "",
-      "date": "2026-09-18",
-      "note": "docs/research/restriction-ligation.md"
-    },
-    "T1020": {
-      "document": "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
-      "edition": "version 2.1_4/21",
-      "url": "",
       "read_as": "",
       "date": "2026-09-18",
       "note": "docs/research/restriction-ligation.md"
@@ -1594,6 +1653,14 @@
       "date": "2026-09-12",
       "note": ""
     },
+    "11789": {
+      "document": "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
+      "edition": "11789.II.pps, revision 31 October 2010",
+      "url": "",
+      "read_as": "",
+      "date": "2026-09-18",
+      "note": "docs/research/gateway-cloning.md"
+    },
     "MAN0000470": {
       "document": "Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide",
       "edition": "part 25-0749, revision 2 April 2012",
@@ -1605,14 +1672,6 @@
     "MAN0001032": {
       "document": "Thermo Fisher Scientific #MAN0001032 Gateway LR Clonase II enzyme mix product sheet",
       "edition": "revision A.0",
-      "url": "",
-      "read_as": "",
-      "date": "2026-09-18",
-      "note": "docs/research/gateway-cloning.md"
-    },
-    "11789": {
-      "document": "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
-      "edition": "11789.II.pps, revision 31 October 2010",
       "url": "",
       "read_as": "",
       "date": "2026-09-18",
@@ -1632,6 +1691,22 @@
       "url": "",
       "read_as": "",
       "date": "2026-09-18",
+      "note": "docs/research/gateway-cloning.md"
+    },
+    "hartley-2000": {
+      "document": "Hartley, J.L., Temple, G.F. and Brasch, M.A. (2000) DNA cloning using in vitro site-specific recombination. Genome Res. 10, 1788-1795",
+      "edition": "",
+      "url": "https://doi.org/10.1101/gr.143000",
+      "read_as": "",
+      "date": "",
+      "note": "docs/research/gateway-cloning.md"
+    },
+    "US7670823": {
+      "document": "Brasch, M., Cheo, D., Hartley, J. and Temple, G., US 7,670,823 B1",
+      "edition": "",
+      "url": "https://patents.google.com/patent/US7670823B1/en",
+      "read_as": "",
+      "date": "",
       "note": "docs/research/gateway-cloning.md"
     }
   },

@@ -10,7 +10,6 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 
 from mbio import checks as judged
-from mbio.bench import REFERENCES as BENCH_REFERENCES
 from mbio.bench.amounts import Amount
 from mbio.bench.gels import choose_ladder
 from mbio.bench.oligos import OrderedOligo, oligo_row, ordered_row
@@ -25,15 +24,13 @@ from mbio.bench.phenotype import Phenotype
 from mbio.bench.steps import (
     CELLS_UL,
     COLONY_PCR_TITLE,
-    DPNI_REFERENCE,
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
-    IPTG_UM,
+    MINIPREP_KIT,
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
-    PLATE_REFERENCE,
+    QUANTIFY_EQUIPMENT,
     SEQUENCING_TITLE,
-    XGAL_UG_ML,
     badges,
     card,
     catalogued,
@@ -46,6 +43,7 @@ from mbio.bench.steps import (
     pcr_step,
     pcr_title,
     phenotype_sentences,
+    plate_material,
     quantify_step,
     sequencing_step,
     transform_step,
@@ -80,10 +78,8 @@ from mbio.protocol.model import (
     Material,
     Note,
     Protocol,
-    Reference,
     Source,
     Step,
-    Timer,
     Troubleshooting,
     citing,
     figured,
@@ -120,31 +116,19 @@ CORRECT_AT_FIVE = 4
 #: joined, which is why a clone is sequenced whatever the screen said (note §16).
 MOLECULES_PER_ERROR = 50
 
-#: What a protocol cites for how many screened colonies read correct and for how often a
-#: junction is misjoined (note §16). Every plan screens and sequences, so both are always cited.
-SCREENING_REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Takara Bio, In-Fusion Cloning FAQs, for the correct clones out of ten screened from "
-        "two to five fragments",
-        url="https://www.takarabio.com/learning-centers/cloning/in-fusion-cloning-faqs",
-    ),
-    Reference(
-        "Gibson, D.G. et al. (2009) Enzymatic assembly of DNA molecules up to several hundred "
-        "kilobases. Nat. Methods 6, 343-345, for the junction error rate",
-        url="https://doi.org/10.1038/nmeth.1318",
-    ),
-)
-
 #: The manual the colony PCR screen's troubleshooting is read from. Both NEB assembly manuals
 #: carry the same table, so one of them answers the screen whichever product the run uses.
 SCREENING_CATALOG = "E2621"
 
-#: The two documents the screening notes read their numbers from.
+#: The two documents the screening notes read their numbers from (note §16): how many screened
+#: colonies read correct, and how often a junction is misjoined. Every plan screens and
+#: sequences, so both are always cited.
 SCREENING_SOURCES: Mapping[str, Source] = MappingProxyType(
     {
         "In-Fusion": Source(
             "Takara Bio, In-Fusion Cloning FAQs",
             url="https://www.takarabio.com/learning-centers/cloning/in-fusion-cloning-faqs",
+            date="2026-09-18",
         ),
         "Gibson 2009": Source(
             "Gibson, D.G. et al. (2009) Enzymatic assembly of DNA molecules up to several "
@@ -159,7 +143,7 @@ EQUIPMENT: tuple[str, ...] = (
     "Thermocycler with a heated lid",
     "Agarose gel rig and power supply",
     "Microcentrifuge",
-    "Spectrophotometer or fluorometer",
+    QUANTIFY_EQUIPMENT,
     f"Heat block or water bath at {HEAT_SHOCK_CELSIUS:g} °C",
     f"Shaking incubator and a plate incubator at {OUTGROWTH_CELSIUS:g} °C",
 )
@@ -182,6 +166,7 @@ def protocol(
     checks: Sequence[judged.Check],
     host: str,
     polymerase: Polymerase,
+    cleanup_kit: Material,
     thresholds: Mapping[PrimerRole, Thresholds],
 ) -> Protocol:
     """Return the bench protocol for one planned assembly, ready to render.
@@ -225,6 +210,7 @@ def protocol(
             host=host,
             polymerase=polymerase,
             phenotype=phenotype,
+            cleanup_kit=cleanup_kit,
         ),
         oligos=(
             *(
@@ -245,8 +231,8 @@ def protocol(
             phenotype=phenotype,
             host=host,
             polymerase=polymerase,
+            cleanup_kit=cleanup_kit,
         ),
-        references=_references(parts, product, phenotype),
         sources={**BENCH_SOURCES, **PCR_SOURCES, **ASSEMBLY_SOURCES, **SCREENING_SOURCES},
     )
     return citing(one)
@@ -343,6 +329,7 @@ def _materials(
     host: str,
     polymerase: Polymerase,
     phenotype: Phenotype,
+    cleanup_kit: Material,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
     made = tuple(part.length for part in parts if part.amplified)
@@ -373,7 +360,7 @@ def _materials(
             if any(part.dpni for part in parts)
             else ()
         ),
-        Material("PCR and gel cleanup spin columns"),
+        cleanup_kit,
         Material(
             product.name,
             supplier=product.supplier,
@@ -391,7 +378,8 @@ def _materials(
             "SOC or NEB 10-beta/Stable Outgrowth Medium",
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
-        Material(_plate(phenotype), amount="one plate per transformation"),
+        plate_material(phenotype),
+        MINIPREP_KIT,
         catalogued(
             COLONY_PCR_MASTER_MIX,
             supplier=product.supplier,
@@ -410,17 +398,6 @@ def _purpose(oligo: DesignedOligo) -> str:
     return COLONY_PCR_TITLE if oligo.role == "colony PCR" else SEQUENCING_TITLE
 
 
-def _plate(phenotype: Phenotype) -> str:
-    """Return what to pour the selection plates with."""
-    antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
-    if phenotype.blue_white:
-        return (
-            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
-            f"and {IPTG_UM} µM IPTG"
-        )
-    return f"{phenotype.medium} agar plates with {antibiotic}"
-
-
 def _steps(
     *,
     parts: Sequence[Part],
@@ -433,6 +410,7 @@ def _steps(
     phenotype: Phenotype,
     host: str,
     polymerase: Polymerase,
+    cleanup_kit: Material,
 ) -> tuple[Step, ...]:
     """Return the steps in the order they happen, the shared ones carrying this method's notes.
 
@@ -467,6 +445,7 @@ def _steps(
         )
     made.append(
         cleanup_step(
+            kit=cleanup_kit,
             notes=(
                 Note(
                     f"A column is optional below {CLEANUP_FRAGMENTS} PCR fragments: a product "
@@ -481,7 +460,7 @@ def _steps(
                     "anything but one band is gel-purified whatever the count.",
                     citation=Citation(product.catalog),
                 ),
-            )
+            ),
         )
     )
     made.append(quantify_step(amounts))
@@ -585,7 +564,7 @@ def _assembly_step(
     A stitched part and a bridging oligo go into this same tube, each at the dose its own source
     states rather than at the picomoles the table gives a fragment.
     """
-    table = assembly_reaction(product, amounts)
+    table = assembly_reaction(product, amounts, measured=True)
     tier = product.tier(len(amounts))
     total = sum(component.volume_ul for component in table.components)
     ratio = Note(
@@ -616,8 +595,6 @@ def _assembly_step(
         expected=(f"A {total:g} µL reaction holding every fragment.",),
         notes=(
             ratio,
-            "The volumes above assume each fragment is concentrated enough to carry its "
-            "picomoles in the microlitre the table gives.",
             unpurified,
             *(
                 Note(
@@ -671,7 +648,6 @@ def _incubation_step(
             "Put the reaction on ice afterwards, or keep it at -20 °C.",
         ),
         programs=(assembly_program(product, fragments=fragments),),
-        timers=(Timer("Assembly", tier.incubation_seconds),),
         expected=(
             "Nothing visible. One exonuclease, one polymerase and one ligase work together at "
             "this one temperature; there is nothing to cycle.",
@@ -755,15 +731,3 @@ def _colony_pcr_step(colony: ColonyCheck, assembly: Assembly) -> Step:
             ),
         ),
     )
-
-
-def _references(
-    parts: Sequence[Part], product: AssemblyProduct, phenotype: Phenotype
-) -> tuple[Reference, ...]:
-    """Where the numbers come from."""
-    items = [*product.references, *SCREENING_REFERENCES, *BENCH_REFERENCES]
-    if any(part.dpni for part in parts):
-        items.append(DPNI_REFERENCE)
-    if phenotype.blue_white:
-        items.append(PLATE_REFERENCE)
-    return tuple(items)

@@ -5,7 +5,7 @@ the product, and runs the whole design: choose the enzyme, design the overhangs,
 PCRs and the ligation, work out the bench quantities, and design the colony PCR and sequencing
 that validate the clone. `Plan.write` puts four files in one directory -- the annotated
 product, a primer order sheet, the protocol as JSON data, and the interactive HTML page
-rendered from that data.
+rendered from that data -- with a map of each record its figures draw beside them.
 
 Every number the protocol prints is computed here or by the modules this one calls. What the
 protocol says about the phenotype -- what drives the inserts, whether anything should be
@@ -15,11 +15,12 @@ own features.
 
 import os
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from mbio.bench.amounts import Amount
 from mbio.bench.goldengate import assembly_amounts
+from mbio.bench.materials import kit
 from mbio.bench.oligos import primer_sheet
 from mbio.bench.phenotype import Phenotype, read_phenotype
 from mbio.bench.validation import (
@@ -44,6 +45,7 @@ from mbio.cloning.plan import (
     PRODUCT_FILE,
     Orientation,
     Site,
+    amplicon_files,
     annotated,
     as_project,
     as_record,
@@ -61,7 +63,7 @@ from mbio.overhangs import Junction
 from mbio.primers.evaluation import PrimerReport, evaluate_primer
 from mbio.primers.polymerase import ONETAQ, Q5, Polymerase
 from mbio.primers.thresholds import THRESHOLDS_FOR, PrimerRole, Thresholds
-from mbio.protocol.model import Protocol
+from mbio.protocol.model import Material, Protocol
 from mbio.protocol.render import write_run_files
 from mbio.sequence import Primer, SequenceRecord
 from mbio.sites import EnzymeLike
@@ -74,12 +76,14 @@ VECTOR_WINDOW = 6
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The four files a plan writes.
+    """The files a plan writes: four, each amplicon, and a map of each record a figure draws.
 
     Parameters
     ----------
     product
         The annotated product, as a SnapGene ``.dna`` file.
+    amplicons
+        Each part's amplicon, tails and all, as a SnapGene ``.dna`` file its PCR step draws.
     primers
         Every designed oligo, as a tab-separated sheet to order from.
     protocol_data
@@ -87,17 +91,28 @@ class Files:
     protocol
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
+    maps
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     product: Path
+    amplicons: tuple[Path, ...]
     primers: Path
     protocol_data: Path
     protocol: Path
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """The four, in the order they were written."""
-        return (self.product, self.primers, self.protocol_data, self.protocol)
+        """Every file, in the order they were written."""
+        return (
+            self.product,
+            *self.amplicons,
+            self.primers,
+            self.protocol_data,
+            *self.maps,
+            self.protocol,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,6 +153,8 @@ class Plan:
         reads.
     host, polymerase
         The choices the protocol names.
+    cleanup_kit
+        The spin-column kit the protocol names, as `mbio.bench.materials.kit` resolves it.
     thresholds
         What those oligos were designed and judged by, for each role, so a page prints the band
         beside the value.
@@ -159,6 +176,7 @@ class Plan:
     designed_oligos: tuple[DesignedOligo, ...]
     host: str
     polymerase: Polymerase
+    cleanup_kit: Material = field(default_factory=kit)
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR
 
     @property
@@ -213,25 +231,29 @@ class Plan:
             checks=self.checks,
             host=self.host,
             polymerase=self.polymerase,
+            cleanup_kit=self.cleanup_kit,
             thresholds=self.thresholds,
         )
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the product, the primer sheet, the protocol data and its page into `directory`.
+        """Write the product, the amplicons, the primer sheet, the protocol, its page and maps.
 
-        The directory is made when it is not there. The four files are named by `PRODUCT_FILE`
-        and `PRIMER_FILE`, and by `mbio.protocol.render` for the protocol pair, and a
-        second run over the same inputs writes the same bytes.
+        The directory is made when it is not there. The files are named by `PRODUCT_FILE`,
+        `amplicon_files` and `PRIMER_FILE`, and by `mbio.protocol.render` for the protocol
+        pair, and a second run over the same inputs writes the same bytes.
         """
         out = Path(directory)
         out.mkdir(parents=True, exist_ok=True)
         product = out / PRODUCT_FILE
         write_dna(self.product, product)
+        amplicons = tuple(out / name for name in amplicon_files(one.name for one in self.parts))
+        for part, path in zip(self.parts, amplicons, strict=True):
+            write_dna(part.amplicon, path)
         sheet = out / PRIMER_FILE
         sheet.write_text(primer_sheet(self.reports), encoding="utf-8")
         written = write_run_files(as_project(self.protocol()), out)
-        return Files(product, sheet, written.data, written.page)
+        return Files(product, amplicons, sheet, written.data, written.page, written.maps)
 
 
 def plan_assembly(
@@ -246,6 +268,7 @@ def plan_assembly(
     prefer_profile: bool = False,
     polymerase: Polymerase = Q5,
     host: str = DEFAULT_HOST,
+    cleanup_kit: str = "",
     name: str = "",
     window: int = VECTOR_WINDOW,
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
@@ -287,6 +310,9 @@ def plan_assembly(
         For the PCRs. The colony PCR uses OneTaq, which is what NEB's protocol asks for.
     host, name
         The strain the protocol names, and what to call the product.
+    cleanup_kit
+        The spin-column kit the protocol names, by catalogue number or by name, as
+        `mbio.bench.materials.kit` reads it. Empty takes that function's default.
     window
         How far the vector junction may slide.
     thresholds
@@ -410,6 +436,7 @@ def plan_assembly(
         ),
         host,
         polymerase,
+        kit(cleanup_kit),
         thresholds,
     )
 

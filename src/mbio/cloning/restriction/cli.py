@@ -5,7 +5,8 @@ from typing import Annotated
 
 import typer
 
-from mbio.cloning.cli import plan_command
+from mbio.bench.materials import DEFAULT_CLEANUP_KIT
+from mbio.cloning.cli import CleanupKit, plan_command
 from mbio.cloning.restriction.plan import DEFAULT_HOST, Plan, plan_restriction
 from mbio.primers.polymerase import Q5, get_polymerase
 from mbio.sequence import position_text
@@ -30,9 +31,7 @@ def plan(
     ],
     out: Annotated[
         Path,
-        typer.Option(
-            "--out", "-o", file_okay=False, help="Directory to write the four outputs into."
-        ),
+        typer.Option("--out", "-o", file_okay=False, help="Directory to write the outputs into."),
     ],
     enzyme: Annotated[
         list[str] | None,
@@ -45,6 +44,7 @@ def plan(
         str, typer.Option(help="Polymerase for the insert's PCR, where one is run.")
     ] = Q5.name,
     host: Annotated[str, typer.Option(help="Strain the protocol names.")] = DEFAULT_HOST,
+    cleanup_kit: CleanupKit = DEFAULT_CLEANUP_KIT,
     name: Annotated[str, typer.Option(help="What to call the product.")] = "",
 ) -> None:
     """Ligate an insert into a vector between two sites, and write the plan into OUT."""
@@ -55,6 +55,7 @@ def plan(
             enzymes=tuple(enzyme or ()),
             polymerase=get_polymerase(polymerase),
             host=host,
+            cleanup_kit=cleanup_kit,
             name=name,
         ),
         out,

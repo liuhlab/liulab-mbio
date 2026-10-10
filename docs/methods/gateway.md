@@ -38,7 +38,7 @@ pixi run mbio cloning gateway plan tests/data/GFP.dna docs/examples/gateway/dest
   --donor docs/examples/gateway/donor.gb --amplify --out plan/
 ```
 
-It prints the design in one line, then the five files it wrote:
+It prints the design in one line, then the seven files it wrote:
 
 ```text
 pDEST-demo-GFP: 915 bp, BP then LR, 751 bp insert, junctions attB1 at 89, attB2 at 831, checks warn
@@ -46,6 +46,8 @@ plan/entry-clone.dna
 plan/product.dna
 plan/primers.tsv
 plan/protocol.json
+plan/entry-clone-map.html
+plan/product-map.html
 plan/protocol.html
 ```
 
@@ -67,10 +69,12 @@ fusion reads through both.
 | [product.dna](../examples/gateway/product.dna) | the expression clone, 915 bp, features carried over and both joins marked. Opens in SnapGene |
 | [primers.tsv](../examples/gateway/primers.tsv) | the six oligos to order, with length and melting temperature |
 | [protocol.json](../examples/gateway/protocol.json) | the same protocol as data |
+| [entry-clone-map.html](../examples/gateway/entry-clone-map.html), [product-map.html](../examples/gateway/product-map.html) | each clone as a map you can explore, which the figure of the step making it opens |
 | [protocol.html](../examples/gateway/protocol.html) | the protocol as one page: no network, nothing to install |
 
-Each name links to what that run wrote, published here unedited; five files rather than four,
-because BP ran. Nothing is typed by hand, so the same three inputs always give the same five.
+Each name links to what that run wrote, published here unedited; seven files rather than five,
+because BP ran and wrote the entry clone and its map. Nothing is typed by hand, so the same three
+inputs always give the same seven.
 To change the design, change the command and run it again. To change what the page says, edit
 `protocol.json` and make the page from it again:
 

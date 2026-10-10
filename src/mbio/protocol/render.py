@@ -13,14 +13,14 @@ import os
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
-from html import escape
+from html import escape, unescape
 from importlib.resources import files
 from itertools import groupby
 from pathlib import Path
 from typing import NamedTuple
 
 from mbio.checks import Status
-from mbio.plot.drawing import draw_map, draw_plate
+from mbio.plot.drawing import Drawing, draw_map, draw_plate
 from mbio.plot.fonts import BOLD, MONO, SANS
 from mbio.plot.page import font_face
 from mbio.protocol.model import (
@@ -28,6 +28,9 @@ from mbio.protocol.model import (
     Caution,
     Check,
     Citation,
+    Component,
+    CountToNet,
+    Expectation,
     Figure,
     Gel,
     Hole,
@@ -39,7 +42,6 @@ from mbio.protocol.model import (
     Project,
     Protocol,
     ReactionTable,
-    Reference,
     Rule,
     Source,
     Stamp,
@@ -48,12 +50,14 @@ from mbio.protocol.model import (
     Timer,
     Topic,
     Transfer,
+    Troubleshooting,
     Wait,
     by_place,
     number,
     read_project,
     read_protocol,
     slug,
+    stated,
     well_at,
     write_project,
     write_protocol,
@@ -67,6 +71,17 @@ NO_NUMBER = "no sourced number"
 
 #: What the references page prints as citing a source the run itself names.
 CITED_BY_BILL = "the bill"
+
+#: What heads a protocol's highlights, so its sentences read as a block of their own.
+HIGHLIGHTS_HEADING = "Keep in mind"
+
+#: What a calculator's field says while the step's ticks hold it still, so a reader who meant
+#: to correct a number is told why it will not take one.
+FIELD_HELD = "untick to change"
+
+#: What a worked-out number reads as while the reading it needs is missing, so a page states no
+#: result for a plate nobody has counted.
+UNREAD = "—"
 
 #: What one protocol written alone is called, as the data and as the page rendered from it.
 PROTOCOL_DATA_FILE = "protocol.json"
@@ -227,6 +242,8 @@ class ProjectFiles:
         One page per protocol, in the order they are run.
     reagents, references
         The two pages the whole run shares.
+    maps
+        The map each record a figure draws opens to, written beside the pages.
     """
 
     data: Path
@@ -234,11 +251,13 @@ class ProjectFiles:
     protocols: tuple[Path, ...]
     reagents: Path
     references: Path
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
         """Every file written, the first written first."""
-        return (self.data, *self.protocols, self.index, self.reagents, self.references)
+        pages = (*self.protocols, self.index, self.reagents, self.references)
+        return (self.data, *self.maps, *pages)
 
 
 @dataclass(frozen=True, slots=True)
@@ -251,15 +270,18 @@ class ProtocolFiles:
         The bench protocol as JSON, which ``protocol render`` turns back into the page.
     page
         The interactive bench protocol, as one self-contained HTML page.
+    maps
+        The map each record a figure draws opens to, written beside the page.
     """
 
     data: Path
     page: Path
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Both, in the order they were written."""
-        return (self.data, self.page)
+        """Every file, in the order they were written."""
+        return (self.data, *self.maps, self.page)
 
 
 @dataclass(frozen=True, slots=True)
@@ -275,10 +297,13 @@ class RunFiles:
         page per protocol and the two shared pages, where it is a chain. The way in leads them,
         which `page` reads, so a folder's pages are not in the order they were written --
         `ProjectFiles.paths` is the one that reports that.
+    maps
+        The map each record a figure draws opens to, written beside the pages.
     """
 
     data: Path
     pages: tuple[Path, ...]
+    maps: tuple[Path, ...]
 
     @property
     def page(self) -> Path:
@@ -287,8 +312,8 @@ class RunFiles:
 
     @property
     def paths(self) -> tuple[Path, ...]:
-        """Every file written: the data, then the pages with the way in leading them."""
-        return (self.data, *self.pages)
+        """Every file written: the data, the maps, then the pages with the way in leading them."""
+        return (self.data, *self.maps, *self.pages)
 
 
 def page_key(value: Protocol | Project) -> str:
@@ -297,7 +322,11 @@ def page_key(value: Protocol | Project) -> str:
     Two pages of one folder never share it, and every `file://` page in a browser shares one
     store, so the key is what keeps one page's marks off another. A key already minted is kept,
     which is what carries the bench's ticks across an agent's edit; everything else is digested,
-    so a re-planned run starts clean.
+    so a re-planned run starts clean. The digest is of the data the page is written from, never
+    of the Python objects, and a field at its default does not count: renaming a class or adding
+    a field leaves every key, and so every tick, where it was. Reordering a class's fields does
+    move the key, by design: `write_protocol` writes them in declared order and the key follows
+    the written bytes, so sorting them here would stop it standing on what the file says.
 
     Examples
     --------
@@ -306,7 +335,7 @@ def page_key(value: Protocol | Project) -> str:
     >>> page_key(Protocol("Demo", key="whichever"))
     'whichever'
     """
-    return value.key or hashlib.sha256(repr(value).encode()).hexdigest()[:16]
+    return value.key or hashlib.sha256(stated(value)).hexdigest()[:16]
 
 
 def minted[T: (Protocol, Project)](value: T) -> T:
@@ -362,16 +391,20 @@ def render_html(
     folder: Folder | None = None,
     here: str = "",
     base: str | os.PathLike[str] | None = None,
+    maps: Mapping[str, str] | None = None,
 ) -> str:
     """Return `protocol` as one HTML page with its styles and script inline.
 
     The page loads nothing over the network, remembers check marks and reaction counts in the
-    browser's local storage when it can, and prints without its controls. Given the `folder` it
-    stands in and its own address in it, the page gains the run's nav bar, a column either side
-    and a line naming its neighbours, and the line prints with it.
+    browser's local storage when it can, and prints without its controls. Its steps are listed
+    in a column beside it that stays on screen. Given the `folder` it stands in and its own
+    address in it, the page gains the run's nav bar, a column listing the run's protocols and a
+    line naming its neighbours, and the line prints with it.
 
     A `Figure` names its record by a path relative to `base`, the directory the protocol was read
-    from; the current directory where nobody says.
+    from; the current directory where nobody says. `maps` holds the address, from the page, of
+    the map each record opens to, keyed as a figure names the record; a figure of a record with
+    none opens to nothing. Each function writing a page writes those maps beside it.
 
     Raises
     ------
@@ -385,7 +418,7 @@ def render_html(
     sections = [""] + [step.section for step in protocol.steps]
     body = "".join(
         [
-            _header(protocol, keys, toc=folder is None, place=place),
+            _header(protocol, place=place),
             _background(protocol.background, protocol.files),
             _materials(protocol.materials, protocol.equipment, paths=protocol.files),
             _oligos(protocol),
@@ -399,14 +432,15 @@ def render_html(
                     protocol,
                     beside,
                     step.section if step.section != sections[n - 1] else "",
+                    maps or {},
                 )
                 for n, step in enumerate(protocol.steps, 1)
             ),
             _holes(protocol),
-            _sources(protocol.sources),
-            _references(protocol.references),
         ]
     )
+    body, listed, at = _numbered(body, protocol.sources)
+    body += _sources(listed, at=at)
     return _page(protocol.title, page_key(protocol), body, folder, here, _within(protocol, keys))
 
 
@@ -421,14 +455,69 @@ def write_html(
 
     Inside a `folder`, the file's own name is the address the other pages link it by. A figure's
     record is read from `base`, and from beside the page where nobody says: a pipeline writes the
-    records, the data and the page into one directory.
+    records, the data and the page into one directory. The map each figure's record opens to is
+    written beside the page first, so the page has it to open.
     """
-    out = Path(path)
-    page = render_html(
-        protocol, folder=folder, here=out.name, base=out.parent if base is None else base
-    )
-    out.write_text(page, encoding="utf-8")
-    return out
+    page, _ = _write_page(protocol, Path(path), folder=folder, base=base)
+    return page
+
+
+def _write_page(
+    protocol: Protocol,
+    out: Path,
+    *,
+    folder: Folder | None = None,
+    base: str | os.PathLike[str] | None = None,
+) -> tuple[Path, tuple[Path, ...]]:
+    """Write the maps `protocol`'s figures open beside `out`, then its page; return both."""
+    beside = out.parent if base is None else Path(base)
+    maps = _write_maps((protocol,), beside, out.parent)
+    page = render_html(protocol, folder=folder, here=out.name, base=beside, maps=_addressed(maps))
+    return _write(page, out), tuple(dict.fromkeys(maps.values()))
+
+
+def _write_maps(
+    protocols: Iterable[Protocol], base: str | os.PathLike[str], into: Path
+) -> dict[str, Path]:
+    """Write into `into` the map each record a figure draws opens to; return where, by record.
+
+    One map a record, however many figures draw it, named after it: ``product.dna`` opens to
+    ``product-map.html``, and a record whose name another has taken is numbered,
+    ``product-2-map.html``. It is the whole record behind the page's switches, so a reader
+    explores what a figure shows only part of, with every enzyme the record's figures name, or
+    the unique cutters where none names one. Records are named relative to `base`, as
+    `render_html` reads them, and one that is not there is left for it to refuse.
+    """
+    named: dict[Path, list[str]] = {}
+    enzymes: dict[Path, set[str] | None] = {}
+    for protocol in protocols:
+        for step in protocol.steps:
+            for figure in step.figures:
+                for record in figure.records:
+                    path = Path(os.path.normpath(Path(base) / record))
+                    named.setdefault(path, []).append(record)
+                    kept = enzymes.setdefault(path, None)
+                    if figure.enzymes is not None:
+                        enzymes[path] = (kept or set()) | set(figure.enzymes)
+    written: dict[str, Path] = {}
+    taken: set[str] = set()
+    for path, records in named.items():
+        if not path.is_file():
+            continue
+        name, n = f"{path.stem}-map.html", 1
+        while name in taken:
+            n += 1
+            name = f"{path.stem}-{n}-map.html"
+        taken.add(name)
+        chosen = enzymes[path]
+        page = draw_map(path, enzymes=None if chosen is None else sorted(chosen)).write(into / name)
+        written |= dict.fromkeys(records, page)
+    return written
+
+
+def _addressed(maps: Mapping[str, Path]) -> dict[str, str]:
+    """Return each map's address from a page written beside it."""
+    return {record: page.name for record, page in maps.items()}
 
 
 def render_index(project: Project, folder: Folder) -> str:
@@ -459,9 +548,8 @@ def render_index(project: Project, folder: Folder) -> str:
         if block:
             jumps.append((anchor, label))
             parts.append(block)
-    return _page(
-        project.title, page_key(project), "".join(parts), folder, folder.index, _jumps(jumps)
-    )
+    body, _, _ = _numbered("".join(parts), _merged_sources(project).found, elsewhere=True)
+    return _page(project.title, page_key(project), body, folder, folder.index, _jumps(jumps))
 
 
 def render_reagents(project: Project, folder: Folder) -> str:
@@ -483,27 +571,25 @@ def render_reagents(project: Project, folder: Folder) -> str:
         if jumps
         else "No protocol of this run lists a reagent or an instrument."
     )
-    body = f"<h1>Reagents and equipment</h1>\n<p>{lead}</p>\n" + "".join(
-        block for _, _, block in blocks
+    body, _, _ = _numbered(
+        f"<h1>Reagents and equipment</h1>\n<p>{lead}</p>\n" + "".join(b for _, _, b in blocks),
+        _merged_sources(project).found,
+        elsewhere=True,
     )
     return _shared(project, folder, folder.reagents, "Reagents and equipment", body, jumps)
 
 
 def render_references(project: Project, folder: Folder) -> str:
-    """Return every document the run was built from, each naming the protocols that cite it."""
-    blocks = (
-        ("references", "References", _references(*_merged_references(project))),
-        ("sources", "Sources", _sources(*_merged_sources(project))),
-    )
-    jumps = [(anchor, label) for anchor, label, block in blocks if block]
-    empty = "" if jumps else "<p>No protocol of this run cites a document.</p>\n"
+    """Return every document the run cites, each naming the pages that cite it and where."""
+    block = _sources(*_merged_sources(project))
+    empty = "" if block else "<p>No protocol of this run cites a document.</p>\n"
     return _shared(
         project,
         folder,
         folder.references,
         "References",
-        f"<h1>References</h1>\n{empty}" + "".join(block for _, _, block in blocks),
-        jumps,
+        f"<h1>References</h1>\n{empty}{block}",
+        [("sources", "Sources")] if block else [],
     )
 
 
@@ -1069,31 +1155,40 @@ def _kit(project: Project) -> str:
     )
 
 
-def _merged_references(project: Project) -> tuple[tuple[Reference, ...], tuple[str, ...]]:
-    """Every reference the run holds, once each, with the protocols holding it."""
-    holders: dict[Reference, list[str]] = {}
-    for protocol in project.protocols:
-        for reference in protocol.references:
-            holders.setdefault(reference, []).append(protocol.title)
-    return tuple(holders), tuple(", ".join(dict.fromkeys(n)) for n in holders.values())
+class _RunSources(NamedTuple):
+    """The run's sources list, in the order `_sources` takes it."""
+
+    found: dict[str, Source]
+    citers: dict[str, str]
+    at: dict[str, tuple[str, ...]]
 
 
-def _merged_sources(project: Project) -> tuple[dict[str, Source], dict[str, str]]:
-    """Every document a number was read from, once each, with what cites it.
+def _merged_sources(project: Project) -> _RunSources:
+    """Every document the run cites, once each, with what cites it and where in it.
 
     The run's own come first, each cited by the bill where a row of it cites one;
-    `docs/adr/0018-a-project-chains-protocols.md` says why a run names any source at all.
+    `docs/adr/0018-a-project-chains-protocols.md` says why a run names any source at all. Where
+    in a document it is cited is gathered over the whole run, as what cites it is. A document
+    nothing in the run cites is not listed, so no entry is one no mark points at.
     """
     billed = project.bill.cited if project.bill else frozenset()
     found: dict[str, Source] = dict(project.sources)
-    citers: dict[str, list[str]] = {
-        key: [CITED_BY_BILL] for key in project.sources if key in billed
-    }
     for protocol in project.protocols:
         for key, source in protocol.sources.items():
             found.setdefault(key, source)
+    citers: dict[str, list[str]] = {key: [CITED_BY_BILL] for key in found if key in billed}
+    for protocol in project.protocols:
+        for key in (one for one in found if one in protocol.cited):
             citers.setdefault(key, []).append(protocol.title)
-    return found, {key: ", ".join(dict.fromkeys(names)) for key, names in citers.items()}
+    at: dict[str, list[str]] = {}
+    bill = project.bill.citations if project.bill else ()
+    for citation in (*bill, *(one for p in project.protocols for one in p.citations)):
+        at.setdefault(citation.source, []).append(citation.locator)
+    return _RunSources(
+        {key: source for key, source in found.items() if key in at},
+        {key: ", ".join(dict.fromkeys(names)) for key, names in citers.items()},
+        {key: tuple(dict.fromkeys(one for one in places if one)) for key, places in at.items()},
+    )
 
 
 def write_project_files(project: Project, directory: str | os.PathLike[str]) -> ProjectFiles:
@@ -1110,8 +1205,14 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
     data = write_project(minted(project), out / PROJECT_DATA_FILE)
     written = read_project(data)
     folder = Folder.of(written)
+    # Written once for the run, since one record is often drawn on several of its pages.
+    maps = _write_maps(written.protocols, out, out)
+    addressed = _addressed(maps)
     protocols = tuple(
-        write_html(one, out / page.href, folder=folder)
+        _write(
+            render_html(one, folder=folder, here=page.href, base=out, maps=addressed),
+            out / page.href,
+        )
         for one, page in zip(written.protocols, folder.pages, strict=True)
     )
     return ProjectFiles(
@@ -1120,6 +1221,7 @@ def write_project_files(project: Project, directory: str | os.PathLike[str]) -> 
         protocols,
         _write(render_reagents(written, folder), out / folder.reagents),
         _write(render_references(written, folder), out / folder.references),
+        tuple(dict.fromkeys(maps.values())),
     )
 
 
@@ -1134,7 +1236,8 @@ def write_protocol_files(protocol: Protocol, directory: str | os.PathLike[str]) 
     out = Path(directory)
     out.mkdir(parents=True, exist_ok=True)
     data = write_protocol(minted(protocol), out / PROTOCOL_DATA_FILE)
-    return ProtocolFiles(data, write_html(read_protocol(data), out / PROTOCOL_FILE))
+    page, maps = _write_page(read_protocol(data), out / PROTOCOL_FILE)
+    return ProtocolFiles(data, page, maps)
 
 
 def write_run_files(project: Project, directory: str | os.PathLike[str]) -> RunFiles:
@@ -1147,10 +1250,12 @@ def write_run_files(project: Project, directory: str | os.PathLike[str]) -> RunF
     """
     if len(project.protocols) == 1:
         alone = write_protocol_files(_alone(project), directory)
-        return RunFiles(alone.data, (alone.page,))
+        return RunFiles(alone.data, (alone.page,), alone.maps)
     folder = write_project_files(project, Path(directory) / PROTOCOL_DIR)
     return RunFiles(
-        folder.data, (folder.index, *folder.protocols, folder.reagents, folder.references)
+        folder.data,
+        (folder.index, *folder.protocols, folder.reagents, folder.references),
+        folder.maps,
     )
 
 
@@ -1182,13 +1287,19 @@ def _write(html: str, path: Path) -> Path:
 def _page(
     title: str, key: str, body: str, folder: Folder | None, here: str, within: str = ""
 ) -> str:
-    """Wrap one page's body in the document, and in the run's frame where it is part of one."""
+    """Wrap one page's body in the document, and in the run's frame where it is part of one.
+
+    A page outside a run still takes the column listing its steps, so its frame has two columns
+    and no left one: there is no run to list.
+    """
     frame = main = f'<main class="page">\n{body}</main>\n'
     if folder is not None:
         right = within or '<div class="column within"></div>'
         frame = (
             f'{_bar(folder, here)}<div class="frame">{_chain(folder, here)}{main}{right}</div>\n'
         )
+    elif within:
+        frame = f'<div class="frame alone">{main}{within}</div>\n'
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
@@ -1400,6 +1511,12 @@ def _bullets(items: Iterable[str], paths: Sequence[str] = ()) -> str:
     return f"<ul>{lines}</ul>" if lines else ""
 
 
+def _expectations(items: Iterable[Expectation], paths: Sequence[str] = ()) -> str:
+    """Return the expected results as bullets, each citing the document its claim rests on."""
+    lines = "".join(f"<li>{_linked(one.text, paths)}{_cite(one.citation)}</li>" for one in items)
+    return f"<ul>{lines}</ul>" if lines else ""
+
+
 def _linked(text: str, paths: Sequence[str] = ()) -> str:
     """Escape `text`, linking every file of `paths` it names by that file's own name.
 
@@ -1427,7 +1544,12 @@ def _copy(text: str, label: str = "Copy") -> str:
     return f'<button type="button" class="copy" data-copy="{escape(text)}">{escape(label)}</button>'
 
 
-def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place: str = "") -> str:
+def _header(protocol: Protocol, *, place: str = "") -> str:
+    """Return the head of a protocol's page as bands, each a block of its own.
+
+    What it is, its facts, what the bench is handed and left with, its sentences under a
+    heading, its verdicts, then the bar counting the steps.
+    """
     parts = [f'<header class="intro">\n<h1>{escape(protocol.title)}</h1>\n{place}']
     if protocol.summary:
         parts.append(f'<p class="summary">{_linked(protocol.summary, protocol.files)}</p>\n')
@@ -1440,9 +1562,12 @@ def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place:
     parts.append(_handover(protocol))
     if protocol.highlights:
         lines = "".join(f"<p>{_linked(one, protocol.files)}</p>" for one in protocol.highlights)
-        parts.append(f'<div class="highlights">{lines}</div>\n')
-    parts.append(_checks(protocol.checks))
-    parts.append(_hole_count(protocol.all_holes))
+        parts.append(
+            f'<section class="highlights"><h3>{HIGHLIGHTS_HEADING}</h3>{lines}</section>\n'
+        )
+    status = _checks(protocol.checks) + _hole_count(protocol.all_holes)
+    if status:
+        parts.append(f'<div class="status">{status}</div>\n')
     if protocol.steps:
         count = len(protocol.steps)
         parts.append(
@@ -1451,10 +1576,6 @@ def _header(protocol: Protocol, keys: Sequence[str], *, toc: bool = True, place:
             '<button type="button" class="print">Print</button>'
             '<button type="button" class="reset">Reset page</button></div>\n'
         )
-        if toc:
-            parts.append(
-                f'<nav class="toc" aria-label="Steps">{_step_nav(protocol.steps, keys)}</nav>\n'
-            )
     parts.append("</header>\n")
     return "".join(parts)
 
@@ -1775,24 +1896,61 @@ def _oligo_checks(oligos: tuple[Oligo, ...]) -> str:
     )
 
 
-def _cite(citation: Citation | None, sources: str = "") -> str:
-    """One citation, as the page shows it beside the number it carries.
+#: A citation as `_cite` leaves it, until `_numbered` reads the whole page and numbers it.
+_CITED = re.compile(
+    r'<a class="cite" href="([^"]*)" data-source="([^"]*)" data-at="([^"]*)">[^<]*</a>'
+)
 
+
+def _cite(citation: Citation | None, sources: str = "") -> str:
+    """One citation, linked to its source's entry and waiting on the number `_numbered` gives it.
+
+    It reads as its key and locator until then, so a page nothing numbers still cites.
     `sources` is the page the sources list stands on, as `Folder.sources_at` gives it, and is
     empty where that is the page being rendered.
     """
     if citation is None:
         return ""
-    where = f" {citation.locator}" if citation.locator else ""
+    said = " ".join(one for one in (citation.source, citation.locator) if one)
     return (
-        f'<a class="cite" href="{escape(sources)}#source-{escape(slug(citation.source))}">'
-        f"{escape(citation.source + where)}</a>"
+        f'<a class="cite" href="{escape(sources)}#source-{escape(slug(citation.source))}" '
+        f'data-source="{escape(citation.source)}" data-at="{escape(citation.locator)}">'
+        f"{escape(said)}</a>"
     )
 
 
-def _after(citation: Citation | None, sources: str = "") -> str:
-    """`_cite`, set off from the text before it; nothing when uncited."""
-    return f" {_cite(citation, sources)}" if citation else ""
+def _numbered(
+    html: str, sources: Mapping[str, Source], *, elsewhere: bool = False
+) -> tuple[str, dict[str, Source], dict[str, tuple[str, ...]]]:
+    """Return `html` with each citation numbered, the list numbered, and where each is cited.
+
+    A citation becomes a bracketed superscript number: one a document, whichever row cites it,
+    and the number is the document's place in the list handed back. A page's own list holds
+    what the page cites, in the order it first does, and nothing else, so no entry is one no
+    mark points at; a list standing `elsewhere` keeps the order `sources` gives, which is how
+    that page lists it. A key the list lacks shows the key, never a number no entry carries.
+    The last value names, key by key in order of first citation, the locators the page cites
+    it at.
+    """
+    at: dict[str, list[str]] = {}
+    for found in _CITED.finditer(html):
+        places = at.setdefault(unescape(found[2]), [])
+        if (locator := unescape(found[3])) and locator not in places:
+            places.append(locator)
+    cited = {key: sources[key] for key in at if key in sources}
+    listed = dict(sources) if elsewhere else cited
+    numbers = {key: str(n) for n, key in enumerate(listed, 1)}
+
+    def number(found: re.Match[str]) -> str:
+        key, locator = unescape(found[2]), unescape(found[3])
+        source = sources.get(key)
+        said = " · ".join(one for one in (source.document if source else key, locator) if one)
+        return (
+            f'<a class="cite" href="{found[1]}" title="{escape(said)}">'
+            f"<sup>[{escape(numbers.get(key, key))}]</sup></a>"
+        )
+
+    return _CITED.sub(number, html), listed, {key: tuple(one) for key, one in at.items()}
 
 
 def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
@@ -1804,7 +1962,7 @@ def _rules(rules: Iterable[tuple[str, Rule]], sources: str = "") -> str:
     items = "".join(
         f'<li class="rule is-{rule.kind}"><strong>{escape(carrier)}: '
         f"{escape('never' if rule.kind == 'forbids' else 'always')} "
-        f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_after(rule.citation, sources)}</li>"
+        f"{escape(rule.subject)}</strong> {escape(rule.detail)}{_cite(rule.citation, sources)}</li>"
         for carrier, rule in rules
     )
     return f'<ul class="rules" aria-label="Rules">{items}</ul>\n' if items else ""
@@ -1818,7 +1976,7 @@ def _cautions(cautions: Iterable[Caution], paths: Sequence[str] = ()) -> str:
     """
     return "".join(
         f'<p class="caution"><strong>Caution:</strong> {_linked(one.text, paths)}'
-        f"{_after(one.citation)}</p>\n"
+        f"{_cite(one.citation)}</p>\n"
         for one in cautions
     )
 
@@ -1944,12 +2102,17 @@ def _plate(one: Plate) -> str:
     )
 
 
-def _figure(figure: Figure, base: Path, where: str) -> str:
+def _figure(figure: Figure, base: Path, where: str, maps: Mapping[str, str]) -> str:
     """Return the figure's records drawn as maps and inlined, as `_plate` inlines a plate.
 
     Laid out here and never stored, so the figure follows the design it is drawn from. Several
     records stack as rows in the order they are named, each labelled by the record's own name,
     which is how a figure shows one molecule becoming the next. One record draws as it did.
+
+    The figure stands in a box of its own with its caption inside, so it never reads as one of
+    the step's instructions. A record with a map in `maps` gets a control under its drawing that
+    opens the map in place, whole and to explore, and closes it again; the page prints the
+    drawing alone.
 
     A highlight lights each row that answers to it and dims every other row whole, so a name only
     the lit round's record carries lights that round. A name no record answers to is a mistake.
@@ -1962,28 +2125,50 @@ def _figure(figure: Figure, base: Path, where: str) -> str:
         If no record of the figure answers to a name the highlight lights.
     """
     rows = [_row(figure, base / named, where) for named in figure.records]
-    lit = frozenset().union(*(answering for _, answering in rows))
+    lit = frozenset().union(*(drawn.answering for drawn in rows))
     unlit = [name for name in figure.highlight if name.casefold() not in lit]
     if unlit:
         listed = ", ".join(repr(name) for name in unlit)
         raise ValueError(f"{where}: no record of this figure draws {listed} to highlight")
+    caption = f"<figcaption>{escape(figure.caption)}{_cite(figure.citation)}</figcaption>"
+    openers = [
+        _opener(maps.get(named), drawn.record.name)
+        for named, drawn in zip(figure.records, rows, strict=True)
+    ]
     if len(rows) == 1:
-        ((element, _),) = rows
-        drawn, stacked = element, ""
+        body, stacked = f"{rows[0].element()}{caption}{openers[0]}", ""
     else:
-        drawn = "".join(element for element, _ in rows)
-        stacked = " rows"
+        # A stacked row carries the record's own name, so a reader knows which molecule it is.
+        body = "".join(
+            f'<div class="row"><p class="row-name">{escape(drawn.record.name)}</p>'
+            f"{drawn.element()}{opener}</div>"
+            for drawn, opener in zip(rows, openers, strict=True)
+        )
+        body, stacked = body + caption, " rows"
+    return f'<figure class="drawing map{stacked}">{body}</figure>\n'
+
+
+def _opener(href: str | None, name: str) -> str:
+    """Return the control that opens a record's map in place, and the map; nothing without one.
+
+    The map is the figure opened: the whole record behind its switches, to explore. It loads the
+    first time it is opened, from its `data-src`, so a page of several costs nothing until asked,
+    and a new tab shows it whole.
+    """
+    if href is None:
+        return ""
+    address = escape(href, quote=True)
     return (
-        f'<figure class="drawing map{stacked}">{drawn}'
-        f"<figcaption>{escape(figure.caption)}{_after(figure.citation)}</figcaption></figure>\n"
+        '<details class="opener"><summary><span class="to-open">Explore the map</span>'
+        '<span class="to-close">Close the map</span></summary>'
+        f'<iframe data-src="{address}" title="{escape(name, quote=True)}, to explore"></iframe>'
+        f'<a class="new-tab" href="{address}" target="_blank" rel="noopener">Open it in a new '
+        "tab</a></details>"
     )
 
 
-def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
-    """Return one record of a figure as its SVG element, and every name it answers to.
-
-    A stacked row carries the record's own name beside it, so a reader knows which molecule it is.
-    """
+def _row(figure: Figure, path: Path, where: str) -> Drawing:
+    """Return one record of a figure laid out to draw, lit as the figure says."""
     if not path.is_file():
         raise FileNotFoundError(f"{where}: no record at {path} to draw")
     drawn = draw_map(
@@ -1997,12 +2182,7 @@ def _row(figure: Figure, path: Path, where: str) -> tuple[str, frozenset[str]]:
         # Lit here rather than by `draw_map`, which refuses a name its one record does not draw:
         # across rows a name belongs to the row it names, and dims every other row whole.
         drawn = replace(drawn, highlight=figure.highlight)
-    answering = drawn.answering
-    element = drawn.element()
-    if len(figure.records) == 1:
-        return element, answering
-    label = f'<p class="row-name">{escape(drawn.record.name)}</p>'
-    return f'<div class="row">{label}{element}</div>', answering
+    return drawn
 
 
 def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
@@ -2031,7 +2211,7 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
     meta = _transfer_meta(transfer, stamp)
     return (
         f'<figure class="drawing transfer rows"><figcaption>{escape(transfer.title)} '
-        f'<span class="muted">{escape(meta)}</span>{_after(transfer.citation)}</figcaption>'
+        f'<span class="muted">{escape(meta)}</span>{_cite(transfer.citation)}</figcaption>'
         f'{drawn}<details class="listing"><summary>{_count(len(transfer.moves), "move")}'
         f"</summary>{_moves(transfer)}</details></figure>\n"
     )
@@ -2042,7 +2222,7 @@ def _transfer_table(transfer: Transfer) -> str:
     return (
         f'<figure class="transfer"><figcaption>{escape(transfer.title)} '
         f'<span class="muted">{escape(_transfer_meta(transfer))}</span>'
-        f"{_after(transfer.citation)}</figcaption>{_moves(transfer)}</figure>\n"
+        f"{_cite(transfer.citation)}</figcaption>{_moves(transfer)}</figure>\n"
     )
 
 
@@ -2095,7 +2275,7 @@ def _bill(bill: Bill | None, sources: str = "") -> str:
         charge = (
             f'<span class="hole-none">{NO_NUMBER}</span>'
             if row.hole
-            else escape(row.charge) + _after(row.citation, sources)
+            else escape(row.charge) + _cite(row.citation, sources)
         )
         quantity = (
             f"{number(row.quantity)} {escape(row.unit)}"
@@ -2132,17 +2312,21 @@ def _bill(bill: Bill | None, sources: str = "") -> str:
     )
 
 
-def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = None) -> str:
-    """Every document a number was read from, so a citation resolves on the page itself.
+def _sources(
+    sources: Mapping[str, Source],
+    cited: Mapping[str, str] | None = None,
+    at: Mapping[str, Sequence[str]] | None = None,
+) -> str:
+    """Every document the page cites, numbered as `_numbered` numbers its citations.
 
-    `cited` names, key by key, what cites each on the page a run shares. A key it leaves out is
-    listed with no citer, which is what a source nothing on the run cites has.
+    The list keeps the order `sources` gives, so an entry's number is its place in it. `at`
+    names, key by key, the places in each document the page cites; `cited` names what cites
+    each on the page a run shares. A key either leaves out is listed without it.
     """
     if not sources:
         return ""
     items = "".join(
-        f'<li id="source-{escape(slug(key))}"><strong>{escape(key)}</strong> '
-        f"{escape(source.document)}"
+        f'<li id="source-{escape(slug(key))}"><strong>{escape(source.document)}</strong>'
         + "".join(
             f" · {escape(text)}"
             for text in (source.edition, source.read_as, source.date, source.note)
@@ -2151,6 +2335,11 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
         + (
             f' <a href="{escape(source.url)}" rel="noreferrer">{escape(source.url)}</a>'
             if source.url
+            else ""
+        )
+        + (
+            f' <span class="cited-at">cited at {escape(" · ".join(at[key]))}</span>'
+            if at and at.get(key)
             else ""
         )
         + (
@@ -2163,11 +2352,19 @@ def _sources(sources: Mapping[str, Source], cited: Mapping[str, str] | None = No
     )
     return (
         '<section class="block sources" id="sources">\n<h2>Sources</h2>\n'
-        f"<ul>{items}</ul>\n</section>\n"
+        f"<ol>{items}</ol>\n</section>\n"
     )
 
 
-def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section: str = "") -> str:
+def _step(
+    n: int,
+    step: Step,
+    key: str,
+    protocol: Protocol,
+    base: Path,
+    section: str,
+    maps: Mapping[str, str],
+) -> str:
     """One step, addressed by its own key, so a reworded title keeps the bench's tick.
 
     Everything inside it is marked by that anchor, a dot and what it is. A key is a slug and
@@ -2189,9 +2386,10 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
             for i, text in enumerate(step.instructions, 1)
         )
         parts.append(f'<ol class="instructions">{items}</ol>\n')
-    parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
-    parts += [_table(f"{anchor}.table.{i}", t) for i, t in enumerate(step.tables, 1)]
-    parts += [_program(p) for p in step.programs]
+    elsewhere = (t for s in protocol.steps if s is not step for t in s.troubleshooting)
+    trouble = (*step.troubleshooting, *elsewhere)
+    parts += [_table(f"{anchor}.table.{i}", t, trouble) for i, t in enumerate(step.tables, 1)]
+    parts += [_program(f"{anchor}.program.{i}", p) for i, p in enumerate(step.programs, 1)]
     parts += [_transfer(t, protocol.plates) for t in step.transfers]
     if step.holes:
         items = "".join(_hole(hole) for hole in step.holes)
@@ -2200,22 +2398,26 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         timers = "".join(_timer(f"{anchor}.timer.{i}", t) for i, t in enumerate(step.timers, 1))
         parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
-    if step.expected or step.gels:
+    # After everything the instructions point at, so "the program below" is never the map.
+    where = f"step {n} {step.title!r}"
+    parts += [_figure(f, base, where, maps) for f in step.figures]
+    if step.expected or step.gels or step.calculator:
         gels = "".join(_gel(g) for g in step.gels)
+        net = _net_count(f"{anchor}.count", step.calculator, trouble) if step.calculator else ""
         parts.append(
             '<div class="expected"><h3>Expected result</h3>'
-            f"{_bullets(step.expected, protocol.files)}{gels}</div>\n"
+            f"{_expectations(step.expectations, protocol.files)}{net}{gels}</div>\n"
         )
     if step.troubleshooting:
         entries = "".join(
             f"<dt>{escape(t.problem)}</dt>"
-            f"<dd>{_linked(t.solution, protocol.files)}{_after(t.citation)}</dd>"
+            f"<dd>{_linked(t.solution, protocol.files)}{_cite(t.citation)}</dd>"
             for t in step.troubleshooting
         )
         parts.append(f'<div class="trouble"><h3>Troubleshooting</h3><dl>{entries}</dl></div>\n')
     if step.notes:
         items = "".join(
-            f"<li>{_linked(note.text, protocol.files)}{_after(note.citation)}</li>"
+            f"<li>{_linked(note.text, protocol.files)}{_cite(note.citation)}</li>"
             for note in step.noted
         )
         parts.append(f'<div class="notes"><h3>Notes</h3><ul>{items}</ul></div>\n')
@@ -2238,33 +2440,46 @@ def _waits(waits: tuple[Wait, ...], sources: str = "") -> str:
             if wait.duration
             else f'<span class="hole-none">{NO_NUMBER}</span>'
         )
-        + f"{_after(wait.citation, sources)}</li>"
+        + f"{_cite(wait.citation, sources)}</li>"
         for wait in waits
     )
     return f'<ul class="waits" aria-label="Waiting">{items}</ul>\n'
 
 
-def _table(key: str, table: ReactionTable) -> str:
-    stock = any(c.stock for c in table.components)
+def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = ()) -> str:
+    """One reaction table, whose rows go live where a calculator reaches one.
+
+    `trouble` is every troubleshooting entry in the order a calculator's problem is looked up,
+    the step's own before any other step's.
+    """
+    live = any(c.calculator for c in table.components)
+    stock = live or any(c.stock for c in table.components)
     final = any(c.final for c in table.components)
     scale = table.reactions * (1 + table.overage)
+    volume_class = "num one" if live else "num"
     rows = []
-    for component in table.components:
-        cells = [f"<td>{escape(component.name)}{_after(component.citation)}</td>"]
-        cells += [f"<td>{escape(component.stock)}</td>"] if stock else []
+    for row, component in enumerate(table.components):
+        cells = [f"<td>{escape(component.name)}{_cite(component.citation)}</td>"]
+        if component.calculator is not None:
+            assumed = component.calculator.nanograms / component.volume_ul
+            field = _reader_number(f"{key}.row.{row}", assumed, label=component.name, unit="ng/µL")
+            cells.append(f"<td>{field}</td>")
+        elif stock:
+            cells.append(f"<td>{escape(component.stock)}</td>")
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
-        cells.append(f'<td class="num">{number(component.volume_ul)}</td>')
+        cells.append(f'<td class="{volume_class}">{number(component.volume_ul)}</td>')
         if component.master_mix:
             # `protocol.js` writes this cell again from `data-ul`, by the same arithmetic.
             mix = number(component.volume_ul * scale)
             cells.append(f'<td class="num mix" data-ul="{component.volume_ul!r}">{mix}</td>')
         else:
             cells.append('<td class="num per-tube">each tube</td>')
-        rows.append(f"<tr>{''.join(cells)}</tr>")
+        attrs = _live_row(component, table) if live else ""
+        rows.append(f"<tr{attrs}>{''.join(cells)}</tr>")
     blanks = "<td></td>" * (stock + final)
     in_mix = sum(c.volume_ul for c in table.components if c.master_mix)
     total = sum(c.volume_ul for c in table.components)
-    per_tube = [c for c in table.components if not c.master_mix]
+    per_tube = [(i, c) for i, c in enumerate(table.components) if not c.master_mix]
     # One tube takes every component; the mix holds only those the column adds up, so where the
     # two totals count different things the mix total says which it is.
     only = '<br><span class="muted">mix only</span>' if per_tube and in_mix else ""
@@ -2276,17 +2491,21 @@ def _table(key: str, table: ReactionTable) -> str:
         + f'<th class="num">Mix for <span class="rxn-n">{table.reactions}</span> (µL)</th>'
     )
     foot = (
-        f'<tr><th>Total</th>{blanks}<td class="num">{number(total)}</td>'
+        f'<tr><th>Total</th>{blanks}<td class="{volume_class}">{number(total)}</td>'
         f'<td class="num mix"><span data-ul="{in_mix!r}">{number(in_mix * scale)}</span>'
         f"{only}</td></tr>"
     )
     dispense = ""
     if in_mix:
-        then = ", ".join(f"{number(c.volume_ul)} µL {c.name}" for c in per_tube)
-        dispense = f"Put {number(in_mix)} µL of mix in each tube" + (
-            f", then add {then}" if then else ""
+        # A live table marks each volume the sentence says, so `protocol.js` can say it again.
+        each = f'<span class="dispense-mix">{number(in_mix)}</span>' if live else number(in_mix)
+        then = ", ".join(
+            (f'<span data-row="{i}">{number(c.volume_ul)}</span>' if live else number(c.volume_ul))
+            + f" µL {escape(c.name)}"
+            for i, c in per_tube
         )
-        dispense = f'<p class="dispense">{escape(dispense)}.</p>'
+        dispense = f"Put {each} µL of mix in each tube" + (f", then add {then}" if then else "")
+        dispense = f'<p class="dispense">{dispense}.</p>'
     caption = f"<figcaption>{escape(table.title)}</figcaption>" if table.title else ""
     return (
         f'<figure class="reaction" data-overage="{table.overage!r}">{caption}'
@@ -2294,7 +2513,155 @@ def _table(key: str, table: ReactionTable) -> str:
         f' min="1" step="1" inputmode="numeric" value="{table.reactions}" data-key="{key}"></label>'
         f'<span class="muted">mix includes {number(table.overage * 100)}% extra</span>'
         f'<div class="scroll"><table><thead><tr>{head}</tr></thead><tbody>{"".join(rows)}</tbody>'
-        f"<tfoot>{foot}</tfoot></table></div>{dispense}</figure>\n"
+        f"<tfoot>{foot}</tfoot></table></div>{_warnings(table, trouble)}{dispense}</figure>\n"
+    )
+
+
+def _reader_number(
+    key: str,
+    plan: float | None,
+    *,
+    label: str = "",
+    unit: str = "",
+    before: str = "",
+    part: str = "",
+    held: bool = True,
+    counts: bool = False,
+    hint: str = "",
+) -> str:
+    """Return a field the reader types a number over, opening at the protocol's `plan`.
+
+    `protocol.js` keeps what they type under `key` and offers `plan` back, so every calculator's
+    input is this one. `before` and `unit` are what the field reads between, `label` what names
+    it to a reader who cannot see where it sits, and `part` what its own calculator calls it.
+
+    A `plan` of `None` is a number the protocol has none to give, such as a plate nobody has
+    counted: the field opens empty, `hint` stands in it greyed, and the button beside it empties
+    it again.
+
+    `held` is for a number the bench pipettes against: the step's ticks hold the field still,
+    and the word beside it says so. A reading the step only records is left open. `counts` is
+    for a number of things rather than a measurement: none of them is a reading of its own, and
+    however many there are they are written out in full.
+    """
+    shown = "" if plan is None else f"{plan:,.0f}" if counts else number(plan)
+    opens = f' data-plan="{plan!r}"' if plan is not None else f' placeholder="{escape(hint)}"'
+    aria = ", ".join(text for text in (label or before, unit) if text)
+    return (
+        f'<span class="calc{" " + part if part else ""}">'
+        f"<label>{escape(before) + ' ' if before else ''}"
+        f'<input type="text" class="calc-value" inputmode="decimal" value="{shown}"{opens}'
+        f' data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
+        + (' data-least="0"' if counts else "")
+        + f' aria-label="{escape(aria)}">'
+        + (f" {escape(unit)}" if unit else "")
+        + "</label>"
+        + (
+            f'<button type="button" class="calc-plan" title="What the protocol gives" hidden>'
+            f"Back to {shown}</button>"
+            if plan is not None
+            else '<button type="button" class="calc-plan" title="Take what you typed back out"'
+            " hidden>Clear</button>"
+        )
+        + (f'<span class="calc-held" hidden>{escape(FIELD_HELD)}</span>' if held else "")
+        + "</span>"
+    )
+
+
+def _live_row(component: Component, table: ReactionTable) -> str:
+    """Return what `protocol.js` reads off one row of a live table.
+
+    The plan's volume, and for a row a calculator reaches, what it carries and the row that
+    gives way.
+    """
+    attrs = f' data-rxn-ul="{component.volume_ul!r}"'
+    calculator = component.calculator
+    if calculator is None:
+        return attrs
+    fill = [c.name for c in table.components].index(calculator.made_up_by)
+    attrs += f' class="measured" data-ng="{calculator.nanograms!r}" data-fill="{fill}"'
+    if calculator.too_dilute:
+        attrs += f' data-too-dilute="{escape(calculator.too_dilute)}"'
+    if calculator.least_ul is not None:
+        attrs += (
+            f' data-least-ul="{calculator.least_ul!r}"'
+            f' data-too-concentrated="{escape(calculator.too_concentrated)}"'
+        )
+    return attrs
+
+
+def _warnings(table: ReactionTable, trouble: Sequence[Troubleshooting]) -> str:
+    """Return the troubleshooting entries a table's calculators fire, hidden until one does.
+
+    Each says the entry's own words, so no calculator writes advice of its own; a problem no
+    step holds is said alone.
+    """
+    problems = dict.fromkeys(
+        problem
+        for c in table.components
+        if c.calculator is not None
+        for problem in (c.calculator.too_dilute, c.calculator.too_concentrated)
+        if problem
+    )
+    return "".join(_warning(problem, trouble) for problem in problems)
+
+
+def _warning(problem: str, trouble: Sequence[Troubleshooting]) -> str:
+    """Return one troubleshooting entry as a calculator's warning, hidden until it fires."""
+    found = next((t for t in trouble if t.problem == problem), None)
+    said = "" if found is None else f" {escape(found.solution)}"
+    return (
+        f'<p class="calc-warning" data-problem="{escape(problem)}" role="alert" hidden>'
+        f"<strong>{escape(problem)}.</strong>{said}</p>"
+    )
+
+
+def _net_count(key: str, count: CountToNet, trouble: Sequence[Troubleshooting]) -> str:
+    """Return the count the reader works out, read against the floor this writes into the page.
+
+    The counted plate opens empty, with the floor greyed in it as the number to beat, so a plate
+    nobody has counted yet shows no net and no verdict rather than a pass. The control opens at
+    nothing and the dilution at none, which is what the plan expects of them. `protocol.js` does
+    the subtraction, the scaling and the comparison; the two verdicts and the floor are here.
+    """
+    floor = f"{count.floor:,}"
+    clears = f"at least the floor of {floor}"
+    fields = [
+        _reader_number(
+            f"{key}.counted",
+            None,
+            before=f"Counted on {count.counted}",
+            part="net-counted",
+            held=False,
+            counts=True,
+            hint=floor,
+        )
+    ]
+    if count.control:
+        fields.append(
+            _reader_number(
+                f"{key}.control",
+                0,
+                before=f"less {count.control}",
+                part="net-control",
+                held=False,
+                counts=True,
+            )
+        )
+    fields.append(
+        _reader_number(
+            f"{key}.dilution", 1, before="Dilution factor", part="net-dilution", held=False
+        )
+    )
+    return (
+        f'<div class="net-count" data-floor="{count.floor!r}">'
+        f'<p class="net-fields">{"".join(fields)}</p>'
+        f'<p class="net-sum" data-clears="{escape(clears)}"'
+        f' data-short="short of the floor of {floor}">'
+        f'<strong><span class="net-value">{UNREAD}</span> net {escape(count.counting)}</strong>'
+        f'<span class="net-said" hidden> — <span class="net-verdict"></span></span>.</p>'
+        + (_warning(count.below_floor, trouble) if count.below_floor else "")
+        + "</div>\n"
     )
 
 
@@ -2312,7 +2679,8 @@ def _temperature(step: Incubation, cycles: int | None) -> str:
     return f'{start}{end} °C<br><span class="muted">{number(step.delta_c)} °C a cycle</span>'
 
 
-def _program(program: ThermocyclerProgram) -> str:
+def _program(key: str, program: ThermocyclerProgram) -> str:
+    """One program, with the timer its run takes under it wherever the program bounds one."""
     meta = []
     if program.lid_temperature_c is not None:
         meta.append(f"lid {number(program.lid_temperature_c)} °C")
@@ -2337,7 +2705,7 @@ def _program(program: ThermocyclerProgram) -> str:
             else f"×{stage.cycles}"
             if stage.cycles > 1
             else str(stage.cycles)
-        ) + _after(stage.citation)
+        ) + _cite(stage.citation)
         rows = []
         for i, step in enumerate(stage.incubations):
             time = "∞" if step.seconds is None else _duration(step.seconds)
@@ -2345,26 +2713,36 @@ def _program(program: ThermocyclerProgram) -> str:
                 f'<td class="num" rowspan="{len(stage.incubations)}">{count}</td>' if i == 0 else ""
             )
             rows.append(
-                f"<tr><td>{escape(step.label)}{'' if shared else _after(step.citation)}</td>"
+                f"<tr><td>{escape(step.label)}{'' if shared else _cite(step.citation)}</td>"
                 f'<td class="num">{_temperature(step, stage.cycles)}</td>'
                 f'<td class="num">{time}</td>{cycles}</tr>'
             )
         bodies.append(f'<tbody class="stage">{"".join(rows)}</tbody>')
+    timer = program.timer
+    run = "" if timer is None else f'<div class="timers">{_timer(key, timer)}</div>'
     return (
-        f'<figure class="program"><figcaption>{title}{caption}{_after(shared)}</figcaption>'
+        f'<figure class="program"><figcaption>{title}{caption}{_cite(shared)}</figcaption>'
         '<div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th>'
         f'<th class="num">Time</th><th class="num">Cycles</th></tr></thead>{"".join(bodies)}'
-        "</table></div></figure>\n"
+        f"</table></div>{run}</figure>\n"
     )
 
 
 def _timer(key: str, timer: Timer) -> str:
-    """One timer, keyed so `protocol.js` can give it back its deadline after a page turn."""
+    """One timer, keyed so `protocol.js` can give it back its deadline and the reader's time.
+
+    The time is a field the reader may type over; `data-seconds` keeps the protocol's, which
+    the page offers back once the two differ.
+    """
+    clock = _clock(timer.seconds)
     return (
-        f'<button type="button" class="timer" data-key="{key}" data-seconds="{timer.seconds!r}">'
-        f'<span class="timer-label">{escape(timer.label)}</span>'
-        f'<span class="timer-time">{_clock(timer.seconds)}</span>'
-        '<span class="timer-action">Start</span></button>'
+        f'<span class="timer" data-key="{key}" data-seconds="{timer.seconds!r}">'
+        f'<label><span class="timer-label">{escape(timer.label)}</span>'
+        f'<input type="text" class="timer-time" value="{clock}" size="8" autocomplete="off"'
+        ' spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label>'
+        '<button type="button" class="timer-action">Start</button>'
+        '<button type="button" class="timer-plan" title="The time the protocol gives" hidden>'
+        f"Back to {clock}</button></span>"
     )
 
 
@@ -2417,21 +2795,4 @@ def _gel(gel: Gel) -> str:
     caption = f"<figcaption>{escape(gel.title)}</figcaption>" if gel.title else ""
     return (
         f'<figure class="gel">{caption}{"".join(svg)}<ol class="gel-legend">{legend}</ol></figure>'
-    )
-
-
-def _references(references: tuple[Reference, ...], cited: tuple[str, ...] = ()) -> str:
-    """Return the reading behind the run; `cited` names which protocols hold each of them."""
-    if not references:
-        return ""
-    items = "".join(
-        f"<li>{escape(r.text)}"
-        + (f' <a href="{escape(r.url)}" rel="noreferrer">{escape(r.url)}</a>' if r.url else "")
-        + (f' <span class="cited-by">cited by {escape(cited[i])}</span>' if cited else "")
-        + "</li>"
-        for i, r in enumerate(references)
-    )
-    return (
-        '<section class="block references" id="references">\n<h2>References</h2>\n'
-        f"<ol>{items}</ol>\n</section>\n"
     )

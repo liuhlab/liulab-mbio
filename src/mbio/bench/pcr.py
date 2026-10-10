@@ -15,7 +15,6 @@ from mbio.protocol.model import (
     Component,
     Incubation,
     ReactionTable,
-    Reference,
     Source,
     Stage,
     ThermocyclerProgram,
@@ -310,12 +309,3 @@ def _program(
         ),
         title=title,
     )
-
-
-#: Where the numbers above come from, ready for a protocol's reference list.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "NEB, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master "
-        "Mixes (Y. Xu, 11/13)"
-    ),
-)

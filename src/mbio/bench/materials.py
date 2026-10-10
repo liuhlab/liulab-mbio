@@ -17,6 +17,7 @@ from collections.abc import Mapping
 from dataclasses import KW_ONLY, dataclass
 from types import MappingProxyType
 
+from mbio.bench.gels import LADDER_CITATIONS
 from mbio.protocol.model import Citation, Material, Rule, Source
 
 #: Every document the parameters below were read from, keyed as a `Citation` names it. A
@@ -165,9 +166,56 @@ CAUTIONS: Mapping[str, tuple[str, ...]] = MappingProxyType(
     }
 )
 
+#: The spin-column kits a run may name, keyed by catalogue number: the product's own name and
+#: who sells it. Each is one a note under `docs/research/` already reads a number off, so
+#: nothing here is a product this package met for the first time. A kit the table does not hold
+#: is named as the caller wrote it and carries no number, since nothing invents one.
+KITS: Mapping[str, tuple[str, str]] = MappingProxyType(
+    {
+        # docs/research/restriction-ligation.md, from the two Monarch manuals.
+        "T1120": ("Monarch Spin DNA Gel Extraction Kit", "New England Biolabs"),
+        "T1130": ("Monarch Spin PCR & DNA Cleanup Kit", "New England Biolabs"),
+        # docs/research/bench-numbers.md, from Qian's supplementary protocol.
+        "D4003": ("DNA Clean & Concentrator-5", "Zymo Research"),
+        "D4007": ("Zymoclean Gel DNA Recovery Kit", "Zymo Research"),
+    }
+)
+
+#: Each kit's own instruction manual, keyed by catalogue number, so a step citing what a column
+#: recovers names the manual of the kit it told the reader to use. Only the kits a note under
+#: `docs/research/` already reads a number off are here.
+KIT_SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "T1120": Source(
+            "New England Biolabs #T1120 Monarch Spin DNA Gel Extraction Kit instruction manual",
+            edition="version 2.0 10.25",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+        "T1130": Source(
+            "New England Biolabs #T1130 Monarch Spin PCR & DNA Cleanup Kit instruction manual",
+            edition="version 1.0 06.24",
+            date="2026-09-18",
+            note="docs/research/restriction-ligation.md",
+        ),
+    }
+)
+
+#: The kit a step names where the run names none. It is the one this package already reads its
+#: column recovery from, so the page's numbers and its materials row name the same product. A
+#: lab that uses another one names it per run; no lab's habit is written in here.
+DEFAULT_CLEANUP_KIT = "T1130"
+
 #: Every catalogue number these parameters are keyed by. A number is keyed without its pack
 #: size, because a pack size changes nothing about the thing in the tube.
-_KEYED = ELECTROPORATION.keys() | RULES.keys() | CONTAINS.keys() | CAUTIONS.keys()
+_KEYED = (
+    ELECTROPORATION.keys()
+    | RULES.keys()
+    | CONTAINS.keys()
+    | CAUTIONS.keys()
+    | KITS.keys()
+    | LADDER_CITATIONS.keys()
+)
 
 
 def _key(catalog: str) -> str:
@@ -217,6 +265,46 @@ def cautions(catalog: str) -> tuple[str, ...]:
     return CAUTIONS.get(_key(catalog), ())
 
 
+def kit_citation(one: Material, locator: str = "") -> Citation | None:
+    """Return where this kit's own manual says what it does, or ``None`` for a kit with none.
+
+    Examples
+    --------
+    >>> kit_citation(kit(), "troubleshooting, low DNA yield").source
+    'T1130'
+    >>> kit_citation(kit("D4003")) is None
+    True
+    """
+    return Citation(_key(one.catalog), locator) if _key(one.catalog) in KIT_SOURCES else None
+
+
+def kit(named: str = "", *, note: str = "") -> Material:
+    """Return the kit a run named, as a material carrying who sells it and its number.
+
+    Parameters
+    ----------
+    named
+        A catalogue number `KITS` holds, or the product's own name. Empty names
+        `DEFAULT_CLEANUP_KIT`.
+    note
+        What it is there for.
+
+    Examples
+    --------
+    >>> kit().name, kit("D4003").supplier
+    ('Monarch Spin PCR & DNA Cleanup Kit', 'Zymo Research')
+    >>> named = kit("Wizard SV Gel and PCR Clean-Up System")
+    >>> named.name, named.supplier, named.catalog
+    ('Wizard SV Gel and PCR Clean-Up System', '', '')
+    """
+    text = (named or DEFAULT_CLEANUP_KIT).strip()
+    found = KITS.get(_key(text))
+    if found is None:
+        return material(text, note=note)
+    product, supplier = found
+    return material(product, supplier=supplier, catalog=text.lstrip("#").upper(), note=note)
+
+
 def material(
     name: str,
     *,
@@ -230,7 +318,8 @@ def material(
     """Return a material carrying its own parameters: what it brings, rules and cautions.
 
     The caller names the thing and what travels with it is looked up, so a material built here
-    cannot reach a protocol without them. One built around this carries none of them.
+    cannot reach a protocol without them. One built around this carries none of them. Where the
+    caller gives no `citation`, the material's own is looked up the same way.
 
     Examples
     --------
@@ -250,5 +339,5 @@ def material(
         contains=contains(catalog),
         rules=rules(catalog),
         cautions=cautions(catalog),
-        citation=citation,
+        citation=citation or LADDER_CITATIONS.get(_key(catalog)),
     )

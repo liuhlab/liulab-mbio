@@ -48,9 +48,13 @@ from mbio.sites import (
     primer_tail,
 )
 
-#: What a junction is drawn in. A feature built in code has no colour of its own, and
-#: `mbio.snapgene` writes SnapGene's default grey for one that has none.
+#: What a junction is drawn in, and the overhang on an amplicon that becomes one. A feature
+#: built in code has no colour of its own, and `mbio.snapgene` writes SnapGene's default grey
+#: for one that has none.
 JUNCTION_COLOR = "#ff9900"
+
+#: What the recognition site a tail carries is drawn in, so a lit one is not taken for grey.
+SITE_COLOR = "#77aadd"
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,7 +74,8 @@ class Part:
         The primers, tails included.
     amplicon
         What the PCR makes: both tails, the span, and the template's features and primers
-        carried to their new coordinates.
+        carried to their new coordinates. Each tail's recognition site is marked, reading the way
+        it points, and so is the overhang its cut leaves.
     left_overhang
         The bases the enzyme leaves at the amplicon's left end, which stand in for the span's
         own first bases.
@@ -192,6 +197,7 @@ def amplify(
     )
     bases = tails[0] + template.bases(anneal, end) + reverse_complement(tails[1])
     features, kept = carried(template, start, end, offset=len(tails[0]) - len(left) - start)
+    marks = _tail_marks(one, bases, (len(tails[0]), len(bases) - len(tails[1])))
     placed = (
         annealed(forward, len(tails[0]), Strand.FORWARD),
         annealed(reverse, len(bases) - len(tails[1]), Strand.REVERSE),
@@ -205,7 +211,7 @@ def amplify(
         SequenceRecord(
             bases,
             name=name or template.name,
-            features=features,
+            features=features + marks,
             primers=kept + placed,
         ),
         left,
@@ -213,6 +219,51 @@ def amplify(
         (template.topology == "circular" and dam_sites(template) > 0) if dpni is None else dpni,
         evaluate_pair(forward, reverse, template, polymerase=polymerase, thresholds=thresholds),
     )
+
+
+def _tail_marks(enzyme: Enzyme, bases: str, tails: tuple[int, int]) -> tuple[Feature, ...]:
+    """Mark what the two tails carry: each recognition site, and the overhang its cut leaves.
+
+    `tails` is where the forward tail ends and where the reverse tail begins.
+    """
+    forward_end, reverse_start = tails
+    marks = []
+    for site in find_sites(SequenceRecord(bases), enzyme):
+        if forward_end <= site.start and site.end <= reverse_start:
+            continue
+        cuts = sorted((site.top_cut, site.bottom_cut))
+        marks += [
+            Feature(
+                site_name(enzyme),
+                "protein_bind",
+                (Segment(site.start, site.end),),
+                strand=site.strand,
+                color=SITE_COLOR,
+            ),
+            Feature(
+                overhang_name(site.overhang or ""),
+                "misc_feature",
+                (Segment(*cuts),),
+                color=JUNCTION_COLOR,
+            ),
+        ]
+    return tuple(marks)
+
+
+def site_name(enzyme: Enzyme) -> str:
+    """Return what an amplicon calls the recognition site a tail carries."""
+    return f"{enzyme.name} site"
+
+
+def overhang_name(overhang: str) -> str:
+    """Return what an amplicon calls the overhang a cut of its tail leaves.
+
+    Examples
+    --------
+    >>> overhang_name("ATGA")
+    'ATGA overhang'
+    """
+    return f"{overhang} overhang"
 
 
 def open_vector(

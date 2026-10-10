@@ -155,7 +155,24 @@ def test_features_are_carried_into_the_amplicon(backbone, insert, puc19, gfp):
     # The disrupted CDS meets the amplified span twice, once either side of the removed MCS. It
     # reads the piece at the far end first.
     assert _spans(carried["lacZα"]) == [(2393, 2643), (14, 31)]  # noqa: RUF001
-    assert [one.name for one in insert.amplicon.features] == ["GFP"]
+    assert insert.amplicon.features[0].name == "GFP"
+
+
+def test_each_tail_marks_its_site_pointing_in_and_the_overhang_its_cut_leaves(insert):
+    """What a figure of the amplicon's end lights: the site, which way it reads, the overhang."""
+    amplicon = insert.amplicon
+    marks = {(one.name, one.strand): one.segments for one in amplicon.features[1:]}
+    cuts = find_sites(amplicon, "BbsI")
+    assert marks == {
+        ("BbsI site", Strand.FORWARD): (Segment(cuts[0].start, cuts[0].end),),
+        ("BbsI site", Strand.REVERSE): (Segment(cuts[1].start, cuts[1].end),),
+        (f"{insert.left_overhang} overhang", Strand.NONE): (
+            Segment(cuts[0].top_cut, cuts[0].bottom_cut),
+        ),
+        (f"{insert.right_overhang} overhang", Strand.NONE): (
+            Segment(cuts[1].top_cut, cuts[1].bottom_cut),
+        ),
+    }
 
 
 def test_designed_primers_are_annotated_on_the_amplicon(backbone):

@@ -29,7 +29,6 @@ from mbio.protocol.model import (
     Component,
     Incubation,
     ReactionTable,
-    Reference,
     Source,
     Stage,
     ThermocyclerProgram,
@@ -334,15 +333,22 @@ def transformation_amount(
     )
 
 
-#: Where the numbers above come from, ready for a protocol's reference list.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
+#: The paper every number above is read from, and where in it each kind of number stands.
+METHOD_SOURCE_KEY = "takacsi-nagy-2026"
+SOURCES: dict[str, Source] = {
+    METHOD_SOURCE_KEY: Source(
         "Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain "
-        "recombination enhance CAR T cell antitumor function. Cell 189, 1-20, STAR Methods "
-        "METHOD DETAILS pp. e4-e5. CC BY 4.0",
+        "recombination enhance CAR T cell antitumor function. Cell 189, 1-20",
+        edition="STAR Methods, METHOD DETAILS pp. e4-e5",
         url="https://doi.org/10.1016/j.cell.2026.07.054",
+        note="docs/research/protein-library-assembly.md",
     ),
-)
+}
+
+#: Where the digest, the ligation and the growth each stand in it.
+DIGEST_CITATION = Citation(METHOD_SOURCE_KEY, "p. e4, digest")
+LIGATION_CITATION = Citation(METHOD_SOURCE_KEY, "p. e4, one-pot assembly")
+GROWTH_CITATION = Citation(METHOD_SOURCE_KEY, "p. e5, recovery and outgrowth")
 
 
 #: The buffer both digests run in, and the ligase and buffer the ligation runs in. The method
@@ -470,11 +476,16 @@ def _digest_component(enzyme: Enzyme) -> Component:
 def digest_program(enzymes: Sequence[Enzyme]) -> ThermocyclerProgram:
     """Return the two hours a digest runs: the first enzyme alone, then the rest added to it."""
     first, rest = enzymes[0], tuple(enzymes[1:])
-    stages = [Stage((Incubation(first.name, DIGEST_CELSIUS, DIGEST_SECONDS),))]
+    stages = [
+        Stage((Incubation(first.name, DIGEST_CELSIUS, DIGEST_SECONDS),), citation=DIGEST_CITATION)
+    ]
     if rest:
         added = listed([one.name for one in rest])
         stages.append(
-            Stage((Incubation(f"{first.name} and {added}", DIGEST_CELSIUS, DIGEST_SECONDS),))
+            Stage(
+                (Incubation(f"{first.name} and {added}", DIGEST_CELSIUS, DIGEST_SECONDS),),
+                citation=DIGEST_CITATION,
+            )
         )
     return ThermocyclerProgram(
         tuple(stages), title=f"Digest with {listed([one.name for one in enzymes])}"
@@ -539,8 +550,14 @@ def growth_program() -> ThermocyclerProgram:
     """
     return ThermocyclerProgram(
         (
-            Stage((Incubation("Recovery, shaking", GROWTH_CELSIUS, RECOVERY_SECONDS),)),
-            Stage((Incubation("Outgrowth", GROWTH_CELSIUS, OUTGROWTH_SECONDS[0]),)),
+            Stage(
+                (Incubation("Recovery, shaking", GROWTH_CELSIUS, RECOVERY_SECONDS),),
+                citation=GROWTH_CITATION,
+            ),
+            Stage(
+                (Incubation("Outgrowth", GROWTH_CELSIUS, OUTGROWTH_SECONDS[0]),),
+                citation=GROWTH_CITATION,
+            ),
         ),
         title=f"Recovery and outgrowth at {GROWTH_CELSIUS:g} °C",
     )

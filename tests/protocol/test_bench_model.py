@@ -225,7 +225,7 @@ def test_a_cycle_count_is_cited_like_any_number_and_a_blank_one_prints_as_none()
 
 
 def test_a_protocol_keeps_the_sources_it_cites_and_drops_the_rest() -> None:
-    """A reference list a reader cannot follow back to a row on the page is what this stops."""
+    """A sources list a reader cannot follow back to a row on the page is what this stops."""
     catalogue = {"M0318": Source("NEB #M0318"), "C3020": Source("NEB #C3020")}
     one = citing(Protocol("x", materials=(LIGASE,), sources=catalogue))
     assert list(one.sources) == ["M0318"]

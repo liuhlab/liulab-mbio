@@ -13,9 +13,15 @@ from dataclasses import KW_ONLY, dataclass, replace
 from types import MappingProxyType
 
 from mbio import checks as judged
-from mbio.bench.amounts import DNA_VOLUME_UL, Amount
-from mbio.bench.gels import agarose_percent, choose_ladder
-from mbio.bench.materials import POLYMERASE_ON_ICE, material
+from mbio.bench.amounts import (
+    DNA_VOLUME_UL,
+    Amount,
+)
+from mbio.bench.amounts import SOURCES as AMOUNT_SOURCES
+from mbio.bench.gels import SOURCES as GEL_SOURCES
+from mbio.bench.gels import agarose_percent, choose_ladder, resolution_note
+from mbio.bench.materials import KIT_SOURCES, POLYMERASE_ON_ICE, kit_citation, material
+from mbio.bench.materials import SOURCES as MATERIAL_SOURCES
 from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.pcr import (
     colony_pcr_program,
@@ -34,6 +40,7 @@ from mbio.protocol.model import (
     Caution,
     Check,
     Citation,
+    Expectation,
     Gel,
     Incubation,
     Item,
@@ -42,7 +49,6 @@ from mbio.protocol.model import (
     Note,
     Oligo,
     Protocol,
-    Reference,
     Rule,
     Source,
     Step,
@@ -52,22 +58,20 @@ from mbio.protocol.model import (
 )
 from mbio.sequence import SequenceRecord
 
-#: The documents these shared steps read their troubleshooting from. A pipeline building any of
-#: them merges this into its own `sources`, so the keys its rows cite resolve; `citing` drops
-#: the ones that run never named. The polymerase protocol comes with it, because the PCR step's
-#: own rows cite it.
+#: The documents these shared steps and the materials they name are read from. A pipeline
+#: building any of them merges this into its own `sources`, so the keys its rows cite resolve;
+#: `citing` drops the ones that run never named. The polymerase protocol comes with it, because
+#: the PCR step's own rows cite it.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
+        **AMOUNT_SOURCES,
+        **GEL_SOURCES,
+        **MATERIAL_SOURCES,
+        **KIT_SOURCES,
         "M0491": PCR_SOURCES["M0491"],
         "NEB-cloning": Source(
             "New England Biolabs, Troubleshooting Guide for Cloning",
             url="https://www.neb.com/en-us/tools-and-resources/troubleshooting-guides/troubleshooting-guide-for-cloning",
-            date="2026-09-18",
-            note="docs/research/restriction-ligation.md",
-        ),
-        "T1020": Source(
-            "New England Biolabs #T1020 Monarch DNA Gel Extraction Kit instruction manual",
-            edition="version 2.1_4/21",
             date="2026-09-18",
             note="docs/research/restriction-ligation.md",
         ),
@@ -82,6 +86,18 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             "Azenta/Genewiz, Sanger sequencing FAQ and technical notes",
             date="2026-09-12",
             note="docs/research/primer-design-and-pcr.md",
+        ),
+        "REBASE-DpnI": Source(
+            "REBASE enzyme record for DpnI",
+            url="http://rebase.neb.com/rebase/rebase.html",
+            note="docs/research/golden-gate-assembly.md",
+        ),
+        "potapov-2018": Source(
+            "Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation "
+            "fidelity by T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, "
+            "2665-2674",
+            url="https://doi.org/10.1021/acssynbio.8b00333",
+            note="docs/research/golden-gate-assembly.md",
         ),
     }
 )
@@ -112,29 +128,24 @@ PLATE_UL = 50.0
 PLATE_DILUTION = 5
 
 #: The indicator plate, from Potapov et al. 2018's recipe (§5): micrograms per millilitre of
-#: X-gal and micromolar IPTG.
+#: X-gal and micromolar IPTG, and where the plate row cites it.
 XGAL_UG_ML = 80
 IPTG_UM = 200
+PLATE_CITATION = Citation("potapov-2018", "methods")
 
 #: The titles of the steps an oligo's row points at, written once so a row and its step cannot
 #: drift. `pcr_title` gives the third.
 COLONY_PCR_TITLE = "Screen colonies by PCR"
 SEQUENCING_TITLE = "Confirm the clone by sequencing"
 
-#: What a protocol cites when it runs the DpnI digest.
-DPNI_REFERENCE = Reference(
-    "REBASE record for DpnI, which cuts G6mATC and so only methylated template",
-    url="http://rebase.neb.com/rebase/rebase.html",
-)
 
-#: What a protocol cites when it pours the indicator plate.
-PLATE_REFERENCE = Reference(
-    "Potapov, V. et al. (2018) Comprehensive profiling of four base overhang ligation fidelity by "
-    "T4 DNA Ligase and application to DNA assembly. ACS Synth. Biol. 7, 2665-2674, for the X-gal "
-    "and IPTG plate",
-    url="https://doi.org/10.1021/acssynbio.8b00333",
-)
+#: What quantifies a purified fragment, which every method that purifies one needs. The
+#: measurement is named first and the instrument a bench says beside it.
+QUANTIFY_EQUIPMENT = "Spectrophotometer (NanoDrop) or fluorometer (Qubit)"
 
+#: The kit the sequencing step's miniprep takes. Which one is the user's call, so the row
+#: names no product; it is here because three methods ask for the same miniprep.
+MINIPREP_KIT = Material("Plasmid miniprep kit", note="for the clones that go to sequencing")
 
 #: Where a plate of primers waits between runs.
 PRIMER_PLATE_STORAGE = "-20 °C"
@@ -311,6 +322,20 @@ def catalogued(
     )
 
 
+def plate_material(phenotype: Phenotype) -> Material:
+    """Return the selection plates, poured as an indicator plate where the plate reads colour."""
+    antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
+    amount = "one plate per transformation"
+    if phenotype.blue_white:
+        return Material(
+            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
+            f"and {IPTG_UM} µM IPTG",
+            amount=amount,
+            citation=PLATE_CITATION,
+        )
+    return Material(f"{phenotype.medium} agar plates with {antibiotic}", amount=amount)
+
+
 def pcr_title(name: str) -> str:
     """Return the title of the step that amplifies `name`, which its oligos name as their purpose."""
     return f"Amplify {name}"
@@ -355,7 +380,7 @@ def pcr_step(
         key=f"pcr-{name}",
         instructions=(
             "Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.",
-            f"Mix the master mix and put it in each tube, then add the {template} template.",
+            f"Mix the master mix, dispense it into each tube, then add the {template} template.",
             f"Run the program below: {annealing_temperature:g} °C annealing and "
             f"{extension_seconds} s extension for a {length_bp} bp product.",
         ),
@@ -402,7 +427,7 @@ def gel_step(amplicons: Sequence[tuple[str, int]]) -> Step:
         "Check the PCRs on a gel",
         key="pcr-gel",
         instructions=(
-            f"Pour a {percent:g}% agarose gel.",
+            f"Use a {percent:g}% agarose gel.",
             "Load 5 µL of each reaction beside the ladder.",
             "Run until the dye front is two thirds down the gel.",
         ),
@@ -414,6 +439,7 @@ def gel_step(amplicons: Sequence[tuple[str, int]]) -> Step:
             ),
         ),
         expected=tuple(f"{name}: one band at {length_bp} bp." for name, length_bp in amplicons),
+        notes=(resolution_note(percent),),
         troubleshooting=(
             Troubleshooting(
                 "A smear or an extra band",
@@ -479,8 +505,11 @@ def dpni_step(
             "template plasmid.",
         ),
         notes=(
-            f"DpnI cuts GATC only where Dam has methylated it, so it cuts {counted} and "
-            "leaves the PCR product, which carries no methylation.",
+            Note(
+                f"DpnI cuts GATC only where Dam has methylated it, so it cuts {counted} and "
+                "leaves the PCR product, which carries no methylation.",
+                citation=Citation("REBASE-DpnI", "DpnI"),
+            ),
             *notes,
         ),
         troubleshooting=(
@@ -493,35 +522,80 @@ def dpni_step(
     )
 
 
+def column(kit: Material) -> str:
+    """Return what a step at the bench calls one column of this kit.
+
+    A vendor calls the product a kit or a system; the bench calls one column by the rest of
+    that name.
+
+    Examples
+    --------
+    >>> from mbio.bench.materials import kit
+    >>> column(kit("T1120"))
+    'Monarch Spin DNA Gel Extraction column'
+    >>> column(kit("Wizard SV Gel and PCR Clean-Up System"))
+    'Wizard SV Gel and PCR Clean-Up column'
+    """
+    name = kit.name
+    for ending in (" Kit", " System"):
+        name = name.removesuffix(ending)
+    return f"{name} column"
+
+
 def cleanup_step(
     *,
+    kit: Material,
     cautions: Sequence[Caution | str] = (),
     notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
-    """Return the spin-column cleanup of every amplicon, carrying the caller's own words."""
+    """Return the spin-column cleanup of every amplicon, carrying the caller's own words.
+
+    `kit` is the product the run cleans up with, which the step names and the protocol's
+    materials list it as; `mbio.bench.materials.kit` resolves what the caller was told. The
+    recovery entry shows only for a kit whose own manual gives it, as ADR 0019 asks.
+    """
+    recovery = kit_citation(kit, "troubleshooting, low DNA yield")
     return Step(
         "Purify every amplicon",
         key="purify-amplicons",
         cautions=tuple(cautions),
         instructions=(
-            "Run each reaction over a spin column and elute in the smallest volume the kit allows.",
+            f"Run each reaction over a {column(kit)} and elute in the smallest volume the "
+            "kit allows.",
         ),
         expected=("Clean DNA, free of polymerase, primers and dNTPs.",),
         notes=tuple(notes),
         troubleshooting=(
-            Troubleshooting(
-                "Low recovery",
-                "Elute twice through the same column, or pool two reactions before purifying.",
-                citation=Citation("T1020", "troubleshooting, low DNA yield"),
+            *(
+                (
+                    Troubleshooting(
+                        "Low recovery",
+                        "Elute in a larger volume and leave the buffer on the column longer.",
+                        citation=recovery,
+                    ),
+                )
+                if recovery
+                else ()
             ),
             *troubleshooting,
         ),
     )
 
 
+#: What the measuring step says when a DNA is too dilute for the reaction after it, and so what
+#: that reaction's calculators fire.
+TOO_DILUTE = Troubleshooting(
+    "Too dilute to fit in the reaction", "Concentrate the amplicon, or scale the reaction up."
+)
+
+
 def quantify_step(amounts: Sequence[Amount]) -> Step:
-    """Return the step that measures what the next reaction is about to take."""
+    """Return the step that measures what the next reaction is about to take.
+
+    The reaction's table takes each concentration measured here, built with
+    `reaction_table(..., measured=True)`, and fires `TOO_DILUTE` where one does not fit.
+    """
     wanted = tuple(
         f"{amount.name}: {number(amount.pmol)} pmol is {amount.nanograms:g} ng, so "
         f"{amount.nanograms / DNA_VOLUME_UL:.0f} ng/µL or more fits in {DNA_VOLUME_UL:g} µL."
@@ -531,21 +605,11 @@ def quantify_step(amounts: Sequence[Amount]) -> Step:
         "Measure every concentration",
         key="quantify",
         instructions=(
-            "Measure each purified amplicon by A260 or with a fluorometer.",
-            "Work out the volume that carries the picomoles the next table asks for.",
+            "Measure each purified amplicon by A260 (NanoDrop) or with a fluorometer (Qubit).",
+            "Enter each concentration in the next table's Stock column.",
         ),
         expected=wanted,
-        notes=(
-            "Picomoles, not nanograms: the shorter fragment weighs less at the same molar "
-            "ratio. Mass to moles here is NEBioCalculator's 36.04 + 615.94 per base pair, "
-            "which is about 5% off the 650 Da per base pair of NEB's manuals.",
-        ),
-        troubleshooting=(
-            Troubleshooting(
-                "Too dilute to fit in the reaction",
-                "Concentrate the amplicon, or scale the reaction up.",
-            ),
-        ),
+        troubleshooting=(TOO_DILUTE,),
     )
 
 
@@ -558,7 +622,7 @@ def transform_step(
     protocol: Transformation = NEB_TRANSFORMATION,
     title: str = "Transform and plate",
     key: str = "transform",
-    expected: Sequence[str] = (),
+    expected: Sequence[Expectation | str] = (),
     notes: Sequence[Note | str] = (),
     troubleshooting: Sequence[Troubleshooting] = (),
 ) -> Step:
@@ -583,7 +647,7 @@ def transform_step(
     expected, notes, troubleshooting
         The caller's own, after the step's.
     """
-    results = [colonies]
+    results: list[Expectation | str] = [colonies]
     if phenotype.blue_white and phenotype.reporter is not None:
         results.append(
             f"Correct clones are white and empty vector is blue: the insertion interrupts "
@@ -623,8 +687,10 @@ def transform_step(
         ),
         cautions=("Competent cells die if they warm up; keep them on ice until the shock.",),
         timers=(
+            *(() if protocol.thaw_seconds is None else (Timer("Thaw", protocol.thaw_seconds),)),
             Timer("On ice", protocol.ice_seconds),
             Timer("Heat shock", protocol.heat_shock_seconds),
+            Timer("Back on ice", protocol.recover_seconds),
             Timer("Outgrowth", protocol.outgrowth_seconds),
         ),
         expected=tuple(results),
@@ -751,7 +817,7 @@ def sequencing_step(
         key="sequencing",
         instructions=(
             "Miniprep two or three colonies that read as correct.",
-            "Send each with both sequencing primers.",
+            "Send each miniprep with both sequencing primers.",
             *instructions,
             "Check the read across every junction and the whole of each insert.",
         ),

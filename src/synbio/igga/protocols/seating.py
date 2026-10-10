@@ -11,17 +11,17 @@ already and the run opens at the one after it.
 
 from mbio.checks import counted
 from mbio.protocol.model import Item as Handed
-from mbio.protocol.model import Material, Plate, Reference, Step
+from mbio.protocol.model import Material, Plate, Source, Step
 from synbio.dmx.carrier import (
     CARRIER,
     CARRIER_KIT,
     CARRIER_MARKER,
     ENZYME,
-    REFERENCES,
     SeatedParts,
     carrier_step,
     materials,
 )
+from synbio.dmx.carrier import SOURCES as CARRIER_SOURCES
 from synbio.igga.protocols.protocol import Protocol
 from synbio.igga.protocols.run import Run
 
@@ -60,9 +60,9 @@ class Seating(Protocol):
         """Return the carrier and its kit, which no other protocol of the run buys."""
         return materials()
 
-    def references(self, run: Run) -> tuple[Reference, ...]:
-        """Return where the kit's own reaction is read from."""
-        return REFERENCES
+    def sources(self, run: Run) -> dict[str, Source]:
+        """Return the document the kit's own reaction is cited to."""
+        return dict(CARRIER_SOURCES)
 
     def plates(self, run: Run) -> tuple[Plate, ...]:
         """Return the carrier plate, so every well the step names has one."""

@@ -13,7 +13,7 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 
 from mbio import checks as judged
-from mbio.bench import REFERENCES as BENCH_REFERENCES
+from mbio.bench.materials import kit
 from mbio.bench.oligos import oligo_row
 from mbio.bench.pcr import (
     COLONY_PCR_MASTER_MIX,
@@ -25,6 +25,7 @@ from mbio.bench.pcr import SOURCES as PCR_SOURCES
 from mbio.bench.phenotype import Phenotype
 from mbio.bench.steps import (
     COLONY_PCR_TITLE,
+    QUANTIFY_EQUIPMENT,
     SEQUENCING_TITLE,
     badges,
     card,
@@ -77,7 +78,6 @@ from mbio.cloning.gateway.bench import (
     PROPAGATION_HOST,
     PROTEINASE_K_UG_UL,
     PROTEINASE_K_UL,
-    REFERENCES,
     SEQUENCING_MAX_PMOL,
     SEQUENCING_MIN_PMOL,
     SEQUENCING_NG,
@@ -113,17 +113,10 @@ from mbio.protocol.model import (
 from mbio.sequence import SequenceRecord, position_text
 
 #: The documents this method's own rows and notes cite, read into
-#: `docs/research/gateway-cloning.md`, which names where each was fetched from. The two a
-#: caution cites are in `bench`, beside the numbers whose pages they are. The same documents
-#: stand in `REFERENCES`, which lists what a run read rather than what a row names.
+#: `docs/research/gateway-cloning.md`, which names where each was fetched from. Those a caution
+#: or a reaction row cites are in `bench`, beside the numbers whose pages they are.
 SOURCES: Mapping[str, Source] = MappingProxyType(
     {
-        "11789": Source(
-            "Thermo Fisher Scientific Gateway BP Clonase II enzyme mix product sheet",
-            edition="11789.II.pps, revision 31 October 2010",
-            date="2026-09-18",
-            note="docs/research/gateway-cloning.md",
-        ),
         "MAN0000291": Source(
             "Thermo Fisher Scientific #MAN0000291 Gateway pDONR Vectors user guide",
             edition="part 25-0531, revised 29 March 2012",
@@ -136,7 +129,26 @@ SOURCES: Mapping[str, Source] = MappingProxyType(
             date="2026-09-18",
             note="docs/research/gateway-cloning.md",
         ),
+        "hartley-2000": Source(
+            "Hartley, J.L., Temple, G.F. and Brasch, M.A. (2000) DNA cloning using in vitro "
+            "site-specific recombination. Genome Res. 10, 1788-1795",
+            url="https://doi.org/10.1101/gr.143000",
+            note="docs/research/gateway-cloning.md",
+        ),
+        "US7670823": Source(
+            "Brasch, M., Cheo, D., Hartley, J. and Temple, G., US 7,670,823 B1",
+            url="https://patents.google.com/patent/US7670823B1/en",
+            note="docs/research/gateway-cloning.md",
+        ),
     }
+)
+
+#: Why a junction is called by an att site's name: its 25 bp region matches that site's
+#: published sequence, which `att.REGIONS` holds.
+SITES_NOTE = Note(
+    "Each att site is named by matching its 25 bp recombination region to that site's "
+    "published sequence.",
+    citation=Citation("US7670823", "FIG. 9"),
 )
 
 #: What a Gateway plan calls the entry clone BP makes, which is the one file no other method
@@ -156,7 +168,7 @@ EQUIPMENT: tuple[str, ...] = (
 )
 
 #: What a run amplifying its own insert needs on top of `EQUIPMENT`.
-PCR_EQUIPMENT: tuple[str, ...] = ("Spectrophotometer or fluorometer",)
+PCR_EQUIPMENT: tuple[str, ...] = (QUANTIFY_EQUIPMENT,)
 
 
 def protocol(
@@ -169,6 +181,7 @@ def protocol(
     oligos: Sequence[DesignedOligo],
     checks: Sequence[judged.Check],
     host: str,
+    cleanup_kit: Material | None = None,
     fusion: Fusion = "none",
     thresholds: Mapping[PrimerRole, Thresholds] = THRESHOLDS_FOR,
 ) -> Protocol:
@@ -180,22 +193,24 @@ def protocol(
     steps and the miniprep that follows them in front of LR's, an attB PCR puts its own two in
     front of those, and the colony PCR and the sequencing that confirm the clone come last.
     """
+    cleaned = kit() if cleanup_kit is None else cleanup_kit
     one = Protocol(
         _title(lr, bp),
         summary=_summary(lr, bp),
         overview=_overview(lr, bp, amplicon),
         highlights=_highlights(lr, bp, amplicon),
         checks=badges(checks),
-        materials=_materials(lr=lr, bp=bp, amplicon=amplicon, colony=colony, host=host),
+        materials=_materials(
+            lr=lr, bp=bp, amplicon=amplicon, colony=colony, host=host, cleanup_kit=cleaned
+        ),
         oligos=_oligos(oligos, amplicon, thresholds),
         equipment=EQUIPMENT if amplicon is None else (*PCR_EQUIPMENT, *EQUIPMENT),
         steps=(
-            *_pcr_steps(amplicon),
+            *_pcr_steps(amplicon, cleaned),
             *_bp_steps(bp, host=host, entry=_carrier(lr)),
             *_lr_steps(lr, host=host),
             *_validation_steps(lr, colony, reads, host=host, fusion=fusion),
         ),
-        references=(*REFERENCES, *BENCH_REFERENCES),
         sources={**BENCH_SOURCES, **PCR_SOURCES, **REACTION_SOURCES, **SOURCES},
     )
     return citing(one)
@@ -309,6 +324,7 @@ def _materials(
     amplicon: Amplicon | None,
     colony: ColonyCheck,
     host: str,
+    cleanup_kit: Material,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for, the first reaction's first."""
     entry, destination = _carrier(lr), _acceptor(lr)
@@ -331,7 +347,7 @@ def _materials(
                     "of primer-dimers, so use one",
                     citation=Citation("MAN0000470", "pp. 43-44"),
                 ),
-                Material("PCR and gel cleanup spin columns"),
+                cleanup_kit,
             )
         )
     if bp is not None:
@@ -453,7 +469,7 @@ def _purpose(oligo: DesignedOligo, amplicon: Amplicon | None) -> str:
     return COLONY_PCR_TITLE if oligo.role == "colony PCR" else SEQUENCING_TITLE
 
 
-def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
+def _pcr_steps(amplicon: Amplicon | None, cleanup_kit: Material) -> tuple[Step, ...]:
     """Return the attB PCR and its cleanup, or nothing where the insert arrived attB-flanked."""
     if amplicon is None:
         return ()
@@ -487,6 +503,7 @@ def _pcr_steps(amplicon: Amplicon | None) -> tuple[Step, ...]:
             ),
         ),
         cleanup_step(
+            kit=cleanup_kit,
             notes=(
                 Note(
                     "The BP reaction takes purified attB DNA: gel-purifying the product is the "
@@ -557,6 +574,7 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
                     "longer.",
                     citation=Citation("MAN0000470", "p. 23"),
                 ),
+                SITES_NOTE,
                 "Junction positions are 1-based, on the entry clone.",
             ),
             troubleshooting=(
@@ -578,14 +596,18 @@ def _bp_steps(bp: PlannedReaction | None, *, host: str, entry: SequenceRecord) -
             inserts=[bp.recombination.moved.name or "the insert"],
             colonies=(
                 f"More than {BP_COLONIES:,} colonies where the whole reaction is transformed "
-                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better. What "
-                "fraction of them is correct is not published; Hartley 2000 counted 195 of 197."
+                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better."
             ),
             protocol=BP_TRANSFORMATION,
             notes=(
                 "Unreacted donor vector and the by-product both keep the ccdB gene, which "
                 f"kills {host}, so they do not grow. A strain carrying F' would supply ccdA "
                 "and cancel that.",
+                Note(
+                    "No manual states what fraction of the colonies is correct; the one count "
+                    "published found 195 of 197 correct after BP.",
+                    citation=Citation("hartley-2000", "Results"),
+                ),
             ),
             troubleshooting=(
                 Troubleshooting(
@@ -692,6 +714,7 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
                     "longer.",
                     citation=Citation("MAN0000470", "p. 32"),
                 ),
+                SITES_NOTE,
                 "Junction positions are 1-based, on the expression clone.",
             ),
             troubleshooting=(
@@ -713,14 +736,18 @@ def _lr_steps(lr: PlannedReaction, *, host: str) -> tuple[Step, ...]:
             inserts=[lr.recombination.moved.name or "the insert"],
             colonies=(
                 f"More than {LR_COLONIES:,} colonies where the whole reaction is transformed "
-                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better. What "
-                "fraction of them is correct is not published; Hartley 2000 counted 96 of 102."
+                f"and plated, with cells at {CELL_EFFICIENCY_CFU_UG:,} cfu/µg or better."
             ),
             protocol=LR_TRANSFORMATION,
             notes=(
                 "Unreacted destination vector and the by-product both keep the ccdB gene, "
                 f"which kills {host}, so they do not grow. A strain carrying F' would supply "
                 "ccdA and cancel that.",
+                Note(
+                    "No manual states what fraction of the colonies is correct; the one count "
+                    "published found 96 of 102 correct after LR.",
+                    citation=Citation("hartley-2000", "Results"),
+                ),
                 f"The expression clone lost the chloramphenicol cassette with the by-product, so "
                 f"restreaking a colony on {CHLORAMPHENICOL_UG_ML} µg/mL chloramphenicol "
                 "confirms it: a true expression clone does not grow there, and one carrying a "

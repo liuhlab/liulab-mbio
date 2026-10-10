@@ -15,6 +15,7 @@ from mbio.cloning.gibson.bench import (
     GIBSON_MASTER_MIX,
     IN_FUSION,
     NEBUILDER_HIFI,
+    SOURCES,
     AssemblyProduct,
     OverlapRule,
     Tier,
@@ -158,9 +159,14 @@ def test_the_default_product_cites_the_documents_its_numbers_came_from():
     assert isinstance(NEBUILDER_HIFI, AssemblyProduct)
     assert NEBUILDER_HIFI.inserts_limit == 5
     assert NEBUILDER_HIFI.shortest_overlap_bp == 12
-    citations = " ".join(reference.text for reference in NEBUILDER_HIFI.references)
-    assert "E2621" in citations
-    assert "CC BY" in citations
+    amounts = assembly_amounts(("backbone", 2629), [("GFP", 717)], product=NEBUILDER_HIFI)
+    table = assembly_reaction(NEBUILDER_HIFI, amounts)
+    mix = next(one for one in table.components if one.name == NEBUILDER_HIFI.name)
+    assert mix.citation is not None
+    assert mix.citation.source == "E2621"
+    program = assembly_program(NEBUILDER_HIFI, fragments=2)
+    assert program.stages[0].citation is not None
+    assert program.stages[0].citation.source == "E2621"
     assert all(isinstance(tier, Tier) for tier in NEBUILDER_HIFI.tiers)
 
 
@@ -188,9 +194,8 @@ def test_each_product_carries_its_own_rules_and_in_fusion_inherits_none_of_nebs(
     assert IN_FUSION.unpurified_ul is None
     assert IN_FUSION.supplier == "Takara Bio"
     assert all(product.inserts_limit == 5 for product in ASSEMBLY_PRODUCTS)
-    for product in ASSEMBLY_PRODUCTS:
-        assert product.references
-        assert all(one.url for one in product.references)
+    # Each product's rows cite its manual by catalogue number, so each has a source to land on.
+    assert all(SOURCES[product.catalog].url for product in ASSEMBLY_PRODUCTS)
 
 
 def test_a_product_is_named_by_the_beginning_of_its_name():

@@ -5,6 +5,17 @@ own files; it picks the enzymes, designs the oligos, builds the plasmid you shou
 writes the bench protocol. One command plans a whole job. Everything it writes is a file you
 can open — a map in SnapGene, a sheet in a spreadsheet, one page in a browser.
 
+One install gives two commands: `mbio` for a job with a standard name, and `synbio` for this
+lab's own projects, iGGA and DMX. [Two commands](two-packages.md) says which one a job wants.
+
+```mermaid
+graph LR
+  M["Cloning method"] -- "planned into" --> P["Protocol"] -- "chained by an item" --> J["Project"]
+```
+
+A cloning method is how fragments are joined. A protocol is one page someone follows at the
+bench. A project is protocols run in order, each handed what the ones before it produced.
+
 ## Pick a job
 
 Each row is one job, with a worked run you can repeat. For a cloning job,
@@ -13,16 +24,16 @@ Each row is one job, with a worked run you can repeat. For a cloning job,
 | What you want | Start here |
 | --- | --- |
 | Join fragments in one tube, in the order you choose | [Golden Gate assembly](methods/golden-gate.md) |
-| Join fragments by their overlaps, with no enzyme | [Gibson assembly](methods/gibson.md) |
-| Cut and paste with a pair of enzymes both plasmids carry | [Restriction and ligation](methods/restriction-ligation.md) |
-| Move a gene between plasmids that carry att sites | [Gateway cloning](methods/gateway.md) |
+| Join fragments by bases they share, with no enzyme site needed | [Gibson assembly](methods/gibson.md) |
+| Cut and paste at a pair of restriction sites | [Restriction and ligation](methods/restriction-ligation.md) |
+| Move a gene between plasmids by recombining att sites | [Gateway cloning](methods/gateway.md) |
 | A primer pair for a fragment, checked against a whole genome | [Primer design](methods/primers.md) |
 | Barcodes far enough apart that no two can be read as one | [Barcode sets](methods/barcodes.md) |
 | A protein written as DNA for a host, free of the sites you name | [Codon optimisation](methods/codon-optimisation.md) |
 | A plasmid map to look at, or a figure for a paper | [Maps and figures](methods/maps.md) |
 
-The next two are whole projects rather than single reactions: many plates, and a chain of
-protocol pages instead of one page.
+The next two are projects, run with `synbio`. Each works across a library or a plate of wells,
+not one plasmid.
 
 | What you want | Start here |
 | --- | --- |
@@ -39,8 +50,7 @@ pixi install
 ```
 
 That reads `pyproject.toml` and builds the environment from the lock file, so you get the
-same versions the tests ran on. You now have two commands, `mbio` and `synbio`.
-[Two commands](two-packages.md) says which one a job wants.
+same versions the tests ran on. You now have both commands.
 
 ## Run it
 
@@ -51,25 +61,33 @@ folder to write into, and makes it if it is not there:
 pixi run mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out plan/
 ```
 
-It prints the design in one line, then the four files it wrote:
+It prints the design in one line, then the nine files it wrote:
 
 ```text
 pUC19-GFP: 3347 bp, BbsI, 2 fragments, overhangs ATGA, TGGC, fidelity 100% (measured), checks warn
 plan/product.dna
+plan/puc19-backbone-amplicon.dna
+plan/gfp-amplicon.dna
 plan/primers.tsv
 plan/protocol.json
+plan/puc19-backbone-amplicon-map.html
+plan/gfp-amplicon-map.html
+plan/product-map.html
 plan/protocol.html
 ```
 
 | File | What it is |
 | --- | --- |
 | [product.dna](examples/pUC19-GFP/product.dna) | the finished plasmid, features carried over and both joins marked. Opens in SnapGene |
+| [puc19-backbone-amplicon.dna](examples/pUC19-GFP/puc19-backbone-amplicon.dna), [gfp-amplicon.dna](examples/pUC19-GFP/gfp-amplicon.dna) | each amplicon, tails and all, whose end its PCR step draws |
 | [primers.tsv](examples/pUC19-GFP/primers.tsv) | the nine oligos to order, with length and melting temperature |
 | [protocol.json](examples/pUC19-GFP/protocol.json) | the same protocol as data |
+| [puc19-backbone-amplicon-map.html](examples/pUC19-GFP/puc19-backbone-amplicon-map.html), [gfp-amplicon-map.html](examples/pUC19-GFP/gfp-amplicon-map.html) | each amplicon as a map you can explore, which its PCR step's figure opens |
+| [product-map.html](examples/pUC19-GFP/product-map.html) | the finished plasmid as a map you can explore, which the figure on the page opens |
 | [protocol.html](examples/pUC19-GFP/protocol.html) | the protocol as one page: no network, nothing to install |
 
 Each name links to what that run wrote, published here unedited. Nothing in it is typed by
-hand, so the same two input files always give the same four. To change the design, change the
+hand, so the same two input files always give the same nine. To change the design, change the
 command and run it again. To change what the page says, edit `protocol.json` and
 [make the page from it again](protocols/editing.md).
 

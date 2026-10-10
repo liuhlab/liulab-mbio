@@ -5,15 +5,16 @@ is sized for it rather than the library sized once at the end: a round short of 
 members no later round can put back, and every later round multiplies what survives. Coverage,
 colonies over products, is what the floor works out at.
 
-`plan_coverage` is the way in. The completeness rule is Clarke & Carbon's, in `REFERENCES`, and
+`plan_coverage` is the way in. The completeness rule is Clarke & Carbon's, in `SOURCES`, and
 it holds only where every member of a part list is equally represented.
 """
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import KW_ONLY, dataclass
+from types import MappingProxyType
 
-from mbio.protocol.model import Reference
+from mbio.protocol.model import Citation, Source
 
 
 def _positive(products: int) -> None:
@@ -286,33 +287,32 @@ class RepresentationMarks:
 REPRESENTATION_MARKS = RepresentationMarks(seen=0.995, skew=10.0, reads_per_member=100)
 
 
-#: Where the completeness rule and the representation marks come from, ready for a protocol's
-#: reference list.
-REFERENCES: tuple[Reference, ...] = (
-    Reference(
-        "Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid "
-        "plasmids representative of the entire E. coli genome. Cell 9, 91-99, for the clones a "
-        "library needs to represent every member",
-        url="https://doi.org/10.1016/0092-8674(76)90055-6",
-    ),
-    Reference(
-        "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional "
-        "activation screening. Nat. Protoc. 12, 828-863, for a pooled library's acceptance "
-        "bar: under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, "
-        "judged at over 100 reads a member",
-        url="https://doi.org/10.1038/nprot.2017.016",
-    ),
-    Reference(
-        "Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR "
-        "screens to decrease experiment size and improve phenotype detection. Genome Biol. 21, "
-        "53, Table 2, for the screen coverage a library's own skew demands: p90/p10 2.5 at "
-        "200x, 5 at 300x, 10 at 400x",
-        url="https://doi.org/10.1186/s13059-020-1939-1",
-    ),
-    Reference(
-        "Heo, S.-J. et al. (2024) Compact CRISPR genetic screens enabled by improved guide RNA "
-        "library cloning. Genome Biol. 25, 25, for a library skewed under 2 matching a "
-        "1,000-fold screen at 100-fold coverage",
-        url="https://doi.org/10.1186/s13059-023-03132-3",
-    ),
+#: The documents the rule and the marks are read from, keyed as a `Citation` names them.
+SOURCES: Mapping[str, Source] = MappingProxyType(
+    {
+        "clarke-1976": Source(
+            "Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid "
+            "plasmids representative of the entire E. coli genome. Cell 9, 91-99",
+            url="https://doi.org/10.1016/0092-8674(76)90055-6",
+            note="docs/research/protein-library-assembly.md",
+        ),
+        "joung-2017": Source(
+            "Joung, J. et al. (2017) Genome-scale CRISPR-Cas9 knockout and transcriptional "
+            "activation screening. Nat. Protoc. 12, 828-863",
+            url="https://doi.org/10.1038/nprot.2017.016",
+            note="docs/research/vector-qc-panel.md",
+        ),
+        "imkeller-2020": Source(
+            "Imkeller, K. et al. (2020) gscreend: modelling asymmetric count ratios in CRISPR "
+            "screens to decrease experiment size and improve phenotype detection. Genome Biol. "
+            "21, 53",
+            url="https://doi.org/10.1186/s13059-020-1939-1",
+            note="docs/research/vector-qc-panel.md",
+        ),
+    }
 )
+
+#: Where the colony floor, the acceptance marks and the price of skew are each read.
+COMPLETENESS_CITATION = Citation("clarke-1976", "the clones a library takes")
+MARKS_CITATION = Citation("joung-2017", "library representation")
+SKEW_COST_CITATION = Citation("imkeller-2020", "Table 2")

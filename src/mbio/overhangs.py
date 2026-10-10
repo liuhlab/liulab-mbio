@@ -147,7 +147,7 @@ class LigationSource:
     Parameters
     ----------
     citation
-        The paper in full, as a reference list prints it.
+        The paper in full, as a sources list prints it.
     doi
         Its DOI, bare.
     """
@@ -211,7 +211,7 @@ class LigationMatrix:
     def source(self) -> str:
         """The paper in passing and which of its tables, as a check cites it.
 
-        The reference in full belongs under References, not in a sentence read at the bench.
+        The paper in full belongs in the page's sources, not in a sentence read at the bench.
         """
         return f"{self.cited} {self.table}, measured with {self.product}"
 
@@ -470,7 +470,7 @@ def _document() -> Mapping[str, Any]:
 def ligation_source() -> LigationSource:
     """Return the paper the shipped ligation data was measured in.
 
-    The data file is the citation's one home, so anything printing the paper -- a reference
+    The data file is the citation's one home, so anything printing the paper -- a sources
     list, a check naming it in passing -- reads it from here.
 
     Examples

@@ -9,7 +9,6 @@ table of NEB's covers, and each says where it comes from.
 from collections.abc import Mapping, Sequence
 
 from mbio import checks as judged
-from mbio.bench import REFERENCES as BENCH_REFERENCES
 from mbio.bench.amounts import Amount
 from mbio.bench.gels import choose_ladder
 from mbio.bench.goldengate import (
@@ -18,10 +17,11 @@ from mbio.bench.goldengate import (
     assembly_program,
     assembly_reaction,
     enzyme_component,
+    fidelity_citation,
+    fidelity_sources,
     golden_gate_temperature,
     ligase_master_mix_component,
 )
-from mbio.bench.goldengate import REFERENCES as GOLDEN_GATE_REFERENCES
 from mbio.bench.goldengate import SOURCES as GOLDEN_GATE_SOURCES
 from mbio.bench.inactivation import heat_inactivation
 from mbio.bench.oligos import oligo_row
@@ -35,15 +35,13 @@ from mbio.bench.phenotype import Phenotype
 from mbio.bench.steps import (
     CELLS_UL,
     COLONY_PCR_TITLE,
-    DPNI_REFERENCE,
     DPNI_UNITS,
     HEAT_SHOCK_CELSIUS,
-    IPTG_UM,
+    MINIPREP_KIT,
     OUTGROWTH_CELSIUS,
     OUTGROWTH_UL,
-    PLATE_REFERENCE,
+    QUANTIFY_EQUIPMENT,
     SEQUENCING_TITLE,
-    XGAL_UG_ML,
     badges,
     card,
     catalogued,
@@ -57,13 +55,20 @@ from mbio.bench.steps import (
     pcr_step,
     pcr_title,
     phenotype_sentences,
+    plate_material,
     quantify_step,
     sequencing_step,
     transform_step,
 )
 from mbio.bench.steps import SOURCES as BENCH_SOURCES
 from mbio.bench.validation import ColonyCheck, SangerRead
-from mbio.cloning.goldengate.assembly import Assembly, Junction, Part
+from mbio.cloning.goldengate.assembly import (
+    Assembly,
+    Junction,
+    Part,
+    overhang_name,
+    site_name,
+)
 from mbio.cloning.goldengate.design import OverhangSet
 from mbio.cloning.goldengate.oligos import DesignedOligo
 from mbio.cloning.plan import (
@@ -71,10 +76,13 @@ from mbio.cloning.plan import (
     MAKE_SECTION,
     PRODUCT_FILE,
     SCREEN_SECTION,
+    amplicon_files,
 )
 from mbio.enzymes import Enzyme
+from mbio.overhangs import FidelityReport
 from mbio.primers.polymerase import Polymerase
 from mbio.primers.thresholds import PrimerRole, Thresholds
+from mbio.protocol.figures import tail_figure
 from mbio.protocol.model import (
     Citation,
     Component,
@@ -82,7 +90,6 @@ from mbio.protocol.model import (
     Material,
     Note,
     Protocol,
-    Reference,
     Step,
     Troubleshooting,
     citing,
@@ -112,7 +119,7 @@ EQUIPMENT: tuple[str, ...] = (
     "Thermocycler with a heated lid",
     "Agarose gel rig and power supply",
     "Microcentrifuge",
-    "Spectrophotometer or fluorometer",
+    QUANTIFY_EQUIPMENT,
     f"Heat block or water bath at {HEAT_SHOCK_CELSIUS:g} °C",
     f"Shaking incubator and a plate incubator at {OUTGROWTH_CELSIUS:g} °C",
 )
@@ -134,6 +141,7 @@ def protocol(
     checks: Sequence[judged.Check],
     host: str,
     polymerase: Polymerase,
+    cleanup_kit: Material,
     thresholds: Mapping[PrimerRole, Thresholds],
 ) -> Protocol:
     """Return the bench protocol for one planned assembly, ready to render.
@@ -167,6 +175,7 @@ def protocol(
             host=host,
             polymerase=polymerase,
             phenotype=phenotype,
+            cleanup_kit=cleanup_kit,
         ),
         oligos=tuple(
             oligo_row(oligo.report, purpose=_purpose(oligo), thresholds=thresholds[oligo.role])
@@ -184,9 +193,14 @@ def protocol(
             phenotype=phenotype,
             host=host,
             polymerase=polymerase,
+            cleanup_kit=cleanup_kit,
         ),
-        references=_references(parts, overhangs, phenotype),
-        sources={**BENCH_SOURCES, **PCR_SOURCES, **GOLDEN_GATE_SOURCES},
+        sources={
+            **BENCH_SOURCES,
+            **PCR_SOURCES,
+            **GOLDEN_GATE_SOURCES,
+            **fidelity_sources(overhangs.fidelity),
+        },
     )
     return citing(one)
 
@@ -262,6 +276,7 @@ def _materials(
     host: str,
     polymerase: Polymerase,
     phenotype: Phenotype,
+    cleanup_kit: Material,
 ) -> tuple[Material, ...]:
     """Every reagent and consumable the protocol asks for. The oligos are the order sheet."""
     fragments = len(parts)
@@ -285,7 +300,7 @@ def _materials(
             amount=f"{DPNI_UNITS} units per PCR",
             note="cuts the methylated plasmid template only",
         ),
-        Material("PCR and gel cleanup spin columns"),
+        cleanup_kit,
         Material(
             mix.name,
             supplier=SUPPLIER,
@@ -304,7 +319,8 @@ def _materials(
             "SOC or NEB 10-beta/Stable Outgrowth Medium",
             amount=f"{OUTGROWTH_UL:g} µL per transformation",
         ),
-        Material(_plate(phenotype), amount="one plate per transformation"),
+        plate_material(phenotype),
+        MINIPREP_KIT,
         catalogued(
             COLONY_PCR_MASTER_MIX,
             supplier=SUPPLIER,
@@ -328,17 +344,6 @@ def _purpose(oligo: DesignedOligo) -> str:
     return COLONY_PCR_TITLE if oligo.role == "colony PCR" else SEQUENCING_TITLE
 
 
-def _plate(phenotype: Phenotype) -> str:
-    """Return what to pour the selection plates with."""
-    antibiotic = phenotype.antibiotic or "the vector's own antibiotic"
-    if phenotype.blue_white:
-        return (
-            f"{phenotype.medium} agar plates with {antibiotic}, {XGAL_UG_ML} µg/mL X-gal "
-            f"and {IPTG_UM} µM IPTG"
-        )
-    return f"{phenotype.medium} agar plates with {antibiotic}"
-
-
 def _steps(
     *,
     parts: Sequence[Part],
@@ -351,11 +356,16 @@ def _steps(
     phenotype: Phenotype,
     host: str,
     polymerase: Polymerase,
+    cleanup_kit: Material,
 ) -> tuple[Step, ...]:
     """Return the steps in the order they happen, the shared ones carrying Golden Gate's notes."""
     enzyme = assembly.enzyme
     cut = [part for part in parts if part.dpni]
-    made = [_pcr_step(part, enzyme, polymerase) for part in parts]
+    files = amplicon_files(part.name for part in parts)
+    made = [
+        figured(_pcr_step(part, polymerase), _tail_figure(part, enzyme, path))
+        for part, path in zip(parts, files, strict=True)
+    ]
     made.append(gel_step([(part.name, part.length) for part in parts]))
     if cut:
         made.append(
@@ -373,6 +383,7 @@ def _steps(
         )
     made.append(
         cleanup_step(
+            kit=cleanup_kit,
             notes=(
                 Note(
                     "The reaction takes purified amplicons: polymerase carried over from the "
@@ -380,7 +391,7 @@ def _steps(
                     "mis-assembles them.",
                     citation=Citation("E1601"),
                 ),
-            )
+            ),
         )
     )
     made.append(quantify_step(amounts))
@@ -390,7 +401,13 @@ def _steps(
             JOIN_SECTION,
             _assembly_step(enzyme, amounts),
             figured(
-                _cycling_step(enzyme, len(parts), assembly.junctions, len(assembly.product)),
+                _cycling_step(
+                    enzyme,
+                    len(parts),
+                    assembly.junctions,
+                    len(assembly.product),
+                    overhangs.fidelity,
+                ),
                 _assembly_figure(assembly),
             ),
         ),
@@ -420,7 +437,7 @@ def _steps(
     )
 
 
-def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
+def _pcr_step(part: Part, polymerase: Polymerase) -> Step:
     """Amplify one part with the tails that carry the enzyme site."""
     return pcr_step(
         part.name,
@@ -434,15 +451,33 @@ def _pcr_step(part: Part, enzyme: Enzyme, polymerase: Polymerase) -> Step:
         notes=(
             "The cycle count is the fewest enough for an amplicon going into an assembly; "
             "fewer cycles means fewer PCR errors.",
-            f"The primers carry a {enzyme.name} site pointing back into the part, so "
-            f"cutting the amplicon leaves {part.left_overhang} and {part.right_overhang}.",
         ),
+    )
+
+
+def _tail_figure(part: Part, enzyme: Enzyme, path: str) -> Figure:
+    """Return the end of the part's amplicon its forward primer makes, and what the cut leaves.
+
+    That end's overhang is the part's own, the other belonging to the next part round the
+    circle, so across the parts' steps every junction is drawn once.
+    """
+    left, right = part.left_overhang, part.right_overhang
+    return tail_figure(
+        part.amplicon,
+        path=path,
+        primer=part.forward.name,
+        enzymes=(enzyme.name,),
+        caption=(
+            f"The {part.name} amplicon's forward end: the {enzyme.name} site its tail carries, "
+            f"and the {left} overhang the cut leaves. The reverse end leaves {right}."
+        ),
+        highlight=(site_name(enzyme), overhang_name(left)),
     )
 
 
 def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
     """Set the one-tube digest and ligation up."""
-    table = assembly_reaction(enzyme, amounts)
+    table = assembly_reaction(enzyme, amounts, measured=True)
     total = sum(component.volume_ul for component in table.components)
     return Step(
         "Set up the Golden Gate reaction",
@@ -456,7 +491,6 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
         ),
         tables=(table,),
         expected=(f"A {total:g} µL reaction holding every fragment.",),
-        notes=("The volumes above assume the concentrations measured in the step before.",),
         troubleshooting=(
             Troubleshooting(
                 "The DNA does not fit the reaction volume",
@@ -468,9 +502,14 @@ def _assembly_step(enzyme: Enzyme, amounts: tuple[Amount, ...]) -> Step:
 
 
 def _cycling_step(
-    enzyme: Enzyme, fragments: int, junctions: Sequence[Junction], length: int
+    enzyme: Enzyme,
+    fragments: int,
+    junctions: Sequence[Junction],
+    length: int,
+    fidelity: FidelityReport,
 ) -> Step:
     """Run it, and the heat inactivation the supplier gives."""
+    scored = fidelity_citation(fidelity)
     programs = [assembly_program(enzyme, fragments=fragments)]
     kill = heat_inactivation(enzyme)
     if kill is not None:
@@ -491,7 +530,20 @@ def _cycling_step(
         instructions=("Put the tube in the thermocycler and run the program below.",),
         programs=tuple(programs),
         expected=tuple(expected),
-        notes=("Junction positions are 1-based, on the product.",),
+        notes=(
+            *(
+                (
+                    Note(
+                        "The fidelity this design was scored on is read from measured "
+                        "ligation counts.",
+                        citation=scored,
+                    ),
+                )
+                if scored
+                else ()
+            ),
+            "Junction positions are 1-based, on the product.",
+        ),
         troubleshooting=(
             Troubleshooting(
                 "Mostly empty vector later",
@@ -518,15 +570,3 @@ def _assembly_figure(assembly: Assembly) -> Figure:
         enzymes=(enzyme,),
         highlight=tuple(dict.fromkeys(one.feature_name for one in assembly.junctions)),
     )
-
-
-def _references(
-    parts: Sequence[Part], overhangs: OverhangSet, phenotype: Phenotype
-) -> tuple[Reference, ...]:
-    """Where the numbers come from."""
-    items = [*GOLDEN_GATE_REFERENCES, *BENCH_REFERENCES, Reference(overhangs.fidelity.source)]
-    if any(part.dpni for part in parts):
-        items.append(DPNI_REFERENCE)
-    if phenotype.blue_white:
-        items.append(PLATE_REFERENCE)
-    return tuple(items)

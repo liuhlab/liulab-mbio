@@ -9,7 +9,7 @@ import math
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import KW_ONLY, dataclass, field, fields, is_dataclass, replace
+from dataclasses import KW_ONLY, MISSING, Field, dataclass, field, fields, is_dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from pathlib import Path
 from types import MappingProxyType
@@ -125,7 +125,7 @@ def number(value: float) -> str:
 
 @dataclass(frozen=True, slots=True)
 class Source:
-    """A document a number was read from, named once and cited by key.
+    """A document a claim on the page rests on, named once and cited by key.
 
     Parameters
     ----------
@@ -163,11 +163,11 @@ class Source:
 
 @dataclass(frozen=True, slots=True)
 class Citation:
-    """Where in a source one row's number stands.
+    """Where in a source the claim one row or sentence makes stands.
 
     Provenance is per row, not per number: a citation hangs on the component, the incubation,
-    the cycling stage, the material or the bill row that carries the number, and on the
-    troubleshooting entry whose solution it gives.
+    the cycling stage, the material or the bill row that carries the number, and on the expected
+    line, note, caution or troubleshooting entry whose sentence it backs.
 
     Parameters
     ----------
@@ -435,6 +435,82 @@ class Oligo:
 
 
 @dataclass(frozen=True, slots=True)
+class AmountToVolume:
+    """A calculator on a reaction row: the volume that carries its DNA at the bench's concentration.
+
+    The page opens it at the concentration the row's `volume_ul` assumes.
+
+    Parameters
+    ----------
+    nanograms
+        What the row has to carry.
+    made_up_by
+        The row of the same table that gives way, such as the water.
+    too_dilute
+        The `Troubleshooting.problem` the page shows once the DNA no longer fits, read from the
+        row's own step or else another step of the protocol.
+    least_ul, too_concentrated
+        The least volume a method lets its row take, and the problem shown below it. Unset,
+        nothing warns of a volume too small.
+    """
+
+    nanograms: float
+    _: KW_ONLY
+    made_up_by: str
+    too_dilute: str = ""
+    least_ul: float | None = None
+    too_concentrated: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse an amount that is not positive, or a least volume without its problem."""
+        _require(self.nanograms > 0, "a calculator's nanograms must be positive")
+        _require(self.least_ul is None or self.least_ul > 0, "a calculator's least_ul is positive")
+        _require(
+            (self.least_ul is None) == (not self.too_concentrated),
+            "a calculator's least_ul and too_concentrated come together",
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CountToNet:
+    """A calculator on an expected result: what a plated count comes to, against its floor.
+
+    The reader counts the plate and the control beside it and says what the dilution was; the
+    page takes the control off, scales back up and reads the net against `floor`. The counted
+    plate opens empty, so until someone counts it the page shows no net and no verdict: a floor
+    is what the plan asked for, not a reading, and an uncounted plate has passed nothing.
+
+    Parameters
+    ----------
+    floor
+        The net count the design asked for. Nothing here works it out: a method computes it and
+        the page only compares.
+    counted
+        What the plate is called, in the step's own words.
+    counting
+        What is counted, such as colonies, for the line that states the net.
+    control
+        What the control plate is called, whose count comes off. Empty where a step plates none.
+    below_floor
+        The `Troubleshooting.problem` the page shows once the net is short of the floor, read
+        from the step's own entries or else another step's.
+    """
+
+    floor: int
+    _: KW_ONLY
+    counted: str
+    counting: str
+    control: str = ""
+    below_floor: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse a floor that is not positive, or a count of nothing named."""
+        _require(self.floor > 0, "a calculator's floor must be positive")
+        _require(bool(self.counted.strip()), "a calculator says what was counted")
+        _require(bool(self.counting.strip()), "a calculator says what it counts")
+
+
+@dataclass(frozen=True, slots=True)
 class Component:
     """One line of a reaction table.
 
@@ -450,6 +526,9 @@ class Component:
         ``False`` for a component added to each tube separately, such as template.
     citation
         Where the volume was read.
+    calculator
+        Where the bench measures this row's concentration, which the page then takes in place
+        of `stock`.
     """
 
     name: str
@@ -459,10 +538,15 @@ class Component:
     final: str = ""
     master_mix: bool = True
     citation: Citation | None = None
+    calculator: AmountToVolume | None = None
 
     def __post_init__(self) -> None:
-        """Refuse a volume that is not positive."""
+        """Refuse a volume that is not positive, or a stock beside the one the bench measures."""
         _require(self.volume_ul > 0, f"component {self.name!r}: volume_ul must be positive")
+        _require(
+            self.calculator is None or not self.stock,
+            f"component {self.name!r}: the bench measures its stock, so it states none",
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -488,10 +572,18 @@ class ReactionTable:
     overage: float = 0.1
 
     def __post_init__(self) -> None:
-        """Refuse an empty table, fewer than one reaction, or a negative overage."""
+        """Refuse an empty table, no reaction, a negative overage, or a calculator's stray row."""
         _require(bool(self.components), f"reaction table {self.title!r} has no component")
         _require(self.reactions >= 1, "reactions must be at least 1")
         _require(self.overage >= 0, "overage must not be negative")
+        plain = {c.name for c in self.components if c.calculator is None}
+        for component in self.components:
+            if component.calculator is not None:
+                _require(
+                    component.calculator.made_up_by in plain,
+                    f"reaction table {self.title!r}: {component.name!r} is made up by "
+                    f"{component.calculator.made_up_by!r}, which is no other row of it",
+                )
 
     def mix_volumes(self, reactions: int) -> tuple[float | None, ...]:
         """Return each component's master-mix volume in µL, to 0.01 µL.
@@ -619,6 +711,27 @@ class ThermocyclerProgram:
             total += stage.cycles * sum(i.seconds or 0 for i in stage.incubations)
         return total
 
+    @property
+    def timer(self) -> "Timer | None":
+        """The countdown the page gives this run, so no step holds a `Timer` for a program.
+
+        It counts `duration_seconds`, and is ``None`` where that bounds nothing: a blank cycle
+        count, or a program that is only an open hold.
+
+        Examples
+        --------
+        >>> hold = Stage((Incubation("Hold", 4.0, None),))
+        >>> ligate = Stage((Incubation("Ligate", 25.0, 600),))
+        >>> ThermocyclerProgram((ligate, hold), title="Ligation").timer
+        Timer(label='Ligation', seconds=600.0)
+        >>> ThermocyclerProgram((hold,)).timer is None
+        True
+        >>> ThermocyclerProgram((Stage((ligate.incubations[0],), cycles=None),)).timer is None
+        True
+        """
+        seconds = self.duration_seconds
+        return Timer(self.title or "Thermocycler program", seconds) if seconds else None
+
 
 def _check_bands(bands_bp: tuple[int, ...], owner: str) -> None:
     _require(all(bp > 0 for bp in bands_bp), f"{owner}: band sizes must be positive")
@@ -726,7 +839,11 @@ class Figure:
 
 @dataclass(frozen=True, slots=True)
 class Timer:
-    """A countdown the reader can start from the step."""
+    """A countdown the reader can start from the step.
+
+    `seconds` is the plan's time. The page lets the reader type their own, and keeps it as it
+    keeps a check mark, so the protocol never holds it.
+    """
 
     label: str
     seconds: float
@@ -801,6 +918,24 @@ class Caution:
 
 
 @dataclass(frozen=True, slots=True)
+class Expectation:
+    """What a step's reader should see if it worked, and where that was read.
+
+    Parameters
+    ----------
+    text
+        What the reader checks their result against, in a sentence.
+    citation
+        The document stating it. Absent where this run computed or chose the result, which is
+        most of them.
+    """
+
+    text: str
+    _: KW_ONLY
+    citation: Citation | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Troubleshooting:
     """A problem the reader may see at a step, and what to do about it.
 
@@ -816,22 +951,6 @@ class Troubleshooting:
     solution: str
     _: KW_ONLY
     citation: Citation | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class Reference:
-    """A citation, with an optional http(s) link."""
-
-    text: str
-    _: KW_ONLY
-    url: str = ""
-
-    def __post_init__(self) -> None:
-        """Refuse a link that is not http or https."""
-        _require(
-            not self.url or self.url.startswith(("http://", "https://")),
-            f"reference url must be http(s), got {self.url!r}",
-        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -1186,6 +1305,11 @@ class Bill:
         _require(bool(self.rows), f"bill {self.title!r} has no row")
 
     @property
+    def citations(self) -> tuple[Citation, ...]:
+        """Every citation this bill's rows carry, row by row."""
+        return tuple(row.citation for row in self.rows if row.citation)
+
+    @property
     def cited(self) -> frozenset[str]:
         """Every source key this bill's rows name.
 
@@ -1194,7 +1318,7 @@ class Bill:
         >>> Bill((BillRow("cells", 1, charge="9.00", citation=Citation("NEB")),)).cited
         frozenset({'NEB'})
         """
-        return frozenset(row.citation.source for row in self.rows if row.citation)
+        return frozenset(citation.source for citation in self.citations)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1294,7 +1418,12 @@ class Step:
     figures
         The records the step draws, shown under its instructions.
     gels, expected
-        What a successful step looks like.
+        What a successful step looks like. A bare expected line is one citing nothing, and the
+        tuple is left as it was written, since most of the package reads an expected line as
+        text; `expectations` gives each of them as an `Expectation`.
+    calculator
+        Where the reader has a count of their own to work out and read against what `expected`
+        states, shown under it.
     troubleshooting
         Problems the reader may see here.
     holes
@@ -1316,7 +1445,8 @@ class Step:
     transfers: tuple[Transfer, ...] = ()
     figures: tuple[Figure, ...] = ()
     gels: tuple[Gel, ...] = ()
-    expected: tuple[str, ...] = ()
+    expected: tuple[Expectation | str, ...] = ()
+    calculator: CountToNet | None = None
     troubleshooting: tuple[Troubleshooting, ...] = ()
     holes: tuple[Hole, ...] = ()
 
@@ -1348,6 +1478,17 @@ class Step:
         (Caution(text='Keep it on ice.', citation=None),)
         """
         return cast("tuple[Caution, ...]", self.cautions)
+
+    @property
+    def expectations(self) -> tuple[Expectation, ...]:
+        """Every expected line, each an `Expectation`, a bare string being one citing nothing.
+
+        Examples
+        --------
+        >>> Step("Run the gel", expected=("One band at 749 bp.",)).expectations
+        (Expectation(text='One band at 749 bp.', citation=None),)
+        """
+        return tuple(Expectation(one) if isinstance(one, str) else one for one in self.expected)
 
     @property
     def noted(self) -> tuple[Note, ...]:
@@ -1392,7 +1533,7 @@ class Step:
         True
         """
         bounded = [float(timer.seconds) for timer in self.timers]
-        bounded += [p.duration_seconds for p in self.programs if p.duration_seconds is not None]
+        bounded += [p.timer.seconds for p in self.programs if p.timer is not None]
         return sum(bounded) if bounded else None
 
     @property
@@ -1484,10 +1625,11 @@ class Protocol:
         page declaring what it mentions.
     vessels, plates
         What the run holds material in, and where each thing sits.
-    steps, references
+    steps
         In the order they are shown.
     sources
-        Every document a number was read from, keyed by what a `Citation` names it.
+        Every document a claim on the page rests on, keyed by what a `Citation` names it. A
+        page lists only the ones its citations name.
     holes
         Numbers missing from the run as a whole. One belonging to a step sits on that step.
     bill
@@ -1513,7 +1655,6 @@ class Protocol:
     vessels: tuple[Vessel, ...] = ()
     plates: tuple[Plate, ...] = ()
     steps: tuple[Step, ...] = ()
-    references: tuple[Reference, ...] = ()
     sources: Mapping[str, Source] = field(default_factory=dict, hash=False)
     holes: tuple[Hole, ...] = ()
     bill: Bill | None = None
@@ -1634,16 +1775,16 @@ class Protocol:
         return (self._sources(), self._wells(), self._rules(), self._holes())
 
     @property
-    def cited(self) -> frozenset[str]:
-        """Every source key this protocol's own citations name.
+    def citations(self) -> tuple[Citation, ...]:
+        """Every citation this protocol's own rows and its bill carry, kind by kind.
 
         Examples
         --------
-        >>> Protocol("Demo").cited
-        frozenset()
+        >>> Protocol("Demo").citations
+        ()
         """
-        return frozenset(
-            citation.source
+        return tuple(
+            citation
             for citation in (
                 *(m.citation for m in self.materials),
                 *(r.citation for m in self.materials for r in m.rules),
@@ -1661,10 +1802,22 @@ class Protocol:
                 *(t.citation for s in self.steps for t in s.troubleshooting),
                 *(c.citation for s in self.steps for c in s.cautioned),
                 *(n.citation for s in self.steps for n in s.noted),
+                *(o.citation for s in self.steps for o in s.expectations),
                 *(w.citation for s in self.steps for w in s.waits),
             )
             if citation
-        ) | (self.bill.cited if self.bill else frozenset())
+        ) + (self.bill.citations if self.bill else ())
+
+    @property
+    def cited(self) -> frozenset[str]:
+        """Every source key this protocol's own citations name.
+
+        Examples
+        --------
+        >>> Protocol("Demo").cited
+        frozenset()
+        """
+        return frozenset(citation.source for citation in self.citations)
 
     def _sources(self) -> Check:
         return _sources_check(self.cited, frozenset(self.sources))
@@ -1932,8 +2085,8 @@ def citing(protocol: Protocol) -> Protocol:
     """Return `protocol` with the sources its own citations name, and no others.
 
     A builder hands in every document the method might read from; which of them this run cited
-    depends on the steps it built. Dropping the rest is what keeps the reference list to
-    documents the reader can follow back to a row on the page.
+    depends on the steps it built. Dropping the rest keeps the data to documents the reader can
+    follow back to a sentence on the page.
 
     Examples
     --------
@@ -1974,29 +2127,59 @@ def write_project(project: Project, path: str | os.PathLike[str]) -> Path:
     return _write(project, path)
 
 
+def stated(what: Protocol | Project) -> bytes:
+    """Return what `what` says, for a page's key to be digested from.
+
+    The bytes `write_protocol` writes, less every field still at its default, so no class name
+    is in them and a field a class gains later changes nothing until something sets it.
+
+    Examples
+    --------
+    >>> json.loads(stated(Protocol("Demo")))
+    {'title': 'Demo'}
+    """
+    return _text(_plain(what, defaults=False)).encode()
+
+
 def _write(what: Protocol | Project, path: str | os.PathLike[str]) -> Path:
     out = Path(path)
-    out.write_text(json.dumps(_plain(what), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out.write_text(_text(_plain(what)), encoding="utf-8")
     return out
 
 
-def _plain(value: Any) -> Any:
-    """Return `value` as JSON data, writing a note or caution citing nothing as its text alone.
+def _text(data: Any) -> str:
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+
+
+def _plain(value: Any, *, defaults: bool = True) -> Any:
+    """Return `value` as JSON data, writing a sentence citing nothing as its text alone.
 
     So the common sentence stays the bare string a hand-edited file writes, and only one
-    carrying a citation grows an object.
+    carrying a citation grows an object. Without `defaults`, a field at its default is left
+    out, which is what `stated` digests and never what a file holds.
     """
     match value:
-        case Note(citation=None) | Caution(citation=None):
+        case Note(citation=None) | Caution(citation=None) | Expectation(citation=None):
             return value.text
         case _ if is_dataclass(value) and not isinstance(value, type):
-            return {f.name: _plain(getattr(value, f.name)) for f in fields(value)}
+            return {
+                f.name: _plain(getattr(value, f.name), defaults=defaults)
+                for f in fields(value)
+                if defaults or not _at_default(f, getattr(value, f.name))
+            }
         case Mapping():
-            return {key: _plain(item) for key, item in value.items()}
+            return {key: _plain(item, defaults=defaults) for key, item in value.items()}
         case tuple() | list():
-            return [_plain(item) for item in value]
+            return [_plain(item, defaults=defaults) for item in value]
         case _:
             return value
+
+
+def _at_default(f: Field[Any], value: Any) -> bool:
+    """Whether `value` is what field `f` holds when nothing sets it."""
+    if f.default is not MISSING:
+        return value == f.default
+    return f.default_factory is not MISSING and value == f.default_factory()
 
 
 _PROTOCOL = jsonfile.reader(Protocol)

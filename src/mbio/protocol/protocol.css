@@ -63,7 +63,7 @@ p { margin: 0 0 0.75rem; }
 a { color: var(--accent); overflow-wrap: anywhere; }
 .muted { color: var(--muted); }
 
-.summary { font-size: 1.08rem; color: var(--muted); max-width: 44rem; }
+.summary { font-size: 1.08rem; color: var(--muted); }
 
 /* Short facts only: a card is a few words, so the row stays one height. A sentence is
    .highlights, and the model refuses one here. */
@@ -77,8 +77,12 @@ a { color: var(--accent); overflow-wrap: anywhere; }
 .handover > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.55rem 0.8rem; }
 .handover ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.92rem; }
 
-.highlights { max-width: 44rem; margin: 0 0 1rem; }
-.highlights p:last-child { margin-bottom: 0; }
+/* The head reads as bands: the sentences, the verdicts and the step count each open under a thin
+   rule rather than in a box, since the facts and the handover above are boxes already. Its prose
+   takes the page's full measure, as a step's does, and no narrower cap of its own. */
+.highlights, .status, .intro .toolbar { border-top: 1px solid var(--line); padding-top: 0.9rem; margin: 1.25rem 0 0; }
+.intro .toolbar { margin-bottom: 1.25rem; }
+.highlights p:last-child, .status > :last-child { margin-bottom: 0; }
 
 .checks { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; margin: 0 0 0.6rem; }
 .check { display: inline-flex; align-items: baseline; gap: 0.45rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
@@ -110,12 +114,8 @@ button {
 button:hover { border-color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.toc { margin: 0 0 1.5rem; }
-.toc a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem; }
-
-/* Both lists of steps — the standalone table of contents and a page's right column — are this
-   list: one group per section, collapsed, so three like rounds read as three rounds. The step's
-   number is in the markup, so no counter here. */
+/* A page's list of steps, in its right column: one group per section, collapsed, so three like
+   rounds read as three rounds. The step's number is in the markup, so no counter here. */
 .step-nav, .step-list { list-style: none; margin: 0; padding: 0; }
 .step-nav .step-list { margin-top: 0.3rem; padding-left: 0.7rem; }
 .step-group + .step-group { margin-top: 0.45rem; }
@@ -123,9 +123,6 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .step-mark { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 0.35rem; }
 /* The count wraps whole or not at all: "0 of 8" on one line and "done" on the next reads as two. */
 .section-progress { font-weight: 400; font-size: 0.85em; white-space: nowrap; }
-/* Pills in a row, whether a step is grouped or loose; a group takes a row of its own. */
-.toc .step-nav, .toc .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.toc .step-group { flex: 1 0 100%; }
 
 .block, .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin: 0 0 1rem; }
 .block, .step { scroll-margin-top: calc(var(--bar) + 1rem); }
@@ -181,12 +178,33 @@ button.copy { font-size: 0.75rem; padding: 0.1rem 0.55rem; min-height: 1.6rem; m
 button.is-copied { border-color: var(--accent); color: var(--accent); }
 
 .timers { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-button.timer { display: inline-flex; gap: 0.5rem; align-items: baseline; }
-.timer-time { font-variant-numeric: tabular-nums; font-weight: 700; }
-.timer-action { color: var(--accent); }
-button.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
-button.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.program .timers { margin-top: 0.5rem; }
+.timer { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-size: 0.85rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.2rem 0.15rem 0.8rem; }
+.timer label { display: inline-flex; gap: 0.5rem; align-items: baseline; }
+/* The time is typed over in place: a dashed rule marks it as a field until it starts. */
+.timer-time { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.timer-time:read-only { border-bottom-color: transparent; }
+.timer-action { color: var(--accent); min-height: 1.75rem; }
+.timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+.timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
+.timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
+
+/* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
+   warning is the step's own troubleshooting entry in the caution colours. */
+.calc { white-space: nowrap; }
+.calc-value { font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; field-sizing: content; min-width: 3ch; text-align: right; color: inherit; background: transparent; border: none; border-bottom: 1px dashed var(--muted); padding: 0; }
+.calc-value:read-only { border-bottom-color: transparent; }
+/* The number to beat stands in an uncounted field light, so it never reads as what was counted. */
+.calc-value::placeholder { font-weight: 400; color: var(--muted); opacity: 1; }
+.calc-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; padding: 0.1rem 0.55rem; margin-left: 0.4rem; }
+.calc-held { font-size: 0.75rem; color: var(--muted); margin-left: 0.4rem; }
+.calc-warning { background: var(--caution-soft); color: var(--caution); border-radius: 8px; padding: 0.5rem 0.75rem; margin: 0.5rem 0 0; font-size: 0.9rem; }
+.reaction tr.is-over td, .reaction.is-over tfoot .one { color: var(--caution); font-weight: 700; }
+.net-count { margin-top: 0.6rem; }
+.net-fields { display: flex; flex-wrap: wrap; gap: 0.1rem 1.1rem; margin: 0 0 0.3rem; }
+.net-sum { margin: 0; }
+.net-sum.is-short { color: var(--caution); }
 
 /* A gel is taller than it is wide, so its height is what has to fit on the screen. */
 .gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
@@ -236,7 +254,39 @@ tfoot .muted { font-weight: 400; }
 .listing { font-size: 0.9rem; margin-top: 0.6rem; }
 .listing summary { cursor: pointer; color: var(--muted); }
 .swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
-.cite { color: var(--muted); font-size: 0.85em; }
+
+/* A citation: a bracketed number that lands on its entry in the sources list. The padding is a
+   finger's target, the negative margin keeps the text from shifting, and a line height of
+   nothing keeps the raised number from opening the line. */
+.cite { text-decoration: none; padding: 0.35em 0.2em; margin: 0 -0.2em; border-radius: 4px; }
+.cite:hover { text-decoration: underline; }
+.cite:focus-visible { outline-offset: 0; }
+.cite sup { font-size: 0.72em; line-height: 0; font-variant-numeric: tabular-nums; }
+.sources ol { padding-left: 1.8rem; }
+.sources li { margin-bottom: 0.4rem; scroll-margin-top: calc(var(--bar) + 1rem); }
+.sources li:target { background: var(--accent-soft); outline: 4px solid var(--accent-soft); border-radius: 2px; }
+.sources .cited-at, .sources .cited-by { display: block; color: var(--muted); font-size: 0.9em; }
+
+/* A step's figure stands in a box of its own with its caption inside, so it never reads as one
+   of the instructions. Its drawing is drawn small; the control under it opens the record's map in
+   place, whole and to explore, and takes the small drawing's place until closed. */
+.drawing.map { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 0.75rem; }
+.drawing.map:not(.rows), .drawing.map .row { display: flex; flex-direction: column; }
+.drawing.map .opener[open] { order: -1; margin-top: 0; }
+.drawing.map .row-name { order: -2; font-weight: 600; }
+.drawing.map:has(> .opener[open]) > svg, .row:has(> .opener[open]) > svg { display: none; }
+.drawing.map svg { max-height: 24rem; width: auto; margin-inline: auto; border-radius: 6px; }
+.drawing.map figcaption { font-weight: 400; font-size: 0.92rem; margin: 0.6rem 0 0; }
+.opener { margin-top: 0.6rem; }
+.opener > summary { display: inline-flex; align-items: center; gap: 0.4rem; list-style: none; cursor: pointer; font-size: 0.85rem; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 2rem; }
+.opener > summary::-webkit-details-marker { display: none; }
+.opener > summary::before { content: "\2922"; font-size: 0.95em; }
+.opener[open] > summary::before { content: "\2715"; }
+.opener > summary:hover { border-color: var(--accent); }
+.opener[open] .to-open, .opener:not([open]) .to-close { display: none; }
+/* Tall enough for the map and its switches, and no taller than a phone's width needs. */
+.opener iframe { display: block; width: 100%; height: min(78vh, 42rem, calc(60vw + 14rem)); margin: 0.6rem 0 0.3rem; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
+.new-tab { font-size: 0.85rem; }
 
 /* A project folder: the run's nav bar across the top, a column either side of the page. */
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -244,6 +294,10 @@ tfoot .muted { font-weight: 400; }
 .site a[aria-current] { color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
 .frame { --bar: 3.1rem; display: grid; align-items: start; gap: 0 1.6rem; grid-template-columns: 13rem minmax(0, 1fr) 12rem; max-width: 80rem; margin: 0 auto; }
 .frame .page { padding-block: 1.5rem 4rem; }
+/* A page outside a run has no bar and no run to list: the page, and its steps beside it. No
+   more specific than .frame, so the narrow layout below folds it as it folds a run's page. */
+.frame:where(.alone) { --bar: 0rem; grid-template-columns: minmax(0, 1fr) 12rem; max-width: calc(54rem + 1.6rem + 12rem); }
+.frame:where(.alone) .page { padding-block: 2rem 4rem; }
 .column { position: sticky; top: var(--bar); max-height: calc(100vh - var(--bar) - 1.4rem); overflow: auto; padding-block: 1.6rem; font-size: 0.9rem; }
 .column-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.45rem; }
 .column ol { margin: 0; padding-left: 1.3rem; }
@@ -301,12 +355,14 @@ tfoot .muted { font-weight: 400; }
 .kit-list .vessels { display: grid; gap: 0.3rem; }
 .hole a { white-space: nowrap; }
 
-/* Too narrow for columns: both lists wrap into rows above the page, as the step list does. */
+/* Too narrow for columns: each list wraps into rows above the page. */
 @media (max-width: 70rem) {
   .frame { display: flex; flex-direction: column; max-width: 54rem; }
   /* A flex item sizes to its content, so without this the widest table widens the page. */
-  .frame .page { order: 1; width: 100%; padding-block: 0.5rem 4rem; }
+  .frame .page { order: 1; width: 100%; padding-block: 1.2rem 4rem; }
   .column { position: static; max-height: none; overflow: visible; padding-block: 0.6rem 0; }
+  /* The last list above the page closes under a rule, so the title opens a block of its own. */
+  .column.within { align-self: stretch; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
   .column ol, .column .step-nav, .column .step-list { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; list-style: none; padding-left: 0; }
   .column .step-group { flex: 1 0 100%; }
   .column li { margin-bottom: 0; }
@@ -331,7 +387,9 @@ tfoot .muted { font-weight: 400; }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
-  .toolbar, .toc, .site, .column, button.copy, .timer-action { display: none !important; }
+  .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
+  /* A figure prints small whether or not its map was open on screen. */
+  .drawing.map svg { display: block !important; }
   .frame { display: block; max-width: none; }
   .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }
@@ -342,11 +400,15 @@ tfoot .muted { font-weight: 400; }
   /* Paper has no toggle, so the reasons and the gathered holes print with the sheet. */
   .oligo-checks:not([open]) > ul, .hole-group:not([open]) > ul { display: block; }
   .oligo-checks::details-content, .hole-group::details-content { content-visibility: visible; }
-  button.timer { border: 1px solid var(--line); animation: none; }
+  .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
+  .timer-time { border: none; }
+  .timer-plan { display: none; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
   .count input { border: none; width: 2.5rem; }
+  .calc-value { border: none; }
+  .calc-plan, .calc-held { display: none !important; }
+  .calc-warning { border: 1px solid var(--line); }
   .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
-  .references a::after { content: none; }
 }
