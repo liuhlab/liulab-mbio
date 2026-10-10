@@ -72,11 +72,10 @@ Rule 4 of `docs/agents/writing.md` says how each field is worded; read it before
   step the reader could split in two usually should be.
 - **Volumes in a reaction table**, never buried in a sentence: the reader scales it to their
   reaction count and pipettes from it. Mark anything added to each tube separately, such as
-  template, as not part of the master mix. A DNA row whose concentration the bench measures
-  first carries a `calculator` instead of a `stock`: the nanograms it holds, the row that
-  makes up the volume, and the troubleshooting problem to show when it no longer fits. The
-  reader types the concentration, and the page gives the volume. Rename that row or reword
-  that problem and change the calculator with it.
+  template, as not part of the master mix. A DNA row the bench measures carries a
+  `calculator`, not a `stock`: its nanograms, the row making up the volume, and the
+  troubleshooting problem it shows once the DNA no longer fits. Rename either, and change the
+  calculator too.
 - **Thermocycler programs as programs**, with stages, cycles and the lid temperature.
 - **Timers** for any wait the reader has to track. A program gets its own from its run time,
   so add none for one. Give no timer to a time stated only in words, such as overnight.

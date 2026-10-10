@@ -237,69 +237,96 @@
     });
   });
 
-  // Calculators: a row the bench measures gives the volume that carries its amount, and the row
-  // it names makes up the difference. Arithmetic here is only over numbers render.py wrote, never
-  // a constant or a formula of the package's. Storage, the way back and the lock follow timers'.
-  function calculators(figure, redraw) {
-    var rows = all("tbody > tr", figure);
-    var measured = rows.filter(function (row) { return row.classList.contains("measured"); });
-    if (!measured.length) return null;
-    var planned = rows.map(function (row) { return parseFloat(row.getAttribute("data-rxn-ul")); });
-    var step = figure.closest(".step");
+  // Calculators. Arithmetic here is only over numbers render.py wrote, never a constant or a
+  // formula of the package's.
+  //
+  // Every calculator's input is a reader's number: a field over the number the protocol gives,
+  // its `data-plan`. The page keeps the reader's only where it differs, offers the protocol's
+  // back on the button beside it, and holds the field still while anything in its step is
+  // ticked, as a timer's time does while it runs. `changed` hears each value it takes.
+  function readerNumber(field, back, changed) {
+    var key = field.getAttribute("data-key");
+    var plan = parseFloat(field.getAttribute("data-plan"));
+    var shown = field.defaultValue;
+    var step = field.closest(".step");
     var marks = step ? all('input[type="checkbox"][data-key]', step) : [];
-
-    var calcs = measured.map(function (row) {
-      var key = row.getAttribute("data-key");
-      var field = row.querySelector(".calc-value");
-      var one = {
-        row: row,
-        at: rows.indexOf(row),
-        fill: Number(row.getAttribute("data-fill")),
-        nanograms: parseFloat(row.getAttribute("data-ng")),
-        plan: parseFloat(row.getAttribute("data-ng-ul")),
-        least: parseFloat(row.getAttribute("data-least-ul")),
-        field: field,
-        back: row.querySelector(".calc-plan"),
-        shown: field.defaultValue,
-        key: key
-      };
-      one.value = typeof state[key] === "number" && state[key] > 0 ? state[key] : one.plan;
-      return one;
-    });
-
-    // What the reader typed, as a concentration: null for anything that is not one. The number
-    // the page opened with reads as the plan's own, though it is printed rounded.
-    function typed(one) {
-      var text = one.field.value.trim();
-      if (text === one.shown) return one.plan;
-      if (!/^\d*\.?\d+$/.test(text)) return null;
-      var value = Number(text);
-      return value > 0 ? value : null;
-    }
+    var value = typeof state[key] === "number" && state[key] > 0 ? state[key] : plan;
 
     function locked() {
       return marks.some(isTicked);
     }
 
-    function show(one) {
-      one.field.value = one.value === one.plan ? one.shown : String(one.value);
-      one.field.readOnly = locked();
-      if (one.back) one.back.hidden = one.value === one.plan || locked();
+    // What the reader typed: null for anything that is not a positive number. The number the
+    // page opened with reads as the protocol's own, though it is printed rounded.
+    function typed() {
+      var text = field.value.trim();
+      if (text === shown) return plan;
+      if (!/^\d*\.?\d+$/.test(text)) return null;
+      return Number(text) > 0 ? Number(text) : null;
     }
 
-    function keep(one) {
-      if (one.value !== one.plan) state[one.key] = one.value;
-      else delete state[one.key];
+    function show() {
+      field.value = value === plan ? shown : String(value);
+      field.readOnly = locked();
+      if (back) back.hidden = value === plan || locked();
+    }
+
+    function take(to) {
+      value = to;
+      if (value !== plan) state[key] = value;
+      else delete state[key];
       save();
+      changed();
     }
 
-    // Each row's volume for one reaction: the plan's, or the one the typed concentration gives,
-    // with what a row gained taken off the row that makes it up.
+    field.addEventListener("input", function () {
+      var to = typed();
+      if (to === null || locked()) return;
+      take(to);
+      if (back) back.hidden = value === plan;
+    });
+    // A slip leaves the number as it was, and the field says so once the reader moves on.
+    field.addEventListener("change", show);
+    if (back) back.addEventListener("click", function () { take(plan); show(); });
+    if (step) {
+      step.addEventListener("change", function (event) {
+        if (event.target.type === "checkbox") show();
+      });
+    }
+    show();
+    return {
+      plan: plan,
+      value: function () { return value; }
+    };
+  }
+
+  // A row the bench measures gives the volume that carries its amount, and the row it names
+  // makes up the difference.
+  function calculators(figure, redraw) {
+    var rows = all("tbody > tr", figure);
+    var measured = rows.filter(function (row) { return row.classList.contains("measured"); });
+    if (!measured.length) return null;
+    var planned = rows.map(function (row) { return parseFloat(row.getAttribute("data-rxn-ul")); });
+
+    var calcs = measured.map(function (row) {
+      return {
+        row: row,
+        at: rows.indexOf(row),
+        fill: Number(row.getAttribute("data-fill")),
+        nanograms: parseFloat(row.getAttribute("data-ng")),
+        least: parseFloat(row.getAttribute("data-least-ul")),
+        input: readerNumber(row.querySelector(".calc-value"), row.querySelector(".calc-plan"), redraw)
+      };
+    });
+
+    // Each row's volume for one reaction: the protocol's, or the one the typed concentration
+    // gives, with what a row gained taken off the row that makes it up.
     function volumes() {
       var ul = planned.slice();
       calcs.forEach(function (one) {
-        if (one.value === one.plan) return;
-        var volume = one.nanograms / one.value;
+        var value = one.input.value();
+        if (value === one.input.plan) return;
+        var volume = one.nanograms / value;
         ul[one.fill] -= volume - planned[one.at];
         ul[one.at] = volume;
       });
@@ -311,7 +338,7 @@
       var fired = {};
       calcs.forEach(function (one) {
         var problem = one.row.getAttribute("data-too-dilute");
-        if (problem && ul[one.fill] <= 0) fired[problem] = true;
+        if (problem && ul[one.fill] < 0) fired[problem] = true;
         problem = one.row.getAttribute("data-too-concentrated");
         if (problem && ul[one.at] < one.least) fired[problem] = true;
       });
@@ -322,9 +349,9 @@
         // A row making up the difference cannot go below nothing: the reaction outgrows its
         // volume instead, and the total says by how much.
         var volume = Math.max(0, ul[i]);
-        var empty = ul[i] <= 0 && calcs.some(function (one) { return one.fill === i; });
-        row.classList.toggle("is-over", empty);
-        spent = spent || empty;
+        var short = ul[i] < 0;
+        row.classList.toggle("is-over", short);
+        spent = spent || short;
         row.querySelector(".one").textContent = number(volume);
         var mix = row.querySelector("[data-ul]");
         if (mix) {
@@ -345,34 +372,6 @@
       });
       all(".calc-warning", figure).forEach(function (warning) {
         warning.hidden = !fired[warning.getAttribute("data-problem")];
-      });
-    }
-
-    calcs.forEach(function (one) {
-      show(one);
-      one.field.addEventListener("input", function () {
-        var value = typed(one);
-        if (value === null || locked()) return;
-        one.value = value;
-        keep(one);
-        if (one.back) one.back.hidden = one.value === one.plan;
-        redraw();
-      });
-      // A slip leaves the row as it was, and the field says so once the reader moves on.
-      one.field.addEventListener("change", function () { show(one); });
-      if (one.back) {
-        one.back.addEventListener("click", function () {
-          one.value = one.plan;
-          keep(one);
-          show(one);
-          redraw();
-        });
-      }
-    });
-
-    if (step) {
-      step.addEventListener("change", function (event) {
-        if (event.target.type === "checkbox") calcs.forEach(show);
       });
     }
 

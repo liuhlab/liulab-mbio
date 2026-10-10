@@ -390,8 +390,9 @@ def test_a_measured_row_opens_at_the_concentration_its_volume_assumes() -> None:
     figure = parse(render_html(protocol)).find_all(cls="reaction")[0]
 
     [measured] = figure.find_all("tr", cls="measured")
-    assert (measured.attrs["data-ng-ul"], measured.attrs["data-fill"]) == ("40.99", "1")
-    assert measured.find_all("input", cls="calc-value")[0].attrs["value"] == "41"
+    assert measured.attrs["data-fill"] == "1"
+    [field] = measured.find_all("input", cls="calc-value")
+    assert (field.attrs["data-plan"], field.attrs["value"]) == ("40.99", "41")
     [warning] = figure.find_all(cls="calc-warning")
     assert "hidden" in warning.attrs
     assert warning.text == "Too dilute. Concentrate it."

@@ -2347,7 +2347,8 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
         cells = [f"<td>{escape(component.name)}{_after(component.citation)}</td>"]
         if component.calculator is not None:
             assumed = component.calculator.nanograms / component.volume_ul
-            cells.append(_concentration(component.name, assumed))
+            field = _reader_number(f"{key}.row.{row}", assumed, "ng/µL", component.name)
+            cells.append(f'<td class="calc">{field}</td>')
         elif stock:
             cells.append(f"<td>{escape(component.stock)}</td>")
         cells += [f"<td>{escape(component.final)}</td>"] if final else []
@@ -2358,7 +2359,7 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
             cells.append(f'<td class="num mix" data-ul="{component.volume_ul!r}">{mix}</td>')
         else:
             cells.append('<td class="num per-tube">each tube</td>')
-        attrs = _live_row(f"{key}.row.{row}", component, table) if live else ""
+        attrs = _live_row(component, table) if live else ""
         rows.append(f"<tr{attrs}>{''.join(cells)}</tr>")
     blanks = "<td></td>" * (stock + final)
     in_mix = sum(c.volume_ul for c in table.components if c.master_mix)
@@ -2401,36 +2402,34 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
     )
 
 
-def _concentration(name: str, assumed: float) -> str:
-    """Return the stock cell of a row the bench measures, at the concentration the plan assumes.
+def _reader_number(key: str, plan: float, unit: str, label: str) -> str:
+    """Return a field the reader types a number over, opening at the protocol's `plan`.
 
-    The reader types over it; the plan's own goes back on the button beside it.
+    `protocol.js` keeps what they type under `key` and offers `plan` back, so every calculator's
+    input is this one. `label` names what is typed, for a reader who cannot see the row.
     """
-    shown = number(assumed)
+    shown = number(plan)
     return (
-        '<td class="calc"><label><input type="text" class="calc-value" inputmode="decimal"'
-        f' value="{shown}" size="5" autocomplete="off" spellcheck="false"'
-        f' aria-label="{escape(name)}, ng/µL measured"> ng/µL</label>'
-        '<button type="button" class="calc-plan" title="The concentration the protocol assumes"'
-        f" hidden>Back to {shown}</button></td>"
+        f'<label><input type="text" class="calc-value" inputmode="decimal" value="{shown}"'
+        f' data-plan="{plan!r}" data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
+        f' aria-label="{escape(label)}, {escape(unit)}"> {escape(unit)}</label>'
+        '<button type="button" class="calc-plan" title="What the protocol gives" hidden>'
+        f"Back to {shown}</button>"
     )
 
 
-def _live_row(key: str, component: Component, table: ReactionTable) -> str:
+def _live_row(component: Component, table: ReactionTable) -> str:
     """Return what `protocol.js` reads off one row of a live table.
 
-    The plan's volume, and for a row a calculator reaches, what it carries, the concentration
-    the plan assumes and the row that gives way.
+    The plan's volume, and for a row a calculator reaches, what it carries and the row that
+    gives way.
     """
     attrs = f' data-rxn-ul="{component.volume_ul!r}"'
     calculator = component.calculator
     if calculator is None:
         return attrs
     fill = [c.name for c in table.components].index(calculator.made_up_by)
-    attrs += (
-        f' class="measured" data-key="{key}" data-ng="{calculator.nanograms!r}"'
-        f' data-ng-ul="{calculator.nanograms / component.volume_ul!r}" data-fill="{fill}"'
-    )
+    attrs += f' class="measured" data-ng="{calculator.nanograms!r}" data-fill="{fill}"'
     if calculator.too_dilute:
         attrs += f' data-too-dilute="{escape(calculator.too_dilute)}"'
     if calculator.least_ul is not None:
