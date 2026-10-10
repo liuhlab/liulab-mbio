@@ -87,7 +87,7 @@ class Channels:
 def read_channels(path: str | os.PathLike[str]) -> Channels:
     """Read an ``.ab1`` trace's four channels and the scan at each base's peak.
 
-    A page takes it keyed by the name of the result `read_trace` reads from the same file.
+    A page takes it in the place of the result `read_trace` reads from the same file.
 
     Raises
     ------

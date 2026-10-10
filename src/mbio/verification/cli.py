@@ -84,7 +84,7 @@ def sequence_verify(
         judged = regions(record, feature or ())
         given = [read_result(one) for one in results]
         made = verify(record, given, judged)
-        channels = _channels(results, given) if out is not None else {}
+        channels = _channels(results) if out is not None else []
     except (KeyError, ValueError, NotImplementedError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error
@@ -96,13 +96,9 @@ def sequence_verify(
         raise typer.Exit(1)
 
 
-def _channels(paths: Sequence[Path], given: Sequence[SequencingResult]) -> dict[str, Channels]:
-    """Return each trace's channels, by the name of the result read from it."""
-    return {
-        one.name: read_channels(path)
-        for path, one in zip(paths, given, strict=True)
-        if path.suffix.lower() == ".ab1"
-    }
+def _channels(paths: Sequence[Path]) -> list[Channels | None]:
+    """Return each result's channels in the order given, ``None`` for one that is no trace."""
+    return [read_channels(path) if path.suffix.lower() == ".ab1" else None for path in paths]
 
 
 def report(made: Verification, results: Sequence[SequencingResult], length: int) -> list[str]:

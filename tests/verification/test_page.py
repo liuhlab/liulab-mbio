@@ -100,8 +100,7 @@ def _laid(
 ) -> page.Page:
     whole = Feature("read", "misc_feature", (Segment(0, len(record)),))
     verification = verify(record, (result,), (whole,))
-    given = {result.name: channels} if channels else None
-    return page.draw_page(record, (result,), verification, channels=given)
+    return page.draw_page(record, (result,), verification, channels=(channels,) if channels else ())
 
 
 def test_a_sanger_close_up_has_its_trace_under_it_each_peak_over_its_base(
@@ -136,6 +135,33 @@ def test_a_sanger_close_up_has_its_trace_under_it_each_peak_over_its_base(
     [mark] = row.mismatches
     assert mark.box.x // sequence_view.CELL == PLANTED - row.start
     assert len(parse(laid.html).find_all("g", cls="track")) == 1
+
+
+def test_two_traces_of_one_name_each_draw_their_own_channels(
+    trace: tuple[SequencingResult, Channels],
+) -> None:
+    """Channels pair with results by position, as checks and placements do, not by name."""
+    result, channels = trace
+    halved = Channels(
+        {base: tuple(value // 2 for value in scan) for base, scan in channels.scans.items()},
+        channels.peaks,
+    )
+    bases = _own_bases(result)
+    bases[PLANTED] = _OTHER[bases[PLANTED]]
+    record = SequenceRecord("".join(bases), name="own bases")
+    both = (result, result)
+    made = verify(record, both, ())
+    laid = page.draw_page(record, both, made, channels=(channels, halved))
+    [close] = laid.close_ups
+    view = close.drawing.sequence_view
+    assert view is not None
+    [row] = view.rows
+    assert [strip.track.curves[0].values for strip in row.strips] == [
+        channels.scans["A"],
+        halved.scans["A"],
+    ]
+    with pytest.raises(ValueError, match="one for each"):
+        page.draw_page(record, both, made, channels=(channels,))
 
 
 @pytest.mark.parametrize("reverse", [False, True])

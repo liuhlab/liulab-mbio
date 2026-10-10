@@ -193,7 +193,7 @@ def draw_page(
     results: Sequence[SequencingResult],
     verification: Verification,
     *,
-    channels: Mapping[str, Channels] | None = None,
+    channels: Sequence[Channels | None] = (),
 ) -> Page:
     """Lay out the page for one clone's `verification` of `results` against `expected`.
 
@@ -206,9 +206,21 @@ def draw_page(
     verification
         What `verify` made of them.
     channels
-        Each Sanger result's channels and peaks, by the result's name, drawn under its bases in
-        every close-up it reaches.
+        Each result's channels and peaks, in the order of `results`, drawn under its bases in
+        every close-up it reaches: ``None`` for a result that is no Sanger trace, and empty
+        where none is drawn. They pair with the results by position, as the checks and the
+        placements do, so two results of one name each draw their own.
+
+    Raises
+    ------
+    ValueError
+        If `channels` is given, but not one for each result.
     """
+    if channels and len(channels) != len(results):
+        raise ValueError(
+            f"{counted(len(channels), 'set')} of channels were given for "
+            f"{counted(len(results), 'result')}; give one for each, None for one with no trace"
+        )
     statuses: dict[str, Status | None] = {one.name: one.status for one in verification.checks}
     # Withheld from a result that does not read as the record, and from one that trusts nothing.
     placed = [one for one in verification.placements if one.strand is not None]
@@ -251,7 +263,7 @@ def draw_page(
     )
     lit = [name for name, _ in named]
     drawn = draw_map(copy, cut_sites=False, insertions=insertions, highlight=lit)
-    tracks = _tracks(expected, results, verification, channels or {})
+    tracks = _tracks(expected, results, verification, channels or [None] * len(results))
     close_ups = []
     for name, one in named:
         start, end = _window(one, expected)
@@ -364,7 +376,7 @@ def _tracks(
     record: SequenceRecord,
     results: Sequence[SequencingResult],
     verification: Verification,
-    channels: Mapping[str, Channels],
+    channels: Sequence[Channels | None],
 ) -> tuple[view.Track, ...]:
     """Return a track of each placed Sanger result's trace, each peak over the base it reads.
 
@@ -373,8 +385,7 @@ def _tracks(
     """
     tracks = []
     n = len(record)
-    for result, placement in zip(results, verification.placements, strict=True):
-        trace = channels.get(result.name)
+    for result, placement, trace in zip(results, verification.placements, channels, strict=True):
         if trace is None or placement.strand is None:
             continue
         laid = place(record, result)
