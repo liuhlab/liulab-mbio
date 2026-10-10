@@ -122,9 +122,8 @@ def test_the_screening_steps_print_the_notes_numbers_and_cite_where_each_came_fr
     assert f"{CORRECT_AT_FIVE} of {SCREENED_COLONIES} at five" in screen
     confirm = " ".join(n.text for n in steps[SEQUENCING_TITLE].noted)
     assert f"one error per {MOLECULES_PER_ERROR} molecules" in confirm
-    citations = " ".join(one.text for one in protocol.references)
-    for cited in ("In-Fusion Cloning FAQs", "Gibson, D.G.", "NEBuilder", "protocols.io", "REBASE"):
-        assert cited in citations
+    assert {"In-Fusion", "Gibson 2009", "E2621", "REBASE-DpnI"} <= protocol.cited
+    assert protocol.cited <= set(protocol.sources)
     for title in (COLONY_PCR_TITLE, SEQUENCING_TITLE):
         assert steps[title].troubleshooting
 
