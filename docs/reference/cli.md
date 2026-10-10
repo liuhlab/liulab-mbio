@@ -101,16 +101,18 @@ rules draw the same set again.
 ## Plan a cloning experiment
 
 Four methods, one command each, all under `mbio cloning`. Each reads SnapGene `.dna`, GenBank or
-FASTA files, and writes four files into `--out`:
+FASTA files, and writes five files into `--out`:
 
 | File | What it holds |
 | --- | --- |
 | `product.dna` | the plasmid the design makes, annotated |
 | `primers.tsv` | the oligos to order |
 | `protocol.json` | the bench protocol as data you can edit |
+| `product-map.html` | the product as a map you can explore, which the page's figure opens |
 | `protocol.html` | that protocol as one page, which opens offline |
 
-Gateway writes a fifth file, `entry-clone.dna`, where it also plans a BP reaction.
+Gateway also writes `entry-clone.dna` and its map, `entry-clone-map.html`, where it plans a BP
+reaction.
 
 Every one of the four prints a summary line, then each file it wrote. Five options are shared:
 

@@ -61,7 +61,7 @@ so closing the tab does not lose the sitting. `Reset page` puts them all back to
 `Print` lays the page out for paper.
 
 A step holds some of these, always in this order: cautions, instructions, a reaction table, a
-thermocycler program, timers, the expected result, troubleshooting, and notes. A note is the one
+thermocycler program, timers, a map, the expected result, troubleshooting, and notes. A note is the one
 place the page says why, and it sits last so the doing comes first.
 
 ## Reaction tables
@@ -110,6 +110,14 @@ A running timer keeps its deadline and a paused one keeps the seconds left, so t
 does not lose an incubation. When it runs out it beeps, vibrates where the device can, flashes,
 and puts `Time up` in the tab's title. A browser lets a page make a sound only after you have
 touched it. After you reload a page with a timer running, click anywhere on it once.
+
+## Maps
+
+A step that makes a molecule shows it as a map, in a box of its own with its caption inside.
+Step 8 draws pUC19-GFP as the reaction closes it: the two junctions in colour, the rest grey.
+Press `Explore the map` and the whole plasmid opens in its place. Switch features, primers and
+cut sites on and off, zoom in, or show the bases. `Close the map` puts the small one back, and
+`Open it in a new tab` gives the map a window of its own. Paper prints the small map.
 
 ## Expected result and troubleshooting
 

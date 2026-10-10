@@ -87,7 +87,7 @@ from mbio.cloning.gibson import plan_gibson
 
 plan = plan_gibson("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every oligo
-plan.write("plan/")  # the same four files
+plan.write("plan/")  # the same files
 ```
 
 `plan.product` is the kit; `plan.plasmid` is the assembled plasmid. `plan.overlaps` gives the

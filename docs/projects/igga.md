@@ -102,6 +102,7 @@ block spells cannot be the one that admits the library.
 | [block-vector-1.dna](../examples/ap1-library/block-vector-1.dna), [-2](../examples/ap1-library/block-vector-2.dna), [-3](../examples/ap1-library/block-vector-3.dna) | the vector each position's blocks are built in, one a position |
 | [working-vector-ccdb.dna](../examples/ap1-library/working-vector-ccdb.dna) | the backbone with a ccdB cassette put in at `--working-site`, 10,284 bases: what the last sitting opens |
 | [library-read-primers.tsv](../examples/ap1-library/library-read-primers.tsv) | the pairs that read linkage and representation back, with each amplicon |
+| [round-1-map.html](../examples/ap1-library/round-1-map.html) and one like it for each record a figure draws | that record as a map you can explore, which the figure on the protocol page opens |
 | [protocol/](../examples/ap1-library/protocol/index.html) | the bench pages, and `project.json`, the whole chain as data |
 
 Each name links to what that run wrote, published here unedited. Nothing is typed by hand, so

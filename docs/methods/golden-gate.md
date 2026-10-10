@@ -29,13 +29,14 @@ with the repo.
 pixi run mbio cloning goldengate plan tests/data/pUC19.dna tests/data/GFP.dna --out plan/
 ```
 
-It prints the design in one line, then the four files it wrote:
+It prints the design in one line, then the five files it wrote:
 
 ```text
 pUC19-GFP: 3347 bp, BbsI, 2 fragments, overhangs ATGA, TGGC, fidelity 100% (measured), checks warn
 plan/product.dna
 plan/primers.tsv
 plan/protocol.json
+plan/product-map.html
 plan/protocol.html
 ```
 
@@ -54,10 +55,11 @@ measured on BbsI itself. `checks warn` means nothing failed, but something wants
 | [product.dna](../examples/pUC19-GFP/product.dna) | the finished plasmid, 3,347 bp, features carried over and both joins marked. Opens in SnapGene |
 | [primers.tsv](../examples/pUC19-GFP/primers.tsv) | the nine oligos to order, with length and melting temperature |
 | [protocol.json](../examples/pUC19-GFP/protocol.json) | the same protocol as data |
+| [product-map.html](../examples/pUC19-GFP/product-map.html) | the finished plasmid as a map you can explore, which the figure on the page opens |
 | [protocol.html](../examples/pUC19-GFP/protocol.html) | the protocol as one page: no network, nothing to install |
 
 Each name links to what that run wrote, published here unedited. Nothing in it is typed by
-hand, so the same two input files always give the same four. To change the design, change the
+hand, so the same two input files always give the same five. To change the design, change the
 command and run it again. To change what the page says, edit `protocol.json` and make the page
 from it again:
 

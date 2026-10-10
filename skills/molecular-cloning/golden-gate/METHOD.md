@@ -68,7 +68,7 @@ from mbio.cloning.goldengate import plan_assembly
 
 plan = plan_assembly("vector.dna", "first.dna", "second.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every primer
-plan.write("plan/")  # the same four files
+plan.write("plan/")  # the same files
 ```
 
 `plan.assembly.checks` carries one verdict per part beside the product's own,

@@ -83,7 +83,7 @@ from mbio.cloning.restriction import plan_restriction
 
 plan = plan_restriction("vector.dna", "insert.dna")
 plan.status  # "pass", "warn" or "fail" over every check and every oligo
-plan.write("plan/")  # the same four files
+plan.write("plan/")  # the same files
 ```
 
 `plan.enzymes` is the pair, `plan.refusals` every pair weighed against it with the rule that

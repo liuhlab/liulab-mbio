@@ -48,13 +48,13 @@ label leaves you a figure, but not the one you meant.
 | --- | --- |
 | [puc19-map.pdf](../examples/pUC19-GFP/puc19-map.pdf) | pUC19 drawn whole, as a circle |
 | [product-insert.pdf](../examples/pUC19-GFP/product-insert.pdf) | the GFP of the finished plasmid, as a line |
-| [product-map.html](../examples/pUC19-GFP/product-map.html) | the finished plasmid as a page, bases on |
+| [product-map.html](../examples/pUC19-GFP/product-map.html) | the finished plasmid as a page, every BbsI site drawn. The plan writes the same page, and its protocol's figure opens it |
 
 The other two came from the finished Golden Gate plasmid, 3,347 bp:
 
 ```bash
 pixi run mbio plot map docs/examples/pUC19-GFP/product.dna --region GFP -o product-insert.pdf
-pixi run mbio plot map docs/examples/pUC19-GFP/product.dna --sequence-view -o product-map.html
+pixi run mbio plot map docs/examples/pUC19-GFP/product.dna --enzyme BbsI -o product-map.html
 ```
 
 Each name links to what those commands wrote, published here unedited, and the same file always
