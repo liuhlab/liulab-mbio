@@ -29,24 +29,25 @@ is a whole-plasmid consensus, trusted whole. Give every result one sample gave i
 as a read from each side of the insert: a base counts as read when any trusted result covers it.
 
 What is judged comes from the product. A plan from this package tags each junction it writes,
-and the inserts are the stretches between them. A record no plan wrote carries no tag, so name
-its regions with `--feature`, once per feature. With neither, every disagreement is listed and
-nothing is judged.
+and the inserts are the stretches between them; the backbone, the stretch holding base 0, is
+left out. A record no plan wrote carries no tag, so name its regions with `--feature`, once per
+feature. With neither, every disagreement is listed and nothing is judged.
 
-It prints one line per region, each result's own check, and whether the clone is verified, and
-exits non-zero when it is not.
+It prints one line per region, each disagreement outside them, each result's own check, and
+whether the clone is verified, and exits 1 when it is not. Its positions count from 1.
 
 ## From Python
 
 ```python
-from mbio.verification import regions, verify
-from mbio.verification.trace import read_trace
+from mbio.verification import read_trace, regions, verify
 ```
 
 `verify(expected, results, regions)` returns a `Verification`: `checks`, one per region in
-record order; `disagreements`, each a span on `expected` naming the results that show it and the
-region or feature it falls in; `placements`, where each result landed and on which strand;
-`status`; and `verified`. Spans are 0-based and half-open (`docs/adr/0001-coordinates.md`).
+record order; `result_checks`, one per result; `disagreements`, each a span on `expected` naming
+the results that show it and the region or feature it falls in; `placements`, where each result
+landed and on which strand; `status`; and `verified`. Spans are 0-based and half-open
+(`docs/adr/0001-coordinates.md`). A result fails its own check when it is mixed, or when more
+than a tenth of its trusted bases disagree or fail to line up, and then judges no region.
 Read the docstrings rather than reconstructing a call:
 
 ```bash
@@ -60,7 +61,7 @@ pixi run python -c "from mbio.verification import verify; help(verify)"
 | pass | a trusted base of some result covers every base, and nothing disagrees |
 | fail | every trusted result covering a base shares a disagreement there, or the base or the sample is mixed |
 | warn | two trusted results contradict each other at a base, or more than 10 reads but fewer than 20 stand behind one |
-| none | part of it went unread and nothing failed |
+| no verdict, `None` | part of it went unread and nothing failed |
 
 A clone is verified only when every region passes. Nothing failing is not enough: a junction no
 read reached carries no verdict, and the clone is not verified until a read covers it.
