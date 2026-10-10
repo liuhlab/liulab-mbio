@@ -48,10 +48,10 @@ mean.
 ## The steps
 
 Eleven numbered steps run from the two PCRs to sequencing. Each step and each instruction has a
-tick box. Tick a step's last instruction and the step ticks itself; tick the step and all its
-instructions tick with it. The bar at the top counts steps: `0 of 11 steps done`. The page
-remembers your ticks, your reaction counts and your running timers, so closing the tab does not
-lose the sitting.
+tick box. Tick every instruction of a step and the step ticks itself; clear one and it clears.
+A step partly done shows a dash in its box. Tick the step and all its instructions tick with it.
+The bar at the top counts steps: `0 of 11 steps done`. The page remembers your ticks, your
+reaction counts and your running timers, so closing the tab does not lose the sitting.
 `Reset page` puts all three back to what was written. `Print` lays the page out for paper.
 
 A step holds some of these, always in this order: cautions, instructions, a reaction table, a

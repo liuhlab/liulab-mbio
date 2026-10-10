@@ -114,8 +114,12 @@ def test_a_check_no_threshold_judges_shows_as_unjudged_and_never_as_a_pass() -> 
 
 
 def test_every_step_and_instruction_has_its_own_checkbox(page: Node) -> None:
+    """`protocol.js` ticks a step from the boxes in its instructions list, and they from it."""
     steps = page.find_all("section", cls="step")
     assert [len(s.find_all("input", type="checkbox")) for s in steps] == [1 + 3, 1 + 1, 1 + 2]
+    assert [len(s.find_all("input", cls="done")) for s in steps] == [1, 1, 1]
+    lists = [s.find_all("ol", cls="instructions")[0] for s in steps]
+    assert [len(one.find_all("input", type="checkbox")) for one in lists] == [3, 1, 2]
     keys = [box.attrs["data-key"] for box in page.find_all("input", type="checkbox")]
     assert len(set(keys)) == len(keys)
 

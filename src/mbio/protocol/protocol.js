@@ -67,10 +67,6 @@
     })[0];
   }
 
-  // A step's own mark is its instructions together: the last instruction ticked ticks the step,
-  // and the step ticked or cleared does the same to every instruction, so each count reads what
-  // the bench did however the reader ticks. A step with no instructions is ticked by hand.
-  // Its instructions are the boxes keyed by its own key, a dot and a number.
   function keyOf(box) {
     return box.getAttribute("data-key");
   }
@@ -79,18 +75,23 @@
     return box.checked;
   }
 
-  var stepMarks = stepBoxes.map(function (box) {
-    var prefix = keyOf(box) + ".";
-    return {
-      box: box,
-      parts: boxes.filter(function (part) { return keyOf(part).indexOf(prefix) === 0; })
-    };
-  });
-
-  function keep(box) {
+  // Into the page's store; `save` writes the store to the browser.
+  function record(box) {
     if (box.checked) state[keyOf(box)] = true;
     else delete state[keyOf(box)];
   }
+
+  // A step's own mark is its instructions together, so each count reads what the bench did
+  // however the reader ticks: every instruction ticked ticks the step, one cleared clears it, and
+  // the step ticked or cleared by hand does the same to all of them. A step with no instructions
+  // is ticked by hand.
+  var stepMarks = stepBoxes.map(function (box) {
+    var step = box.closest(".step");
+    return {
+      box: box,
+      instructions: step ? all('.instructions input[type="checkbox"][data-key]', step) : []
+    };
+  });
 
   function refresh() {
     var done = 0;
@@ -98,52 +99,46 @@
       var box = mark.box;
       var step = box.closest(".step");
       if (step) step.classList.toggle("is-done", box.checked);
-      box.indeterminate = !box.checked && mark.parts.some(isTicked);
+      box.indeterminate = !box.checked && mark.instructions.some(isTicked);
       if (box.checked) done += 1;
     });
     if (progress) progress.textContent = done + " of " + steps(stepBoxes.length) + " done";
     showSections();
   }
 
-  // A store written before steps followed their instructions can hold one without the other.
-  // Nothing ticked is lost: a step ticked by hand stands for its instructions, and instructions
-  // all ticked for their step. The run's index reads only step marks, so the mended store is saved.
-  var mended = false;
-  stepMarks.forEach(function (mark) {
-    var keys = mark.parts.map(keyOf);
-    var whole = state[keyOf(mark.box)] === true || keys.every(function (key) {
-      return state[key] === true;
-    });
-    if (!keys.length || !whole) return;
-    keys.concat(keyOf(mark.box)).forEach(function (key) {
-      if (state[key] !== true) mended = true;
-      state[key] = true;
-    });
-  });
-  if (mended) save();
+  function settle(mark, changed) {
+    if (changed === mark.box) {
+      mark.instructions.forEach(function (box) { box.checked = mark.box.checked; });
+    } else {
+      mark.box.checked = mark.instructions.every(isTicked);
+    }
+    [mark.box].concat(mark.instructions).forEach(record);
+    save();
+    refresh();
+  }
 
   boxes.forEach(function (box) {
     box.checked = state[keyOf(box)] === true;
   });
 
+  // The store can hold a step's mark without its instructions' or the reverse. Nothing ticked is
+  // lost: a ticked step stands for its instructions, and instructions all ticked for their step.
+  // It is saved once mended, so a run's index, which reads step marks alone, counts it from then.
+  var mended = false;
   stepMarks.forEach(function (mark) {
-    mark.box.addEventListener("change", function () {
-      mark.parts.forEach(function (part) {
-        part.checked = mark.box.checked;
-        keep(part);
-      });
-      keep(mark.box);
-      save();
-      refresh();
+    if (!mark.instructions.length) return;
+    if (!mark.box.checked && !mark.instructions.every(isTicked)) return;
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      if (!box.checked) mended = true;
+      box.checked = true;
+      record(box);
     });
-    mark.parts.forEach(function (part) {
-      part.addEventListener("change", function () {
-        mark.box.checked = mark.parts.every(isTicked);
-        keep(part);
-        keep(mark.box);
-        save();
-        refresh();
-      });
+  });
+  if (mended) save();
+
+  stepMarks.forEach(function (mark) {
+    [mark.box].concat(mark.instructions).forEach(function (box) {
+      box.addEventListener("change", function () { settle(mark, box); });
     });
   });
   refresh();
