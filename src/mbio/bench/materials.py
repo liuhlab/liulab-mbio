@@ -237,7 +237,7 @@ def cautions(catalog: str) -> tuple[str, ...]:
     return CAUTIONS.get(_key(catalog), ())
 
 
-def kit(named: str = "", *, amount: str = "", note: str = "") -> Material:
+def kit(named: str = "", *, note: str = "") -> Material:
     """Return the kit a run named, as a material carrying who sells it and its number.
 
     Parameters
@@ -245,8 +245,8 @@ def kit(named: str = "", *, amount: str = "", note: str = "") -> Material:
     named
         A catalogue number `KITS` holds, or the product's own name. Empty names
         `DEFAULT_CLEANUP_KIT`.
-    amount, note
-        What one run takes of it, and what it is there for.
+    note
+        What it is there for.
 
     Examples
     --------
@@ -259,11 +259,9 @@ def kit(named: str = "", *, amount: str = "", note: str = "") -> Material:
     text = (named or DEFAULT_CLEANUP_KIT).strip()
     found = KITS.get(_key(text))
     if found is None:
-        return material(text, amount=amount, note=note)
+        return material(text, note=note)
     sold, supplier = found
-    return material(
-        sold, supplier=supplier, catalog=text.lstrip("#").upper(), amount=amount, note=note
-    )
+    return material(sold, supplier=supplier, catalog=text.lstrip("#").upper(), note=note)
 
 
 def material(
