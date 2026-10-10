@@ -66,6 +66,9 @@ WATER_UL = 0.5
 MASTERMIX_UL = 0.5
 WELL_UL = LYSATE_UL + BARCODE_UL + WATER_UL + MASTERMIX_UL
 
+#: How long the picked plates stand inverted before they are compressed. Qian SI Day 4.1.
+INVERT_SECONDS = 1800
+
 #: What moves the liquid, and what the colonies are picked with, both Qian's. The handler is
 #: cited on the move it makes; the picker is equipment, which carries no citation, so the page
 #: reaches it through the Qian reference alone.
@@ -627,7 +630,10 @@ def compression(picked: Sequence[Plate], compressed: Plate) -> Transfer:
         LYSATE_UL,
         title=f"Compress {len(picked)} picked plates into {compressed.name}",
         instrument=ACOUSTIC,
-        note="Invert the picked plates for 30 minutes first, so the cells gather at the meniscus",
+        note=(
+            f"Invert the picked plates for {INVERT_SECONDS // 60} minutes first, so the cells "
+            "gather at the meniscus"
+        ),
         citation=Citation("Qian SI", "Day 4.1"),
     )
 

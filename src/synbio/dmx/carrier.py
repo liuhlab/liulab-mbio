@@ -27,6 +27,7 @@ from mbio.protocol.model import (
     Plate,
     Reference,
     Step,
+    Timer,
     Troubleshooting,
 )
 from mbio.sequence import Feature, Segment, SequenceRecord, Strand, position_text
@@ -52,6 +53,9 @@ REFERENCES: tuple[Reference, ...] = (
         "room-temperature reaction"
     ),
 )
+
+#: How long the reaction stands at room temperature, the user guide's time.
+SEAT_SECONDS = 300
 
 #: The head-to-head pair topoisomerase I sits either side of. The enzyme cleaves after 5'-CCCTT
 #: on each strand, so a carrier is supplied opened halfway through this run.
@@ -292,10 +296,11 @@ def carrier_step(seated: SeatedParts) -> Step:
         instructions=(
             f"Set up one {CARRIER_KIT} reaction per well of {seated.plate.name}, each holding "
             "one blunt part, the linearised carrier and the kit's salt solution.",
-            "Leave 5 min at room temperature. Topoisomerase I comes bound to the carrier, so "
-            "nothing is added to join the two.",
+            f"Leave {SEAT_SECONDS // 60} min at room temperature. Topoisomerase I comes bound "
+            "to the carrier, so nothing is added to join the two.",
             f"Transform each well on its own and select on {CARRIER_MARKER}.",
         ),
+        timers=(Timer("TOPO reaction", SEAT_SECONDS),),
         expected=(
             f"{counted(seated.products, 'carrier plasmid')}, one a part, each still named by "
             "the well it sits in.",

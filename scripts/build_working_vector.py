@@ -44,6 +44,7 @@ from mbio.protocol.model import (
     Protocol,
     Reference,
     Step,
+    Timer,
     read_protocol,
     sectioned,
     write_protocol,
@@ -71,6 +72,10 @@ PROTOCOL_FILE = "working-vector-domestication.html"
 CLEARED = ("BsaI", "BsmBI")
 
 NAME = "pLVX-TetOne-dom"
+
+#: How long each enzyme the vector is cleared of digests the miniprep for, to show it no longer
+#: cuts.
+CONFIRM_DIGEST_SECONDS = 3600
 
 
 @dataclass(frozen=True)
@@ -450,11 +455,15 @@ def _steps(record: SequenceRecord, control: Enzyme, length: str) -> tuple[Step, 
                 key="confirm-digest",
                 instructions=(
                     "Digest 1 µg of the miniprep with 10 units of BsaI-HFv2 in rCutSmart Buffer for "
-                    "1 hour at 37 °C.",
-                    "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for 1 hour at "
-                    "55 °C.",
+                    f"{CONFIRM_DIGEST_SECONDS // 3600} hour at 37 °C.",
+                    "Digest a second 1 µg with 10 units of BsmBI-v2 in NEBuffer r3.1 for "
+                    f"{CONFIRM_DIGEST_SECONDS // 3600} hour at 55 °C.",
                     f"Digest a third 1 µg with 10 units of {control.commercial_name or control.name}.",
                     "Run all three beside 1 µg of undigested miniprep on a 0.8% agarose gel.",
+                ),
+                timers=(
+                    Timer("BsaI-HFv2 digest", CONFIRM_DIGEST_SECONDS),
+                    Timer("BsmBI-v2 digest", CONFIRM_DIGEST_SECONDS),
                 ),
                 expected=(
                     "The BsaI and BsmBI lanes look like the undigested lane.",
