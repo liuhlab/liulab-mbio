@@ -80,10 +80,20 @@ foot of the page.
 
 ## Timers
 
-An incubation of fixed length gets a timer button, such as `DpnI digest 1:00:00`. Press it to
-start. A running timer keeps its deadline and a paused one keeps the seconds left, so turning
-the page does not lose an incubation. It sounds and vibrates when it runs out. Step 9 carries
-three: 30 minutes on ice, a 30-second heat shock, and an hour of outgrowth.
+An incubation of fixed length gets a timer, such as `DpnI digest 1:00:00`. Press `Start` to
+start it. A thermocycler program gets one under its table, set to the run time in its caption.
+That time leaves out the ramps, so the machine ends a little later. A time written only in
+words, such as an overnight growth, gets no timer. Step 9 carries five: 10 minutes to thaw, 30
+minutes on ice, a 30-second heat shock, 5 minutes back on ice, and an hour of outgrowth.
+
+The time is yours to change. Click it, type a new one and press Enter: `1:30:00`, `90:00`, or
+`90` for 90 minutes. The page keeps your time, and a button beside it offers the planned time
+back. `Reset page` puts it back as well.
+
+A running timer keeps its deadline and a paused one keeps the seconds left, so turning the page
+does not lose an incubation. When it runs out it beeps, vibrates where the device can, flashes,
+and puts `Time up` in the tab's title. A browser lets a page make a sound only after you have
+touched it. After you reload a page with a timer running, click anywhere on it once.
 
 ## Expected result and troubleshooting
 

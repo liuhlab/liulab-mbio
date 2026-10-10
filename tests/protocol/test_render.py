@@ -147,7 +147,10 @@ def reworded() -> tuple[Protocol, Protocol]:
 def test_a_step_is_addressed_by_its_key_so_a_reworded_title_keeps_its_ticks() -> None:
     """ADR 0002's own case: an agent rewords the steps, renders again, nothing is ticked twice."""
     marks = [
-        sorted(box.attrs["data-key"] for box in parse(render_html(one)).find_all("input"))
+        sorted(
+            box.attrs["data-key"]
+            for box in parse(render_html(one)).find_all("input", type="checkbox")
+        )
         for one in reworded()
     ]
     assert marks[0] == ["step-cycle", "step-set-up", "step-set-up.1"]
@@ -425,6 +428,9 @@ def test_a_thermocycler_program_lists_temperatures_times_and_cycles(page: Node) 
     caption = program.find_all("figcaption")[0].text
     assert "105 °C" in caption
     assert "50 min 30 s" in caption
+    # The run the caption times is the program's own timer, so no step has to add one.
+    [timer] = program.find_all(cls="timer")
+    assert timer.attrs["data-seconds"] == "3030.0"
 
 
 def _program_rows(program: ThermocyclerProgram) -> tuple[Node, list[list[str]]]:
@@ -457,6 +463,8 @@ def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_e
     assert [cited.text for cited in figure.find_all("a", cls="cite")] == [
         "LevSeq thermal cycler table"
     ]
+    # A blank count bounds no run, so no timer stands in for one.
+    assert not figure.find_all(cls="timer")
 
 
 def test_a_program_held_at_one_temperature_is_not_given_ramps_it_does_not_run() -> None:
@@ -494,24 +502,35 @@ def test_a_gel_draws_each_band_at_a_height_set_by_log_size(page: Node) -> None:
     assert "No template: no band" in legend
 
 
-def test_a_timer_starts_from_its_duration(page: Node) -> None:
-    timer = page.find_all("button", cls="timer")[0]
+def test_a_timer_starts_from_the_plans_time_in_a_field_the_reader_may_type_over(
+    page: Node,
+) -> None:
+    """`data-seconds` keeps the plan's time, which the page offers back once the reader's differs."""
+    [timer] = [one for one in page.find_all(cls="timer") if "Gel run" in one.text]
     assert timer.attrs["data-seconds"] == "1800"
-    assert "30:00" in timer.text
+    [field] = timer.find_all("input", cls="timer-time")
+    assert field.attrs["value"] == "30:00"
+    assert "readonly" not in field.attrs
 
 
 def test_each_timer_is_keyed_so_a_running_one_survives_a_page_turn() -> None:
     """`protocol.js` keeps a deadline under this key, so a key is a timer's own and no other's."""
+    ligate = ThermocyclerProgram((Stage((Incubation("ligate", 25.0, 60),)),))
     protocol = Protocol(
         "Incubate",
         steps=(
             Step("Digest", timers=(Timer("digest", 60), Timer("heat", 120))),
-            Step("Ligate", timers=(Timer("ligate", 60),)),
+            Step("Ligate", programs=(ligate,), timers=(Timer("ligate", 60),)),
         ),
     )
     page = parse(render_html(protocol))
-    keys = [button.attrs["data-key"] for button in page.find_all("button", cls="timer")]
-    assert keys == ["step-digest.timer.1", "step-digest.timer.2", "step-ligate.timer.1"]
+    keys = [timer.attrs["data-key"] for timer in page.find_all(cls="timer")]
+    assert keys == [
+        "step-digest.timer.1",
+        "step-digest.timer.2",
+        "step-ligate.program.1",
+        "step-ligate.timer.1",
+    ]
 
 
 def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:

@@ -619,6 +619,26 @@ class ThermocyclerProgram:
             total += stage.cycles * sum(i.seconds or 0 for i in stage.incubations)
         return total
 
+    @property
+    def timer(self) -> "Timer | None":
+        """The countdown the page gives this run, so no step holds a `Timer` for a program.
+
+        It counts `duration_seconds`, and is ``None`` where that bounds nothing: a blank cycle
+        count, or a program that is only an open hold. A time stated in words, such as an
+        overnight growth, is in no program, so it never becomes one.
+
+        Examples
+        --------
+        >>> hold = Stage((Incubation("Hold", 4.0, None),))
+        >>> ligate = Stage((Incubation("Ligate", 25.0, 600),))
+        >>> ThermocyclerProgram((ligate, hold), title="Ligation").timer
+        Timer(label='Ligation', seconds=600.0)
+        >>> ThermocyclerProgram((hold,)).timer is None
+        True
+        """
+        seconds = self.duration_seconds
+        return Timer(self.title or "Thermocycler program", seconds) if seconds else None
+
 
 def _check_bands(bands_bp: tuple[int, ...], owner: str) -> None:
     _require(all(bp > 0 for bp in bands_bp), f"{owner}: band sizes must be positive")
@@ -726,7 +746,11 @@ class Figure:
 
 @dataclass(frozen=True, slots=True)
 class Timer:
-    """A countdown the reader can start from the step."""
+    """A countdown the reader can start from the step.
+
+    `seconds` is the plan's time. The page lets the reader type their own, and keeps it as it
+    keeps a check mark, so the protocol never holds it.
+    """
 
     label: str
     seconds: float

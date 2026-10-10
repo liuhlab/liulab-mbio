@@ -2191,7 +2191,7 @@ def _step(n: int, step: Step, key: str, protocol: Protocol, base: Path, section:
         parts.append(f'<ol class="instructions">{items}</ol>\n')
     parts += [_figure(f, base, f"step {n} {step.title!r}") for f in step.figures]
     parts += [_table(f"{anchor}.table.{i}", t) for i, t in enumerate(step.tables, 1)]
-    parts += [_program(p) for p in step.programs]
+    parts += [_program(f"{anchor}.program.{i}", p) for i, p in enumerate(step.programs, 1)]
     parts += [_transfer(t, protocol.plates) for t in step.transfers]
     if step.holes:
         items = "".join(_hole(hole) for hole in step.holes)
@@ -2312,7 +2312,8 @@ def _temperature(step: Incubation, cycles: int | None) -> str:
     return f'{start}{end} °C<br><span class="muted">{number(step.delta_c)} °C a cycle</span>'
 
 
-def _program(program: ThermocyclerProgram) -> str:
+def _program(key: str, program: ThermocyclerProgram) -> str:
+    """One program, with the timer its run takes under it wherever the program bounds one."""
     meta = []
     if program.lid_temperature_c is not None:
         meta.append(f"lid {number(program.lid_temperature_c)} °C")
@@ -2350,21 +2351,31 @@ def _program(program: ThermocyclerProgram) -> str:
                 f'<td class="num">{time}</td>{cycles}</tr>'
             )
         bodies.append(f'<tbody class="stage">{"".join(rows)}</tbody>')
+    timer = program.timer
+    run = "" if timer is None else f'<div class="timers">{_timer(key, timer)}</div>'
     return (
         f'<figure class="program"><figcaption>{title}{caption}{_after(shared)}</figcaption>'
         '<div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th>'
         f'<th class="num">Time</th><th class="num">Cycles</th></tr></thead>{"".join(bodies)}'
-        "</table></div></figure>\n"
+        f"</table></div>{run}</figure>\n"
     )
 
 
 def _timer(key: str, timer: Timer) -> str:
-    """One timer, keyed so `protocol.js` can give it back its deadline after a page turn."""
+    """One timer, keyed so `protocol.js` can give it back its deadline and the reader's time.
+
+    The time is a field the reader may type over; `data-seconds` keeps the plan's, which the
+    page offers back once the two differ.
+    """
+    clock = _clock(timer.seconds)
     return (
-        f'<button type="button" class="timer" data-key="{key}" data-seconds="{timer.seconds!r}">'
-        f'<span class="timer-label">{escape(timer.label)}</span>'
-        f'<span class="timer-time">{_clock(timer.seconds)}</span>'
-        '<span class="timer-action">Start</span></button>'
+        f'<span class="timer" data-key="{key}" data-seconds="{timer.seconds!r}">'
+        f'<label><span class="timer-label">{escape(timer.label)}</span>'
+        f'<input type="text" class="timer-time" value="{clock}" size="8" autocomplete="off"'
+        ' spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label>'
+        '<button type="button" class="timer-action">Start</button>'
+        '<button type="button" class="timer-plan" hidden>'
+        f"Use the plan's {clock}</button></span>"
     )
 
 

@@ -284,61 +284,143 @@
     return h ? h + ":" + String(m).padStart(2, "0") + ":" + rest : m + ":" + rest;
   }
 
-  function alarm() {
+  // What a reader types for a time: h:mm:ss, m:ss, or a bare number of minutes. Null for
+  // anything else, or for no time at all, so a slip leaves the timer as it was.
+  function seconds(text) {
+    var parts = String(text).trim().split(":");
+    if (parts.length > 3) return null;
+    var total = 0;
+    for (var i = 0; i < parts.length; i += 1) {
+      if (!/^\d+(\.\d+)?$/.test(parts[i].trim())) return null;
+      total = total * 60 + Number(parts[i]);
+    }
+    if (parts.length === 1) total *= 60;
+    return total > 0 ? total : null;
+  }
+
+  // A browser lets a page sound only once the reader has touched it, so the alarm plays on a
+  // context a touch made or woke; one made when the time runs out can stay silent.
+  var sound = null;
+
+  function unlock() {
     try {
       var Context = window.AudioContext || window.webkitAudioContext;
-      var context = new Context();
-      [0, 0.35, 0.7].forEach(function (offset) {
-        var tone = context.createOscillator();
-        var gain = context.createGain();
-        tone.frequency.value = 880;
-        gain.gain.value = 0.15;
-        tone.connect(gain);
-        gain.connect(context.destination);
-        tone.start(context.currentTime + offset);
-        tone.stop(context.currentTime + offset + 0.2);
-      });
+      if (!sound && Context) sound = new Context();
+      if (sound && sound.state === "suspended") sound.resume();
+    } catch (error) {
+      sound = null;
+    }
+  }
+
+  function beep() {
+    [0, 0.35, 0.7].forEach(function (offset) {
+      var tone = sound.createOscillator();
+      var gain = sound.createGain();
+      tone.frequency.value = 880;
+      gain.gain.value = 0.15;
+      tone.connect(gain);
+      gain.connect(sound.destination);
+      tone.start(sound.currentTime + offset);
+      tone.stop(sound.currentTime + offset + 0.2);
+    });
+  }
+
+  // A context the browser holds back may be let go only at the reader's next touch, which is
+  // no time for an alarm, so a late one stays quiet.
+  function alarm() {
+    try {
+      unlock();
+      var asked = Date.now();
+      if (sound && sound.state === "running") beep();
+      else if (sound) {
+        Promise.resolve(sound.resume()).then(function () {
+          if (sound.state === "running" && Date.now() - asked < 2000) beep();
+        }, function () {});
+      }
     } catch (error) {
       /* no sound available */
     }
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   }
 
+  // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
+  // until that timer is reset.
+  var title = document.title;
+  var rung = {};
+
+  function flag(key, label) {
+    if (label) rung[key] = label;
+    else delete rung[key];
+    var labels = Object.keys(rung).map(function (one) { return rung[one]; });
+    document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
+  }
+
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
   // page or closing the tab does not lose an incubation. A deadline already past comes back
   // finished and silent: the sound belongs to the moment it ran out, not to the page load.
-  all("button.timer").forEach(function (button) {
-    var key = button.getAttribute("data-key");
-    var total = parseFloat(button.getAttribute("data-seconds")) || 0;
+  // A time the reader typed is kept beside either, and is the timer's until they take the
+  // plan's back; the plan's own is `data-seconds`.
+  var timers = all(".timer[data-key]");
+  timers.forEach(function (timer) {
+    var key = timer.getAttribute("data-key");
+    var plan = parseFloat(timer.getAttribute("data-seconds")) || 0;
+    var label = (timer.querySelector(".timer-label") || timer).textContent;
+    var field = timer.querySelector(".timer-time");
+    var action = timer.querySelector(".timer-action");
+    var back = timer.querySelector(".timer-plan");
+    var kept = state[key] || {};
+    var total = typeof kept.seconds === "number" ? kept.seconds : plan;
     var left = total;
     var end = 0;
     var handle = null;
-    var time = button.querySelector(".timer-time");
-    var action = button.querySelector(".timer-action");
+    var due = null;
 
-    function show(label) {
-      time.textContent = clock(left);
-      action.textContent = label;
+    function show(word) {
+      field.value = clock(left);
+      field.readOnly = handle !== null;
+      action.textContent = word;
+      if (back) back.hidden = total === plan || handle !== null;
+    }
+
+    // What the page keeps for this timer: the reader's time where it is not the plan's, and the
+    // deadline or the seconds left where either is set.
+    function keep(extra) {
+      var held = extra || {};
+      if (total !== plan) held.seconds = total;
+      if (Object.keys(held).length) state[key] = held;
+      else delete state[key];
+      save();
     }
 
     function stop() {
       window.clearInterval(handle);
+      window.clearTimeout(due);
       handle = null;
-      button.classList.remove("is-running");
+      due = null;
+      timer.classList.remove("is-running");
     }
 
+    // The interval redraws, and a hidden tab may run it once a minute; the deadline is a timeout
+    // of its own, which a browser holds to the second. One past what a timeout can wait, about
+    // 24 days, is left to the interval.
     function run() {
+      var wait = Math.max(0, end - Date.now());
       handle = window.setInterval(tick, 250);
-      button.classList.add("is-running");
+      if (wait < 2147483647) due = window.setTimeout(function () { finish(true); }, wait);
+      timer.classList.add("is-running");
       show("Pause");
     }
 
-    function finish(sound) {
+    function finish(sounded) {
+      if (timer.classList.contains("is-finished")) return;
       stop();
       left = 0;
-      button.classList.add("is-finished");
+      timer.classList.add("is-finished");
       show("Reset");
-      if (sound) alarm();
+      if (sounded) {
+        alarm();
+        flag(key, label);
+      }
     }
 
     function tick() {
@@ -347,33 +429,60 @@
       else show("Pause");
     }
 
-    var kept = state[key];
-    if (kept && typeof kept.ends === "number") {
+    // Back to a full count of `to`, standing ready.
+    function ready(to) {
+      stop();
+      total = to;
+      left = to;
+      timer.classList.remove("is-finished");
+      flag(key, null);
+      keep();
+      show("Start");
+    }
+
+    if (typeof kept.ends === "number") {
       end = kept.ends;
       left = Math.max(0, (end - Date.now()) / 1000);
       if (left > 0) run();
       else finish(false);
-    } else if (kept && typeof kept.left === "number") {
+    } else if (typeof kept.left === "number") {
       left = kept.left;
       show("Resume");
+    } else {
+      show("Start");
     }
 
-    button.addEventListener("click", function () {
+    action.addEventListener("click", function () {
       if (handle !== null) {
         stop();
-        state[key] = { left: left };
+        keep({ left: left });
         show("Resume");
       } else if (left <= 0) {
-        left = total;
-        button.classList.remove("is-finished");
-        delete state[key];
-        show("Start");
+        ready(total);
       } else {
+        unlock();
         end = Date.now() + left * 1000;
-        state[key] = { ends: end };
+        keep({ ends: end });
         run();
       }
-      save();
     });
+
+    // A typed time is the whole count from here: the timer stands ready at it.
+    field.addEventListener("change", function () {
+      var typed = seconds(field.value);
+      if (typed === null || handle !== null) show(action.textContent);
+      else ready(typed);
+    });
+
+    if (back) back.addEventListener("click", function () { ready(plan); });
   });
+
+  // A timer still running after a reload sounds only once the page has been touched again.
+  if (timers.length) {
+    ["pointerdown", "keydown"].forEach(function (kind) {
+      document.addEventListener(kind, function () {
+        if (document.querySelector(".timer.is-running")) unlock();
+      }, true);
+    });
+  }
 })();
