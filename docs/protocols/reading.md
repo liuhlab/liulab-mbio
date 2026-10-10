@@ -87,8 +87,8 @@ words, such as an overnight growth, gets no timer. Step 9 carries five: 10 minut
 minutes on ice, a 30-second heat shock, 5 minutes back on ice, and an hour of outgrowth.
 
 The time is yours to change. Click it, type a new one and press Enter: `1:30:00`, `90:00`, or
-`90` for 90 minutes. The page keeps your time, and a button beside it offers the planned time
-back. `Reset page` puts it back as well.
+`90` for 90 minutes. On a paused timer, what you type is the time left. The page keeps your
+time, and a button beside it offers the planned time back. `Reset page` puts it back as well.
 
 A running timer keeps its deadline and a paused one keeps the seconds left, so turning the page
 does not lose an incubation. When it runs out it beeps, vibrates where the device can, flashes,
