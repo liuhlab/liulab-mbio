@@ -20,7 +20,7 @@ a method's name, which inverts the package boundary. The grouping belongs in thi
 note can sit under two headings at once. Within the directory, a note in a family takes the
 family's name as a prefix, so `ls` clusters it at no cost.
 
-Thirty-seven notes, under eight headings. Four of them earn a second heading, listed at the end.
+Thirty-eight notes, under nine headings. Four of them earn a second heading, listed at the end.
 
 ## Shipped data and where it came from
 
@@ -91,6 +91,12 @@ Thirty-seven notes, under eight headings. Four of them earn a second heading, li
 | [`figure-sources.md`](figure-sources.md) | what four published figures show, and what ours has to vary |
 | [`offline-html-maps.md`](offline-html-maps.md) | the ways to write a record as one HTML file that opens offline, and what each costs |
 | [`offline-navigation.md`](offline-navigation.md) | how an offline document navigates with no server, measured in a browser |
+
+## Writing for the bench
+
+| Note | What it settled |
+| --- | --- |
+| [`bench-facing-documentation.md`](bench-facing-documentation.md) | how five comparable tools document themselves for a wet-lab reader, and which page shape to take from each |
 
 ## Surveys whose answer was no
 
