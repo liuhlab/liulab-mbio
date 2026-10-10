@@ -4,9 +4,9 @@ The stretch drawn, a whole record or a region of it, spans the line and keeps th
 numbering. The backbone is two lines with a bp scale under them, and `• • •` at each end the
 molecule carries on past. Features lie under the scale as arrows along their strand, or boxes when
 they have none, in rows packed by earliest start. Each primer is a thin arrow above the backbone at
-each binding site, overlapping ones further up. Whatever the stretch cuts, it cuts cleanly, with no
-arrowhead at the cut, so a feature across the origin of a circular record drawn opened lies at both
-ends.
+each binding site, overlapping ones further up. An insertion is a short bar across the backbone at
+its point. Whatever the stretch cuts, it cuts cleanly, with no arrowhead at the cut, so a feature
+across the origin of a circular record drawn opened lies at both ends.
 
 A feature's name goes inside its arrow when it fits, underneath when nothing else in its row lies
 there, and otherwise in a box above. Boxed names, primers and cut sites are labelled in the rows
@@ -89,6 +89,10 @@ _ROW_GAP = 4.0
 # A primer's arrow above the backbone: its thickness, and the room either side of it.
 _PRIMER_BAND = 4.0
 _PRIMER_GAP = 2.0
+
+# An insertion's bar: how far it reaches past the backbone either side, and how thick it is.
+_INSERTION_REACH = 1.5
+_INSERTION = 2.0
 
 # The labels: padding inside a box, the room between the drawing and the lowest row, the space
 # between boxes, and the canvas's margin.
@@ -262,7 +266,7 @@ def layout(
     for item in items:
         if not SANS.drawn(item.label):
             continue
-        if item.kind == "cut_site":
+        if item.kind in ("cut_site", "insertion"):
             feet[id(item)] = [
                 Point(at(piece.start), -_BACKBONE / 2)
                 for piece in pieces(item, start, end, length, circular=circular)
@@ -286,6 +290,12 @@ def layout(
 
     order = {id(item): index for index, item in enumerate(items)}
     drawn = sorted((*features, *primers), key=lambda run: order[id(run.item)])
+    marks = [
+        _mark(item, at(piece.start))
+        for item in items
+        if item.kind == "insertion"
+        for piece in pieces(item, start, end, length, circular=circular)
+    ]
     scale_shapes, numbers = _scale(start, end, length, circular, at, width)
     ends = _ends(circular or start > 0, circular or end < length, width)
     title = _title(name, length, span, bottom, width)
@@ -294,6 +304,7 @@ def layout(
         *ends,
         *scale_shapes,
         *_items(drawn, arrows, names),
+        *marks,
         *(_label(label) for label in boxes),
         *title,
     )
@@ -302,6 +313,7 @@ def layout(
         *_boxes(ends),
         *numbers,
         *(_bounds(arrow) for run in drawn for arrow in arrows[id(run)]),
+        *(_mark_box(mark) for mark in marks),
         *(_letters_box(name_.letters) for name_ in names.values()),
         *(label.box for label in boxes),
         *_boxes(title),
@@ -599,6 +611,20 @@ def _items(
         Group(tuple(shapes), classes=(item.kind,), data={"kind": item.kind, **item.hover})
         for item, shapes in groups.values()
     ]
+
+
+def _mark(item: Item, x: float) -> Group:
+    """Return an insertion's bar across the backbone at `x`, in its colour."""
+    top = -_BACKBONE / 2 - _INSERTION_REACH
+    bottom = _STRANDS_APART + _BACKBONE / 2 + _INSERTION_REACH
+    line = Line(x, top, x, bottom, item.color, _INSERTION)
+    return Group((line,), classes=(item.kind,), data={"kind": item.kind, **item.hover})
+
+
+def _mark_box(mark: Group) -> Box:
+    [line] = mark.shapes
+    assert isinstance(line, Line)
+    return Box(line.x1 - _INSERTION / 2, line.y1, _INSERTION, line.y2 - line.y1)
 
 
 def _label(label: Label) -> Group:

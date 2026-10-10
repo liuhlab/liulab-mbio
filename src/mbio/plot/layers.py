@@ -1,9 +1,11 @@
 """What a map draws from a record: its items, with their names, colours and hover details.
 
 A view takes these items and never the record. A map draws a record's features, each primer at
-its binding sites, and the cut sites of the shipped unique cutters or of the enzymes named. A
-primer carries its 5' tail and the bases it does not pair with, found by comparing it with the
-record, and each enzyme at a cut site how its cuts in the two strands stagger.
+its binding sites, any insertion it is given, and the cut sites of the shipped unique cutters or
+of the enzymes named. A primer carries its 5' tail and the bases it does not pair with, found by
+comparing it with the record, and each enzyme at a cut site how its cuts in the two strands
+stagger. An insertion is bases the record lacks: a mark at the point between two bases, never a
+feature, since a feature lies over bases and an insertion over none.
 
 A feature draws in its file's colour, and a segment in its own where that differs. One the file
 gives no colour takes Paul Tol's light scheme by the group its type falls in, and pale grey for a
@@ -44,8 +46,9 @@ from mbio.sequence import (
 )
 from mbio.sites import find_sites
 
-#: What an item is: a feature, a primer at one binding site, or the enzymes cutting at one position.
-type Kind = Literal["feature", "primer", "cut_site"]
+#: What an item is: a feature, a primer at one binding site, the enzymes cutting at one position,
+#: or bases the record lacks at one point.
+type Kind = Literal["feature", "primer", "cut_site", "insertion"]
 
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
@@ -124,6 +127,9 @@ PRIMER = "#AA3377"
 #: The colour of an enzyme's name.
 ENZYME = "#000000"
 
+#: Tol vibrant red, for an insertion given no colour of its own.
+INSERTION = "#cc3311"
+
 #: The one pale grey every paint of an item a highlight leaves unlit takes.
 DIM = "#dddddd"
 
@@ -134,7 +140,7 @@ SEPARATOR = " - "
 TERMINATING_CLASSES = frozenset({"terminator", "polyA_signal_sequence"})
 
 # The kinds in the order their labels hide.
-_HIDING: tuple[Kind, ...] = ("cut_site", "primer", "feature")
+_HIDING: tuple[Kind, ...] = ("cut_site", "primer", "feature", "insertion")
 
 
 @dataclass(frozen=True, slots=True)
@@ -204,6 +210,29 @@ class Codon:
 
 
 @dataclass(frozen=True, slots=True)
+class Insertion:
+    """Bases a record lacks between two of its own, which a map marks at the point they would go.
+
+    Parameters
+    ----------
+    name
+        What a highlight lights it by, and hovering over it shows.
+    at
+        The 0-based boundary it lies at: 0 before the first base, the record's length after the
+        last.
+    length
+        How many bases it adds, which its label says.
+    color
+        What it is marked in.
+    """
+
+    name: str
+    at: int
+    length: int
+    color: str = INSERTION
+
+
+@dataclass(frozen=True, slots=True)
 class Item:
     """One thing a map draws.
 
@@ -219,7 +248,8 @@ class Item:
         The strand it reads along.
     spans
         In top-strand order, as the feature's segments are. A primer's is its binding site. A cut
-        site's is empty, at the boundary where its enzymes cut the top strand.
+        site's is empty, at the boundary where its enzymes cut the top strand, and an insertion's
+        at the boundary it lies at.
     label
         The text a map labels it with.
     hover
@@ -303,8 +333,9 @@ def items(
     hide_types: Iterable[str] = (),
     source: bool = False,
     translations: bool = False,
+    insertions: Iterable[Insertion] = (),
 ) -> tuple[Item, ...]:
-    """Return what a map of `record` draws: its features, its primers, then its cut sites.
+    """Return what a map of `record` draws: its features, its primers, insertions, then cut sites.
 
     Parameters
     ----------
@@ -321,11 +352,15 @@ def items(
         Whether a `source` feature is drawn.
     translations
         Whether each CDS carries its translation, as a sequence view draws it.
+    insertions
+        Each drawn as its own mark, labelled with how many bases it adds.
 
     Raises
     ------
     KeyError
         If no shipped enzyme answers to a name in `enzymes`, as `sites.find_sites` raises.
+    ValueError
+        If an insertion adds no bases, or lies off the record.
     """
     chosen = None if enzymes is None else _chosen(enzymes)
     left_off = set(hide_types) if source else {*hide_types, "source"}
@@ -342,6 +377,7 @@ def items(
             for primer in record.primers
             for site in primer.binding_sites
         )
+    drawn.extend(_insertion(one, record) for one in insertions)
     if cut_sites:
         drawn.extend(_cut_sites(record, chosen))
     return tuple(drawn)
@@ -431,8 +467,8 @@ def hiding(item: Item) -> tuple[int, int, int, int]:
     """Return where an item's label comes in the order labels hide: sort by it, first to hide first.
 
     An item a highlight leaves unlit hides before every item it lights. Then cut sites hide first,
-    those whose enzymes cut most often before the rest, then primers, then features, and within
-    each the longest label first. A cut site naming several enzymes hides as late as the one among
+    those whose enzymes cut most often before the rest, then primers, then features, then
+    insertions, and within each the longest label first. A cut site naming several enzymes hides as late as the one among
     them that cuts least often.
 
     Examples
@@ -459,9 +495,10 @@ def notice(hidden: Iterable[Item]) -> str:
     ('1 enzyme site is hidden', '')
     """
     counts = Counter(item.kind for item in hidden)
+    words = ("enzyme site", "primer", "feature", "insertion")
     parts = [
         f"{counts[kind]} {word if counts[kind] == 1 else word + 's'}"
-        for kind, word in zip(_HIDING, ("enzyme site", "primer", "feature"), strict=True)
+        for kind, word in zip(_HIDING, words, strict=True)
         if counts[kind]
     ]
     if not parts:
@@ -682,6 +719,35 @@ def _primer(primer: Primer, site: BindingSite, record: SequenceRecord) -> Item:
         hover,
         tail=max(0, len(primer.sequence) - (site.end - site.start)),
         mismatches=_mismatches(primer, site, record),
+    )
+
+
+def _insertion(insertion: Insertion, record: SequenceRecord) -> Item:
+    """Return an insertion's mark: an empty span at its point, labelled with what it adds.
+
+    Its point reads as GenBank writes a site between two bases, the one before ``^`` the one after.
+    """
+    length = len(record)
+    at, added = insertion.at, insertion.length
+    if added < 1 or not 0 <= at <= length:
+        raise ValueError(
+            f"insertion {insertion.name!r} of {added} bases at {at} does not lie on "
+            f"{record.name!r} of {length} bases: it adds at least one base, at 0 to {length}"
+        )
+    if record.topology == "circular":
+        at %= length
+        point = f"{(at - 1) % length + 1}^{at + 1}"
+    else:
+        point = f"{at}^{at + 1}"
+    hover = {"name": insertion.name, "type": "insertion", "span": point, "length": f"{added} bp"}
+    return Item(
+        "insertion",
+        insertion.name,
+        "insertion",
+        Strand.NONE,
+        (Span(at, at, insertion.color.lower()),),
+        f"+{added} bp",
+        hover,
     )
 
 

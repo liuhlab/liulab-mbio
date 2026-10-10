@@ -33,6 +33,7 @@ _KINDS: dict[layers.Kind, str] = {
     "feature": "Features",
     "primer": "Primers",
     "cut_site": "Cut sites",
+    "insertion": "Insertions",
 }
 
 
@@ -89,6 +90,10 @@ class Drawing:
     highlight
         The names lit; every other item is dimmed, in every view and every format. Nothing is lit
         when it is empty.
+    insertions
+        Each marked where it lies, in every view.
+    tracks
+        Each drawn under the sequence view's rows.
     """
 
     record: SequenceRecord
@@ -100,6 +105,8 @@ class Drawing:
     bases_per_row: int
     both_strands: bool
     highlight: tuple[str, ...] = ()
+    insertions: tuple[layers.Insertion, ...] = ()
+    tracks: tuple[view.Track, ...] = ()
     _kept: dict[tuple[object, ...], object] = field(default_factory=dict, init=False, repr=False)
 
     @property
@@ -201,6 +208,8 @@ def draw_map(
     source: bool = False,
     bases_per_row: int = 60,
     both_strands: bool = True,
+    insertions: Iterable[layers.Insertion] = (),
+    tracks: Iterable[view.Track] = (),
 ) -> Drawing:
     """Lay out a record as a map of its features, primers and cut sites: a circle or a line.
 
@@ -247,6 +256,12 @@ def draw_map(
         many, rounded up, for a narrow page.
     both_strands
         Whether the sequence view's bottom strand, under the top one, is switched on.
+    insertions
+        Bases the record lacks, each marked at the point between two bases it lies at, labelled
+        with how many it adds. A highlight lights one by its name.
+    tracks
+        Values along the record's bases, each drawn as curves in a strip under every row of the
+        sequence view its peaks reach.
 
     Raises
     ------
@@ -255,8 +270,8 @@ def draw_map(
     ValueError
         If the file cannot be read as a record, the record has no bases, `region` names no
         feature or lies off the record, `highlight` names nothing the record draws,
-        `bases_per_row` is less than 1, or a sequence view would draw more than
-        `sequence_view.LIMIT` bases.
+        `bases_per_row` is less than 1, a sequence view would draw more than
+        `sequence_view.LIMIT` bases, or an insertion adds nothing or lies off the record.
 
     Examples
     --------
@@ -276,9 +291,18 @@ def draw_map(
             f"draw {end - start:,}: name a region to draw it"
         )
     named = enzymes if enzymes is None or isinstance(enzymes, str) else tuple(enzymes)
-    # Reads the names alone, so an unknown one raises here rather than when a layout needs it.
-    layers.items(record, features=False, primers=False, cut_sites=False, enzymes=named)
-    kinds: dict[layers.Kind, bool] = {"feature": features, "primer": primers, "cut_site": cut_sites}
+    inserted = tuple(insertions)
+    # Reads the names and the insertions alone, so a wrong one raises here rather than when a
+    # layout needs it.
+    layers.items(
+        record, features=False, primers=False, cut_sites=False, enzymes=named, insertions=inserted
+    )
+    kinds: dict[layers.Kind, bool] = {
+        "feature": features,
+        "primer": primers,
+        "cut_site": cut_sites,
+        "insertion": True,
+    }
     switches = Switches(
         frozenset(kind for kind, on in kinds.items() if on),
         frozenset(hide_types) | (frozenset() if source else {"source"}),
@@ -293,6 +317,8 @@ def draw_map(
         bases_per_row,
         both_strands,
         (highlight,) if isinstance(highlight, str) else tuple(highlight),
+        inserted,
+        tuple(tracks),
     )
     _lit(drawing)
     return drawing
@@ -313,7 +339,7 @@ def _lit(drawing: Drawing) -> None:
     if unknown:
         listed = ", ".join(repr(name) for name in unknown)
         raise ValueError(
-            f"record {drawing.record.name!r} draws no feature, primer or enzyme "
+            f"record {drawing.record.name!r} draws no feature, primer, insertion or enzyme "
             f"called {listed} to highlight"
         )
 
@@ -379,6 +405,7 @@ def _uncut(drawing: Drawing) -> tuple[layers.Item, ...]:
                 cut_sites=False,
                 source=True,
                 translations=_carries_sequence_view(drawing),
+                insertions=drawing.insertions,
             ),
         ),
     )
@@ -458,6 +485,7 @@ def _rows(
             span=drawing.span,
             bases_per_row=bases_per_row,
             both_strands=both_strands,
+            tracks=drawing.tracks,
         ),
     )
 

@@ -948,9 +948,17 @@ _Avoid_: plasmid map (a linear record has one too), figure, plot
 ### Sequence view
 
 A drawing of a sequence record base by base, in rows: both strands, the translation of every CDS,
-features as bars, primers as arrows and enzyme names above their cut. It is drawn only with a
-map, which shows where each row lies.
+features as bars, primers as arrows, enzyme names above their cut, an insertion as a line between
+two bases, and each **track** under the rows it reaches. It is drawn only with a map, which shows
+where each row lies.
 _Avoid_: sequence panel, text view
+
+### Track
+
+Values along a record's bases, such as the four channels of a Sanger trace, drawn as curves in a
+strip under each row of a **sequence view** they reach. Each peak lies over the middle of the base
+it was called for, so the signal behind every call stands under it.
+_Avoid_: chromatogram (one kind of it), lane, signal
 
 ### Highlight
 
