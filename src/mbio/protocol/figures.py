@@ -177,15 +177,15 @@ def tail_figure(
         span = (max(0, site.start - context), len(record))
     else:
         span = (0, min(len(record), site.end + context))
-    cutting = tuple(enzymes)
+    drawn = tuple(enzymes)
     return Figure(
         (path,),
         caption,
         span=span,
         linear=True,
         sequence_view=True,
-        enzymes=cutting,
-        highlight=tuple(dict.fromkeys((primer, *cutting, *highlight))),
+        enzymes=drawn,
+        highlight=tuple(dict.fromkeys((primer, *drawn, *highlight))),
     )
 
 

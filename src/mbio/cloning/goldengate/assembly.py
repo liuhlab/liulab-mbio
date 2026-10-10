@@ -194,7 +194,7 @@ def amplify(
     )
     bases = tails[0] + template.bases(anneal, end) + reverse_complement(tails[1])
     features, kept = carried(template, start, end, offset=len(tails[0]) - len(left) - start)
-    marks = _tail_marks(one, bases, (len(tails[0]), len(bases) - len(tails[1])), (left, right))
+    marks = _tail_marks(one, bases, (len(tails[0]), len(bases) - len(tails[1])))
     placed = (
         annealed(forward, len(tails[0]), Strand.FORWARD),
         annealed(reverse, len(bases) - len(tails[1]), Strand.REVERSE),
@@ -218,39 +218,32 @@ def amplify(
     )
 
 
-def _tail_marks(
-    enzyme: Enzyme, bases: str, edges: tuple[int, int], overhangs: tuple[str, str]
-) -> tuple[Feature, ...]:
-    """Mark what the two tails carry: each recognition site, then the overhang each cut leaves.
+def _tail_marks(enzyme: Enzyme, bases: str, tails: tuple[int, int]) -> tuple[Feature, ...]:
+    """Mark what the two tails carry: each recognition site, and the overhang its cut leaves.
 
-    `edges` is where the forward tail ends and the reverse tail begins, which is where the two
-    overhangs end and begin.
+    `tails` is where the forward tail ends and where the reverse tail begins.
     """
-    head, foot = edges
-    sites = [
-        Feature(
-            site_name(enzyme),
-            "protein_bind",
-            (Segment(site.start, site.end),),
-            strand=site.strand,
-        )
-        for site in find_sites(SequenceRecord(bases), enzyme)
-        if site.start < head or site.end > foot
-    ]
-    left, right = overhangs
-    ends = ((left, head - len(left)), (right, foot))
-    return (
-        *sites,
-        *(
+    forward_end, reverse_start = tails
+    marks = []
+    for site in find_sites(SequenceRecord(bases), enzyme):
+        if forward_end <= site.start and site.end <= reverse_start:
+            continue
+        cuts = sorted((site.top_cut, site.bottom_cut))
+        marks += [
             Feature(
-                overhang_name(spelled),
+                site_name(enzyme),
+                "protein_bind",
+                (Segment(site.start, site.end),),
+                strand=site.strand,
+            ),
+            Feature(
+                overhang_name(site.overhang or ""),
                 "misc_feature",
-                (Segment(at, at + len(spelled)),),
+                (Segment(*cuts),),
                 color=JUNCTION_COLOR,
-            )
-            for spelled, at in ends
-        ),
-    )
+            ),
+        ]
+    return tuple(marks)
 
 
 def site_name(enzyme: Enzyme) -> str:

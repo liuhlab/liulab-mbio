@@ -79,10 +79,10 @@ plan/protocol.html
 | File | What it is |
 | --- | --- |
 | [product.dna](examples/pUC19-GFP/product.dna) | the finished plasmid, features carried over and both joins marked. Opens in SnapGene |
-| [puc19-backbone-amplicon.dna](examples/pUC19-GFP/puc19-backbone-amplicon.dna), [gfp-amplicon.dna](examples/pUC19-GFP/gfp-amplicon.dna) | each PCR product, tails and all, whose end its PCR step draws |
+| [puc19-backbone-amplicon.dna](examples/pUC19-GFP/puc19-backbone-amplicon.dna), [gfp-amplicon.dna](examples/pUC19-GFP/gfp-amplicon.dna) | each amplicon, tails and all, whose end its PCR step draws |
 | [primers.tsv](examples/pUC19-GFP/primers.tsv) | the nine oligos to order, with length and melting temperature |
 | [protocol.json](examples/pUC19-GFP/protocol.json) | the same protocol as data |
-| [puc19-backbone-amplicon-map.html](examples/pUC19-GFP/puc19-backbone-amplicon-map.html), [gfp-amplicon-map.html](examples/pUC19-GFP/gfp-amplicon-map.html) | each PCR product as a map you can explore, which its step's figure opens |
+| [puc19-backbone-amplicon-map.html](examples/pUC19-GFP/puc19-backbone-amplicon-map.html), [gfp-amplicon-map.html](examples/pUC19-GFP/gfp-amplicon-map.html) | each amplicon as a map you can explore, which its PCR step's figure opens |
 | [product-map.html](examples/pUC19-GFP/product-map.html) | the finished plasmid as a map you can explore, which the figure on the page opens |
 | [protocol.html](examples/pUC19-GFP/protocol.html) | the protocol as one page: no network, nothing to install |
 

@@ -112,7 +112,7 @@ FASTA files, and writes five files into `--out`:
 | `protocol.html` | that protocol as one page, which opens offline |
 
 Gateway also writes `entry-clone.dna` and its map, `entry-clone-map.html`, where it plans a BP
-reaction. Golden Gate also writes each PCR product, `NAME-amplicon.dna`, and its map, which the
+reaction. Golden Gate also writes each amplicon, `NAME-amplicon.dna`, and its map, which the
 PCR step's figure opens.
 
 Every one of the four prints a summary line, then each file it wrote. Five options are shared:
