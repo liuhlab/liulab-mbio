@@ -334,6 +334,16 @@ the quality and the no-quality case, and are under a licence that allows copying
 **None comes with the construct it was read from**, so a test of a junction verdict builds its
 expected record around the read's own trimmed calls and plants the disagreement it wants.
 
+**Tracked.** `3730.ab1` and `310.ab1` are copied unchanged into `tests/data/` from Biopython at
+commit `e38c64daa2` (<https://github.com/biopython/biopython/tree/e38c64daa2/Tests/Abi>), fetched
+2026-10-10. Biopython's `LICENSE.rst` from the same commit sits beside them as
+`tests/data/biopython-LICENSE.rst`, the notice its licence asks a copy to carry. SHA-256:
+
+| File | SHA-256 |
+| --- | --- |
+| `3730.ab1` | `e4663e4db40232576ccdda5b878dddb01ef80a3d1b032941ba053146ce53f77b` |
+| `310.ab1` | `0a395d39520d24a89af4c77dd55fd7fb632e732a6da807ceb6ead0c2465cb887` |
+
 **Whole-plasmid: no public raw vendor result exists.** No vendor publishes a demo folder, and the
 one public per-base table has been processed. The lab supplies its own result — one Plasmidsaurus
 folder for a plasmid it already holds — or a test writes a small file in the vendor's documented
