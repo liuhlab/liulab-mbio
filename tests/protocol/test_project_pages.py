@@ -680,22 +680,21 @@ def test_the_reagents_page_states_a_caution_two_protocols_both_bring_once() -> N
 
 def test_the_references_page_names_every_protocol_citing_each_document(project: Project) -> None:
     main = main_of(parse(render_references(project, Folder.of(project))))
-    [listed] = main.find_all("ol")
     cited = {
         item.text.split(".")[0]: item.find_all("span", cls="cited-by")[0].text
-        for item in listed.find_all("li")
+        for item in main.find_all("section", cls="references")[0].find_all("li")
     }
     assert cited == {
         "Smith 2020": "cited by Order the pool, Build the blocks",
         "Jones 2019": "cited by Build the blocks",
     }
     sources = {
-        item.find_all("strong")[0].text: item.find_all("span", cls="cited-by")[0].text
+        item.attrs["id"]: item.find_all("span", cls="cited-by")[0].text
         for item in main.find_all("section", cls="sources")[0].find_all("li")
     }
     assert sources == {
-        "NEB": "cited by Order the pool, Build the blocks",
-        "M0491": "cited by Build the blocks",
+        "source-neb": "cited by Order the pool, Build the blocks",
+        "source-m0491": "cited by Build the blocks",
     }
 
 
@@ -710,10 +709,13 @@ def test_the_references_page_lists_the_record_the_run_bill_cites() -> None:
     folder = Folder.of(run)
     main = main_of(parse(render_references(run, folder)))
     sources = {
-        item.find_all("strong")[0].text: item.find_all("span", cls="cited-by")[0].text
+        item.attrs["id"]: item.find_all("span", cls="cited-by")[0].text
         for item in main.find_all("section", cls="sources")[0].find_all("li")
     }
-    assert sources == {"prices": "cited by the bill", "NEB": "cited by Order the pool"}
+    assert sources == {
+        "source-prices": "cited by the bill",
+        "source-neb": "cited by Order the pool",
+    }
     [bill] = main_of(parse(render_reagents(run, folder))).find_all("section", cls="bill")
     assert [one.attrs["href"] for one in bill.find_all("a", cls="cite")] == [
         f"{REFERENCES_FILE}#source-prices"
@@ -729,7 +731,7 @@ def test_a_run_source_no_row_of_its_bill_cites_is_listed_with_no_citer() -> None
     )
     main = main_of(parse(render_references(run, Folder.of(run))))
     [listed] = main.find_all("section", cls="sources")[0].find_all("li")
-    assert listed.find_all("strong")[0].text == "prices"
+    assert listed.attrs["id"] == "source-prices"
     assert not listed.find_all("span", cls="cited-by")
 
 
@@ -784,6 +786,11 @@ def test_a_citation_resolves_on_its_own_page_and_reaches_the_run_list_from_a_pag
         "references.html#source-m0491",
         "references.html#source-neb",
     }
+    # A number on a page with no list of its own is the run list's, so it lands on that entry.
+    run = main_of(parse(render_references(project, folder))).find_all("section", cls="sources")
+    listed = [item.attrs["id"] for item in run[0].find_all("li")]
+    for cited in shared.find_all("a", cls="cite"):
+        assert cited.text == f"[{listed.index(cited.attrs['href'].partition('#')[2]) + 1}]"
     one = project.protocols[1]
     for page in (render_html(one), render_html(one, folder=folder, here=folder.pages[1].href)):
         assert {a.attrs["href"] for a in parse(page).find_all("a", cls="cite")} == {"#source-m0491"}

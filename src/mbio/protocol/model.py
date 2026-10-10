@@ -1211,6 +1211,11 @@ class Bill:
         _require(bool(self.rows), f"bill {self.title!r} has no row")
 
     @property
+    def citations(self) -> tuple[Citation, ...]:
+        """Every citation this bill's rows carry, row by row."""
+        return tuple(row.citation for row in self.rows if row.citation)
+
+    @property
     def cited(self) -> frozenset[str]:
         """Every source key this bill's rows name.
 
@@ -1219,7 +1224,7 @@ class Bill:
         >>> Bill((BillRow("cells", 1, charge="9.00", citation=Citation("NEB")),)).cited
         frozenset({'NEB'})
         """
-        return frozenset(row.citation.source for row in self.rows if row.citation)
+        return frozenset(citation.source for citation in self.citations)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1659,16 +1664,16 @@ class Protocol:
         return (self._sources(), self._wells(), self._rules(), self._holes())
 
     @property
-    def cited(self) -> frozenset[str]:
-        """Every source key this protocol's own citations name.
+    def citations(self) -> tuple[Citation, ...]:
+        """Every citation this protocol's own rows and its bill carry, kind by kind.
 
         Examples
         --------
-        >>> Protocol("Demo").cited
-        frozenset()
+        >>> Protocol("Demo").citations
+        ()
         """
-        return frozenset(
-            citation.source
+        return tuple(
+            citation
             for citation in (
                 *(m.citation for m in self.materials),
                 *(r.citation for m in self.materials for r in m.rules),
@@ -1689,7 +1694,18 @@ class Protocol:
                 *(w.citation for s in self.steps for w in s.waits),
             )
             if citation
-        ) | (self.bill.cited if self.bill else frozenset())
+        ) + (self.bill.citations if self.bill else ())
+
+    @property
+    def cited(self) -> frozenset[str]:
+        """Every source key this protocol's own citations name.
+
+        Examples
+        --------
+        >>> Protocol("Demo").cited
+        frozenset()
+        """
+        return frozenset(citation.source for citation in self.citations)
 
     def _sources(self) -> Check:
         return _sources_check(self.cited, frozenset(self.sources))

@@ -465,8 +465,8 @@ def test_a_touchdown_is_one_cycled_stage_printed_from_its_start_to_its_derived_e
         ["Anneal", "68 °C-0.5 °C a cycle", "20 s", NO_NUMBER],
     ]
     # One source behind every row is the program's, so the rows carry no citation of their own.
-    assert [cited.text for cited in figure.find_all("a", cls="cite")] == [
-        "LevSeq thermal cycler table"
+    assert [cited.attrs["title"] for cited in figure.find_all("a", cls="cite")] == [
+        "LevSeq, thermal cycler table"
     ]
     # A blank count bounds no run, so no timer stands in for one.
     assert not figure.find_all(cls="timer")
@@ -809,9 +809,38 @@ def test_a_note_that_cites_a_document_anchors_it_where_a_troubleshooting_row_doe
     notes = parse(render_html(one)).find_all(cls="notes")[0]
     assert [item.text for item in notes.find_all("li")] == [
         "This run chose 2 hours.",
-        "Glycerol above 5% is what stars. NEB §2",
+        "Glycerol above 5% is what stars.[1]",
     ]
     assert [a.attrs["href"] for a in notes.find_all("a", cls="cite")] == ["#source-neb"]
+
+
+def test_a_citation_is_one_number_a_document_and_its_entry_names_where_the_page_cites_it() -> None:
+    """Numbered by first citation, so the list reads in order and lands each click on its entry."""
+    one = Protocol(
+        "Digest",
+        sources={"MAN": Source("Kit manual"), "NEB": Source("Guide"), "OLD": Source("Unread")},
+        steps=(
+            Step(
+                "Set up the digest",
+                notes=(
+                    Note("Glycerol above 5% is what stars.", citation=Citation("NEB", "§2")),
+                    Note("The buffer comes with the kit.", citation=Citation("MAN")),
+                    Note("Heat stops the enzyme.", citation=Citation("NEB", "§5")),
+                ),
+            ),
+        ),
+    )
+    page = parse(render_html(one))
+    assert [(a.text, a.attrs["href"]) for a in page.find_all("a", cls="cite")] == [
+        ("[1]", "#source-neb"),
+        ("[2]", "#source-man"),
+        ("[1]", "#source-neb"),
+    ]
+    [listed] = page.find_all("section", cls="sources")[0].find_all("ol")
+    assert [
+        (item.attrs["id"], [at.text for at in item.find_all(cls="cited-at")])
+        for item in listed.find_all("li")
+    ] == [("source-neb", ["cited at §2 · §5"]), ("source-man", []), ("source-old", [])]
 
 
 def test_a_caution_that_cites_a_document_anchors_it_where_a_note_does() -> None:
@@ -833,7 +862,7 @@ def test_a_caution_that_cites_a_document_anchors_it_where_a_note_does() -> None:
     said = [one.text for one in page.find_all(cls="caution")]
     assert said == [
         "Caution: Keep the enzyme mix on ice.",
-        "Caution: Excess DNA inhibits it. MAN p. 21",
+        "Caution: Excess DNA inhibits it.[1]",
     ]
     assert [a.attrs["href"] for a in page.find_all("a", cls="cite")] == ["#source-man"]
 
