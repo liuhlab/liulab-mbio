@@ -671,26 +671,39 @@ def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Pa
     assert order == ["program", "drawing map"]
 
 
-def test_a_figure_opens_to_its_record_s_map_written_beside_the_record(
+def test_a_figure_opens_to_its_record_s_map_written_beside_the_page(
     data_dir: Path, tmp_path: Path
 ) -> None:
-    """One map a record, with every enzyme its figures name, linked from the page that draws it."""
-    (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
-    figures = tuple(
-        Figure(("../pUC19.dna",), f"Cut by {enzyme}", enzymes=(enzyme,))
-        for enzyme in ("EcoRI", "HindIII")
+    """One map a record, with every enzyme its figures name, beside the page that opens it.
+
+    A record of the same name in another folder is another record, so its map is numbered.
+    """
+    for folder in ("records", "other"):
+        (tmp_path / folder).mkdir()
+        (tmp_path / folder / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    figures = (
+        *(
+            Figure(("../records/pUC19.dna",), f"Cut by {enzyme}", enzymes=(enzyme,))
+            for enzyme in ("EcoRI", "HindIII")
+        ),
+        Figure(("../other/pUC19.dna",), "The other copy", enzymes=()),
     )
     one = Protocol("Clone", steps=(Step("Cut", figures=figures),))
     (tmp_path / "pages").mkdir()
 
     page = parse(write_html(one, tmp_path / "pages" / "protocol.html").read_text("utf-8"))
 
-    written = (tmp_path / "pUC19-map.html").read_text(encoding="utf-8")
+    written = (tmp_path / "pages" / "pUC19-map.html").read_text(encoding="utf-8")
     assert all(f'data-name="{enzyme}"' in written for enzyme in ("EcoRI", "HindIII"))
-    opened = [figure.find_all("details", cls="opened")[0] for figure in page.find_all("figure")]
-    assert [d.find_all("iframe")[0].attrs["data-src"] for d in opened] == ["../pUC19-map.html"] * 2
+    opened = [figure.find_all("details", cls="opener")[0] for figure in page.find_all("figure")]
+    assert [d.find_all("iframe")[0].attrs["data-src"] for d in opened] == [
+        "pUC19-map.html",
+        "pUC19-map.html",
+        "pUC19-2-map.html",
+    ]
+    assert (tmp_path / "pages" / "pUC19-2-map.html").is_file()
     # A page rendered with no map written has nothing to open.
-    assert not parse(render_html(one, base=tmp_path / "pages")).find_all("details", cls="opened")
+    assert not parse(render_html(one, base=tmp_path / "pages")).find_all("details", cls="opener")
 
 
 def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path: Path) -> None:

@@ -5,7 +5,7 @@ the product, and runs the whole design: choose the enzyme, design the overhangs,
 PCRs and the ligation, work out the bench quantities, and design the colony PCR and sequencing
 that validate the clone. `Plan.write` puts four files in one directory -- the annotated
 product, a primer order sheet, the protocol as JSON data, and the interactive HTML page
-rendered from that data -- with the map its figure opens to beside them.
+rendered from that data -- with a map of each record its figures draw beside them.
 
 Every number the protocol prints is computed here or by the modules this one calls. What the
 protocol says about the phenotype -- what drives the inserts, whether anything should be
@@ -75,7 +75,7 @@ VECTOR_WINDOW = 6
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The files a plan writes: four, and the map each figure opens to.
+    """The files a plan writes: four, and a map of each record a figure draws.
 
     Parameters
     ----------
@@ -89,14 +89,14 @@ class Files:
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
     maps
-        The map each record a figure draws opens to, an interactive page beside the record.
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     product: Path
     primers: Path
     protocol_data: Path
     protocol: Path
-    maps: tuple[Path, ...] = ()
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -226,7 +226,7 @@ class Plan:
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the product, the primer sheet, the protocol data and its page into `directory`.
+        """Write the product, the primer sheet, the protocol, its page and maps into `directory`.
 
         The directory is made when it is not there. The files are named by `PRODUCT_FILE`
         and `PRIMER_FILE`, and by `mbio.protocol.render` for the protocol pair, and a

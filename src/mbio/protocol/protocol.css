@@ -260,31 +260,26 @@ tfoot .muted { font-weight: 400; }
 .sources li:target { background: var(--accent-soft); outline: 4px solid var(--accent-soft); border-radius: 2px; }
 .sources .cited-at, .sources .cited-by { display: block; color: var(--muted); font-size: 0.9em; }
 
-/* A step's figure is a frame of its own with its caption inside, so it never reads as one of
-   the instructions. Its drawing is a thumbnail; the control under it opens the record's map in
-   place, whole and to explore, and paper keeps the thumbnail alone. */
+/* A step's figure stands in a box of its own with its caption inside, so it never reads as one
+   of the instructions. Its drawing is drawn small; the control under it opens the record's map in
+   place, whole and to explore, and takes the small drawing's place until closed. */
 .drawing.map { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 0.75rem; }
-/* Opened, the map takes the thumbnail's place and the caption stays under it. */
 .drawing.map:not(.rows), .drawing.map .row { display: flex; flex-direction: column; }
-.drawing.map .opened[open] { order: -1; margin-top: 0; }
+.drawing.map .opener[open] { order: -1; margin-top: 0; }
 .drawing.map .row-name { order: -2; font-weight: 600; }
-.drawing.map:has(> .opened[open]) > svg, .row:has(> .opened[open]) > svg { display: none; }
+.drawing.map:has(> .opener[open]) > svg, .row:has(> .opener[open]) > svg { display: none; }
 .drawing.map svg { max-height: 24rem; width: auto; margin-inline: auto; border-radius: 6px; }
 .drawing.map figcaption { font-weight: 400; font-size: 0.92rem; margin: 0.6rem 0 0; }
-.opened { margin-top: 0.6rem; }
-.opened > summary { display: inline-flex; align-items: center; gap: 0.4rem; list-style: none; cursor: pointer; font-size: 0.85rem; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 2rem; }
-.opened > summary::-webkit-details-marker { display: none; }
-.opened > summary::before { content: "\2922"; font-size: 0.95em; }
-.opened[open] > summary::before { content: "\2715"; }
-.opened > summary:hover { border-color: var(--accent); }
-.opened[open] .to-open, .opened:not([open]) .to-close { display: none; }
-.opened iframe { display: block; width: 100%; height: min(78vh, 42rem, calc(60vw + 14rem)); margin: 0.6rem 0 0.3rem; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
+.opener { margin-top: 0.6rem; }
+.opener > summary { display: inline-flex; align-items: center; gap: 0.4rem; list-style: none; cursor: pointer; font-size: 0.85rem; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 2rem; }
+.opener > summary::-webkit-details-marker { display: none; }
+.opener > summary::before { content: "\2922"; font-size: 0.95em; }
+.opener[open] > summary::before { content: "\2715"; }
+.opener > summary:hover { border-color: var(--accent); }
+.opener[open] .to-open, .opener:not([open]) .to-close { display: none; }
+/* Tall enough for the map and its switches, and no taller than a phone's width needs. */
+.opener iframe { display: block; width: 100%; height: min(78vh, 42rem, calc(60vw + 14rem)); margin: 0.6rem 0 0.3rem; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
 .new-tab { font-size: 0.85rem; }
-@media print {
-  .opened { display: none !important; }
-  .drawing.map { background: none; break-inside: avoid; }
-  .drawing.map svg { display: block !important; }
-}
 
 /* A project folder: the run's nav bar across the top, a column either side of the page. */
 .site { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0 1.4rem; margin: 0 -16px 0.5rem; padding: 0.6rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -385,7 +380,9 @@ tfoot .muted { font-weight: 400; }
   body { padding: 0; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
-  .toolbar, .site, .column, button.copy, .timer-action { display: none !important; }
+  .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
+  /* A figure prints small whether or not its map was open on screen. */
+  .drawing.map svg { display: block !important; }
   .frame { display: block; max-width: none; }
   .frame .page { padding: 0; }
   .block, .step { border: none; border-top: 1px solid var(--line); border-radius: 0; padding: 0.6rem 0 0; }

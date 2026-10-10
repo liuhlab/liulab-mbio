@@ -4,7 +4,7 @@
 to the same two ends, check they anneal, simulate the ligation, and design the colony PCR and
 the sequencing that confirm the clone. `Plan.write` puts four files in one directory -- the
 annotated product, an oligo order sheet, the protocol as JSON data, and the interactive HTML page
-rendered from that data -- with the map its figure opens to beside them.
+rendered from that data -- with a map of each record its figures draw beside them.
 
 There are two routes to the insert and the record handed in picks one. A record already carrying
 the enzymes' sites is cut and the piece between them goes in. A record carrying none is amplified
@@ -86,7 +86,7 @@ from mbio.snapgene import write_dna
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The files a plan writes: four, and the map each figure opens to.
+    """The files a plan writes: four, and a map of each record a figure draws.
 
     Parameters
     ----------
@@ -100,14 +100,14 @@ class Files:
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
     maps
-        The map each record a figure draws opens to, an interactive page beside the record.
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     product: Path
     primers: Path
     protocol_data: Path
     protocol: Path
-    maps: tuple[Path, ...] = ()
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -284,7 +284,7 @@ class Plan:
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the product, the oligo sheet, the protocol data and its page into `directory`.
+        """Write the product, the oligo sheet, the protocol, its page and its maps into `directory`.
 
         The directory is made when it is not there. The names are `mbio.cloning.plan`'s and
         `mbio.protocol.render`'s, and a second run over the same inputs writes the same bytes.

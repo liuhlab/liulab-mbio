@@ -188,10 +188,10 @@
 
   // A figure opens to its record's map, which loads the first time it is opened. Nothing is
   // remembered: an opened map is not a mark.
-  all("details.opened").forEach(function (opened) {
-    opened.addEventListener("toggle", function () {
-      var frame = opened.querySelector("iframe[data-src]");
-      if (opened.open && frame && !frame.getAttribute("src")) {
+  all("details.opener").forEach(function (opener) {
+    opener.addEventListener("toggle", function () {
+      var frame = opener.querySelector("iframe[data-src]");
+      if (opener.open && frame && !frame.getAttribute("src")) {
         frame.setAttribute("src", frame.getAttribute("data-src"));
       }
     });

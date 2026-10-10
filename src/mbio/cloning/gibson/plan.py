@@ -5,8 +5,8 @@ replace, choose the overlap at each junction, design the primers that carry it, 
 product, work out what the assembly reaction takes, and design the colony PCR and the
 sequencing that say whether the clone is the one the design asked for. `Plan.write` puts four
 files in one directory -- the annotated product, an oligo order sheet, the protocol as JSON
-data, and the interactive HTML page rendered from that data -- with the map its figure opens to
-beside them.
+data, and the interactive HTML page rendered from that data -- with a map of each record its
+figures draw beside them.
 
 Every number the protocol prints is computed here or by the modules this one calls, and every
 supplier's number behind them is `mbio.cloning.gibson.bench`, through
@@ -94,7 +94,7 @@ type Route = Literal["amplify", "stitch"]
 
 @dataclass(frozen=True, slots=True)
 class Files:
-    """The files a plan writes: four, and the map each figure opens to.
+    """The files a plan writes: four, and a map of each record a figure draws.
 
     Parameters
     ----------
@@ -108,14 +108,14 @@ class Files:
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
     maps
-        The map each record a figure draws opens to, an interactive page beside the record.
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     product: Path
     primers: Path
     protocol_data: Path
     protocol: Path
-    maps: tuple[Path, ...] = ()
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -266,7 +266,7 @@ class Plan:
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the plasmid, the oligo sheet, the protocol data and its page into `directory`.
+        """Write the plasmid, the oligo sheet, the protocol, its page and its maps into `directory`.
 
         The directory is made when it is not there. The files are named by
         `mbio.cloning.plan` and `mbio.protocol.render`, and a second run over the same inputs

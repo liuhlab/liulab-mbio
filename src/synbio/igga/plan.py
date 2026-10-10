@@ -160,7 +160,7 @@ class Files:
         The working vector the final assembly opens, cassette and all, or ``None`` where the
         build names none.
     maps
-        The map each record a figure draws opens to, an interactive page beside the record.
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     parts: Path

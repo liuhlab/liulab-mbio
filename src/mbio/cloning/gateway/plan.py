@@ -9,7 +9,8 @@ a plain insert it amplifies that insert onto attB ends first.
 
 `Plan.write` puts four files in one directory -- the annotated expression clone, the oligo order
 sheet, the protocol as JSON data and the interactive HTML page rendered from that data -- and
-the entry clone as a fifth where BP was planned, with the map each figure opens to beside them.
+the entry clone as a fifth where BP was planned, with a map of each record its figures draw
+beside them.
 
 Every number the protocol prints is computed here or is one `mbio.cloning.gateway.bench`
 cites from `docs/research/gateway-cloning.md`.
@@ -81,7 +82,7 @@ class Files:
         The interactive bench protocol, as one self-contained HTML page rendered from
         `protocol_data`.
     maps
-        The map each record a figure draws opens to, an interactive page beside the record.
+        The map each record a figure draws opens to, an interactive page beside the protocol.
     """
 
     entry: Path | None
@@ -89,7 +90,7 @@ class Files:
     primers: Path
     protocol_data: Path
     protocol: Path
-    maps: tuple[Path, ...] = ()
+    maps: tuple[Path, ...]
 
     @property
     def paths(self) -> tuple[Path, ...]:
@@ -221,7 +222,7 @@ class Plan:
         return ordered_from_sheet(made)
 
     def write(self, directory: str | os.PathLike[str]) -> Files:
-        """Write the clones, the oligo sheet, the protocol data and its page into `directory`.
+        """Write the clones, the oligo sheet, the protocol, its page and its maps into `directory`.
 
         The directory is made when it is not there. The entry clone is written only where BP
         was planned, under `ENTRY_FILE`; the rest are named by `PRODUCT_FILE`, `PRIMER_FILE` and
