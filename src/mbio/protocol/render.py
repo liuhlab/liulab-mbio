@@ -29,6 +29,7 @@ from mbio.protocol.model import (
     Check,
     Citation,
     Component,
+    CountToNet,
     Figure,
     Gel,
     Hole,
@@ -2384,11 +2385,12 @@ def _step(
     # After everything the instructions point at, so "the program below" is never the map.
     where = f"step {n} {step.title!r}"
     parts += [_figure(f, base, where, maps) for f in step.figures]
-    if step.expected or step.gels:
+    if step.expected or step.gels or step.calculator:
         gels = "".join(_gel(g) for g in step.gels)
+        net = _net_count(f"{anchor}.count", step.calculator, trouble) if step.calculator else ""
         parts.append(
             '<div class="expected"><h3>Expected result</h3>'
-            f"{_bullets(step.expected, protocol.files)}{gels}</div>\n"
+            f"{_bullets(step.expected, protocol.files)}{net}{gels}</div>\n"
         )
     if step.troubleshooting:
         entries = "".join(
@@ -2444,7 +2446,9 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
         cells = [f"<td>{escape(component.name)}{_cite(component.citation)}</td>"]
         if component.calculator is not None:
             assumed = component.calculator.nanograms / component.volume_ul
-            field = _reader_number(f"{key}.row.{row}", assumed, "ng/µL", component.name)
+            field = _reader_number(
+                f"{key}.row.{row}", assumed, label=component.name, unit="ng/µL"
+            )
             cells.append(f"<td>{field}</td>")
         elif stock:
             cells.append(f"<td>{escape(component.stock)}</td>")
@@ -2499,22 +2503,42 @@ def _table(key: str, table: ReactionTable, trouble: Sequence[Troubleshooting] = 
     )
 
 
-def _reader_number(key: str, plan: float, unit: str, label: str) -> str:
+def _reader_number(
+    key: str,
+    plan: float,
+    *,
+    label: str = "",
+    unit: str = "",
+    before: str = "",
+    least: float | None = None,
+    part: str = "",
+    held: bool = True,
+) -> str:
     """Return a field the reader types a number over, opening at the protocol's `plan`.
 
     `protocol.js` keeps what they type under `key` and offers `plan` back, so every calculator's
-    input is this one. `label` names what is typed, for a reader who cannot see the row, and
-    the word beside it says why a ticked step will not take a number.
+    input is this one. `before` and `unit` are what the field reads between, `label` what names
+    it to a reader who cannot see where it sits, `least` what it takes below the smallest
+    positive number, and `part` what its own calculator calls it.
+
+    `held` is for a number the bench pipettes against: the step's ticks hold the field still,
+    and the word beside it says so. A reading the step only records is left open.
     """
     shown = number(plan)
+    said = ", ".join(text for text in (label or before, unit) if text)
     return (
-        '<span class="calc">'
-        f'<label><input type="text" class="calc-value" inputmode="decimal" value="{shown}"'
+        f'<span class="calc{" " + part if part else ""}">'
+        f'<label>{escape(before) + " " if before else ""}'
+        f'<input type="text" class="calc-value" inputmode="decimal" value="{shown}"'
         f' data-plan="{plan!r}" data-key="{key}" size="5" autocomplete="off" spellcheck="false"'
-        f' aria-label="{escape(label)}, {escape(unit)}"> {escape(unit)}</label>'
+        + (f' data-least="{least!r}"' if least is not None else "")
+        + f' aria-label="{escape(said)}">'
+        + (f" {escape(unit)}" if unit else "")
+        + "</label>"
         '<button type="button" class="calc-plan" title="What the protocol gives" hidden>'
         f"Back to {shown}</button>"
-        f'<span class="calc-held" hidden>{escape(FIELD_HELD)}</span></span>'
+        + (f'<span class="calc-held" hidden>{escape(FIELD_HELD)}</span>' if held else "")
+        + "</span>"
     )
 
 
@@ -2553,15 +2577,50 @@ def _warnings(table: ReactionTable, trouble: Sequence[Troubleshooting]) -> str:
         for problem in (c.calculator.too_dilute, c.calculator.too_concentrated)
         if problem
     )
-    out = []
-    for problem in problems:
-        found = next((t for t in trouble if t.problem == problem), None)
-        said = "" if found is None else f" {escape(found.solution)}"
-        out.append(
-            f'<p class="calc-warning" data-problem="{escape(problem)}" role="alert" hidden>'
-            f"<strong>{escape(problem)}.</strong>{said}</p>"
+    return "".join(_warning(problem, trouble) for problem in problems)
+
+
+def _warning(problem: str, trouble: Sequence[Troubleshooting]) -> str:
+    """Return one troubleshooting entry as a calculator's warning, hidden until it fires."""
+    found = next((t for t in trouble if t.problem == problem), None)
+    said = "" if found is None else f" {escape(found.solution)}"
+    return (
+        f'<p class="calc-warning" data-problem="{escape(problem)}" role="alert" hidden>'
+        f"<strong>{escape(problem)}.</strong>{said}</p>"
+    )
+
+
+def _net_count(key: str, count: CountToNet, trouble: Sequence[Troubleshooting]) -> str:
+    """Return the count the reader works out, read against the floor this writes into the page.
+
+    It opens at the floor, with nothing on the control and no dilution, so the page states the
+    plan until the bench types. `protocol.js` does the subtraction, the scaling and the
+    comparison; the two verdicts and the floor are written here.
+    """
+    floor = number(count.floor)
+    clears = f"at least the floor of {floor}"
+    plates = [(f"{key}.counted", count.floor, f"Counted on {count.counted}", "counted")]
+    if count.control:
+        plates.append((f"{key}.control", 0, f"less {count.control}", "control"))
+    fields = [
+        _reader_number(at, plan, before=before, least=0, part=f"net-{part}", held=False)
+        for at, plan, before, part in plates
+    ]
+    fields.append(
+        _reader_number(
+            f"{key}.dilution", 1, before="Dilution factor", part="net-dilution", held=False
         )
-    return "".join(out)
+    )
+    return (
+        f'<div class="net-count" data-floor="{count.floor!r}">'
+        f'<p class="net-fields">{"".join(fields)}</p>'
+        f'<p class="net-sum" data-clears="{escape(clears)}"'
+        f' data-short="short of the floor of {floor}">'
+        f'<strong><span class="net-value">{floor}</span> net {escape(count.counting)}</strong>'
+        f' — <span class="net-verdict">{clears}</span>.</p>'
+        + (_warning(count.below_floor, trouble) if count.below_floor else "")
+        + "</div>\n"
+    )
 
 
 def _temperature(step: Incubation, cycles: int | None) -> str:

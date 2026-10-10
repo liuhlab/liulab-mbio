@@ -262,29 +262,40 @@
     var shown = field.defaultValue;
     var box = field.closest(".calc");
     var back = box.querySelector(".calc-plan");
+    // Only a field something is pipetted against carries the word, and only it is held still.
     var held = box.querySelector(".calc-held");
+    var least = parseFloat(field.getAttribute("data-least"));
     var step = field.closest(".step");
     var marks = step ? all('input[type="checkbox"][data-key]', step) : [];
-    var value = typeof state[key] === "number" && state[key] > 0 ? state[key] : plan;
+    var value = allowed(state[key]) ? state[key] : plan;
 
     function locked() {
-      return marks.some(isTicked);
+      return held !== null && marks.some(isTicked);
     }
 
-    // What the reader typed: null for anything that is not a positive number. The number the
-    // page opened with reads as the protocol's own, though it is printed rounded.
+    // What a field takes: more than nothing, or from its own `data-least` up where none is a
+    // reading of its own.
+    function allowed(given) {
+      if (typeof given !== "number") return false;
+      return isNaN(least) ? given > 0 : given >= least;
+    }
+
+    // What the reader typed: null for anything the field will not take. The number the page
+    // opened with reads as the protocol's own, though it is printed rounded.
     function typed() {
       var text = field.value.trim();
       if (text === shown) return plan;
+      // The page groups a long number, so the reader may type the groups back.
+      text = text.replace(/,/g, "");
       if (!/^\d*\.?\d+$/.test(text)) return null;
-      return Number(text) > 0 ? Number(text) : null;
+      return allowed(Number(text)) ? Number(text) : null;
     }
 
     function show() {
       field.value = value === plan ? shown : String(value);
       field.readOnly = locked();
       field.title = locked() ? held.textContent : "";
-      held.hidden = !locked();
+      if (held) held.hidden = !locked();
       back.hidden = value === plan || locked();
     }
 
@@ -394,6 +405,36 @@
 
     return { draw: draw };
   }
+
+  // A count the bench took: the control comes off it, the dilution scales it back up, and the
+  // net is read against the floor render.py wrote. The floor itself is never worked out here,
+  // and neither is anything the plan says about it.
+  all(".net-count").forEach(function (block) {
+    var floor = parseFloat(block.getAttribute("data-floor"));
+    var net = block.querySelector(".net-sum");
+    var shown = block.querySelector(".net-value");
+    var verdict = block.querySelector(".net-verdict");
+
+    function part(name) {
+      var input = block.querySelector("." + name + " .calc-value");
+      return input ? readerNumber(input, function () { draw(); }) : null;
+    }
+
+    var counted = part("net-counted");
+    var control = part("net-control");
+    var dilution = part("net-dilution");
+
+    function draw() {
+      var total = (counted.value() - (control ? control.value() : 0)) * dilution.value();
+      var clears = total >= floor;
+      shown.textContent = number(total);
+      verdict.textContent = net.getAttribute(clears ? "data-clears" : "data-short");
+      net.classList.toggle("is-short", !clears);
+      all(".calc-warning", block).forEach(function (warning) { warning.hidden = clears; });
+    }
+
+    draw();
+  });
 
   // Copy buttons.
   function fallbackCopy(text) {

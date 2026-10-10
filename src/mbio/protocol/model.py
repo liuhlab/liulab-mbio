@@ -472,6 +472,45 @@ class AmountToVolume:
 
 
 @dataclass(frozen=True, slots=True)
+class CountToNet:
+    """A calculator on an expected result: what a plated count comes to, against its floor.
+
+    The reader counts the plate and the control beside it and says what the dilution was; the
+    page takes the control off, scales back up and reads the net against `floor`. It opens at
+    the floor itself, undiluted and with nothing on the control, so an untouched page states
+    what the plan asked for.
+
+    Parameters
+    ----------
+    floor
+        The net count the design asked for. Nothing here works it out: a method computes it and
+        the page only compares.
+    counted
+        What the plate is called, in the step's own words.
+    control
+        What the control plate is called, whose count comes off. Empty where a step plates none.
+    counting
+        What is counted, for the line that states the net.
+    below_floor
+        The `Troubleshooting.problem` the page shows once the net is short of the floor, read
+        from the step's own entries or else another step's.
+    """
+
+    floor: int
+    _: KW_ONLY
+    counted: str
+    control: str = ""
+    counting: str = "colonies"
+    below_floor: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse a floor that is not positive, or a count of nothing named."""
+        _require(self.floor > 0, "a calculator's floor must be positive")
+        _require(bool(self.counted.strip()), "a calculator says what was counted")
+        _require(bool(self.counting.strip()), "a calculator says what it counts")
+
+
+@dataclass(frozen=True, slots=True)
 class Component:
     """One line of a reaction table.
 
@@ -1362,6 +1401,9 @@ class Step:
         The records the step draws, shown under its instructions.
     gels, expected
         What a successful step looks like.
+    calculator
+        Where the reader has a count of their own to work out and read against what `expected`
+        states, shown under it.
     troubleshooting
         Problems the reader may see here.
     holes
@@ -1384,6 +1426,7 @@ class Step:
     figures: tuple[Figure, ...] = ()
     gels: tuple[Gel, ...] = ()
     expected: tuple[str, ...] = ()
+    calculator: CountToNet | None = None
     troubleshooting: tuple[Troubleshooting, ...] = ()
     holes: tuple[Hole, ...] = ()
 

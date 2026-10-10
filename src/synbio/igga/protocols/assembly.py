@@ -22,6 +22,7 @@ from mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
 from mbio.protocol.model import (
     Citation,
+    CountToNet,
     Figure,
     Hole,
     Note,
@@ -85,6 +86,10 @@ from synbio.igga.rounds import Round
 
 #: What the page is headed and what the chain names it by.
 ASSEMBLY = "Library assembly in rounds"
+
+#: What a round that did not clear its floor is called, by the entry and by the count reading
+#: against it. Reword one and the other stops finding it.
+SHORT_OF_THE_FLOOR = "Fewer net colonies than the count above"
 
 
 class Assembly(Protocol):
@@ -584,6 +589,12 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
             f"{number(coverage.absent_probability)}.",
             f"{control.name} should be near empty beside it; its colonies come off the count.",
         ),
+        calculator=CountToNet(
+            coverage.colonies,
+            counted=dilution.name,
+            control=control.name,
+            below_floor=SHORT_OF_THE_FLOOR,
+        ),
         notes=(
             f"Both steps run at {GROWTH_CELSIUS:g} °C and not at 37 °C. That is a library "
             "precaution rather than an oversight.",
@@ -602,7 +613,7 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
         ),
         troubleshooting=(
             Troubleshooting(
-                "Fewer net colonies than the count above",
+                SHORT_OF_THE_FLOOR,
                 "The round has lost library members and no later round can put them back. "
                 "Electroporate more of the ligation, or run the round again.",
             ),

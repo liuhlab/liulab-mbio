@@ -13,6 +13,7 @@ from mbio.protocol import (
     Check,
     Citation,
     Component,
+    CountToNet,
     Figure,
     Folder,
     Incubation,
@@ -398,6 +399,39 @@ def test_a_measured_row_opens_at_the_concentration_its_volume_assumes() -> None:
     [warning] = figure.find_all(cls="calc-warning")
     assert "hidden" in warning.attrs
     assert warning.text == "Too dilute. Concentrate it."
+
+
+def test_a_counted_plate_opens_at_the_floor_it_is_read_against() -> None:
+    """The plan's count stands until the bench types, and the short verdict is the step's own."""
+    count = CountToNet(
+        183,
+        counted="round 1 titre",
+        control="round 1 no-donor control",
+        below_floor="Fewer net colonies",
+    )
+    protocol = Protocol(
+        "t",
+        steps=(
+            Step(
+                "Grow",
+                expected=("At least 183 net colonies.",),
+                calculator=count,
+                troubleshooting=(Troubleshooting("Fewer net colonies", "Run it again."),),
+            ),
+        ),
+    )
+    [block] = parse(render_html(protocol)).find_all(cls="net-count")
+
+    assert block.attrs["data-floor"] == "183"
+    fields = block.find_all("input", cls="calc-value")
+    assert [one.attrs["value"] for one in fields] == ["183", "0", "1"]
+    # A count is read rather than pipetted against, so no tick of the step holds it still.
+    assert block.find_all(cls="calc-held") == []
+    [said] = block.find_all(cls="net-sum")
+    assert said.text == "183 net colonies — at least the floor of 183."
+    assert said.attrs["data-short"] == "short of the floor of 183"
+    [warning] = block.find_all(cls="calc-warning")
+    assert warning.text == "Fewer net colonies. Run it again."
 
 
 def volume_cells(volume_ul: float) -> list[str]:

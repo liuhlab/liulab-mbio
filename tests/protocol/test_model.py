@@ -14,6 +14,7 @@ from mbio.protocol import (
     Check,
     Citation,
     Component,
+    CountToNet,
     Figure,
     Gel,
     Incubation,
@@ -374,6 +375,15 @@ def test_a_calculator_round_trips_and_gives_way_only_to_another_row(tmp_path: Pa
 
     with pytest.raises(ValueError, match="made up by 'Water', which is no other row of it"):
         ReactionTable((row,))
+
+
+def test_a_counted_plate_round_trips_and_needs_a_floor_to_read_against(tmp_path: Path) -> None:
+    count = CountToNet(183, counted="round 1 titre", control="round 1 no-donor control")
+    one = Protocol("t", steps=(Step("Grow", expected=("At least 183.",), calculator=count),))
+    assert read_protocol(write_protocol(one, tmp_path / "protocol.json")) == one
+
+    with pytest.raises(ValueError, match="floor must be positive"):
+        CountToNet(0, counted="round 1 titre")
 
 
 def test_a_steps_time_round_trips_through_json(tmp_path: Path) -> None:

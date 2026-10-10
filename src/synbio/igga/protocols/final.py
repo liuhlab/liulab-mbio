@@ -23,6 +23,7 @@ from mbio.protocol.figures import LIGATION_CITATION, ligation_figure
 from mbio.protocol.figures import SOURCE as FIGURE_SOURCE
 from mbio.protocol.figures import SOURCE_KEY as FIGURE_SOURCE_KEY
 from mbio.protocol.model import (
+    CountToNet,
     Figure,
     Incubation,
     Note,
@@ -74,6 +75,10 @@ from synbio.igga.vector import Working, released_cargo
 
 #: What the page is headed and what the chain names it by.
 FINAL = "Final cargo ligation"
+
+#: What a library that did not clear its floor is called, by the entry and by the count reading
+#: against it. Reword one and the other stops finding it.
+SHORT_OF_THE_FLOOR = "Fewer net colonies than the count above"
 
 
 class FinalLigation(Protocol):
@@ -445,6 +450,12 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
             "Near-empty plates from a no-cargo control beside it; what grows there is working "
             "vector that kept its ccdB cassette.",
         ),
+        calculator=CountToNet(
+            colonies,
+            counted="the plates",
+            control="the no-cargo control",
+            below_floor=SHORT_OF_THE_FLOOR,
+        ),
         notes=(
             "This is a bottleneck like a round's, and the library can only lose members here. "
             "Electroporate all of the assembly rather than a measured part of it.",
@@ -461,7 +472,7 @@ def _growth_step(constructs: int, completeness: float, working: Working | None) 
         ),
         troubleshooting=(
             Troubleshooting(
-                "Fewer net colonies than the count above",
+                SHORT_OF_THE_FLOOR,
                 "The library has lost members in the transfer. Nothing downstream puts them "
                 "back; repeat the assembly from more of the released cargo.",
             ),
