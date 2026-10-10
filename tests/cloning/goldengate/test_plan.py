@@ -550,7 +550,8 @@ def test_the_assembly_step_shows_the_product_with_every_junction_lit(plan):
 
 def test_each_pcr_step_shows_its_own_overhang_so_every_junction_is_drawn_once(four):
     """A part's own overhang is at its forward primer's end; the next part draws the other."""
-    steps = {step.title: step for step in four.protocol().steps}
+    protocol = four.protocol()
+    steps = {step.title: step for step in protocol.steps}
     lit = []
     for part, path in zip(four.parts, amplicon_files(p.name for p in four.parts), strict=True):
         [figure] = steps[pcr_title(part.name)].figures
@@ -563,4 +564,4 @@ def test_each_pcr_step_shows_its_own_overhang_so_every_junction_is_drawn_once(fo
         lit += [name for name in figure.highlight if name.endswith("overhang")]
     assert sorted(lit) == sorted(f"{one.overhang} overhang" for one in four.assembly.junctions)
     # The figure says what the note said, so the note is gone.
-    assert "pointing back" not in _sentences(four.protocol())
+    assert "pointing back" not in _sentences(protocol)
