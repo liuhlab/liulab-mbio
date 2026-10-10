@@ -583,7 +583,7 @@ def _growth_step(row: RoundBench, selection: str) -> Step:
             f"its {coverage.products:,} distinct products is missing, equally represented.",
             f"At that count the chance a named product is missing is "
             f"{number(coverage.absent_probability)}.",
-            f"{control.name} should be near empty beside it; its colonies come off the count.",
+            f"The {control.name} should be near empty beside it; its colonies come off the count.",
         ),
         calculator=CountToNet(
             coverage.colonies,

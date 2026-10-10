@@ -1,6 +1,6 @@
 {
   "title": "DMX-iGGA: 3 part lists in 3 rounds",
-  "key": "8035068f4fa6bca2",
+  "key": "2f0d06c5250f0941",
   "summary": "Join 72 synthesised parts into 13,824 distinct constructs in 3 rounds, over 7 protocols. Each round opens the library with BbsI, releases one part list with BsaI, ligates the two, and transforms, grows and preps the result for the round after it.",
   "background": [
     {
@@ -11933,7 +11933,7 @@
     },
     {
       "title": "Library assembly in rounds",
-      "key": "eaa9074283910c4d",
+      "key": "5b5a787c7334834d",
       "summary": "Join 3 part lists into 13,824 distinct constructs in 3 rounds, each round opening the library with BbsI and ligating one part list into it, then read the finished library back.",
       "overview": {
         "Method": "iGGA",
@@ -12858,7 +12858,7 @@
           "expected": [
             "At least 183 net colonies, scaled up from the dilution: the floor for the 0.99 chance this design asked for that none of its 24 distinct products is missing, equally represented.",
             "At that count the chance a named product is missing is 4.15 × 10⁻⁴.",
-            "round 1 no-donor control should be near empty beside it; its colonies come off the count."
+            "The round 1 no-donor control should be near empty beside it; its colonies come off the count."
           ],
           "calculator": {
             "floor": 183,
@@ -13459,7 +13459,7 @@
           "expected": [
             "At least 6,306 net colonies, scaled up from the dilution: the floor for the 0.99 chance this design asked for that none of its 576 distinct products is missing, equally represented.",
             "At that count the chance a named product is missing is 1.74 × 10⁻⁵.",
-            "round 2 no-donor control should be near empty beside it; its colonies come off the count."
+            "The round 2 no-donor control should be near empty beside it; its colonies come off the count."
           ],
           "calculator": {
             "floor": 6306,
@@ -14060,7 +14060,7 @@
           "expected": [
             "At least 195,386 net colonies, scaled up from the dilution: the floor for the 0.99 chance this design asked for that none of its 13,824 distinct products is missing, equally represented.",
             "At that count the chance a named product is missing is 7.27 × 10⁻⁷.",
-            "round 3 no-donor control should be near empty beside it; its colonies come off the count."
+            "The round 3 no-donor control should be near empty beside it; its colonies come off the count."
           ],
           "calculator": {
             "floor": 195386,
