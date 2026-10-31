@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from mbio.bench import plates
 from mbio.plot import layers
 from mbio.protocol import (
     OVERVIEW_CHARS,
@@ -59,8 +58,9 @@ def test_the_page_loads_nothing_from_outside_itself(page_html: str, page: Node) 
     assert not [n for n in page.iter() if "src" in n.attrs]
     assert "@import" not in page_html
     links = {a.attrs["href"] for a in page.find_all("a")}
-    # The only addresses on the page are links a reader may choose to follow.
-    assert set(re.findall(r"https?://[^\s\"'<>]+", page_html)) <= links
+    # The only addresses on the page are links a reader may choose to follow. A drawing's
+    # namespace names its format and loads nothing.
+    assert set(re.findall(r"(?<!xmlns=\")https?://[^\s\"'<>]+", page_html)) <= links
 
 
 def test_text_from_the_protocol_is_escaped() -> None:
@@ -571,25 +571,12 @@ def test_a_program_held_at_one_temperature_is_not_given_ramps_it_does_not_run() 
     assert "plus ramps" not in figure.find_all("figcaption")[0].text
 
 
-def test_a_gel_draws_each_band_at_a_height_set_by_log_size(page: Node) -> None:
-    gel = page.find_all(cls="gel")[0]
-    lanes = {
-        g.attrs["data-lane"]: {
-            int(b.attrs["data-bp"]): float(b.attrs["y"]) for b in g.find_all("rect", cls="band")
-        }
-        for g in gel.find_all("g", cls="lane")
-    }
-    assert list(lanes) == ["1 kb ladder", "Sample", "No template"]
-    ladder = lanes["1 kb ladder"]
-    heights = [ladder[bp] for bp in sorted(ladder, reverse=True)]
-    assert heights == sorted(set(heights))
-    # 1000 bp is one decade from both 10000 and 100 bp.
-    assert ladder[1000] == pytest.approx((ladder[10000] + ladder[100]) / 2, abs=0.1)
-    assert lanes["Sample"] == {500: pytest.approx(ladder[500])}
-    assert lanes["No template"] == {}
-    legend = gel.find_all(cls="gel-legend")[0].text
-    assert "Sample: 500 bp" in legend
-    assert "No template: no band" in legend
+def test_a_gel_is_drawn_in_the_expected_result_each_lane_named_with_its_bands(page: Node) -> None:
+    """molviz draws the gel and its key; the page hands it the ladder and each lane's sizes."""
+    [gel] = page.find_all("figure", cls="gel")
+    drawn = [text.text for text in gel.find_all("svg")[0].find_all("text")]
+    assert {"1 kb ladder", "Sample: 500 bp", "No template: no band"} <= set(drawn)
+    assert not gel.find_all("ol")
 
 
 def test_a_timer_starts_from_the_plans_time_in_a_field_the_reader_may_type_over(
@@ -653,24 +640,23 @@ def test_expected_results_troubleshooting_and_sources_are_shown(page: Node) -> N
 
 
 def test_a_page_inlining_a_drawing_embeds_its_faces_once_and_keeps_it_on_white(page: Node) -> None:
-    """The plate is laid out on white in the faces the package measured it in, in either scheme."""
-    drawn = parse(render_html(Protocol("Pick", plates=(plates.plate("picked", 96),))))
-    style = drawn.find_all("style")[0].text
-    [figure] = drawn.find_all("figure", cls="drawing")
+    """The gel is drawn on white in the faces it was measured in, in either colour scheme."""
+    style = page.find_all("style")[0].text
+    [figure] = page.find_all("figure", cls="drawing")
 
-    families = {text.attrs["font-family"] for text in figure.find_all("text")}
-
-    faces = re.findall(r"@font-face \{([^}]*)\}", style)
+    families = {text.attrs["font-family"].strip("'\"") for text in figure.find_all("text")}
+    faces = re.findall(r"@font-face\s*\{([^}]*)\}", style)
+    declared = {re.findall(r"font-family:\s*([^;]+);", face)[0].strip("'\"") for face in faces}
 
     assert families
-    assert all(any(f"font-family: {family};" in face for face in faces) for family in families)
+    assert families <= declared
     assert len(faces) == len(set(faces))
     # One rule, under no scheme's media query, so the dark ground never shows through.
     assert style.count(".drawing svg") == 1
     [declarations] = re.findall(r"\.drawing svg \{([^}]*)\}", style)
     assert "background: #ffffff" in declarations
     # A page with no drawing carries no face: they cost more than the rest of the page.
-    assert "@font-face" not in page.find_all("style")[0].text
+    assert "@font-face" not in parse(render_html(Protocol("Pick"))).find_all("style")[0].text
 
 
 def test_the_page_fits_a_phone_prints_and_follows_dark_mode(page: Node) -> None:

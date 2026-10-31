@@ -24,6 +24,7 @@ from mbio.checks import Status
 from mbio.plot.drawing import Drawing, draw_map, draw_plate
 from mbio.plot.fonts import BOLD, MONO, SANS
 from mbio.plot.page import font_face
+from mbio.protocol.converter import molviz_gel
 from mbio.protocol.model import (
     Bill,
     Caution,
@@ -1549,11 +1550,13 @@ def _fonts(body: str) -> str:
     """Each face a drawing in `body` was measured in, written once, or nothing where it draws none.
 
     A drawing pins every line of text to the width the package measured it at, so a page drawing
-    one as text carries those faces or the browser stretches its own to fit. Every figure holding
-    a drawing is marked `drawing`, whatever it draws, so the faces follow it onto any page.
+    one as text carries those faces or the browser stretches its own to fit. A drawing names its
+    faces on each text, so the faces follow it onto any page: molviz's, and the package's own.
     """
-    drawn = 'class="drawing' in body
-    return "".join(font_face(font) for font in (SANS, BOLD, MONO)) if drawn else ""
+    import molviz
+
+    own = "".join(font_face(font) for font in (SANS, BOLD, MONO)) if "'Liulab Mbio" in body else ""
+    return own + (molviz.font_rules() if 'font-family="molviz ' in body else "")
 
 
 def _duration(seconds: float) -> str:
@@ -2815,53 +2818,8 @@ def _timer(key: str, timer: Timer) -> str:
     )
 
 
-# Gel drawing geometry, in SVG user units.
-_LABEL_W, _LANE_W, _GAP = 46, 38, 10
-_GEL_TOP, _RUN_TOP, _RUN_H = 22, 48, 210
-
-
 def _gel(gel: Gel) -> str:
-    lanes = [
-        ("L", gel.ladder.name, gel.ladder.bands_bp),
-        *((str(i), lane.label, lane.bands_bp) for i, lane in enumerate(gel.lanes, 1)),
-    ]
-    gel_w = len(lanes) * (_LANE_W + _GAP) + _GAP
-    gel_h = _RUN_TOP - _GEL_TOP + _RUN_H + 16
-    width, height = _LABEL_W + gel_w + 2, _GEL_TOP + gel_h + 2
+    """Return the gel molviz draws from its ladder and lanes, its key drawn with it."""
+    import molviz
 
-    def y(bp: int) -> float:
-        return _RUN_TOP + gel.migration(bp) * _RUN_H
-
-    label = escape(gel.title or "Simulated agarose gel")
-    svg = [
-        f'<svg class="gel-image" viewBox="0 0 {width} {height}" role="img" aria-label="{label}">',
-        f'<rect class="gel-bg" x="{_LABEL_W}" y="{_GEL_TOP}" width="{gel_w}" height="{gel_h}" rx="6"/>',
-    ]
-    last = float("-inf")
-    for bp in sorted(set(gel.ladder.bands_bp), reverse=True):
-        if y(bp) - last >= 10:
-            svg.append(f'<text class="size" x="{_LABEL_W - 5}" y="{y(bp) + 3.5:.1f}">{bp}</text>')
-            last = y(bp)
-    for k, (mark, name, bands) in enumerate(lanes):
-        x = _LABEL_W + _GAP + k * (_LANE_W + _GAP)
-        kind = "lane ladder" if k == 0 else "lane"
-        svg.append(f'<g class="{kind}" data-lane="{escape(name)}">')
-        svg.append(f'<text class="lane-mark" x="{x + _LANE_W / 2}" y="14">{escape(mark)}</text>')
-        svg.append(f'<rect class="well" x="{x}" y="{_GEL_TOP + 8}" width="{_LANE_W}" height="6"/>')
-        svg += [
-            f'<rect class="band" data-bp="{bp}" x="{x + 3}" y="{y(bp) - 2:.1f}" width="{_LANE_W - 6}"'
-            f' height="4" rx="1.5"><title>{bp} bp</title></rect>'
-            for bp in sorted(bands, reverse=True)
-        ]
-        svg.append("</g>")
-    svg.append("</svg>")
-    legend = "".join(
-        f"<li><strong>{mark}</strong> {escape(name)}"
-        + ("" if k == 0 else f": {', '.join(map(str, bands))} bp" if bands else ": no band")
-        + "</li>"
-        for k, (mark, name, bands) in enumerate(lanes)
-    )
-    caption = f"<figcaption>{escape(gel.title)}</figcaption>" if gel.title else ""
-    return (
-        f'<figure class="gel">{caption}{"".join(svg)}<ol class="gel-legend">{legend}</ol></figure>'
-    )
+    return f'<figure class="drawing gel">{molviz.draw_gel(molviz_gel(gel)).still_svg()}</figure>'

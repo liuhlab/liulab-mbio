@@ -16,7 +16,6 @@ from mbio.protocol import (
     Component,
     CountToNet,
     Figure,
-    Gel,
     Incubation,
     Ladder,
     Lane,
@@ -133,19 +132,6 @@ def test_a_blank_cycle_count_leaves_the_run_time_unknown() -> None:
         )
     )
     assert program.duration_seconds is None
-
-
-def test_gel_migration_is_linear_in_the_log_of_band_size() -> None:
-    gel = Gel(Ladder("marker", (100, 1000, 10000)), (Lane("sample", (500,)),))
-    assert gel.migration(10000) == pytest.approx(0.0)
-    assert gel.migration(1000) == pytest.approx(0.5)
-    assert gel.migration(100) == pytest.approx(1.0)
-    assert gel.migration(500) > gel.migration(1000)
-
-
-def test_gel_migration_spans_sample_bands_beyond_the_ladder() -> None:
-    gel = Gel(Ladder("marker", (1000,)), (Lane("sample", (100, 10000)),))
-    assert gel.migration(1000) == pytest.approx(0.5)
 
 
 @pytest.mark.parametrize(
