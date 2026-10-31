@@ -1,16 +1,18 @@
 import pytest
 
 from mbio.enzymes import Enzyme
-from mbio.sequence import Segment, SequenceRecord, Strand
+from mbio.sequence import Feature, Segment, SequenceRecord, Strand
 from mbio.sites import has_site
 from mbio.translate import (
     SiteNotRemovableError,
+    codon_start,
     in_frame,
     optimize_coding_sequence,
     optimize_protein,
     reverse_translate,
     stop_codons,
     translate,
+    translation,
 )
 
 # The only table on this branch. The host is a parameter, so another table flows through it.
@@ -180,3 +182,35 @@ def test_a_stop_across_the_origin_is_read_and_reported_past_the_length() -> None
     record = SequenceRecord("GACCCCCCCT", topology="circular")
     found = stop_codons(record, Segment(9, 12))
     assert [(one.start, one.end) for one in found] == [(9, 12)]
+
+
+def test_a_feature_reads_across_its_joined_segments_from_its_codon_start() -> None:
+    record = SequenceRecord("AATGGCAAAAGTAAC")
+    cds = Feature(
+        "cds",
+        "CDS",
+        (Segment(0, 6), Segment(10, 14)),
+        strand=Strand.FORWARD,
+        qualifiers={"codon_start": (2,)},
+    )
+    # ATG, then GC across the gap to G, then TAA.
+    assert translation(cds, record) == "MA*"
+    assert codon_start(cds) == 2
+
+
+def test_a_reverse_feature_reads_the_bottom_strand_across_the_origin() -> None:
+    # Read on the bottom strand from its last base: ATG GCG TAA.
+    record = SequenceRecord("GCCATCCCCTTAC", topology="circular")
+    cds = Feature("cds", "CDS", (Segment(9, 18),), strand=Strand.REVERSE)
+    assert translation(cds, record) == "MA*"
+    assert codon_start(cds) == 1
+
+
+def test_every_cds_reads_as_snapgene_translates_it(puc19: SequenceRecord) -> None:
+    coding = [one for one in puc19.features if one.type == "CDS"]
+    assert coding
+    for feature in coding:
+        # SnapGene marks where AmpR's segments join with a comma.
+        assert translation(feature, puc19) == str(feature.qualifiers["translation"][0]).replace(
+            ",", ""
+        )

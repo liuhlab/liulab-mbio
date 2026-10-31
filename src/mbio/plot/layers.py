@@ -30,7 +30,6 @@ from dataclasses import dataclass, field
 from functools import cache
 from typing import Literal
 
-from mbio.codons import amino_acid
 from mbio.enzymes import Enzyme, get_enzyme
 from mbio.enzymes import enzymes as shipped
 from mbio.sequence import (
@@ -45,6 +44,8 @@ from mbio.sequence import (
     span_text,
 )
 from mbio.sites import find_sites
+from mbio.translate import codon_start
+from mbio.translate import translation as coded
 
 #: What an item is: a feature, a primer at one binding site, the enzymes cutting at one position,
 #: or bases the record lacks at one point.
@@ -648,28 +649,11 @@ def translation(feature: Feature, record: SequenceRecord) -> tuple[Codon, ...]:
     ]
     if feature.strand == Strand.REVERSE:
         positions.reverse()
-    bases = record.extract(feature)
-    first = _codon_start(feature) - 1
+    first = codon_start(feature) - 1
     return tuple(
-        Codon(positions[at + 1], _amino_acid(bases[at : at + 3]))
-        for at in range(first, len(bases) - 2, 3)
+        Codon(positions[first + 3 * at + 1], letter)
+        for at, letter in enumerate(coded(feature, record))
     )
-
-
-def _codon_start(feature: Feature) -> int:
-    """Return the base, 1 to 3, a feature's `/codon_start` reads from: 1 when it gives none."""
-    try:
-        start = int(feature.qualifiers.get("codon_start", (1,))[0])
-    except (IndexError, ValueError):
-        return 1
-    return start if start in (1, 2, 3) else 1
-
-
-def _amino_acid(codon: str) -> str:
-    try:
-        return amino_acid(codon)
-    except KeyError:
-        return "X"
 
 
 @cache
