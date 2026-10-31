@@ -32,6 +32,7 @@ from typing import Literal
 
 from mbio.enzymes import Enzyme, get_enzyme
 from mbio.enzymes import enzymes as shipped
+from mbio.plot.converter import TERMINATING_CLASSES
 from mbio.sequence import (
     BindingSite,
     Feature,
@@ -136,9 +137,6 @@ DIM = "#dddddd"
 
 #: What joins the names of the enzymes cutting at one position.
 SEPARATOR = " - "
-
-#: The `/regulatory_class` values that put a `regulatory` feature among the terminators.
-TERMINATING_CLASSES = frozenset({"terminator", "polyA_signal_sequence"})
 
 # The kinds in the order their labels hide.
 _HIDING: tuple[Kind, ...] = ("cut_site", "primer", "feature", "insertion")

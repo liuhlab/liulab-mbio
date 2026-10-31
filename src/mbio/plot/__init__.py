@@ -11,9 +11,12 @@ bare boxes; `fonts` measures text in the pinned faces; `svg` holds the shapes an
 lays a plate's wells out on the same substrate, which `draw_plate` is the way in to. A drawing
 is laid out as geometry before anything draws, per `docs/adr/0006-drawings-as-geometry.md`.
 
-Only the way in is re-exported. Everything else is imported by module.
+`converter` hands a record to molviz instead: `molviz_record` writes it in molviz's own format.
+
+Only the ways in are re-exported. Everything else is imported by module.
 """
 
+from mbio.plot.converter import molviz_record
 from mbio.plot.drawing import Drawing, PlateDrawing, draw_map, draw_plate
 
-__all__ = ["Drawing", "PlateDrawing", "draw_map", "draw_plate"]
+__all__ = ["Drawing", "PlateDrawing", "draw_map", "draw_plate", "molviz_record"]
