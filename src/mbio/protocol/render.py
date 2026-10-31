@@ -401,12 +401,22 @@ def _timers(protocol: Protocol) -> tuple[tuple[str, str], ...]:
     for key, step in zip(_step_keys(protocol.steps), protocol.steps, strict=True):
         anchor = f"step-{key}"
         timers += [
-            (f"{anchor}.program.{i}", program.timer.label)
+            (_program_key(anchor, i), program.timer.label)
             for i, program in enumerate(step.programs, 1)
             if program.timer is not None
         ]
-        timers += [(f"{anchor}.timer.{i}", one.label) for i, one in enumerate(step.timers, 1)]
+        timers += [(_timer_key(anchor, i), one.label) for i, one in enumerate(step.timers, 1)]
     return tuple(timers)
+
+
+def _program_key(anchor: str, place: int) -> str:
+    """Return the key a step's `place`-th program, and the timer its run takes, go by."""
+    return f"{anchor}.program.{place}"
+
+
+def _timer_key(anchor: str, place: int) -> str:
+    """Return the key a step's `place`-th timer goes by in the page's storage and its id."""
+    return f"{anchor}.timer.{place}"
 
 
 def render_html(
@@ -2447,13 +2457,13 @@ def _step(
     elsewhere = (t for s in protocol.steps if s is not step for t in s.troubleshooting)
     trouble = (*step.troubleshooting, *elsewhere)
     parts += [_table(f"{anchor}.table.{i}", t, trouble) for i, t in enumerate(step.tables, 1)]
-    parts += [_program(f"{anchor}.program.{i}", p) for i, p in enumerate(step.programs, 1)]
+    parts += [_program(_program_key(anchor, i), p) for i, p in enumerate(step.programs, 1)]
     parts += [_transfer(t, protocol.plates) for t in step.transfers]
     if step.holes:
         items = "".join(_hole(hole) for hole in step.holes)
         parts.append(f'<ul class="holes-here" aria-label="Holes">{items}</ul>\n')
     if step.timers:
-        timers = "".join(_timer(f"{anchor}.timer.{i}", t) for i, t in enumerate(step.timers, 1))
+        timers = "".join(_timer(_timer_key(anchor, i), t) for i, t in enumerate(step.timers, 1))
         parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
     # After everything the instructions point at, so "the program below" is never the map.

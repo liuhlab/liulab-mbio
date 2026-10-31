@@ -1112,34 +1112,65 @@ tfoot .muted { font-weight: 400; }
 
   // Pages of a run are often open in several tabs, and a timer that runs out sounds once among
   // them: each tab claims its deadline in the shared store and reads the claim back a moment
-  // later, so two claiming at once settle on the last to write. Every tab flags its title.
+  // later, so two claiming at once settle on the last to write. A tab the browser lets sound
+  // claims at once; one still waiting for a touch claims only if no such tab has. Every tab
+  // flags its title.
   var tab = Math.random().toString(36).slice(2);
+  var CLAIM_SETTLE_MS = 150;
+  // The longest wait setTimeout honours; a later deadline is redrawn by the interval instead.
+  var LONGEST_TIMEOUT_MS = 2147483647;
+  // Redraw just past a deadline, so the entry reads done, and keep the page clear of the panel.
+  var PAST_DEADLINE_MS = 50;
+  var PANEL_GAP_PX = 24;
+  var MUTED_TAB_WAIT_MS = 1000;
+  var CLAIM_PREFIX = "liulab-protocol-alarm:";
+  var DAY_MS = 86400000;
 
   function claimKey(page, key) {
-    return "liulab-protocol-alarm:" + page + ":" + key;
+    return CLAIM_PREFIX + page + ":" + key;
+  }
+
+  // A claim outlives its alarm so a late tab does not sound it again; after a day it is dropped.
+  try {
+    Object.keys(window.localStorage).forEach(function (name) {
+      if (name.indexOf(CLAIM_PREFIX) !== 0) return;
+      var ends = parseFloat(window.localStorage.getItem(name) || "");
+      if (!(ends > Date.now() - DAY_MS)) window.localStorage.removeItem(name);
+    });
+  } catch (error) {
+    /* nothing to tidy */
+  }
+
+  function claimed(claim, ends) {
+    var held = window.localStorage.getItem(claim);
+    return Boolean(held) && held.split(" ")[0] === String(ends);
   }
 
   function ring(page, key, label, ends) {
     markTitle(timerId(page, key), label);
     var claim = claimKey(page, key);
     var mine = ends + " " + tab;
-    try {
-      var held = window.localStorage.getItem(claim);
-      if (held && held.split(" ")[0] === String(ends)) return;
-      window.localStorage.setItem(claim, mine);
-    } catch (error) {
-      alarm();
-      return;
-    }
-    window.setTimeout(function () {
-      var held = null;
+    var audible = Boolean(audio) && audio.state === "running";
+    function stake() {
       try {
-        held = window.localStorage.getItem(claim);
+        if (claimed(claim, ends)) return;
+        window.localStorage.setItem(claim, mine);
       } catch (error) {
-        /* unread: stay quiet rather than sound twice */
+        alarm();
+        return;
       }
-      if (held === mine) alarm();
-    }, 150);
+      window.setTimeout(function () {
+        var held = null;
+        try {
+          held = window.localStorage.getItem(claim);
+        } catch (error) {
+          /* unread: stay quiet rather than sound twice */
+        }
+        if (held === mine) alarm();
+      }, CLAIM_SETTLE_MS);
+    }
+    if (audible) stake();
+    else window.setTimeout(stake, MUTED_TAB_WAIT_MS);
   }
 
   function release(page, key) {
@@ -1202,7 +1233,7 @@ tfoot .muted { font-weight: 400; }
     function run() {
       var wait = Math.max(0, end - Date.now());
       handle = window.setInterval(tick, 250);
-      if (wait < 2147483647) due = window.setTimeout(function () { finish(true); }, wait);
+      if (wait < LONGEST_TIMEOUT_MS) due = window.setTimeout(function () { finish(true); }, wait);
       timer.classList.add("is-running");
       show("Pause");
     }
@@ -1455,13 +1486,15 @@ tfoot .muted { font-weight: 400; }
     seen = now;
     panel.hidden = !list.length;
     // The page's end scrolls clear of the panel, so the panel never covers the credit.
-    document.body.style.paddingBottom = panel.hidden ? "" : panel.offsetHeight + 24 + "px";
+    document.body.style.paddingBottom = panel.hidden ? "" : panel.offsetHeight + PANEL_GAP_PX + "px";
     // Another page's next deadline is waited for to the second, as this page's own are.
     window.clearTimeout(soon);
     var next = list.filter(function (entry) {
       return entry.page !== here && entry.status === "running";
     })[0];
-    if (next && next.left < 2147483) soon = window.setTimeout(draw, next.left * 1000 + 50);
+    if (next && next.left * 1000 < LONGEST_TIMEOUT_MS) {
+      soon = window.setTimeout(draw, next.left * 1000 + PAST_DEADLINE_MS);
+    }
   }
 
   if (panel && (own.length || others.length)) {
