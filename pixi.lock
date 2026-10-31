@@ -94,6 +94,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/c2/3c/c5bd479784826bbbc69f713aae2bcfd5ef353ba4e5e0e661666938474535/mini_racer-0.14.1-py3-none-manylinux_2_27_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
@@ -167,6 +169,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/yaml-0.2.5-h74c22ad_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/09/bf/ecaad0c208b9d8bd8f2141f7fa5e520b66915945a2ed56c520524df75fcb/mini_racer-0.14.1-py3-none-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
   docs:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -268,6 +272,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/c2/3c/c5bd479784826bbbc69f713aae2bcfd5ef353ba4e5e0e661666938474535/mini_racer-0.14.1-py3-none-manylinux_2_27_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
@@ -360,6 +366,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zensical-0.0.57-py310h8dbfc9c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/09/bf/ecaad0c208b9d8bd8f2141f7fa5e520b66915945a2ed56c520524df75fcb/mini_racer-0.14.1-py3-none-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
   fonts:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -442,6 +450,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/c2/3c/c5bd479784826bbbc69f713aae2bcfd5ef353ba4e5e0e661666938474535/mini_racer-0.14.1-py3-none-manylinux_2_27_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
@@ -515,6 +525,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/yaml-0.2.5-h74c22ad_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/09/bf/ecaad0c208b9d8bd8f2141f7fa5e520b66915945a2ed56c520524df75fcb/mini_racer-0.14.1-py3-none-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
   test:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -597,6 +609,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/c2/3c/c5bd479784826bbbc69f713aae2bcfd5ef353ba4e5e0e661666938474535/mini_racer-0.14.1-py3-none-manylinux_2_27_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/ipcr-5.0.0-he10dcb2_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/primer3-py-2.3.1-py313h1f6456e_0.conda
@@ -670,6 +684,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/yaml-0.2.5-h74c22ad_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/09/bf/ecaad0c208b9d8bd8f2141f7fa5e520b66915945a2ed56c520524df75fcb/mini_racer-0.14.1-py3-none-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
 packages:
 - conda: https://conda.anaconda.org/bioconda/linux-64/ipcr-5.0.0-hac3de82_0.conda
   sha256: a0e9792c7a679d22b39f91161e559b8d16025ea66a6072e5dea5a5f9e1027968
@@ -3433,8 +3449,29 @@ packages:
   name: liulab-mbio
   requires_dist:
   - biopython>=1.88
+  - liulab-molviz==2026.10.1
   - primer3-py>=2.3
   - pypdf>=6
   - typer>=0.12
   - vl-convert-python>=1.9,<2
+  requires_python: '>=3.13'
+- pypi: https://files.pythonhosted.org/packages/09/bf/ecaad0c208b9d8bd8f2141f7fa5e520b66915945a2ed56c520524df75fcb/mini_racer-0.14.1-py3-none-macosx_11_0_arm64.whl
+  name: mini-racer
+  version: 0.14.1
+  sha256: 56cc6965a1665a50d8d613bc43aa83b4cec6b1f09acc69dc4c2845dacb201463
+  requires_python: '>=3.10'
+- pypi: https://files.pythonhosted.org/packages/c2/3c/c5bd479784826bbbc69f713aae2bcfd5ef353ba4e5e0e661666938474535/mini_racer-0.14.1-py3-none-manylinux_2_27_x86_64.whl
+  name: mini-racer
+  version: 0.14.1
+  sha256: cdf3a088e1363f16a695288f882abf76b3705b8e1df21418208b87ed010037a4
+  requires_python: '>=3.10'
+- pypi: https://files.pythonhosted.org/packages/e7/31/4388d0ff6b645af2a1271ec8942023af980bafe090eac2fdb223d4576d6d/liulab_molviz-2026.10.1-py3-none-any.whl
+  name: liulab-molviz
+  version: 2026.10.1
+  sha256: 1f14ed751eddcc2aedd87c8334d0ebb08a5aba041905862f4db3e69882ac5f6e
+  requires_dist:
+  - mini-racer>=0.14
+  - pypdf>=6
+  - typer>=0.12
+  - vl-convert-python>=1.9,<2.0.0a0
   requires_python: '>=3.13'

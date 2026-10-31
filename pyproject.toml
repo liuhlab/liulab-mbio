@@ -24,6 +24,9 @@ dependencies = [
     "primer3-py>=2.3",
     "vl-convert-python>=1.9,<2",
     "pypdf>=6",
+    # On PyPI alone, so pixi takes it from there through the editable install. Exact: every
+    # drawing mbio makes is this release's.
+    "liulab-molviz==2026.10.1",
 ]
 
 [project.scripts]
