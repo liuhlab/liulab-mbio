@@ -198,6 +198,27 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 .timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
 .timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
 .timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.timer { scroll-margin: calc(var(--bar) + 4rem) 0 4rem; }
+.timer.is-flagged { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* The timers on this page and the run's others, pinned however far the page scrolls. */
+.timer-panel { position: fixed; right: 16px; bottom: 16px; z-index: 3; width: min(19rem, calc(100vw - 32px)); max-height: 45vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgb(0 0 0 / 0.18); padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.timer-panel[hidden] { display: none; }
+.timer-panel ol { list-style: none; margin: 0; padding: 0; }
+.timer-panel li { display: flex; gap: 0.6rem; align-items: center; padding: 0.4rem 0; border-top: 1px solid var(--line); }
+.timer-panel li:first-child { border-top: none; }
+.timer-panel a { flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+.timer-panel a:hover .panel-label { text-decoration: underline; }
+.panel-label, .panel-page { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-page { color: var(--muted); font-size: 0.75rem; }
+.panel-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.timer-panel .is-running .panel-time { color: var(--accent); }
+.timer-panel .is-paused .panel-time { color: var(--muted); }
+.timer-panel .is-done .panel-time { color: var(--caution); }
+.panel-dismiss { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+
+.credit { max-width: 80rem; margin: 0 auto; padding: 1.2rem 0 2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; text-align: center; }
+.credit a { color: inherit; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
 /* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
@@ -394,7 +415,8 @@ tfoot .muted { font-weight: 400; }
     --expected-soft: #ffffff;
     --code-bg: #ffffff;
   }
-  body { padding: 0; font-size: 10.5pt; }
+  /* Over the room the script leaves below the page for the panel. */
+  body { padding: 0 !important; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
   .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
@@ -413,6 +435,10 @@ tfoot .muted { font-weight: 400; }
   .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
   .timer-time { border: none; }
   .timer-plan { display: none; }
+  .timer-panel { display: none !important; }
+  /* Paper has no links, so the credit spells its addresses out. */
+  .credit { padding: 0.6rem 0 0; margin-top: 1rem; text-align: left; }
+  .credit a::after { content: " (" attr(href) ")"; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
@@ -455,7 +481,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-pcr-attb-gfp.1"><span>Thaw the buffer, dNTPs and primers on ice, then vortex and spin them down.</span></label></li><li><label><input type="checkbox" data-key="step-pcr-attb-gfp.2"><span>Mix the master mix, dispense it into each tube, then add the GFP template.</span></label></li><li><label><input type="checkbox" data-key="step-pcr-attb-gfp.3"><span>Run the program below: 63 °C annealing and 20 s extension for a 775 bp product.</span></label></li></ol>
 <figure class="reaction" data-overage="0.1"><figcaption>attB-GFP PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-pcr-attb-gfp.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 unit</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix"><span data-ul="49.0">53.9</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
-<figure class="program"><figcaption>attB-GFP PCR <span class="muted">· 27 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">×30<a class="cite" href="#source-m0491" title="New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page · thermocycling conditions"><sup>[3]</sup></a></td></tr><tr><td>Anneal</td><td class="num">63 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-pcr-attb-gfp.program.1" data-seconds="1650.0"><label><span class="timer-label">attB-GFP PCR</span><input type="text" class="timer-time" value="27:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 27:30</button></span></div></figure>
+<figure class="program"><figcaption>attB-GFP PCR <span class="muted">· 27 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">×30<a class="cite" href="#source-m0491" title="New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page · thermocycling conditions"><sup>[3]</sup></a></td></tr><tr><td>Anneal</td><td class="num">63 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" id="timer-step-pcr-attb-gfp.program.1" data-key="step-pcr-attb-gfp.program.1" data-seconds="1650.0"><label><span class="timer-label">attB-GFP PCR</span><input type="text" class="timer-time" value="27:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 27:30</button></span></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One band at 775 bp.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band</dt><dd>Drop the annealing temperature by 3 °C and check the GFP template is there.<a class="cite" href="#source-m0491" title="New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page · annealing temperature"><sup>[3]</sup></a></dd><dt>Several bands</dt><dd>Raise the annealing temperature, or gel-purify the band of the right size.<a class="cite" href="#source-m0491" title="New England Biolabs #M0491 Q5 High-Fidelity DNA Polymerase protocol page · annealing temperature"><sup>[3]</sup></a></dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Each primer carries a whole attB tail: 4 G residues, the 25 bp att site and the frame bases the fusion needs, 29 bases forward and 29 reverse. A tail short of that is a published cause of few or no colonies.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · pp. 43-44"><sup>[1]</sup></a></li><li>The annealing temperature above is read from the annealing regions alone; a tail pairs with nothing on the template in the first cycles.</li><li>Over 70 bp of primer a two-step adapter PCR installs the same whole tail in two rounds; it is not planned here.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · pp. 47-48"><sup>[1]</sup></a></li></ul></div>
@@ -480,7 +506,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <section class="step" id="step-run-bp">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-run-bp"><span class="step-n">4</span><span>Run the BP reaction</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-run-bp.1"><span>Incubate at 25 °C for 1 hour.</span></label></li></ol>
-<div class="timers"><span class="timer" data-key="step-run-bp.timer.1" data-seconds="3600"><label><span class="timer-label">BP incubation</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
+<div class="timers"><span class="timer" id="timer-step-run-bp.timer.1" data-key="step-run-bp.timer.1" data-seconds="3600"><label><span class="timer-label">BP incubation</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
 <figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-406.21 -249.43 813.28 498.87" width="813.28" height="498.87"><circle cx="0" cy="0" r="220" fill="none" stroke="#252525" stroke-width="2.6"/><circle cx="0" cy="0" r="216.2" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="-214.9" x2="0" y2="-202.9" fill="none" stroke="#252525" stroke-width="2.4"/><g class="scale"><line x1="201.2" y1="-75.5" x2="195.58" y2="-73.39" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(69.43)"><text x="-10.02" y="-198.15" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">200</text></g><line x1="141.38" y1="161.85" x2="137.43" y2="157.33" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(-41.14)"><text x="-10.02" y="205.42" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">400</text></g><line x1="-101.86" y1="189.23" x2="-99.02" y2="183.94" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(28.29)"><text x="-10.02" y="205.42" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">600</text></g><line x1="-212.95" y1="-28.88" x2="-207" y2="-28.08" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(277.72)"><text x="-10.02" y="-198.15" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">800</text></g><line x1="-47.77" y1="-209.52" x2="-46.44" y2="-203.67" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(347.16)"><text x="-13.36" y="-198.15" font-size="10.5" textLength="26.72" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">1000</text></g></g><g class="feature" data-kind="feature" data-name="KanR" data-type="CDS" data-span="1 .. 60" data-length="60 bp"><path d="M0 -190.68A190.68 190.68 0 0 1 55.99 -182.27L57.16 -186.1L65.14 -171.21L50.41 -164.11L51.59 -167.93A175.68 175.68 0 0 0 0 -175.68Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="12.1 19.26 26.1 33.13" y="-178.83 -178.19 -177.32 -176.15" rotate="5.08 7.3 9.54 11.93" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">KanR</text></g><g class="feature" data-kind="feature" data-name="attL1" data-type="misc_recomb" data-span="136 .. 160" data-length="25 bp"><path d="M120.9 -113.27A165.68 165.68 0 0 1 129.12 -103.82L132.23 -106.32L130.43 -89.49L114.31 -91.91L117.43 -94.42A150.68 150.68 0 0 0 109.96 -103.02Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/></g><g class="feature" data-kind="feature" data-name="GFP" data-type="CDS" data-span="161 .. 877" data-length="717 bp"><path d="M157.23 -107.88A190.68 190.68 0 0 1 6.24 190.58A190.68 190.68 0 0 1 -163.95 -97.35L-167.39 -99.4L-151.04 -103.63L-147.61 -87.65L-151.05 -89.7A175.68 175.68 0 0 0 5.75 175.58A175.68 175.68 0 0 0 144.86 -99.39Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="-5.25 3.83 10.59" y="187.14 187.15 186.89" rotate="0.24 -2.19 -4.3" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">GFP</text></g><g class="feature" data-kind="feature" data-name="attL2" data-type="misc_recomb" data-span="878 .. 902" data-length="25 bp"><path d="M-130.43 -89.49L-132.23 -106.32L-129.12 -103.82A165.68 165.68 0 0 1 -120.9 -113.27L-109.96 -103.02A150.68 150.68 0 0 0 -117.43 -94.42L-114.31 -91.91Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="attB-GFP forward" data-type="primer" data-span="161 .. 186" data-length="26 bp"><path d="M188.3 -129.2A228.37 228.37 0 0 1 200.76 -108.85L201.69 -109.36L204.44 -97.2L196.3 -106.43L197.24 -106.94A224.37 224.37 0 0 0 185.01 -126.94Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="attB-GFP reverse" data-type="primer" data-span="852 .. 877" data-length="26 bp"><path d="M-204.44 -97.2L-201.69 -109.36L-200.76 -108.85A228.37 228.37 0 0 1 -188.3 -129.2L-185.01 -126.94A224.37 224.37 0 0 0 -197.24 -106.94L-196.3 -106.43Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="feature label" data-kind="feature" data-name="attL1" data-type="misc_recomb" data-span="136 .. 160" data-length="25 bp"><line x1="181.94" y1="-146.25" x2="195.67" y2="-152.52" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><rect x="195.67" y="-160.21" width="35.79" height="15.39" rx="2" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="198.67" y="-148.54" font-size="11.5" textLength="29.79" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">attL1</text></g><g class="feature label" data-kind="feature" data-name="attL2" data-type="misc_recomb" data-span="878 .. 902" data-length="25 bp"><line x1="-181.94" y1="-146.25" x2="-195.67" y2="-152.52" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><rect x="-231.46" y="-160.21" width="35.79" height="15.39" rx="2" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="-228.46" y="-148.54" font-size="11.5" textLength="29.79" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">attL2</text></g><g class="primer label" data-kind="primer" data-name="attB-GFP forward" data-type="primer" data-span="161 .. 186" data-length="26 bp"><line x1="202.28" y1="-116.51" x2="215.19" y2="-121.5" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="218.19" y="-117.52" font-size="11.5" textLength="169.88" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">attB-GFP forward (161 .. 186)</text></g><g class="primer label" data-kind="primer" data-name="attB-GFP reverse" data-type="primer" data-span="852 .. 877" data-length="26 bp"><line x1="-202.28" y1="-116.51" x2="-215.19" y2="-121.5" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="-387.21" y="-117.52" font-size="11.5" textLength="169.02" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">attB-GFP reverse (852 .. 877)</text></g><text x="-87.76" y="-1.44" font-size="13.5" textLength="175.51" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">pDONR-demo-attB-GFP</text><text x="-21.69" y="11.49" font-size="10.5" textLength="43.39" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">1037 bp</text></svg><figcaption>The entry clone the reaction makes: attL1 and attL2, the sites it writes where the two molecules crossed over.</figcaption><details class="opener"><summary><span class="to-open">Explore the map</span><span class="to-close">Close the map</span></summary><iframe data-src="entry-clone-map.html" title="pDONR-demo-attB-GFP, to explore"></iframe><a class="new-tab" href="entry-clone-map.html" target="_blank" rel="noopener">Open it in a new tab</a></details></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>Nothing visible: the reaction is a recombination, not a digest.</li><li>The entry clone carries attL1 at 136, spelling CCAACTTTGTACAAAAAAGCAGGCT: its first bases from pDONR-demo and the rest from attB-GFP.</li><li>The entry clone carries attL2 at 878, spelling CCAACTTTGTACAAGAAAGCTGGGT: its first bases from pDONR-demo and the rest from attB-GFP.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>Few or no colonies later, though the transformation control worked</dt><dd>Use an attB substrate with a donor vector (attP): the BP reaction takes those and no others. Do not freeze and thaw the enzyme mix more than ten times.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · p. 40"><sup>[1]</sup></a></dd></dl></div>
@@ -489,7 +515,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <section class="step" id="step-stop-bp">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-stop-bp"><span class="step-n">5</span><span>Stop the BP reaction with proteinase K</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-stop-bp.1"><span>Add 1 µL of proteinase K at 2 µg/µL.</span></label></li><li><label><input type="checkbox" data-key="step-stop-bp.2"><span>Incubate at 37 °C for 10 minutes.</span></label></li></ol>
-<div class="timers"><span class="timer" data-key="step-stop-bp.timer.1" data-seconds="600"><label><span class="timer-label">Proteinase K, BP</span><input type="text" class="timer-time" value="10:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 10:00</button></span></div>
+<div class="timers"><span class="timer" id="timer-step-stop-bp.timer.1" data-key="step-stop-bp.timer.1" data-seconds="600"><label><span class="timer-label">Proteinase K, BP</span><input type="text" class="timer-time" value="10:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 10:00</button></span></div>
 <div class="expected"><h3>Expected result</h3><ul><li>A reaction that can go straight into competent cells.</li></ul></div>
 <div class="notes"><h3>Notes</h3><ul><li>An untreated reaction is a published cause of few or no colonies, so this step is not optional.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · p. 40"><sup>[1]</sup></a></li></ul></div>
 </section>
@@ -497,7 +523,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-transform-bp"><span class="step-n">6</span><span>Transform and plate the BP reaction</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Competent cells die if they warm up; keep them on ice until the shock.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-transform-bp.1"><span>Thaw 50 µL of TOP10 chemically competent E. coli on ice.</span></label></li><li><label><input type="checkbox" data-key="step-transform-bp.2"><span>Add 1 µL of the BP reaction and flick the tube four or five times.</span></label></li><li><label><input type="checkbox" data-key="step-transform-bp.3"><span>Hold on ice for 30 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-transform-bp.4"><span>Heat shock at 42 °C for 30 seconds.</span></label></li><li><label><input type="checkbox" data-key="step-transform-bp.5"><span>Return to ice for 2 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-transform-bp.6"><span>Add 250 µL of outgrowth medium and shake at 37 °C for 60 minutes at 250 rpm.</span></label></li><li><label><input type="checkbox" data-key="step-transform-bp.7"><span>Spread 100 µL of a 1:10 dilution on a warmed plate and grow overnight at 37 °C.</span></label></li></ol>
-<div class="timers"><span class="timer" data-key="step-transform-bp.timer.1" data-seconds="1800"><label><span class="timer-label">On ice</span><input type="text" class="timer-time" value="30:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 30:00</button></span><span class="timer" data-key="step-transform-bp.timer.2" data-seconds="30"><label><span class="timer-label">Heat shock</span><input type="text" class="timer-time" value="0:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 0:30</button></span><span class="timer" data-key="step-transform-bp.timer.3" data-seconds="120"><label><span class="timer-label">Back on ice</span><input type="text" class="timer-time" value="2:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 2:00</button></span><span class="timer" data-key="step-transform-bp.timer.4" data-seconds="3600"><label><span class="timer-label">Outgrowth</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
+<div class="timers"><span class="timer" id="timer-step-transform-bp.timer.1" data-key="step-transform-bp.timer.1" data-seconds="1800"><label><span class="timer-label">On ice</span><input type="text" class="timer-time" value="30:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 30:00</button></span><span class="timer" id="timer-step-transform-bp.timer.2" data-key="step-transform-bp.timer.2" data-seconds="30"><label><span class="timer-label">Heat shock</span><input type="text" class="timer-time" value="0:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 0:30</button></span><span class="timer" id="timer-step-transform-bp.timer.3" data-key="step-transform-bp.timer.3" data-seconds="120"><label><span class="timer-label">Back on ice</span><input type="text" class="timer-time" value="2:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 2:00</button></span><span class="timer" id="timer-step-transform-bp.timer.4" data-key="step-transform-bp.timer.4" data-seconds="3600"><label><span class="timer-label">Outgrowth</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
 <div class="expected"><h3>Expected result</h3><ul><li>More than 1,500 colonies where the whole reaction is transformed and plated, with cells at 100,000,000 cfu/µg or better.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No colonies</dt><dd>Check the antibiotic and the cells&#x27; efficiency, and plate the rest of the outgrowth.<a class="cite" href="#source-neb-cloning" title="New England Biolabs, Troubleshooting Guide for Cloning · few or no transformants"><sup>[8]</sup></a></dd><dt>A lawn</dt><dd>Plate a smaller volume or a greater dilution next time.</dd><dt>Two sizes of colony on the plate</dt><dd>The donor vector&#x27;s ccdB gene has mutated or been deleted; the negative control then gives a similar count.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · p. 41"><sup>[1]</sup></a></dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Colour does not report this insertion; screen every colony by PCR.</li><li>The clone is not expected to make GFP: no ribosome binding site is annotated ahead of it.</li><li>Unreacted donor vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F&#x27; would supply ccdA and cancel that.</li><li>No manual states what fraction of the colonies is correct; the one count published found 195 of 197 correct after BP.<a class="cite" href="#source-hartley-2000" title="Hartley, J.L., Temple, G.F. and Brasch, M.A. (2000) DNA cloning using in vitro site-specific recombination. Genome Res. 10, 1788-1795 · Results"><sup>[9]</sup></a></li></ul></div>
@@ -522,7 +548,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <section class="step" id="step-run-lr">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-run-lr"><span class="step-n">9</span><span>Run the LR reaction</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-run-lr.1"><span>Incubate at 25 °C for 1 hour.</span></label></li></ol>
-<div class="timers"><span class="timer" data-key="step-run-lr.timer.1" data-seconds="3600"><label><span class="timer-label">LR incubation</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
+<div class="timers"><span class="timer" id="timer-step-run-lr.timer.1" data-key="step-run-lr.timer.1" data-seconds="3600"><label><span class="timer-label">LR incubation</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
 <figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-357.01 -281.6 746.7 539.17" width="746.7" height="539.17"><circle cx="0" cy="0" r="220" fill="none" stroke="#252525" stroke-width="2.6"/><circle cx="0" cy="0" r="216.2" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="-214.9" x2="0" y2="-202.9" fill="none" stroke="#252525" stroke-width="2.4"/><g class="scale"><line x1="136.24" y1="-166.19" x2="132.44" y2="-161.55" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(39.34)"><text x="-10.02" y="-198.15" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">100</text></g><line x1="210.73" y1="-42.15" x2="204.84" y2="-40.97" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(78.69)"><text x="-10.02" y="-198.15" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">200</text></g><line x1="189.69" y1="101" x2="184.39" y2="98.18" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(-61.97)"><text x="-10.02" y="205.42" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">300</text></g><line x1="82.66" y1="198.36" x2="80.36" y2="192.83" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(-22.62)"><text x="-10.02" y="205.42" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">400</text></g><line x1="-61.83" y1="205.81" x2="-60.1" y2="200.07" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(16.72)"><text x="-10.02" y="205.42" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">500</text></g><line x1="-178.3" y1="119.97" x2="-173.32" y2="116.62" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(56.07)"><text x="-10.02" y="205.42" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">600</text></g><line x1="-213.94" y1="-20.26" x2="-207.97" y2="-19.69" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(275.41)"><text x="-10.02" y="-198.15" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">700</text></g><line x1="-152.61" y1="-151.3" x2="-148.35" y2="-147.08" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(314.75)"><text x="-10.02" y="-198.15" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">800</text></g><line x1="-22.1" y1="-213.76" x2="-21.48" y2="-207.79" fill="none" stroke="#252525" stroke-width="1.2"/><g transform="rotate(354.1)"><text x="-10.02" y="-198.15" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">900</text></g></g><g class="feature" data-kind="feature" data-name="AmpR" data-type="CDS" data-span="1 .. 60" data-length="60 bp"><path d="M0 -190.68A190.68 190.68 0 0 1 64.76 -179.34L66.11 -183.11L73.35 -167.85L58.3 -161.47L59.66 -165.24A175.68 175.68 0 0 0 0 -175.68Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="14.14 21.77 32.64 39.63" y="-178.68 -177.96 -176.24 -174.8" rotate="5.78 8.77 11.66 14.05" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">AmpR</text></g><g class="feature" data-kind="feature" data-name="T7 promoter" data-type="promoter" data-span="61 .. 80" data-length="20 bp"><path d="M66.35 -151.81A165.68 165.68 0 0 1 75.55 -147.45L77.37 -151.01L82.59 -134.9L66.88 -130.54L68.71 -134.1A150.68 150.68 0 0 0 60.34 -138.07Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="feature" data-kind="feature" data-name="RBS" data-type="RBS" data-span="81 .. 88" data-length="8 bp"><path d="M99.56 -162.62A190.68 190.68 0 0 0 99.56 -162.62L101.65 -166.03L104.08 -150.74L89.64 -146.42L91.73 -149.83A175.68 175.68 0 0 1 91.73 -149.83Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="feature" data-kind="feature" data-name="attB1" data-type="misc_recomb" data-span="89 .. 113" data-length="25 bp"><path d="M94.13 -136.34A165.68 165.68 0 0 1 106.74 -126.71L109.32 -129.77L110.79 -112.9L94.5 -112.18L97.08 -115.24A150.68 150.68 0 0 0 85.61 -123.99Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/></g><g class="feature" data-kind="feature" data-name="GFP" data-type="CDS" data-span="114 .. 830" data-length="717 bp"><path d="M133.55 -136.1A190.68 190.68 0 0 1 -12.08 190.29A190.68 190.68 0 0 1 -115.27 -151.89L-117.69 -155.07L-100.95 -152.85L-103.79 -136.75L-106.2 -139.94A175.68 175.68 0 0 0 -11.13 175.32A175.68 175.68 0 0 0 123.04 -125.39Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="-23.19 -14.15 -7.4" y="185.77 186.65 187.04" rotate="5.75 3.32 1.2" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">GFP</text></g><g class="feature" data-kind="feature" data-name="attB2" data-type="misc_recomb" data-span="831 .. 855" data-length="25 bp"><path d="M-87.17 -131.99L-82.51 -148.27L-80.56 -144.77A165.68 165.68 0 0 1 -66.35 -151.81L-60.34 -138.07A150.68 150.68 0 0 0 -73.27 -131.66L-71.33 -128.17Z" fill="#ff9900" stroke="#734500" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="attB-GFP forward" data-type="primer" data-span="114 .. 139" data-length="26 bp"><path d="M159.95 -163A228.37 228.37 0 0 1 179.1 -141.69L179.93 -142.35L184.72 -130.84L175.12 -138.55L175.96 -139.21A224.37 224.37 0 0 0 157.15 -160.14Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="attB-GFP reverse" data-type="primer" data-span="805 .. 830" data-length="26 bp"><path d="M-156.31 -163.73L-149.42 -174.11L-148.72 -173.3A228.37 228.37 0 0 1 -125.85 -190.56L-123.65 -187.22A224.37 224.37 0 0 0 -146.12 -170.27L-145.42 -169.46Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="Colony PCR forward" data-type="primer" data-span="37 .. 58" data-length="22 bp"><path d="M55.88 -221.42A228.37 228.37 0 0 1 77.29 -214.89L77.65 -215.89L87.79 -208.65L75.58 -210.12L75.94 -211.13A224.37 224.37 0 0 0 54.9 -217.55Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="Colony PCR reverse" data-type="primer" data-span="879 .. 907" data-length="29 bp"><path d="M-56.9 -219.1L-45.82 -224.81L-45.61 -223.77A228.37 228.37 0 0 1 -12.54 -228.02L-12.32 -224.03A224.37 224.37 0 0 0 -44.81 -219.85L-44.6 -218.8Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="Sequencing forward" data-type="primer" data-span="889 .. 908" data-length="20 bp"><path d="M-43.6 -232.45A236.5 236.5 0 0 1 -23.43 -235.34L-23.54 -236.4L-11.27 -234.23L-22.93 -230.29L-23.04 -231.36A232.5 232.5 0 0 0 -42.86 -228.52Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="Sequencing reverse" data-type="primer" data-span="50 .. 68" data-length="19 bp"><path d="M77.42 -221.35L89.8 -219.94L89.4 -218.95A236.5 236.5 0 0 1 106.46 -211.18L104.66 -207.61A232.5 232.5 0 0 0 87.89 -215.25L87.48 -214.26Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="feature label" data-kind="feature" data-name="T7 promoter" data-type="promoter" data-span="61 .. 80" data-length="20 bp"><line x1="111.7" y1="-214.19" x2="135.56" y2="-219.61" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><rect x="135.56" y="-227.3" width="77.36" height="15.39" rx="2" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="138.56" y="-215.63" font-size="11.5" textLength="71.36" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">T7 promoter</text></g><g class="feature label" data-kind="feature" data-name="RBS" data-type="RBS" data-span="81 .. 88" data-length="8 bp"><line x1="131.74" y1="-202.48" x2="159.51" y2="-202.22" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><rect x="159.51" y="-209.92" width="28.98" height="15.39" rx="2" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="162.51" y="-198.24" font-size="11.5" textLength="22.98" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">RBS</text></g><g class="feature label" data-kind="feature" data-name="attB1" data-type="misc_recomb" data-span="89 .. 113" data-length="25 bp"><line x1="153.79" y1="-186.29" x2="178.62" y2="-184.83" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><rect x="178.62" y="-192.53" width="37.27" height="15.39" rx="2" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="181.62" y="-180.85" font-size="11.5" textLength="31.27" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">attB1</text></g><g class="feature label" data-kind="feature" data-name="attB2" data-type="misc_recomb" data-span="831 .. 855" data-length="25 bp"><line x1="-115.36" y1="-212.24" x2="-133.32" y2="-221.03" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><rect x="-170.59" y="-228.72" width="37.27" height="15.39" rx="2" fill="#ff9900" stroke="#734500" stroke-width="0.8"/><text x="-167.59" y="-217.05" font-size="11.5" textLength="31.27" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">attB2</text></g><g class="primer label" data-kind="primer" data-name="attB-GFP forward" data-type="primer" data-span="114 .. 139" data-length="26 bp"><line x1="183.89" y1="-156.65" x2="197.8" y2="-163.13" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="200.8" y="-159.15" font-size="11.5" textLength="169.88" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">attB-GFP forward (114 .. 139)</text></g><g class="primer label" data-kind="primer" data-name="attB-GFP reverse" data-type="primer" data-span="805 .. 830" data-length="26 bp"><line x1="-150.57" y1="-188.9" x2="-165.99" y2="-196.72" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="-338.01" y="-192.74" font-size="11.5" textLength="169.02" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">attB-GFP reverse (805 .. 830)</text></g><g class="primer label" data-kind="primer" data-name="Colony PCR forward" data-type="primer" data-span="37 .. 58" data-length="22 bp"><line x1="76.62" y1="-229.09" x2="49.3" y2="-254.38" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="52.3" y="-250.4" font-size="11.5" textLength="170.27" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">Colony PCR forward (37 .. 58)</text></g><g class="primer label" data-kind="primer" data-name="Colony PCR reverse" data-type="primer" data-span="879 .. 907" data-length="29 bp"><line x1="-37.17" y1="-238.69" x2="-95.28" y2="-240.52" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="-282.31" y="-236.54" font-size="11.5" textLength="184.03" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">Colony PCR reverse (879 .. 907)</text></g><g class="primer label" data-kind="primer" data-name="Sequencing forward" data-type="primer" data-span="889 .. 908" data-length="20 bp"><line x1="-28.14" y1="-239.92" x2="-26.07" y2="-257.91" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="-215.4" y="-253.92" font-size="11.5" textLength="186.33" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">Sequencing forward (889 .. 908)</text></g><g class="primer label" data-kind="primer" data-name="Sequencing reverse" data-type="primer" data-span="50 .. 68" data-length="19 bp"><line x1="94.45" y1="-222.34" x2="103.47" y2="-237" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="106.47" y="-233.01" font-size="11.5" textLength="170.83" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">Sequencing reverse (50 .. 68)</text></g><text x="-65.3" y="-1.44" font-size="13.5" textLength="130.6" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">pDEST-demo-GFP</text><text x="-18.35" y="11.49" font-size="10.5" textLength="36.71" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">915 bp</text></svg><figcaption>The expression clone the reaction makes: attB1 and attB2, the sites it writes where the two molecules crossed over.</figcaption><details class="opener"><summary><span class="to-open">Explore the map</span><span class="to-close">Close the map</span></summary><iframe data-src="product-map.html" title="pDEST-demo-GFP, to explore"></iframe><a class="new-tab" href="product-map.html" target="_blank" rel="noopener">Open it in a new tab</a></details></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>Nothing visible: the reaction is a recombination, not a digest.</li><li>The expression clone carries attB1 at 89, spelling ACAAGTTTGTACAAAAAAGCAGGCT: its first bases from pDEST-demo and the rest from pDONR-demo-attB-GFP.</li><li>The expression clone carries attB2 at 831, spelling ACCACTTTGTACAAGAAAGCTGGGT: its first bases from pDEST-demo and the rest from pDONR-demo-attB-GFP.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>Few or no colonies later, though the transformation control worked</dt><dd>Use an entry clone (attL) with a destination vector (attR): the LR reaction takes those and no others. Do not freeze and thaw the enzyme mix more than ten times.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · p. 40"><sup>[1]</sup></a></dd></dl></div>
@@ -531,7 +557,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <section class="step" id="step-stop-lr">
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-stop-lr"><span class="step-n">10</span><span>Stop the LR reaction with proteinase K</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-stop-lr.1"><span>Add 1 µL of proteinase K at 2 µg/µL.</span></label></li><li><label><input type="checkbox" data-key="step-stop-lr.2"><span>Incubate at 37 °C for 10 minutes.</span></label></li></ol>
-<div class="timers"><span class="timer" data-key="step-stop-lr.timer.1" data-seconds="600"><label><span class="timer-label">Proteinase K, LR</span><input type="text" class="timer-time" value="10:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 10:00</button></span></div>
+<div class="timers"><span class="timer" id="timer-step-stop-lr.timer.1" data-key="step-stop-lr.timer.1" data-seconds="600"><label><span class="timer-label">Proteinase K, LR</span><input type="text" class="timer-time" value="10:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 10:00</button></span></div>
 <div class="expected"><h3>Expected result</h3><ul><li>A reaction that can go straight into competent cells.</li></ul></div>
 <div class="notes"><h3>Notes</h3><ul><li>An untreated reaction is a published cause of few or no colonies, so this step is not optional.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · p. 40"><sup>[1]</sup></a></li></ul></div>
 </section>
@@ -540,7 +566,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-transform-lr"><span class="step-n">11</span><span>Transform and plate the LR reaction</span></label></h2>
 <p class="caution"><strong>Caution:</strong> Competent cells die if they warm up; keep them on ice until the shock.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-transform-lr.1"><span>Thaw 50 µL of TOP10 chemically competent E. coli on ice.</span></label></li><li><label><input type="checkbox" data-key="step-transform-lr.2"><span>Add 1 µL of the LR reaction and flick the tube four or five times.</span></label></li><li><label><input type="checkbox" data-key="step-transform-lr.3"><span>Hold on ice for 30 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-transform-lr.4"><span>Heat shock at 42 °C for 30 seconds.</span></label></li><li><label><input type="checkbox" data-key="step-transform-lr.5"><span>Return to ice for 2 minutes.</span></label></li><li><label><input type="checkbox" data-key="step-transform-lr.6"><span>Add 250 µL of outgrowth medium and shake at 37 °C for 60 minutes at 250 rpm.</span></label></li><li><label><input type="checkbox" data-key="step-transform-lr.7"><span>Spread 100 µL of a 1:10 dilution on a warmed plate and grow overnight at 37 °C.</span></label></li></ol>
-<div class="timers"><span class="timer" data-key="step-transform-lr.timer.1" data-seconds="1800"><label><span class="timer-label">On ice</span><input type="text" class="timer-time" value="30:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 30:00</button></span><span class="timer" data-key="step-transform-lr.timer.2" data-seconds="30"><label><span class="timer-label">Heat shock</span><input type="text" class="timer-time" value="0:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 0:30</button></span><span class="timer" data-key="step-transform-lr.timer.3" data-seconds="120"><label><span class="timer-label">Back on ice</span><input type="text" class="timer-time" value="2:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 2:00</button></span><span class="timer" data-key="step-transform-lr.timer.4" data-seconds="3600"><label><span class="timer-label">Outgrowth</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
+<div class="timers"><span class="timer" id="timer-step-transform-lr.timer.1" data-key="step-transform-lr.timer.1" data-seconds="1800"><label><span class="timer-label">On ice</span><input type="text" class="timer-time" value="30:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 30:00</button></span><span class="timer" id="timer-step-transform-lr.timer.2" data-key="step-transform-lr.timer.2" data-seconds="30"><label><span class="timer-label">Heat shock</span><input type="text" class="timer-time" value="0:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 0:30</button></span><span class="timer" id="timer-step-transform-lr.timer.3" data-key="step-transform-lr.timer.3" data-seconds="120"><label><span class="timer-label">Back on ice</span><input type="text" class="timer-time" value="2:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 2:00</button></span><span class="timer" id="timer-step-transform-lr.timer.4" data-key="step-transform-lr.timer.4" data-seconds="3600"><label><span class="timer-label">Outgrowth</span><input type="text" class="timer-time" value="1:00:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:00:00</button></span></div>
 <div class="expected"><h3>Expected result</h3><ul><li>More than 5,000 colonies where the whole reaction is transformed and plated, with cells at 100,000,000 cfu/µg or better.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No colonies</dt><dd>Check the antibiotic and the cells&#x27; efficiency, and plate the rest of the outgrowth.<a class="cite" href="#source-neb-cloning" title="New England Biolabs, Troubleshooting Guide for Cloning · few or no transformants"><sup>[8]</sup></a></dd><dt>A lawn</dt><dd>Plate a smaller volume or a greater dilution next time.</dd><dt>Small colonies beside large ones</dt><dd>Usually unreacted pDONR-demo-attB-GFP co-transforming; restreak them on the entry clone&#x27;s own antibiotic to tell.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · p. 41"><sup>[1]</sup></a></dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>Colour does not report this insertion; screen every colony by PCR.</li><li>Unreacted destination vector and the by-product both keep the ccdB gene, which kills TOP10 chemically competent E. coli, so they do not grow. A strain carrying F&#x27; would supply ccdA and cancel that.</li><li>No manual states what fraction of the colonies is correct; the one count published found 96 of 102 correct after LR.<a class="cite" href="#source-hartley-2000" title="Hartley, J.L., Temple, G.F. and Brasch, M.A. (2000) DNA cloning using in vitro site-specific recombination. Genome Res. 10, 1788-1795 · Results"><sup>[9]</sup></a></li><li>The expression clone lost the chloramphenicol cassette with the by-product, so restreaking a colony on 30 µg/mL chloramphenicol confirms it: a true expression clone does not grow there, and one carrying a mutated ccdB gene does.</li></ul></div>
@@ -549,7 +575,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-colony-pcr"><span class="step-n">12</span><span>Screen colonies by PCR</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-colony-pcr.1"><span>Touch a well-separated colony with a sterile toothpick and stir it into the tube until the liquid clouds.</span></label></li><li><label><input type="checkbox" data-key="step-colony-pcr.2"><span>Streak the same toothpick onto a numbered plate, so the clone survives the PCR.</span></label></li><li><label><input type="checkbox" data-key="step-colony-pcr.3"><span>Run the program below and load 5 µL on a 2% gel.</span></label></li></ol>
 <figure class="reaction" data-overage="0.1"><figcaption>Colony PCR</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-colony-pcr.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>OneTaq Quick-Load 2X Master Mix with Standard Buffer (M0486)</td><td>2X</td><td>1X</td><td class="num">12.5</td><td class="num mix" data-ul="12.5">13.8</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>200 nM</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 25 µL</td><td class="num">11.5</td><td class="num mix" data-ul="11.5">12.7</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">25</td><td class="num mix"><span data-ul="25.0">27.5</span></td></tr></tfoot></table></div><p class="dispense">Put 25 µL of mix in each tube.</p></figure>
-<figure class="program"><figcaption>Colony PCR <span class="muted">· 1 h 10 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Lysis</td><td class="num">94 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">94 °C</td><td class="num">30 s</td><td class="num" rowspan="3">×30<a class="cite" href="#source-m0480" title="New England Biolabs #M0480 OneTaq DNA Polymerase protocol · thermocycling conditions"><sup>[11]</sup></a></td></tr><tr><td>Anneal</td><td class="num">57 °C</td><td class="num">30 s</td></tr><tr><td>Extend</td><td class="num">68 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">68 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">10 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-colony-pcr.program.1" data-seconds="4200.0"><label><span class="timer-label">Colony PCR</span><input type="text" class="timer-time" value="1:10:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:10:00</button></span></div></figure>
+<figure class="program"><figcaption>Colony PCR <span class="muted">· 1 h 10 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Lysis</td><td class="num">94 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">94 °C</td><td class="num">30 s</td><td class="num" rowspan="3">×30<a class="cite" href="#source-m0480" title="New England Biolabs #M0480 OneTaq DNA Polymerase protocol · thermocycling conditions"><sup>[11]</sup></a></td></tr><tr><td>Anneal</td><td class="num">57 °C</td><td class="num">30 s</td></tr><tr><td>Extend</td><td class="num">68 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">68 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">10 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" id="timer-step-colony-pcr.program.1" data-key="step-colony-pcr.program.1" data-seconds="4200.0"><label><span class="timer-label">Colony PCR</span><input type="text" class="timer-time" value="1:10:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:10:00</button></span></div></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>Each of the 2 junctions is read: the flanking pair crosses them all.</li><li>Correct clone: 871 bp.</li><li>Empty vector: 429 bp.</li></ul><figure class="gel"><figcaption>Colony PCR</figcaption><svg class="gel-image" viewBox="0 0 202 276" role="img" aria-label="Colony PCR"><rect class="gel-bg" x="46" y="22" width="154" height="252" rx="6"/><text class="size" x="41" y="51.5">1517</text><text class="size" x="41" y="69.6">1200</text><text class="size" x="41" y="83.7">1000</text><text class="size" x="41" y="100.9">800</text><text class="size" x="41" y="111.2">700</text><text class="size" x="41" y="123.1">600</text><text class="size" x="41" y="137.2">500</text><text class="size" x="41" y="154.4">400</text><text class="size" x="41" y="176.7">300</text><text class="size" x="41" y="208.0">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 100 bp DNA Ladder (N3231)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="1517" x="59" y="46.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="64.1" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="78.2" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="86.3" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="95.4" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="105.7" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="117.6" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="131.7" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="148.9" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="171.2" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="202.5" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="Correct clone"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="871" x="107" y="88.8" width="32" height="4" rx="1.5"><title>871 bp</title></rect></g><g class="lane" data-lane="Empty vector"><text class="lane-mark" x="171.0" y="14">2</text><rect class="well" x="152" y="30" width="38" height="6"/><rect class="band" data-bp="429" x="155" y="143.5" width="32" height="4" rx="1.5"><title>429 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 100 bp DNA Ladder (N3231)</li><li><strong>1</strong> Correct clone: 871 bp</li><li><strong>2</strong> Empty vector: 429 bp</li></ol></figure></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>No band in any lane</dt><dd>The colony was too much material: touch a smaller one, or dilute it.<a class="cite" href="#source-colony-pcr" title="New England Biolabs application note, Robust Colony PCR from Multiple E. coli Strains using OneTaq Quick-Load Master Mixes · template"><sup>[12]</sup></a></dd><dt>The plate carries large colonies and small ones</dt><dd>The small ones are usually unreacted pDONR-demo-attB-GFP co-transforming. It carries neither of these primers, so it adds no band here; restreak on the entry clone&#x27;s own antibiotic to tell.<a class="cite" href="#source-man0000470" title="Thermo Fisher Scientific #MAN0000470 Gateway Technology with Clonase II user guide · p. 41"><sup>[1]</sup></a></dd></dl></div>
 <div class="notes"><h3>Notes</h3><ul><li>The long first step at 94 °C lyses the cells; there is no purified template.</li><li>Both primers sit in the destination vector&#x27;s backbone, so one product crosses both attB junctions and an unrecombined vector gives a band of its own.</li><li>An unrecombined destination vector still carries ccdB, which kills TOP10 chemically competent E. coli, so its lane is what a strain supplying ccdA or a damaged ccdB gene would put on the plate.</li><li>A restriction digest beside this screen is recommended the first time it is run: mispriming and contaminating template both give artefacts.<a class="cite" href="#source-man0000291" title="Thermo Fisher Scientific #MAN0000291 Gateway pDONR Vectors user guide · p. 10"><sup>[13]</sup></a></li></ul></div>
@@ -568,6 +594,8 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
 </main>
 <nav class="column within" aria-label="Steps"><h2 class="column-title">This protocol</h2><ul class="step-nav"><li class="step-group"><details data-steps="pcr-attb-gfp purify-amplicons" open><summary>Make the fragments <span class="section-progress muted">0 of 2 done</span></summary><ul class="step-list"><li><a href="#step-pcr-attb-gfp"><span class="step-mark">1</span> <span>Amplify attB-GFP</span></a></li><li><a href="#step-purify-amplicons"><span class="step-mark">2</span> <span>Purify every amplicon</span></a></li></ul></details></li><li class="step-group"><details data-steps="set-up-bp run-bp stop-bp transform-bp miniprep-entry-clone"><summary>Make the entry clone <span class="section-progress muted">0 of 5 done</span></summary><ul class="step-list"><li><a href="#step-set-up-bp"><span class="step-mark">3</span> <span>Set up the BP reaction</span></a></li><li><a href="#step-run-bp"><span class="step-mark">4</span> <span>Run the BP reaction</span></a></li><li><a href="#step-stop-bp"><span class="step-mark">5</span> <span>Stop the BP reaction with proteinase K</span></a></li><li><a href="#step-transform-bp"><span class="step-mark">6</span> <span>Transform and plate the BP reaction</span></a></li><li><a href="#step-miniprep-entry-clone"><span class="step-mark">7</span> <span>Pick and miniprep the entry clone</span></a></li></ul></details></li><li class="step-group"><details data-steps="set-up-lr run-lr stop-lr"><summary>Recombine <span class="section-progress muted">0 of 3 done</span></summary><ul class="step-list"><li><a href="#step-set-up-lr"><span class="step-mark">8</span> <span>Set up the LR reaction</span></a></li><li><a href="#step-run-lr"><span class="step-mark">9</span> <span>Run the LR reaction</span></a></li><li><a href="#step-stop-lr"><span class="step-mark">10</span> <span>Stop the LR reaction with proteinase K</span></a></li></ul></details></li><li class="step-group"><details data-steps="transform-lr colony-pcr sequencing"><summary>Transform and screen <span class="section-progress muted">0 of 3 done</span></summary><ul class="step-list"><li><a href="#step-transform-lr"><span class="step-mark">11</span> <span>Transform and plate the LR reaction</span></a></li><li><a href="#step-colony-pcr"><span class="step-mark">12</span> <span>Screen colonies by PCR</span></a></li><li><a href="#step-sequencing"><span class="step-mark">13</span> <span>Confirm the clone by sequencing</span></a></li></ul></details></li></ul></nav>
 </div>
+<footer class="credit">Made with <a href="https://liuhlab.github.io/liulab-mbio/">liulab-mbio</a>, from the <a href="https://liuhlab.github.io/">Liu lab</a>.</footer>
+<aside class="timer-panel" aria-label="Timers" hidden><ol></ol></aside>
 <script>
 (function () {
   "use strict";
@@ -1135,15 +1163,93 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
   }
 
   // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
-  // until that timer is reset.
+  // until that timer is reset. A timer is named by its page's key and its own, since the panel
+  // holds the run's other pages' timers too.
   var title = document.title;
+  var here = document.body.getAttribute("data-protocol") || "";
   var ranOut = {};
 
-  function markTitle(key, label) {
-    if (label) ranOut[key] = label;
-    else delete ranOut[key];
+  function timerId(page, key) {
+    return page + "\n" + key;
+  }
+
+  function markTitle(id, label) {
+    if (label) ranOut[id] = label;
+    else delete ranOut[id];
     var labels = Object.keys(ranOut).map(function (one) { return ranOut[one]; });
     document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
+  }
+
+  // Pages of a run are often open in several tabs, and a timer that runs out sounds once among
+  // them: each tab claims its deadline in the shared store and reads the claim back a moment
+  // later, so two claiming at once settle on the last to write. A tab the browser lets sound
+  // claims at once; one still waiting for a touch claims only if no such tab has. Every tab
+  // flags its title.
+  var tab = Math.random().toString(36).slice(2);
+  var CLAIM_SETTLE_MS = 150;
+  // The longest wait setTimeout honours; a later deadline is redrawn by the interval instead.
+  var LONGEST_TIMEOUT_MS = 2147483647;
+  // Redraw just past a deadline, so the entry reads done, and keep the page clear of the panel.
+  var PAST_DEADLINE_MS = 50;
+  var PANEL_GAP_PX = 24;
+  var MUTED_TAB_WAIT_MS = 1000;
+  var CLAIM_PREFIX = "liulab-protocol-alarm:";
+  var DAY_MS = 86400000;
+
+  function claimKey(page, key) {
+    return CLAIM_PREFIX + page + ":" + key;
+  }
+
+  // A claim outlives its alarm so a late tab does not sound it again; after a day it is dropped.
+  try {
+    Object.keys(window.localStorage).forEach(function (name) {
+      if (name.indexOf(CLAIM_PREFIX) !== 0) return;
+      var ends = parseFloat(window.localStorage.getItem(name) || "");
+      if (!(ends > Date.now() - DAY_MS)) window.localStorage.removeItem(name);
+    });
+  } catch (error) {
+    /* nothing to tidy */
+  }
+
+  function claimed(claim, ends) {
+    var held = window.localStorage.getItem(claim);
+    return Boolean(held) && held.split(" ")[0] === String(ends);
+  }
+
+  function ring(page, key, label, ends) {
+    markTitle(timerId(page, key), label);
+    var claim = claimKey(page, key);
+    var mine = ends + " " + tab;
+    var audible = Boolean(audio) && audio.state === "running";
+    function stake() {
+      try {
+        if (claimed(claim, ends)) return;
+        window.localStorage.setItem(claim, mine);
+      } catch (error) {
+        alarm();
+        return;
+      }
+      window.setTimeout(function () {
+        var held = null;
+        try {
+          held = window.localStorage.getItem(claim);
+        } catch (error) {
+          /* unread: stay quiet rather than sound twice */
+        }
+        if (held === mine) alarm();
+      }, CLAIM_SETTLE_MS);
+    }
+    if (audible) stake();
+    else window.setTimeout(stake, MUTED_TAB_WAIT_MS);
+  }
+
+  function release(page, key) {
+    markTitle(timerId(page, key), null);
+    try {
+      window.localStorage.removeItem(claimKey(page, key));
+    } catch (error) {
+      /* nothing was claimed */
+    }
   }
 
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
@@ -1152,15 +1258,15 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
   // A time the reader typed is kept beside either, and is the timer's until they take the
   // plan's back; the plan's own is `data-seconds`.
   var timers = all(".timer[data-key]");
-  timers.forEach(function (timer) {
+  // This page's timers as the panel reads them: each one's key, label, element and controls.
+  var own = timers.map(function (timer) {
     var key = timer.getAttribute("data-key");
     var plan = parseFloat(timer.getAttribute("data-seconds")) || 0;
     var label = (timer.querySelector(".timer-label") || timer).textContent;
     var field = timer.querySelector(".timer-time");
     var action = timer.querySelector(".timer-action");
     var back = timer.querySelector(".timer-plan");
-    var kept = state[key] || {};
-    var total = typeof kept.seconds === "number" ? kept.seconds : plan;
+    var total = plan;
     var left = total;
     var end = 0;
     var handle = null;
@@ -1197,7 +1303,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
     function run() {
       var wait = Math.max(0, end - Date.now());
       handle = window.setInterval(tick, 250);
-      if (wait < 2147483647) due = window.setTimeout(function () { finish(true); }, wait);
+      if (wait < LONGEST_TIMEOUT_MS) due = window.setTimeout(function () { finish(true); }, wait);
       timer.classList.add("is-running");
       show("Pause");
     }
@@ -1208,10 +1314,7 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
       left = 0;
       timer.classList.add("is-finished");
       show("Reset");
-      if (sounded) {
-        alarm();
-        markTitle(key, label);
-      }
+      if (sounded) ring(here, key, label, end);
     }
 
     function tick() {
@@ -1226,22 +1329,32 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
       total = to;
       left = to;
       timer.classList.remove("is-finished");
-      markTitle(key, null);
+      release(here, key);
       keep();
       show("Start");
     }
 
-    if (typeof kept.ends === "number") {
-      end = kept.ends;
-      left = Math.max(0, (end - Date.now()) / 1000);
-      if (left > 0) run();
-      else finish(false);
-    } else if (typeof kept.left === "number") {
-      left = kept.left;
-      show("Resume");
-    } else {
-      show("Start");
+    // As the store holds it: on arrival, and again when another tab changes it.
+    function restore() {
+      var kept = state[key] || {};
+      stop();
+      timer.classList.remove("is-finished");
+      total = typeof kept.seconds === "number" ? kept.seconds : plan;
+      left = total;
+      if (typeof kept.ends === "number") {
+        end = kept.ends;
+        left = Math.max(0, (end - Date.now()) / 1000);
+        if (left > 0) run();
+        else finish(false);
+      } else if (typeof kept.left === "number") {
+        left = kept.left;
+        show("Resume");
+      } else {
+        show("Start");
+      }
     }
+
+    restore();
 
     action.addEventListener("click", function () {
       if (handle !== null) {
@@ -1277,17 +1390,216 @@ Sequencing reverse	TCGTATTAAGCCTGAACGC">Copy all sequences</button></p>
     });
 
     if (back) back.addEventListener("click", function () { ready(plan); });
+
+    return {
+      key: key,
+      label: label,
+      element: timer,
+      restore: restore,
+      reset: function () { ready(total); }
+    };
   });
 
-  // A timer still running after a reload sounds only once the page has been touched again.
-  if (timers.length) {
-    // A touch lets a page sound when it lifts, not when it lands.
-    ["pointerup", "keydown"].forEach(function (kind) {
-      document.addEventListener(kind, function () {
-        if (document.querySelector(".timer.is-running")) unlock();
-      }, true);
+  // The timer panel: every timer running, paused or finished, on this page and, on a page of a
+  // run, on the run's other protocol pages, each read from its own page's store. The one to
+  // finish soonest is on top; a finished one stays until it is dismissed or reset.
+  var panel = document.querySelector(".timer-panel");
+  var others = [];
+  try {
+    var listed = document.getElementById("run-timers");
+    if (listed) others = JSON.parse(listed.textContent) || [];
+    others = others.filter(function (page) {
+      return page.key !== here && page.timers && page.timers.length;
+    });
+  } catch (error) {
+    others = [];
+  }
+
+  function storeOf(page) {
+    if (page === here) return state;
+    try {
+      return JSON.parse(window.localStorage.getItem("liulab-protocol:" + page) || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  var RANK = { done: 0, running: 1, paused: 2 };
+
+  function entries() {
+    var now = Date.now();
+    var list = [];
+
+    function add(kept, entry) {
+      if (!kept || typeof kept !== "object") return;
+      if (typeof kept.ends === "number") {
+        entry.ends = kept.ends;
+        entry.left = Math.max(0, (kept.ends - now) / 1000);
+        entry.status = entry.left > 0 ? "running" : "done";
+      } else if (typeof kept.left === "number") {
+        entry.left = kept.left;
+        entry.status = "paused";
+      } else {
+        return;
+      }
+      entry.id = timerId(entry.page, entry.key);
+      list.push(entry);
+    }
+
+    own.forEach(function (one) {
+      add(state[one.key], {
+        page: here, key: one.key, label: one.label, title: "",
+        href: "#" + one.element.id, element: one.element, reset: one.reset
+      });
+    });
+    others.forEach(function (page) {
+      var store = storeOf(page.key);
+      (page.timers || []).forEach(function (one) {
+        add(store[one.key], {
+          page: page.key, key: one.key, label: one.label, title: page.title, href: one.href
+        });
+      });
+    });
+    list.sort(function (a, b) { return RANK[a.status] - RANK[b.status] || a.left - b.left; });
+    return list;
+  }
+
+  // Brought into view and lit for a moment, from the panel or from another page's link.
+  function flag(element) {
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    element.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "center" });
+    element.classList.add("is-flagged");
+    window.setTimeout(function () { element.classList.remove("is-flagged"); }, 2000);
+  }
+
+  // A timer on another page is set back to ready in that page's store, keeping the reader's
+  // time; its page, if open, hears the change.
+  function dismiss(entry) {
+    if (entry.reset) {
+      entry.reset();
+    } else {
+      var store = storeOf(entry.page);
+      var kept = store[entry.key] || {};
+      if (typeof kept.seconds === "number") store[entry.key] = { seconds: kept.seconds };
+      else delete store[entry.key];
+      try {
+        window.localStorage.setItem("liulab-protocol:" + entry.page, JSON.stringify(store));
+      } catch (error) {
+        /* the store is out of reach, so the timer stays */
+      }
+      release(entry.page, entry.key);
+    }
+    draw();
+  }
+
+  function span(name, text) {
+    var one = document.createElement("span");
+    one.className = name;
+    one.textContent = text;
+    return one;
+  }
+
+  function rowFor(entry) {
+    var row = document.createElement("li");
+    var link = document.createElement("a");
+    link.href = entry.href;
+    link.appendChild(span("panel-label", entry.label));
+    if (entry.title) link.appendChild(span("panel-page", entry.title));
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "panel-dismiss";
+    button.textContent = "Dismiss";
+    row.appendChild(link);
+    row.appendChild(span("panel-time", ""));
+    row.appendChild(button);
+    if (entry.element) {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        flag(entry.element);
+      });
+    }
+    button.addEventListener("click", function () { dismiss(row.entry); });
+    return row;
+  }
+
+  var rows = {};
+  var seen = {};
+  var soon = null;
+
+  function draw() {
+    var list = entries();
+    var holder = panel.querySelector("ol");
+    var now = {};
+    list.forEach(function (entry) {
+      now[entry.id] = entry.status;
+      var row = rows[entry.id] || (rows[entry.id] = rowFor(entry));
+      row.entry = entry;
+      row.className = "is-" + entry.status;
+      row.querySelector(".panel-time").textContent =
+        entry.status === "done" ? "done" : clock(entry.left);
+      row.querySelector(".panel-dismiss").hidden = entry.status !== "done";
+      holder.appendChild(row);
+      // This page's own timers sound from their steps; another page's sounds here once this tab
+      // has seen it run out.
+      if (entry.page !== here && entry.status === "done" && seen[entry.id] === "running") {
+        ring(entry.page, entry.key, entry.label, entry.ends);
+      }
+    });
+    Object.keys(rows).forEach(function (id) {
+      if (now[id]) return;
+      holder.removeChild(rows[id]);
+      delete rows[id];
+    });
+    Object.keys(ranOut).forEach(function (id) {
+      if (now[id] !== "done") markTitle(id, null);
+    });
+    seen = now;
+    panel.hidden = !list.length;
+    // The page's end scrolls clear of the panel, so the panel never covers the credit.
+    document.body.style.paddingBottom = panel.hidden ? "" : panel.offsetHeight + PANEL_GAP_PX + "px";
+    // Another page's next deadline is waited for to the second, as this page's own are.
+    window.clearTimeout(soon);
+    var next = list.filter(function (entry) {
+      return entry.page !== here && entry.status === "running";
+    })[0];
+    if (next && next.left * 1000 < LONGEST_TIMEOUT_MS) {
+      soon = window.setTimeout(draw, next.left * 1000 + PAST_DEADLINE_MS);
+    }
+  }
+
+  if (panel && (own.length || others.length)) {
+    draw();
+    window.setInterval(draw, 500);
+    // Another tab changed a store: this page's own timers take what it holds now.
+    window.addEventListener("storage", function (event) {
+      if (event.key === storageKey) {
+        var fresh = load();
+        own.forEach(function (one) {
+          if (JSON.stringify(fresh[one.key]) === JSON.stringify(state[one.key])) return;
+          if (fresh[one.key] === undefined) delete state[one.key];
+          else state[one.key] = fresh[one.key];
+          one.restore();
+        });
+      }
+      draw();
     });
   }
+
+  // Opened at a timer, as the panel on another page of the run links one.
+  try {
+    var target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+    if (target && target.classList.contains("timer")) flag(target);
+  } catch (error) {
+    /* an address naming no timer */
+  }
+
+  // A timer still running after a reload sounds only once the page has been touched again.
+  // A touch lets a page sound when it lifts, not when it lands.
+  ["pointerup", "keydown"].forEach(function (kind) {
+    document.addEventListener(kind, function () {
+      if (document.querySelector(".timer.is-running, .timer-panel .is-running")) unlock();
+    }, true);
+  });
 })();
 </script>
 </body>

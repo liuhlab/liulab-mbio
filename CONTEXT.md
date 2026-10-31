@@ -268,6 +268,13 @@ up the difference; and a plated count, which takes the control off, scales by th
 says whether the net clears the floor the design asked for.
 _Avoid_: widget, formula, converter, panel
 
+### Timer panel
+
+The corner of a protocol page that lists every timer of the run that is running, paused or done,
+whichever page it is on, and leads to it. It is a view of what the pages' timers keep, and a
+timer that runs out sounds in one tab only.
+_Avoid_: dock, timer bar
+
 ### Thermocycler program
 
 Stages run in order, each a list of incubations repeated for a number of cycles. An incubation

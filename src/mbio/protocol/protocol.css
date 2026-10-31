@@ -188,6 +188,27 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 .timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
 .timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
 .timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.timer { scroll-margin: calc(var(--bar) + 4rem) 0 4rem; }
+.timer.is-flagged { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* The timers on this page and the run's others, pinned however far the page scrolls. */
+.timer-panel { position: fixed; right: 16px; bottom: 16px; z-index: 3; width: min(19rem, calc(100vw - 32px)); max-height: 45vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgb(0 0 0 / 0.18); padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.timer-panel[hidden] { display: none; }
+.timer-panel ol { list-style: none; margin: 0; padding: 0; }
+.timer-panel li { display: flex; gap: 0.6rem; align-items: center; padding: 0.4rem 0; border-top: 1px solid var(--line); }
+.timer-panel li:first-child { border-top: none; }
+.timer-panel a { flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+.timer-panel a:hover .panel-label { text-decoration: underline; }
+.panel-label, .panel-page { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-page { color: var(--muted); font-size: 0.75rem; }
+.panel-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.timer-panel .is-running .panel-time { color: var(--accent); }
+.timer-panel .is-paused .panel-time { color: var(--muted); }
+.timer-panel .is-done .panel-time { color: var(--caution); }
+.panel-dismiss { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+
+.credit { max-width: 80rem; margin: 0 auto; padding: 1.2rem 0 2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; text-align: center; }
+.credit a { color: inherit; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
 /* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
@@ -384,7 +405,8 @@ tfoot .muted { font-weight: 400; }
     --expected-soft: #ffffff;
     --code-bg: #ffffff;
   }
-  body { padding: 0; font-size: 10.5pt; }
+  /* Over the room the script leaves below the page for the panel. */
+  body { padding: 0 !important; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
   .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
@@ -403,6 +425,10 @@ tfoot .muted { font-weight: 400; }
   .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
   .timer-time { border: none; }
   .timer-plan { display: none; }
+  .timer-panel { display: none !important; }
+  /* Paper has no links, so the credit spells its addresses out. */
+  .credit { padding: 0.6rem 0 0; margin-top: 1rem; text-align: left; }
+  .credit a::after { content: " (" attr(href) ")"; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }

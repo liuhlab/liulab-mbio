@@ -198,6 +198,27 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 .timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
 .timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
 .timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.timer { scroll-margin: calc(var(--bar) + 4rem) 0 4rem; }
+.timer.is-flagged { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* The timers on this page and the run's others, pinned however far the page scrolls. */
+.timer-panel { position: fixed; right: 16px; bottom: 16px; z-index: 3; width: min(19rem, calc(100vw - 32px)); max-height: 45vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgb(0 0 0 / 0.18); padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.timer-panel[hidden] { display: none; }
+.timer-panel ol { list-style: none; margin: 0; padding: 0; }
+.timer-panel li { display: flex; gap: 0.6rem; align-items: center; padding: 0.4rem 0; border-top: 1px solid var(--line); }
+.timer-panel li:first-child { border-top: none; }
+.timer-panel a { flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+.timer-panel a:hover .panel-label { text-decoration: underline; }
+.panel-label, .panel-page { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-page { color: var(--muted); font-size: 0.75rem; }
+.panel-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.timer-panel .is-running .panel-time { color: var(--accent); }
+.timer-panel .is-paused .panel-time { color: var(--muted); }
+.timer-panel .is-done .panel-time { color: var(--caution); }
+.panel-dismiss { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+
+.credit { max-width: 80rem; margin: 0 auto; padding: 1.2rem 0 2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; text-align: center; }
+.credit a { color: inherit; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
 /* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
@@ -394,7 +415,8 @@ tfoot .muted { font-weight: 400; }
     --expected-soft: #ffffff;
     --code-bg: #ffffff;
   }
-  body { padding: 0; font-size: 10.5pt; }
+  /* Over the room the script leaves below the page for the panel. */
+  body { padding: 0 !important; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
   .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
@@ -413,6 +435,10 @@ tfoot .muted { font-weight: 400; }
   .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
   .timer-time { border: none; }
   .timer-plan { display: none; }
+  .timer-panel { display: none !important; }
+  /* Paper has no links, so the credit spells its addresses out. */
+  .credit { padding: 0.6rem 0 0; margin-top: 1rem; text-align: left; }
+  .credit a::after { content: " (" attr(href) ")"; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
@@ -455,7 +481,7 @@ tfoot .muted { font-weight: 400; }
 <p class="caution"><strong>Caution:</strong> Keep the polymerase on ice.</p>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-pcr1.1"><span>Set up 1 reaction, one a batch, with the pool as template.</span></label></li><li><label><input type="checkbox" data-key="step-pcr1.2"><span>Give each its own pair: batch 1: OP107 with OP146.</span></label></li><li><label><input type="checkbox" data-key="step-pcr1.3"><span>Run the program below. On a real-time instrument, add an intercalating dye and stop before the curve plateaus; the printed count is what to run without one.</span></label></li></ol>
 <figure class="reaction" data-overage="0.1"><figcaption>PCR1, one tube a batch</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="1" data-key="step-pcr1.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">1</span> (µL)</th></tr></thead><tbody><tr><td>Q5 Reaction Buffer</td><td>5X</td><td>1X</td><td class="num">10</td><td class="num mix" data-ul="10.0">11</td></tr><tr><td>dNTP mix</td><td>10 mM each</td><td>200 µM each</td><td class="num">1</td><td class="num mix" data-ul="1.0">1.1</td></tr><tr><td>Forward primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Reverse primer</td><td>10 µM</td><td>500 nM</td><td class="num">2.5</td><td class="num mix" data-ul="2.5">2.75</td></tr><tr><td>Template DNA</td><td></td><td></td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>Q5 DNA Polymerase</td><td>2 U/µL</td><td>1 unit</td><td class="num">0.5</td><td class="num mix" data-ul="0.5">0.55</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 50 µL</td><td class="num">32.5</td><td class="num mix" data-ul="32.5">35.8</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">50</td><td class="num mix"><span data-ul="49.0">53.9</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 49 µL of mix in each tube, then add 1 µL Template DNA.</p></figure>
-<figure class="program"><figcaption>PCR1 <span class="muted">· 12 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">×12<a class="cite" href="#source-frm-001034" title="Twist Bioscience, Amplifying Twist Oligo Pools · p. 2, cycle chart"><sup>[3]</sup></a></td></tr><tr><td>Anneal</td><td class="num">65.1 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-pcr1.program.1" data-seconds="750.0"><label><span class="timer-label">PCR1</span><input type="text" class="timer-time" value="12:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 12:30</button></span></div></figure>
+<figure class="program"><figcaption>PCR1 <span class="muted">· 12 min 30 s plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Initial denaturation</td><td class="num">98 °C</td><td class="num">30 s</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Denature</td><td class="num">98 °C</td><td class="num">10 s</td><td class="num" rowspan="3">×12<a class="cite" href="#source-frm-001034" title="Twist Bioscience, Amplifying Twist Oligo Pools · p. 2, cycle chart"><sup>[3]</sup></a></td></tr><tr><td>Anneal</td><td class="num">65.1 °C</td><td class="num">20 s</td></tr><tr><td>Extend</td><td class="num">72 °C</td><td class="num">20 s</td></tr></tbody><tbody class="stage"><tr><td>Final extension</td><td class="num">72 °C</td><td class="num">2 min</td><td class="num" rowspan="1">1</td></tr></tbody><tbody class="stage"><tr><td>Hold</td><td class="num">4 °C</td><td class="num">∞</td><td class="num" rowspan="1">1</td></tr></tbody></table></div><div class="timers"><span class="timer" id="timer-step-pcr1.program.1" data-key="step-pcr1.program.1" data-seconds="750.0"><label><span class="timer-label">PCR1</span><input type="text" class="timer-time" value="12:30" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 12:30</button></span></div></figure>
 <ul class="holes-here" aria-label="Holes"><li class="hole" id="hole-H29"><span class="hole-id">H29</span> <span class="hole-none">no sourced number</span> — PCR1, the polymerase the cycle count is stated against: no cycle count published for Q5 on a Twist oligo pool. <span class="hole-kind">Waiting on a number nobody has published.</span> <em>Filled by a count Twist states against Q5, or a pilot on this pool.</em></li></ul>
 <figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-88.57 -76.34 919.08 196.99" width="919.08" height="196.99"><line x1="0" y1="0" x2="720" y2="0" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="3.8" x2="720" y2="3.8" fill="none" stroke="#252525" stroke-width="2.6"/><g class="scale"><line x1="102.86" y1="5.1" x2="102.86" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="96.18" y="21.85" font-size="10.5" textLength="13.36" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">50</text><line x1="205.71" y1="5.1" x2="205.71" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="195.69" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">100</text><line x1="308.57" y1="5.1" x2="308.57" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="298.55" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">150</text><line x1="411.43" y1="5.1" x2="411.43" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="401.41" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">200</text><line x1="514.29" y1="5.1" x2="514.29" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="504.27" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">250</text><line x1="617.14" y1="5.1" x2="617.14" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="607.12" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">300</text><line x1="720" y1="5.1" x2="720" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="709.98" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350</text></g><g class="feature" data-kind="feature" data-name="N_JUN fragment 1" data-type="misc_feature" data-span="28 .. 297" data-length="270 bp"><path d="M55.54 33.32L598.97 33.32L598.97 29.32L610.97 40.82L598.97 52.32L598.97 48.32L55.54 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="275.96 284.56 290.31 293.71 302.12 310.73 314.38 318.43 323.16 330.21 337.5 348.71 355.78 363.07 367.58 371.24" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">N_JUN fragment 1</text></g><g class="feature" data-kind="feature" data-name="filler" data-type="misc_feature" data-span="305 .. 310" data-length="6 bp"><path d="M625.37 33.32L637.71 33.32L637.71 48.32L625.37 48.32Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/><text x="618.82 622.87 626.07 629.26 632.46 639.53" y="64" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">filler</text></g><g class="primer" data-kind="primer" data-name="OP107" data-type="primer" data-span="1 .. 20" data-length="20 bp"><path d="M0 -8.37L29.14 -8.37L29.14 -9.43L41.14 -6.37L29.14 -3.3L29.14 -4.37L0 -4.37Z" fill="#aa3377" stroke="#4c1736" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="OP1" data-type="primer" data-span="311 .. 330" data-length="20 bp"><path d="M637.71 -6.37L649.71 -9.43L649.71 -8.37L678.86 -8.37L678.86 -4.37L649.71 -4.37L649.71 -3.3Z" fill="#dddddd" stroke="#636363" stroke-width="0.8"/></g><g class="primer" data-kind="primer" data-name="OP146" data-type="primer" data-span="331 .. 350" data-length="20 bp"><path d="M678.86 -14.5L690.86 -17.57L690.86 -16.5L720 -16.5L720 -12.5L690.86 -12.5L690.86 -11.43Z" fill="#aa3377" stroke="#4c1736" stroke-width="0.8"/></g><g class="primer label" data-kind="primer" data-name="OP107" data-type="primer" data-span="1 .. 20" data-length="20 bp"><line x1="20.57" y1="-9.43" x2="20.57" y2="-27.57" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="-69.57" y="-31.28" font-size="11.5" textLength="87.14" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#aa3377">OP107 (1 .. 20)</text></g><g class="primer label" data-kind="primer" data-name="OP1" data-type="primer" data-span="311 .. 330" data-length="20 bp"><line x1="658.29" y1="-9.43" x2="658.29" y2="-44.95" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="661.29" y="-48.67" font-size="11.5" textLength="94.45" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">OP1 (311 .. 330)</text></g><g class="primer label" data-kind="primer" data-name="OP146" data-type="primer" data-span="331 .. 350" data-length="20 bp"><line x1="699.43" y1="-17.57" x2="699.43" y2="-27.57" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="702.43" y="-31.28" font-size="11.5" textLength="109.09" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#aa3377">OP146 (331 .. 350)</text></g><g class="cut_site label" data-kind="cut_site" data-name="BsmBI" data-type="cut site" data-span="27"><line x1="55.54" y1="-1.3" x2="55.54" y2="-27.57" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="58.54" y="-31.28" font-size="11.5" textLength="36.36" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">BsmBI</text><text x="94.91" y="-31.28" font-size="11.5" textLength="27.26" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (27)</text></g><g class="cut_site label" data-kind="cut_site" data-name="BsmBI" data-type="cut site" data-span="293"><line x1="602.74" y1="-1.3" x2="602.74" y2="-27.57" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="528.8" y="-31.28" font-size="11.5" textLength="36.36" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd">BsmBI</text><text x="565.16" y="-31.28" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#dddddd"> (293)</text></g><text x="326.33" y="89.24" font-size="13.5" textLength="67.35" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">N_JUN_f1</text><text x="341.65" y="102.17" font-size="10.5" textLength="36.71" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">350 bp</text></svg><figcaption>PCR1 pairs OP107 with OP146 and pulls one batch out of the pool, in 1 reaction<a class="cite" href="#source-figure-sources" title="liulab-mbio, Figure sources for four designs · section 1, Baker&#x27;s three-primer PCR design"><sup>[4]</sup></a></figcaption><details class="opener"><summary><span class="to-open">Explore the map</span><span class="to-close">Close the map</span></summary><iframe data-src="oligo-map.html" title="N_JUN_f1, to explore"></iframe><a class="new-tab" href="oligo-map.html" target="_blank" rel="noopener">Open it in a new tab</a></details></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>One band at 350 bp in every batch, which is the whole oligo.</li><li>Batch sizes: 1 holds 72.</li></ul><figure class="gel"><figcaption>PCR1, any batch</figcaption><svg class="gel-image" viewBox="0 0 154 276" role="img" aria-label="PCR1, any batch"><rect class="gel-bg" x="46" y="22" width="106" height="252" rx="6"/><text class="size" x="41" y="51.5">1517</text><text class="size" x="41" y="69.6">1200</text><text class="size" x="41" y="83.7">1000</text><text class="size" x="41" y="100.9">800</text><text class="size" x="41" y="111.2">700</text><text class="size" x="41" y="123.1">600</text><text class="size" x="41" y="137.2">500</text><text class="size" x="41" y="154.4">400</text><text class="size" x="41" y="176.7">300</text><text class="size" x="41" y="208.0">200</text><text class="size" x="41" y="261.5">100</text><g class="lane ladder" data-lane="NEB 100 bp DNA Ladder (N3231)"><text class="lane-mark" x="75.0" y="14">L</text><rect class="well" x="56" y="30" width="38" height="6"/><rect class="band" data-bp="1517" x="59" y="46.0" width="32" height="4" rx="1.5"><title>1517 bp</title></rect><rect class="band" data-bp="1200" x="59" y="64.1" width="32" height="4" rx="1.5"><title>1200 bp</title></rect><rect class="band" data-bp="1000" x="59" y="78.2" width="32" height="4" rx="1.5"><title>1000 bp</title></rect><rect class="band" data-bp="900" x="59" y="86.3" width="32" height="4" rx="1.5"><title>900 bp</title></rect><rect class="band" data-bp="800" x="59" y="95.4" width="32" height="4" rx="1.5"><title>800 bp</title></rect><rect class="band" data-bp="700" x="59" y="105.7" width="32" height="4" rx="1.5"><title>700 bp</title></rect><rect class="band" data-bp="600" x="59" y="117.6" width="32" height="4" rx="1.5"><title>600 bp</title></rect><rect class="band" data-bp="500" x="59" y="131.7" width="32" height="4" rx="1.5"><title>500 bp</title></rect><rect class="band" data-bp="400" x="59" y="148.9" width="32" height="4" rx="1.5"><title>400 bp</title></rect><rect class="band" data-bp="300" x="59" y="171.2" width="32" height="4" rx="1.5"><title>300 bp</title></rect><rect class="band" data-bp="200" x="59" y="202.5" width="32" height="4" rx="1.5"><title>200 bp</title></rect><rect class="band" data-bp="100" x="59" y="256.0" width="32" height="4" rx="1.5"><title>100 bp</title></rect></g><g class="lane" data-lane="PCR1 product"><text class="lane-mark" x="123.0" y="14">1</text><rect class="well" x="104" y="30" width="38" height="6"/><rect class="band" data-bp="350" x="107" y="159.3" width="32" height="4" rx="1.5"><title>350 bp</title></rect></g></svg><ol class="gel-legend"><li><strong>L</strong> NEB 100 bp DNA Ladder (N3231)</li><li><strong>1</strong> PCR1 product: 350 bp</li></ol></figure></div>
@@ -479,7 +505,7 @@ tfoot .muted { font-weight: 400; }
 <h2 class="step-title"><label><input type="checkbox" class="done" data-key="step-assemble-cargo"><span class="step-n">3</span><span>Assemble each cargo into its position&#x27;s destination, from its 1 to 5 pieces</span></label></h2>
 <ol class="instructions"><li><label><input type="checkbox" data-key="step-assemble-cargo.1"><span>Open DMX-iGGA N (<a href="../block-vector-1.dna">block-vector-1.dna</a>), DMX-iGGA DBD (<a href="../block-vector-2.dna">block-vector-2.dna</a>) and DMX-iGGA C (<a href="../block-vector-3.dna">block-vector-3.dna</a>) with BbsI and SrfI, the digest a round opens the library with, and clean each up.</span></label></li><li><label><input type="checkbox" data-key="step-assemble-cargo.2"><span>Set up one assembly a well, holding that block&#x27;s own PCR2 pieces, the opened destination of the position that block fills, and nothing from another well.</span></label></li><li><label><input type="checkbox" data-key="step-assemble-cargo.3"><span>Transform, plate on 50 µg/mL kanamycin, and pick one colony a block.</span></label></li></ol>
 <figure class="reaction" data-overage="0.1"><figcaption>Golden Gate assembly, NEBridge kit E1602</figcaption><label class="count">Reactions <input type="number" class="rxn-count" name="reactions" min="1" step="1" inputmode="numeric" value="72" data-key="step-assemble-cargo.table.1"></label><span class="muted">mix includes 10% extra</span><div class="scroll"><table><thead><tr><th>Component</th><th>Stock</th><th>Final</th><th class="num">1 rxn (µL)</th><th class="num">Mix for <span class="rxn-n">72</span> (µL)</th></tr></thead><tbody><tr><td>DMX-iGGA, opened<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[6]</sup></a></td><td></td><td>0.05 pmol (165.17 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 1<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[6]</sup></a></td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 2<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[6]</sup></a></td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 3<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[6]</sup></a></td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 4<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[6]</sup></a></td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>PCR2 piece 5<a class="cite" href="#source-nebiocalculator" title="New England Biolabs NEBioCalculator · dsDNA molecular weight"><sup>[6]</sup></a></td><td></td><td>0.05 pmol (10.16 ng)</td><td class="num">1</td><td class="num per-tube">each tube</td></tr><tr><td>T4 DNA Ligase Buffer<a class="cite" href="#source-e1602" title="New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) instruction manual · assembly protocol"><sup>[7]</sup></a></td><td>10X</td><td>1X</td><td class="num">2</td><td class="num mix" data-ul="2.0">158</td></tr><tr><td>NEBridge Golden Gate Enzyme Mix<a class="cite" href="#source-e1602" title="New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) instruction manual · assembly protocol"><sup>[7]</sup></a></td><td></td><td></td><td class="num">1</td><td class="num mix" data-ul="1.0">79.2</td></tr><tr><td>Nuclease-free water</td><td></td><td>to 20 µL</td><td class="num">11</td><td class="num mix" data-ul="11.0">871</td></tr></tbody><tfoot><tr><th>Total</th><td></td><td></td><td class="num">20</td><td class="num mix"><span data-ul="14.0">1,109</span><br><span class="muted">mix only</span></td></tr></tfoot></table></div><p class="dispense">Put 14 µL of mix in each tube, then add 1 µL DMX-iGGA, opened, 1 µL PCR2 piece 1, 1 µL PCR2 piece 2, 1 µL PCR2 piece 3, 1 µL PCR2 piece 4, 1 µL PCR2 piece 5.</p></figure>
-<figure class="program"><figcaption>Golden Gate assembly <span class="muted">· 1 h 5 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Digest</td><td class="num">42 °C</td><td class="num">1 min</td><td class="num" rowspan="2">×30<a class="cite" href="#source-e1602" title="New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) instruction manual · assembly protocol"><sup>[7]</sup></a></td></tr><tr><td>Ligate</td><td class="num">16 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>End soak</td><td class="num">60 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1<a class="cite" href="#source-e1602" title="New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) instruction manual · assembly protocol"><sup>[7]</sup></a></td></tr></tbody></table></div><div class="timers"><span class="timer" data-key="step-assemble-cargo.program.1" data-seconds="3900.0"><label><span class="timer-label">Golden Gate assembly</span><input type="text" class="timer-time" value="1:05:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:05:00</button></span></div></figure>
+<figure class="program"><figcaption>Golden Gate assembly <span class="muted">· 1 h 5 min plus ramps</span></figcaption><div class="scroll"><table><thead><tr><th>Step</th><th class="num">Temperature</th><th class="num">Time</th><th class="num">Cycles</th></tr></thead><tbody class="stage"><tr><td>Digest</td><td class="num">42 °C</td><td class="num">1 min</td><td class="num" rowspan="2">×30<a class="cite" href="#source-e1602" title="New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) instruction manual · assembly protocol"><sup>[7]</sup></a></td></tr><tr><td>Ligate</td><td class="num">16 °C</td><td class="num">1 min</td></tr></tbody><tbody class="stage"><tr><td>End soak</td><td class="num">60 °C</td><td class="num">5 min</td><td class="num" rowspan="1">1<a class="cite" href="#source-e1602" title="New England Biolabs #E1602S/L NEBridge Golden Gate Assembly Kit (BsmBI-v2) instruction manual · assembly protocol"><sup>[7]</sup></a></td></tr></tbody></table></div><div class="timers"><span class="timer" id="timer-step-assemble-cargo.program.1" data-key="step-assemble-cargo.program.1" data-seconds="3900.0"><label><span class="timer-label">Golden Gate assembly</span><input type="text" class="timer-time" value="1:05:00" size="8" autocomplete="off" spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label><button type="button" class="timer-action">Start</button><button type="button" class="timer-plan" title="The time the protocol gives" hidden>Back to 1:05:00</button></span></div></figure>
 <figure class="drawing map"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-36.8 -42.69 793.6 376.64" width="793.6" height="376.64"><line x1="0" y1="0" x2="720" y2="0" fill="none" stroke="#252525" stroke-width="2.6"/><line x1="0" y1="3.8" x2="720" y2="3.8" fill="none" stroke="#252525" stroke-width="2.6"/><g class="ends"><circle cx="-7" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-13" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="-19" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="727" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="733" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/><circle cx="739" cy="1.9" r="0.9" fill="none" stroke="#252525" stroke-width="1.8"/></g><g class="scale"><line x1="36.92" y1="5.1" x2="36.92" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="26.9" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350</text><line x1="129.23" y1="5.1" x2="129.23" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="119.21" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">360</text><line x1="221.54" y1="5.1" x2="221.54" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="211.52" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">370</text><line x1="313.85" y1="5.1" x2="313.85" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="303.83" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">380</text><line x1="406.15" y1="5.1" x2="406.15" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="396.13" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">390</text><line x1="498.46" y1="5.1" x2="498.46" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="488.44" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">400</text><line x1="590.77" y1="5.1" x2="590.77" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="580.75" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">410</text><line x1="683.08" y1="5.1" x2="683.08" y2="11.1" fill="none" stroke="#252525" stroke-width="1.2"/><text x="673.06" y="21.85" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">420</text></g><g class="feature" data-kind="feature" data-name="6xHis" data-type="CDS" data-span="415 .. 432" data-length="18 bp"><path d="M627.69 33.32L720 33.32L720 48.32L627.69 48.32Z" fill="#cc99b2" stroke="#5c4550" stroke-width="0.8"/><text x="657.87 665.18 671.99 680.64 683.83" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">6xHis</text></g><g class="feature" data-kind="feature" data-name="internal stuffer" data-type="misc_feature" data-span="371 .. 400" data-length="30 bp"><path d="M221.54 33.32L486.46 33.32L486.46 29.32L498.46 40.82L486.46 52.32L486.46 48.32L221.54 48.32Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="311.27 314.46 321.75 326.26 333.33 337.86 345.15 352.19 355.39 359.05 365.04 369.55 376.83 380.88 384.93 392.01" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">internal stuffer</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M36.92 33.32L98.77 33.32L98.77 29.32L110.77 40.82L98.77 52.32L98.77 48.32L36.92 48.32Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="53.54 60.48 71.68 78.76" y="44.8" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">PmeI</text></g><g class="cut_site label" data-kind="cut_site" data-name="BbsI" data-type="cut site" data-span="370"><line x1="221.54" y1="-1.3" x2="221.54" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="224.54" y="-15.01" font-size="11.5" textLength="24.57" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BbsI</text><text x="249.11" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000"> (370)</text></g><g class="cut_site label" data-kind="cut_site" data-name="BbsI" data-type="cut site" data-span="400"><line x1="498.46" y1="-1.3" x2="498.46" y2="-11.3" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="501.46" y="-15.01" font-size="11.5" textLength="24.57" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BbsI</text><text x="526.03" y="-15.01" font-size="11.5" textLength="34.58" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000"> (400)</text></g><text x="313.61" y="74.85" font-size="13.5" textLength="92.79" font-family="'Liulab Mbio Sans'" font-weight="700" fill="#000000">DMX-iGGA N</text><text x="312.5" y="87.78" font-size="10.5" textLength="94.99" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">347 .. 424 (78 bp)</text><g transform="translate(12.98 122.26)"><g class="rows" data-length="5393" data-cell="11"><g class="row" data-start="346" data-end="406" data-top="35.61" data-rail="53.91" data-bottom="72.22"><g class="ruler"><text x="28.48 35.16 41.84 48.52 138.48 145.16 151.84 158.52 248.48 255.16 261.84 268.52 358.48 365.16 371.84 378.52 468.48 475.16 481.84 488.52 578.48 585.16 591.84" y="31.13" font-size="10.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">350 360 370 380 390 400</text><line x1="0" y1="53.91" x2="660" y2="53.91" fill="none" stroke="#7f7f7f" stroke-width="1.6"/><path d="M5.5 52.41v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3" fill="none" stroke="#7f7f7f" stroke-width="1"/></g><g class="strand top"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19 200.19 211.19 222.19 233.19 244.19 255.19 266.19 277.19 288.19 299.19 310.19 321.19 332.19 343.19 354.19 365.19 376.19 387.19 398.19 409.19 420.19 431.19 442.19 453.19 464.19 475.19 486.19 497.19 508.19 519.19 530.19 541.19 552.19 563.19 574.19 585.19 596.19 607.19 618.19 629.19 640.19 651.19" y="45.82" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">TACAGTTTAAACTATGGGGTCTCAAGGAAAGTCTTCAGCCCGGGCAGAAGACAATTCCTT</text></g><g class="strand bottom"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19 200.19 211.19 222.19 233.19 244.19 255.19 266.19 277.19 288.19 299.19 310.19 321.19 332.19 343.19 354.19 365.19 376.19 387.19 398.19 409.19 420.19 431.19 442.19 453.19 464.19 475.19 486.19 497.19 508.19 519.19 530.19 541.19 552.19 563.19 574.19 585.19 596.19 607.19 618.19 629.19 640.19 651.19" y="69.62" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">ATGTCAAATTTGATACCCCAGAGTTCCTTTCAGAAGTCGGGCCCGTCTTCTGTTAAGGAA</text></g><g class="position"><text x="674" y="57.55" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">406</text></g><g class="feature" data-kind="feature" data-name="PmeI" data-type="protein_bind" data-span="351 .. 358" data-length="8 bp"><path d="M44 79.22H125L132 86.72L125 94.22H44Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="70.2 77.13 88.34 95.41" y="90.7" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">PmeI</text></g><g class="feature" data-kind="feature" data-name="internal stuffer" data-type="misc_feature" data-span="371 .. 400" data-length="30 bp"><path d="M264 79.22H587L594 86.72L587 94.22H264Z" fill="#a6acb3" stroke="#4b4d51" stroke-width="0.8"/><text x="382.77 385.96 393.25 397.76 404.83 409.36 416.65 423.69 426.89 430.55 436.54 441.05 448.33 452.38 456.43 463.51" y="90.7" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">internal stuffer</text></g><g class="cut_site" data-kind="cut_site" data-name="BbsI" data-type="cut site" data-span="370"><line x1="264" y1="35.61" x2="264" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><g class="bottom"><line x1="264" y1="53.91" x2="308" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><line x1="308" y1="53.91" x2="308" y2="72.22" fill="none" stroke="#252525" stroke-width="1.2"/></g></g><g class="cut_site" data-kind="cut_site" data-name="BbsI" data-type="cut site" data-span="400"><line x1="594" y1="35.61" x2="594" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><g class="bottom"><line x1="594" y1="53.91" x2="638" y2="53.91" fill="none" stroke="#252525" stroke-width="1.2"/><line x1="638" y1="53.91" x2="638" y2="72.22" fill="none" stroke="#252525" stroke-width="1.2"/></g></g><g class="cut_site label" data-kind="cut_site" data-name="BbsI" data-type="cut site" data-span="370"><line x1="264" y1="21.39" x2="264" y2="15.39" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="267" y="11.67" font-size="11.5" textLength="24.57" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BbsI</text></g><g class="cut_site label" data-kind="cut_site" data-name="BbsI" data-type="cut site" data-span="400"><line x1="594" y1="21.39" x2="594" y2="15.39" fill="none" stroke="#7f7f7f" stroke-width="0.8"/><text x="597" y="11.67" font-size="11.5" textLength="24.57" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">BbsI</text></g></g><g class="row" data-start="406" data-end="424" data-top="124.44" data-rail="142.75" data-bottom="161.05"><g class="ruler"><text x="28.48 35.16 41.84 48.52 138.48 145.16 151.84" y="119.97" font-size="10.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">410 420</text><line x1="0" y1="142.75" x2="198" y2="142.75" fill="none" stroke="#7f7f7f" stroke-width="1.6"/><path d="M5.5 141.25v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3m11 -4v5m11 -4v3m11 -3v3m11 -3v3m11 -3v3m11 -5v7m11 -5v3m11 -3v3m11 -3v3m11 -3v3" fill="none" stroke="#7f7f7f" stroke-width="1"/></g><g class="strand top"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19" y="134.65" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">CCGGAGACCACCACCACC</text></g><g class="strand bottom"><text x="2.19 13.19 24.19 35.19 46.19 57.19 68.19 79.19 90.19 101.19 112.19 123.19 134.19 145.19 156.19 167.19 178.19 189.19" y="158.46" font-size="11" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">GGCCTCTGGTGGTGGTGG</text></g><g class="position"><text x="674" y="146.38" font-size="10.5" textLength="20.04" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#252525">424</text></g><g class="feature" data-kind="feature" data-name="6xHis" data-type="CDS" data-span="415 .. 432" data-length="18 bp"><path d="M88 180.69H198V195.69H88Z" fill="#cc99b2" stroke="#5c4550" stroke-width="0.8"/><g class="translation"><text x="95.47 101.49 107.51 113.53 128.47 134.49 140.51 146.53 161.47 167.49 173.51" y="177.33" font-size="10" font-family="'Liulab Mbio Sans Mono'" font-weight="400" fill="#252525">His His His</text></g><text x="127.02 134.34 141.14 149.79 152.99" y="192.17" font-size="11.5" font-family="'Liulab Mbio Sans'" font-weight="400" fill="#000000">6xHis</text></g></g></g></g></svg><figcaption>The stuffer BbsI cuts out of DMX-iGGA N, which a cargo replaces. The cargo enters on the four bases its position spells here.<a class="cite" href="#source-figure-sources" title="liulab-mbio, Figure sources for four designs · section 2, Cargo GGA ligation"><sup>[4]</sup></a></figcaption><details class="opener"><summary><span class="to-open">Explore the map</span><span class="to-close">Close the map</span></summary><iframe data-src="block-vector-1-map.html" title="DMX-iGGA N, to explore"></iframe><a class="new-tab" href="block-vector-1-map.html" target="_blank" rel="noopener">Open it in a new tab</a></details></figure>
 <div class="expected"><h3>Expected result</h3><ul><li>72 plasmids, one a block: its position&#x27;s destination carrying that block&#x27;s cargo, 83 to 1,099 bp of it.</li><li>Each cargo reads: the overhang its part enters on, its coding bases, the internal stuffer, its barcode, and the TTCC cloning scar. The external stuffers <a href="../parts.tsv">parts.tsv</a> spells either side of it are the destination&#x27;s own bases.</li></ul></div>
 <div class="trouble"><h3>Troubleshooting</h3><dl><dt>A block comes out short</dt><dd>A piece was missing from the well. Check that well&#x27;s PCR2 lane before assembling it again; the pieces of one block are not interchangeable.</dd><dt>Colonies carrying the destination with no cargo</dt><dd>The destination was not opened to completion. Run a little of its digest on a gel before setting the plate up again.</dd></dl></div>
@@ -497,6 +523,9 @@ tfoot .muted { font-weight: 400; }
 </main>
 <nav class="column within" aria-label="Steps"><h2 class="column-title">This protocol</h2><ul class="step-nav"><li class="step-group"><details data-steps="pcr1 pcr2" open><summary>Amplify the pool <span class="section-progress muted">0 of 2 done</span></summary><ul class="step-list"><li><a href="#step-pcr1"><span class="step-mark">1</span> <span>PCR1: pull 1 batch out of the pool</span></a></li><li><a href="#step-pcr2"><span class="step-mark">2</span> <span>PCR2: pull each of the 72 blocks out of its batch</span></a></li></ul></details></li><li class="step-group"><details data-steps="assemble-cargo"><summary>Close each cargo into its vector <span class="section-progress muted">0 of 1 done</span></summary><ul class="step-list"><li><a href="#step-assemble-cargo"><span class="step-mark">3</span> <span>Assemble each cargo into its position&#x27;s destination, from its 1 to 5 pieces</span></a></li></ul></details></li></ul></nav>
 </div>
+<footer class="credit">Made with <a href="https://liuhlab.github.io/liulab-mbio/">liulab-mbio</a>, from the <a href="https://liuhlab.github.io/">Liu lab</a>.</footer>
+<aside class="timer-panel" aria-label="Timers" hidden><ol></ol></aside>
+<script type="application/json" id="run-timers">[{"key": "1e37b944aa4106cd", "title": "Part carrier", "timers": [{"key": "step-seat-parts.timer.1", "label": "TOPO reaction", "href": "01-part-carrier.html#timer-step-seat-parts.timer.1"}]}, {"key": "fdb6a0650c5f9cbd", "title": "Primer plates", "timers": []}, {"key": "1d55f66a11691cec", "title": "Cargo ordering and pool preparation", "timers": []}, {"key": "21f2b86cf4a6b041", "title": "Cargo creation", "timers": [{"key": "step-pcr1.program.1", "label": "PCR1", "href": "04-cargo-creation.html#timer-step-pcr1.program.1"}, {"key": "step-assemble-cargo.program.1", "label": "Golden Gate assembly", "href": "04-cargo-creation.html#timer-step-assemble-cargo.program.1"}]}, {"key": "8ac90a12f8273b56", "title": "Cargo validation: barcode ligation", "timers": [{"key": "step-compress-plates.timer.1", "label": "Plates inverted", "href": "05-cargo-validation-barcode-ligation.html#timer-step-compress-plates.timer.1"}]}, {"key": "1941b8d7544f9991", "title": "Cargo validation: index PCR", "timers": [{"key": "step-index-pcr.program.1", "label": "Index PCR", "href": "05-cargo-validation-index-pcr.html#timer-step-index-pcr.program.1"}]}, {"key": "5b5a787c7334834d", "title": "Library assembly in rounds", "timers": [{"key": "step-round-1-open.program.1", "label": "Digest with BbsI and SrfI", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-open.program.1"}, {"key": "step-round-1-release.program.1", "label": "Digest with BsaI and PmeI", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-release.program.1"}, {"key": "step-round-1-ligate.timer.1", "label": "Ligation", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-ligate.timer.1"}, {"key": "step-round-1-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-grow.program.1"}, {"key": "step-round-2-open.program.1", "label": "Digest with BbsI and SrfI", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-open.program.1"}, {"key": "step-round-2-release.program.1", "label": "Digest with BsaI and PmeI", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-release.program.1"}, {"key": "step-round-2-ligate.timer.1", "label": "Ligation", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-ligate.timer.1"}, {"key": "step-round-2-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-grow.program.1"}, {"key": "step-round-3-open.program.1", "label": "Digest with BbsI and SrfI", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-open.program.1"}, {"key": "step-round-3-release.program.1", "label": "Digest with BsaI and PmeI", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-release.program.1"}, {"key": "step-round-3-ligate.timer.1", "label": "Ligation", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-ligate.timer.1"}, {"key": "step-round-3-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-grow.program.1"}]}, {"key": "0f35f4735f9390c0", "title": "Final cargo ligation", "timers": [{"key": "step-release-cargo.program.1", "label": "Digest with BsaI and PmeI", "href": "07-final-cargo-ligation.html#timer-step-release-cargo.program.1"}, {"key": "step-release-cargo.program.2", "label": "BsaI heat inactivation", "href": "07-final-cargo-ligation.html#timer-step-release-cargo.program.2"}, {"key": "step-release-cargo.program.3", "label": "PmeI heat inactivation", "href": "07-final-cargo-ligation.html#timer-step-release-cargo.program.3"}, {"key": "step-assemble-into-working-vector.program.1", "label": "Golden Gate assembly", "href": "07-final-cargo-ligation.html#timer-step-assemble-into-working-vector.program.1"}, {"key": "step-electroporate-and-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "07-final-cargo-ligation.html#timer-step-electroporate-and-grow.program.1"}]}]</script>
 <script>
 (function () {
   "use strict";
@@ -1064,15 +1093,93 @@ tfoot .muted { font-weight: 400; }
   }
 
   // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
-  // until that timer is reset.
+  // until that timer is reset. A timer is named by its page's key and its own, since the panel
+  // holds the run's other pages' timers too.
   var title = document.title;
+  var here = document.body.getAttribute("data-protocol") || "";
   var ranOut = {};
 
-  function markTitle(key, label) {
-    if (label) ranOut[key] = label;
-    else delete ranOut[key];
+  function timerId(page, key) {
+    return page + "\n" + key;
+  }
+
+  function markTitle(id, label) {
+    if (label) ranOut[id] = label;
+    else delete ranOut[id];
     var labels = Object.keys(ranOut).map(function (one) { return ranOut[one]; });
     document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
+  }
+
+  // Pages of a run are often open in several tabs, and a timer that runs out sounds once among
+  // them: each tab claims its deadline in the shared store and reads the claim back a moment
+  // later, so two claiming at once settle on the last to write. A tab the browser lets sound
+  // claims at once; one still waiting for a touch claims only if no such tab has. Every tab
+  // flags its title.
+  var tab = Math.random().toString(36).slice(2);
+  var CLAIM_SETTLE_MS = 150;
+  // The longest wait setTimeout honours; a later deadline is redrawn by the interval instead.
+  var LONGEST_TIMEOUT_MS = 2147483647;
+  // Redraw just past a deadline, so the entry reads done, and keep the page clear of the panel.
+  var PAST_DEADLINE_MS = 50;
+  var PANEL_GAP_PX = 24;
+  var MUTED_TAB_WAIT_MS = 1000;
+  var CLAIM_PREFIX = "liulab-protocol-alarm:";
+  var DAY_MS = 86400000;
+
+  function claimKey(page, key) {
+    return CLAIM_PREFIX + page + ":" + key;
+  }
+
+  // A claim outlives its alarm so a late tab does not sound it again; after a day it is dropped.
+  try {
+    Object.keys(window.localStorage).forEach(function (name) {
+      if (name.indexOf(CLAIM_PREFIX) !== 0) return;
+      var ends = parseFloat(window.localStorage.getItem(name) || "");
+      if (!(ends > Date.now() - DAY_MS)) window.localStorage.removeItem(name);
+    });
+  } catch (error) {
+    /* nothing to tidy */
+  }
+
+  function claimed(claim, ends) {
+    var held = window.localStorage.getItem(claim);
+    return Boolean(held) && held.split(" ")[0] === String(ends);
+  }
+
+  function ring(page, key, label, ends) {
+    markTitle(timerId(page, key), label);
+    var claim = claimKey(page, key);
+    var mine = ends + " " + tab;
+    var audible = Boolean(audio) && audio.state === "running";
+    function stake() {
+      try {
+        if (claimed(claim, ends)) return;
+        window.localStorage.setItem(claim, mine);
+      } catch (error) {
+        alarm();
+        return;
+      }
+      window.setTimeout(function () {
+        var held = null;
+        try {
+          held = window.localStorage.getItem(claim);
+        } catch (error) {
+          /* unread: stay quiet rather than sound twice */
+        }
+        if (held === mine) alarm();
+      }, CLAIM_SETTLE_MS);
+    }
+    if (audible) stake();
+    else window.setTimeout(stake, MUTED_TAB_WAIT_MS);
+  }
+
+  function release(page, key) {
+    markTitle(timerId(page, key), null);
+    try {
+      window.localStorage.removeItem(claimKey(page, key));
+    } catch (error) {
+      /* nothing was claimed */
+    }
   }
 
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
@@ -1081,15 +1188,15 @@ tfoot .muted { font-weight: 400; }
   // A time the reader typed is kept beside either, and is the timer's until they take the
   // plan's back; the plan's own is `data-seconds`.
   var timers = all(".timer[data-key]");
-  timers.forEach(function (timer) {
+  // This page's timers as the panel reads them: each one's key, label, element and controls.
+  var own = timers.map(function (timer) {
     var key = timer.getAttribute("data-key");
     var plan = parseFloat(timer.getAttribute("data-seconds")) || 0;
     var label = (timer.querySelector(".timer-label") || timer).textContent;
     var field = timer.querySelector(".timer-time");
     var action = timer.querySelector(".timer-action");
     var back = timer.querySelector(".timer-plan");
-    var kept = state[key] || {};
-    var total = typeof kept.seconds === "number" ? kept.seconds : plan;
+    var total = plan;
     var left = total;
     var end = 0;
     var handle = null;
@@ -1126,7 +1233,7 @@ tfoot .muted { font-weight: 400; }
     function run() {
       var wait = Math.max(0, end - Date.now());
       handle = window.setInterval(tick, 250);
-      if (wait < 2147483647) due = window.setTimeout(function () { finish(true); }, wait);
+      if (wait < LONGEST_TIMEOUT_MS) due = window.setTimeout(function () { finish(true); }, wait);
       timer.classList.add("is-running");
       show("Pause");
     }
@@ -1137,10 +1244,7 @@ tfoot .muted { font-weight: 400; }
       left = 0;
       timer.classList.add("is-finished");
       show("Reset");
-      if (sounded) {
-        alarm();
-        markTitle(key, label);
-      }
+      if (sounded) ring(here, key, label, end);
     }
 
     function tick() {
@@ -1155,22 +1259,32 @@ tfoot .muted { font-weight: 400; }
       total = to;
       left = to;
       timer.classList.remove("is-finished");
-      markTitle(key, null);
+      release(here, key);
       keep();
       show("Start");
     }
 
-    if (typeof kept.ends === "number") {
-      end = kept.ends;
-      left = Math.max(0, (end - Date.now()) / 1000);
-      if (left > 0) run();
-      else finish(false);
-    } else if (typeof kept.left === "number") {
-      left = kept.left;
-      show("Resume");
-    } else {
-      show("Start");
+    // As the store holds it: on arrival, and again when another tab changes it.
+    function restore() {
+      var kept = state[key] || {};
+      stop();
+      timer.classList.remove("is-finished");
+      total = typeof kept.seconds === "number" ? kept.seconds : plan;
+      left = total;
+      if (typeof kept.ends === "number") {
+        end = kept.ends;
+        left = Math.max(0, (end - Date.now()) / 1000);
+        if (left > 0) run();
+        else finish(false);
+      } else if (typeof kept.left === "number") {
+        left = kept.left;
+        show("Resume");
+      } else {
+        show("Start");
+      }
     }
+
+    restore();
 
     action.addEventListener("click", function () {
       if (handle !== null) {
@@ -1206,17 +1320,216 @@ tfoot .muted { font-weight: 400; }
     });
 
     if (back) back.addEventListener("click", function () { ready(plan); });
+
+    return {
+      key: key,
+      label: label,
+      element: timer,
+      restore: restore,
+      reset: function () { ready(total); }
+    };
   });
 
-  // A timer still running after a reload sounds only once the page has been touched again.
-  if (timers.length) {
-    // A touch lets a page sound when it lifts, not when it lands.
-    ["pointerup", "keydown"].forEach(function (kind) {
-      document.addEventListener(kind, function () {
-        if (document.querySelector(".timer.is-running")) unlock();
-      }, true);
+  // The timer panel: every timer running, paused or finished, on this page and, on a page of a
+  // run, on the run's other protocol pages, each read from its own page's store. The one to
+  // finish soonest is on top; a finished one stays until it is dismissed or reset.
+  var panel = document.querySelector(".timer-panel");
+  var others = [];
+  try {
+    var listed = document.getElementById("run-timers");
+    if (listed) others = JSON.parse(listed.textContent) || [];
+    others = others.filter(function (page) {
+      return page.key !== here && page.timers && page.timers.length;
+    });
+  } catch (error) {
+    others = [];
+  }
+
+  function storeOf(page) {
+    if (page === here) return state;
+    try {
+      return JSON.parse(window.localStorage.getItem("liulab-protocol:" + page) || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  var RANK = { done: 0, running: 1, paused: 2 };
+
+  function entries() {
+    var now = Date.now();
+    var list = [];
+
+    function add(kept, entry) {
+      if (!kept || typeof kept !== "object") return;
+      if (typeof kept.ends === "number") {
+        entry.ends = kept.ends;
+        entry.left = Math.max(0, (kept.ends - now) / 1000);
+        entry.status = entry.left > 0 ? "running" : "done";
+      } else if (typeof kept.left === "number") {
+        entry.left = kept.left;
+        entry.status = "paused";
+      } else {
+        return;
+      }
+      entry.id = timerId(entry.page, entry.key);
+      list.push(entry);
+    }
+
+    own.forEach(function (one) {
+      add(state[one.key], {
+        page: here, key: one.key, label: one.label, title: "",
+        href: "#" + one.element.id, element: one.element, reset: one.reset
+      });
+    });
+    others.forEach(function (page) {
+      var store = storeOf(page.key);
+      (page.timers || []).forEach(function (one) {
+        add(store[one.key], {
+          page: page.key, key: one.key, label: one.label, title: page.title, href: one.href
+        });
+      });
+    });
+    list.sort(function (a, b) { return RANK[a.status] - RANK[b.status] || a.left - b.left; });
+    return list;
+  }
+
+  // Brought into view and lit for a moment, from the panel or from another page's link.
+  function flag(element) {
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    element.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "center" });
+    element.classList.add("is-flagged");
+    window.setTimeout(function () { element.classList.remove("is-flagged"); }, 2000);
+  }
+
+  // A timer on another page is set back to ready in that page's store, keeping the reader's
+  // time; its page, if open, hears the change.
+  function dismiss(entry) {
+    if (entry.reset) {
+      entry.reset();
+    } else {
+      var store = storeOf(entry.page);
+      var kept = store[entry.key] || {};
+      if (typeof kept.seconds === "number") store[entry.key] = { seconds: kept.seconds };
+      else delete store[entry.key];
+      try {
+        window.localStorage.setItem("liulab-protocol:" + entry.page, JSON.stringify(store));
+      } catch (error) {
+        /* the store is out of reach, so the timer stays */
+      }
+      release(entry.page, entry.key);
+    }
+    draw();
+  }
+
+  function span(name, text) {
+    var one = document.createElement("span");
+    one.className = name;
+    one.textContent = text;
+    return one;
+  }
+
+  function rowFor(entry) {
+    var row = document.createElement("li");
+    var link = document.createElement("a");
+    link.href = entry.href;
+    link.appendChild(span("panel-label", entry.label));
+    if (entry.title) link.appendChild(span("panel-page", entry.title));
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "panel-dismiss";
+    button.textContent = "Dismiss";
+    row.appendChild(link);
+    row.appendChild(span("panel-time", ""));
+    row.appendChild(button);
+    if (entry.element) {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        flag(entry.element);
+      });
+    }
+    button.addEventListener("click", function () { dismiss(row.entry); });
+    return row;
+  }
+
+  var rows = {};
+  var seen = {};
+  var soon = null;
+
+  function draw() {
+    var list = entries();
+    var holder = panel.querySelector("ol");
+    var now = {};
+    list.forEach(function (entry) {
+      now[entry.id] = entry.status;
+      var row = rows[entry.id] || (rows[entry.id] = rowFor(entry));
+      row.entry = entry;
+      row.className = "is-" + entry.status;
+      row.querySelector(".panel-time").textContent =
+        entry.status === "done" ? "done" : clock(entry.left);
+      row.querySelector(".panel-dismiss").hidden = entry.status !== "done";
+      holder.appendChild(row);
+      // This page's own timers sound from their steps; another page's sounds here once this tab
+      // has seen it run out.
+      if (entry.page !== here && entry.status === "done" && seen[entry.id] === "running") {
+        ring(entry.page, entry.key, entry.label, entry.ends);
+      }
+    });
+    Object.keys(rows).forEach(function (id) {
+      if (now[id]) return;
+      holder.removeChild(rows[id]);
+      delete rows[id];
+    });
+    Object.keys(ranOut).forEach(function (id) {
+      if (now[id] !== "done") markTitle(id, null);
+    });
+    seen = now;
+    panel.hidden = !list.length;
+    // The page's end scrolls clear of the panel, so the panel never covers the credit.
+    document.body.style.paddingBottom = panel.hidden ? "" : panel.offsetHeight + PANEL_GAP_PX + "px";
+    // Another page's next deadline is waited for to the second, as this page's own are.
+    window.clearTimeout(soon);
+    var next = list.filter(function (entry) {
+      return entry.page !== here && entry.status === "running";
+    })[0];
+    if (next && next.left * 1000 < LONGEST_TIMEOUT_MS) {
+      soon = window.setTimeout(draw, next.left * 1000 + PAST_DEADLINE_MS);
+    }
+  }
+
+  if (panel && (own.length || others.length)) {
+    draw();
+    window.setInterval(draw, 500);
+    // Another tab changed a store: this page's own timers take what it holds now.
+    window.addEventListener("storage", function (event) {
+      if (event.key === storageKey) {
+        var fresh = load();
+        own.forEach(function (one) {
+          if (JSON.stringify(fresh[one.key]) === JSON.stringify(state[one.key])) return;
+          if (fresh[one.key] === undefined) delete state[one.key];
+          else state[one.key] = fresh[one.key];
+          one.restore();
+        });
+      }
+      draw();
     });
   }
+
+  // Opened at a timer, as the panel on another page of the run links one.
+  try {
+    var target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+    if (target && target.classList.contains("timer")) flag(target);
+  } catch (error) {
+    /* an address naming no timer */
+  }
+
+  // A timer still running after a reload sounds only once the page has been touched again.
+  // A touch lets a page sound when it lifts, not when it lands.
+  ["pointerup", "keydown"].forEach(function (kind) {
+    document.addEventListener(kind, function () {
+      if (document.querySelector(".timer.is-running, .timer-panel .is-running")) unlock();
+    }, true);
+  });
 })();
 </script>
 </body>

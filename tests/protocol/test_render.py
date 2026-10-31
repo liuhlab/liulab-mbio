@@ -621,6 +621,13 @@ def test_each_timer_is_keyed_so_a_running_one_survives_a_page_turn() -> None:
         "step-ligate.program.1",
         "step-ligate.timer.1",
     ]
+    # The timer panel links each timer by its id, from this page and from the run's others.
+    assert [timer.attrs["id"] for timer in page.find_all(cls="timer")] == [
+        "timer-step-digest.timer.1",
+        "timer-step-digest.timer.2",
+        "timer-step-ligate.program.1",
+        "timer-step-ligate.timer.1",
+    ]
 
 
 def test_a_duration_of_an_hour_or_more_is_printed_to_the_minute() -> None:
@@ -671,6 +678,27 @@ def test_the_page_fits_a_phone_prints_and_follows_dark_mode(page: Node) -> None:
     style = page.find_all("style")[0].text
     assert "@media print" in style
     assert "prefers-color-scheme: dark" in style
+
+
+def test_a_page_ends_with_a_credit_linking_the_docs_and_the_lab(page: Node) -> None:
+    [credit] = page.find_all("footer", cls="credit")
+    links = {a.attrs["href"] for a in credit.find_all("a")}
+    assert links == {"https://liuhlab.github.io/liulab-mbio/", "https://liuhlab.github.io/"}
+    assert "liulab-mbio" in credit.text
+
+
+def test_a_page_alone_holds_an_empty_timer_panel_and_lists_no_run(page: Node) -> None:
+    """The script fills the panel from this page's own timers; there is no run to read."""
+    [panel] = page.find_all("aside", cls="timer-panel")
+    assert "hidden" in panel.attrs
+    assert not page.find_all("script", id="run-timers")
+
+
+def test_paper_drops_the_timer_panel_and_spells_out_the_credits_addresses(page: Node) -> None:
+    style = page.find_all("style")[0].text
+    printed = style[style.index("@media print") :]
+    assert re.search(r"\.timer-panel[^{]*\{[^}]*display: none", printed)
+    assert re.search(r"\.credit a::after \{[^}]*attr\(href\)", printed)
 
 
 def test_write_html_writes_the_rendered_page(data_dir: Path, tmp_path: Path) -> None:
