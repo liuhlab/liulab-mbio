@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from mbio.sequence import (
@@ -9,6 +11,7 @@ from mbio.sequence import (
     Strand,
     across_the_origin,
     counted_round,
+    mismatches,
     position_text,
     reverse_complement,
 )
@@ -241,3 +244,23 @@ def test_a_position_a_person_reads_counts_from_one_and_comes_round_the_origin() 
     assert position_text(0, 2686) == "1"
     assert position_text(2683, 2686) == "2684"
     assert position_text(2688, 2686) == "3"
+
+
+def test_a_primer_mismatches_the_bases_it_does_not_pair_with_and_not_its_tail() -> None:
+    # A 2-base tail, then ACCAGG over ACCCGG: the fourth base it pairs with differs.
+    record = SequenceRecord("AAACCCGGGTTT")
+    site = BindingSite(2, 8, Strand.FORWARD)
+    primer = Primer("p", "GGACCAGG", binding_sites=(site,))
+    assert mismatches(primer, site, record) == (5,)
+
+
+def test_a_reverse_primer_mismatches_where_snapgene_binds_it(data_dir: Path) -> None:
+    from mbio.io import read_record
+
+    record = read_record(data_dir / "primer-test.dna")
+    found = {
+        primer.name: mismatches(primer, site, record)
+        for primer in record.primers
+        for site in primer.binding_sites
+    }
+    assert found == {"fwd-BsaI-tail": (), "rev-mismatch": (263,), "plain-fwd": ()}

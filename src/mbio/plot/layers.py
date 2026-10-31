@@ -40,7 +40,7 @@ from mbio.sequence import (
     SequenceRecord,
     Strand,
     counted_round,
-    reverse_complement,
+    mismatches,
     span_text,
 )
 from mbio.sites import find_sites
@@ -718,7 +718,7 @@ def _primer(primer: Primer, site: BindingSite, record: SequenceRecord) -> Item:
         f"{primer.name} ({span})",
         hover,
         tail=max(0, len(primer.sequence) - (site.end - site.start)),
-        mismatches=_mismatches(primer, site, record),
+        mismatches=mismatches(primer, site, record),
     )
 
 
@@ -743,26 +743,6 @@ def _insertion(insertion: Insertion, record: SequenceRecord) -> Item:
         (Span(at, at, insertion.color.lower()),),
         f"+{added} bp",
         hover,
-    )
-
-
-def _mismatches(primer: Primer, site: BindingSite, record: SequenceRecord) -> tuple[int, ...]:
-    """Return where a primer's bases differ from the record's they pair with at `site`.
-
-    The primer's 3' end pairs with the site's 3' end on the primer's strand, and each base 5' of it
-    with the site's base as far from that end, as far as the site or the primer runs.
-    """
-    length = len(record)
-    pairing = primer.sequence[-(site.end - site.start) :]
-    if site.strand == Strand.REVERSE:
-        reads, first = reverse_complement(pairing), site.start
-    else:
-        reads, first = pairing, site.end - len(pairing)
-    there = record.bases(first, first + len(reads))
-    return tuple(
-        (first + index) % length
-        for index, (base, paired) in enumerate(zip(reads, there, strict=True))
-        if base != paired
     )
 
 
