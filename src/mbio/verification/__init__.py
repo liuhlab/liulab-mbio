@@ -12,9 +12,12 @@ Every public name in its modules imports from here as well:
   every disagreement and where each result landed; `regions`, which reads those regions off
   the junctions a plan tagged with `JUNCTION_TAG`.
 - `page`: `draw_page`, which lays one clone's verification out as one page to write.
+- `converter`: `molviz_verification`, the reads, disagreements and traces a verification adds
+  to its record in molviz's record format.
 """
 
 from mbio.verification.align import Aligned, Column, place
+from mbio.verification.converter import molviz_verification
 from mbio.verification.judge import (
     CONSENSUS_CAVEAT,
     DEPTH_FLOOR,
@@ -54,6 +57,7 @@ __all__ = [
     "TableRow",
     "Verification",
     "draw_page",
+    "molviz_verification",
     "place",
     "read_channels",
     "read_trace",
