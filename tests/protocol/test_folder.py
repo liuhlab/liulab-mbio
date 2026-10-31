@@ -4,6 +4,7 @@ What each page holds beyond its frame is tested where that content is built; thi
 the frame and the folder.
 """
 
+import json
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,7 @@ from mbio.protocol import (
     Project,
     Protocol,
     Step,
+    Timer,
     Topic,
     page_key,
     write_project_files,
@@ -213,6 +215,52 @@ def test_the_two_shared_pages_say_so_where_no_protocol_of_the_run_lists_anything
         assert [n.tag for n in main.children if isinstance(n, Node)] == ["h1", "p"]
         assert main.find_all("h1")[0].text == heading
         assert empty in main.find_all("p")[0].text
+
+
+def test_every_page_of_a_run_ends_with_the_credit_and_lists_every_timer_of_the_run(
+    tmp_path: Path,
+) -> None:
+    """The panel on any page reads each protocol page's store, by the keys listed here."""
+    cut = Protocol("Digest", steps=(Step("Cut", timers=(Timer("digest", 60),)),))
+    join = Protocol("Ligate", steps=(Step("Join", timers=(Timer("ligate", 600),)),))
+    write_project_files(Project("Run", protocols=(cut, join)), tmp_path)
+    expected = [
+        {
+            "key": page_key(cut),
+            "title": "Digest",
+            "timers": [
+                {
+                    "key": "step-cut.timer.1",
+                    "label": "digest",
+                    "href": "01-digest.html#timer-step-cut.timer.1",
+                }
+            ],
+        },
+        {
+            "key": page_key(join),
+            "title": "Ligate",
+            "timers": [
+                {
+                    "key": "step-join.timer.1",
+                    "label": "ligate",
+                    "href": "02-ligate.html#timer-step-join.timer.1",
+                }
+            ],
+        },
+    ]
+    written = pages(tmp_path)
+    for name, page in written.items():
+        [credit] = page.find_all("footer", cls="credit")
+        assert len(credit.find_all("a")) == 2, name
+        assert page.find_all("aside", cls="timer-panel"), name
+        [listed] = page.find_all("script", id="run-timers")
+        assert json.loads(listed.text) == expected, name
+    # Each address is a timer its page draws, under the key the panel reads its store by.
+    for one in expected:
+        [timer] = one["timers"]
+        name, anchor = timer["href"].split("#")
+        [drawn] = [n for n in written[name].iter() if n.attrs.get("id") == anchor]
+        assert drawn.attrs["data-key"] == timer["key"]
 
 
 def test_a_protocol_written_on_its_own_carries_no_run(tmp_path: Path) -> None:

@@ -9,6 +9,7 @@ pipeline chooses whether it writes a page or a folder.
 """
 
 import hashlib
+import json
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -95,6 +96,10 @@ INDEX_FILE = "index.html"
 REAGENTS_FILE = "reagents.html"
 REFERENCES_FILE = "references.html"
 
+#: Where every page's credit links: the package's documentation, and the lab's home page.
+DOCS_URL = "https://liuhlab.github.io/liulab-mbio/"
+LAB_URL = "https://liuhlab.github.io/"
+
 #: The directory a run writes its folder into, below the directory it was given. A folder and
 #: not a flat set: it names its own `project.json`, and a build file may be called that already.
 PROTOCOL_DIR = "protocol"
@@ -139,6 +144,9 @@ class Page:
     choice
         The job the protocol is one way of doing, carried from it, so every page of the folder
         can see which pages share one place in the run.
+    timers
+        Each timer's key and label, so every page of the folder lists the timers this page
+        keeps in its store.
     """
 
     title: str
@@ -146,6 +154,7 @@ class Page:
     step_keys: tuple[str, ...] = ()
     key: str = ""
     choice: str = ""
+    timers: tuple[tuple[str, str], ...] = ()
 
     @classmethod
     def of(cls, place: int, protocol: Protocol) -> "Page":
@@ -161,6 +170,7 @@ class Page:
             _step_keys(protocol.steps),
             page_key(protocol),
             protocol.choice,
+            _timers(protocol),
         )
 
 
@@ -383,6 +393,20 @@ def _step_keys(steps: Sequence[Step]) -> tuple[str, ...]:
         taken.add(key)
         keys.append(key)
     return tuple(keys)
+
+
+def _timers(protocol: Protocol) -> tuple[tuple[str, str], ...]:
+    """Return each timer on `protocol`'s page as its key and label, in the order `_step` draws."""
+    timers: list[tuple[str, str]] = []
+    for key, step in zip(_step_keys(protocol.steps), protocol.steps, strict=True):
+        anchor = f"step-{key}"
+        timers += [
+            (f"{anchor}.program.{i}", program.timer.label)
+            for i, program in enumerate(step.programs, 1)
+            if program.timer is not None
+        ]
+        timers += [(f"{anchor}.timer.{i}", one.label) for i, one in enumerate(step.timers, 1)]
+    return tuple(timers)
 
 
 def render_html(
@@ -1290,7 +1314,8 @@ def _page(
     """Wrap one page's body in the document, and in the run's frame where it is part of one.
 
     A page outside a run still takes the column listing its steps, so its frame has two columns
-    and no left one: there is no run to list.
+    and no left one: there is no run to list. Every page ends with the credit and holds the
+    timer panel `protocol.js` fills; a page of a run also lists every timer of the run.
     """
     frame = main = f'<main class="page">\n{body}</main>\n'
     if folder is not None:
@@ -1305,9 +1330,42 @@ def _page(
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{escape(title)}</title>\n"
         f"<style>\n{_fonts(frame)}{_asset('protocol.css')}</style>\n"
-        f'</head>\n<body data-protocol="{escape(key)}">\n{frame}'
+        f'</head>\n<body data-protocol="{escape(key)}">\n{frame}{_credit()}{_panel(folder)}'
         f"<script>\n{_asset('protocol.js')}</script>\n</body>\n</html>\n"
     )
+
+
+def _credit() -> str:
+    """Return the footer naming the package and the lab, each linked."""
+    return (
+        f'<footer class="credit">Made with <a href="{DOCS_URL}">liulab-mbio</a>, '
+        f'from the <a href="{LAB_URL}">Liu lab</a>.</footer>\n'
+    )
+
+
+def _panel(folder: Folder | None) -> str:
+    """Return the timer panel `protocol.js` fills, and in a run, every timer of the run.
+
+    Each protocol page is listed with the timers its store holds, so the panel on any page of
+    the run reads them there.
+    """
+    panel = '<aside class="timer-panel" aria-label="Timers" hidden><ol></ol></aside>\n'
+    if folder is None:
+        return panel
+    run = [
+        {
+            "key": page.key,
+            "title": page.title,
+            "timers": [
+                {"key": key, "label": label, "href": f"{page.href}#timer-{key}"}
+                for key, label in page.timers
+            ],
+        }
+        for page in folder.pages
+    ]
+    # A `</` would end the script; JSON reads `<\/` back as `</`.
+    listed = json.dumps(run, ensure_ascii=False).replace("</", "<\\/")
+    return f'{panel}<script type="application/json" id="run-timers">{listed}</script>\n'
 
 
 def _bar(folder: Folder, here: str) -> str:
@@ -2736,7 +2794,8 @@ def _timer(key: str, timer: Timer) -> str:
     """
     clock = _clock(timer.seconds)
     return (
-        f'<span class="timer" data-key="{key}" data-seconds="{timer.seconds!r}">'
+        f'<span class="timer" id="timer-{key}" data-key="{key}"'
+        f' data-seconds="{timer.seconds!r}">'
         f'<label><span class="timer-label">{escape(timer.label)}</span>'
         f'<input type="text" class="timer-time" value="{clock}" size="8" autocomplete="off"'
         ' spellcheck="false" title="Type a time: h:mm:ss, m:ss, or minutes"></label>'

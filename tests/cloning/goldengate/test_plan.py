@@ -34,6 +34,9 @@ from mbio.protocol.render import minted
 from mbio.sequence import Feature, Segment, SequenceRecord, Strand, reverse_complement
 from mbio.snapgene import read_dna
 
+#: What every page's credit links: the documentation and the lab's home page.
+CREDITED = ("https://liuhlab.github.io/liulab-mbio/", "https://liuhlab.github.io/")
+
 #: Where the fixture's own MCS feature sits, and the vector bases past it.
 MCS = (395, 452)
 
@@ -151,6 +154,7 @@ def test_the_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, 
     ]
     assert read_protocol(outputs.protocol_data) == minted(plan.protocol())
     page = outputs.protocol.read_text(encoding="utf-8")
+    assert all(f'<a href="{url}">' in page for url in CREDITED)
     # Each figure's record opens to the map written beside it.
     opened = {
         "product.dna": "product-map.html",

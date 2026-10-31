@@ -195,6 +195,27 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 .timer-plan { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
 .timer.is-running { border-color: var(--accent); background: var(--accent-soft); }
 .timer.is-finished { border-color: var(--caution); background: var(--caution-soft); animation: pulse 1s ease-in-out infinite; }
+.timer { scroll-margin: calc(var(--bar) + 4rem) 0 4rem; }
+.timer.is-flagged { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* The timers on this page and the run's others, pinned however far the page scrolls. */
+.timer-panel { position: fixed; right: 16px; bottom: 16px; z-index: 3; width: min(19rem, calc(100vw - 32px)); max-height: 45vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 20px rgb(0 0 0 / 0.18); padding: 0.2rem 0.7rem; font-size: 0.85rem; }
+.timer-panel[hidden] { display: none; }
+.timer-panel ol { list-style: none; margin: 0; padding: 0; }
+.timer-panel li { display: flex; gap: 0.6rem; align-items: center; padding: 0.4rem 0; border-top: 1px solid var(--line); }
+.timer-panel li:first-child { border-top: none; }
+.timer-panel a { flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+.timer-panel a:hover .panel-label { text-decoration: underline; }
+.panel-label, .panel-page { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-page { color: var(--muted); font-size: 0.75rem; }
+.panel-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.timer-panel .is-running .panel-time { color: var(--accent); }
+.timer-panel .is-paused .panel-time { color: var(--muted); }
+.timer-panel .is-done .panel-time { color: var(--caution); }
+.panel-dismiss { font-size: 0.75rem; color: var(--muted); min-height: 1.6rem; }
+
+.credit { max-width: 80rem; margin: 0 auto; padding: 1.2rem 0 2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; text-align: center; }
+.credit a { color: inherit; }
 @keyframes pulse { 50% { opacity: 0.55; } }
 
 /* Calculators: a reaction row's stock is typed over in place, as a timer's time is, and its
@@ -391,7 +412,8 @@ tfoot .muted { font-weight: 400; }
     --expected-soft: #ffffff;
     --code-bg: #ffffff;
   }
-  body { padding: 0; font-size: 10.5pt; }
+  /* Over the room the script leaves below the page for the panel. */
+  body { padding: 0 !important; font-size: 10.5pt; }
   .page { max-width: none; padding: 0; }
   /* Paper has no navigation, so the line naming this page's neighbours carries the run. */
   .toolbar, .site, .column, button.copy, .timer-action, .opener { display: none !important; }
@@ -410,6 +432,10 @@ tfoot .muted { font-weight: 400; }
   .timer { border: 1px solid var(--line); animation: none; padding-right: 0.8rem; }
   .timer-time { border: none; }
   .timer-plan { display: none; }
+  .timer-panel { display: none !important; }
+  /* Paper has no links, so the credit spells its addresses out. */
+  .credit { padding: 0.6rem 0 0; margin-top: 1rem; text-align: left; }
+  .credit a::after { content: " (" attr(href) ")"; }
   figure, table, .trouble dt, .gel, .flow-box, .flow-hand-item, .wait { break-inside: avoid; }
   .flow-box { border: 1px solid var(--line); }
   h2, h3 { break-after: avoid; }
@@ -446,6 +472,9 @@ tfoot .muted { font-weight: 400; }
 </main>
 <nav class="column within" aria-label="This page"><h2 class="column-title">This page</h2><ol><li><a href="#materials">Materials</a></li><li><a href="#kit">Equipment and plasticware</a></li><li><a href="#bill">Bill</a></li></ol></nav>
 </div>
+<footer class="credit">Made with <a href="https://liuhlab.github.io/liulab-mbio/">liulab-mbio</a>, from the <a href="https://liuhlab.github.io/">Liu lab</a>.</footer>
+<aside class="timer-panel" aria-label="Timers" hidden><ol></ol></aside>
+<script type="application/json" id="run-timers">[{"key": "1e37b944aa4106cd", "title": "Part carrier", "timers": [{"key": "step-seat-parts.timer.1", "label": "TOPO reaction", "href": "01-part-carrier.html#timer-step-seat-parts.timer.1"}]}, {"key": "fdb6a0650c5f9cbd", "title": "Primer plates", "timers": []}, {"key": "1d55f66a11691cec", "title": "Cargo ordering and pool preparation", "timers": []}, {"key": "21f2b86cf4a6b041", "title": "Cargo creation", "timers": [{"key": "step-pcr1.program.1", "label": "PCR1", "href": "04-cargo-creation.html#timer-step-pcr1.program.1"}, {"key": "step-assemble-cargo.program.1", "label": "Golden Gate assembly", "href": "04-cargo-creation.html#timer-step-assemble-cargo.program.1"}]}, {"key": "8ac90a12f8273b56", "title": "Cargo validation: barcode ligation", "timers": [{"key": "step-compress-plates.timer.1", "label": "Plates inverted", "href": "05-cargo-validation-barcode-ligation.html#timer-step-compress-plates.timer.1"}]}, {"key": "1941b8d7544f9991", "title": "Cargo validation: index PCR", "timers": [{"key": "step-index-pcr.program.1", "label": "Index PCR", "href": "05-cargo-validation-index-pcr.html#timer-step-index-pcr.program.1"}]}, {"key": "5b5a787c7334834d", "title": "Library assembly in rounds", "timers": [{"key": "step-round-1-open.program.1", "label": "Digest with BbsI and SrfI", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-open.program.1"}, {"key": "step-round-1-release.program.1", "label": "Digest with BsaI and PmeI", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-release.program.1"}, {"key": "step-round-1-ligate.timer.1", "label": "Ligation", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-ligate.timer.1"}, {"key": "step-round-1-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "06-library-assembly-in-rounds.html#timer-step-round-1-grow.program.1"}, {"key": "step-round-2-open.program.1", "label": "Digest with BbsI and SrfI", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-open.program.1"}, {"key": "step-round-2-release.program.1", "label": "Digest with BsaI and PmeI", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-release.program.1"}, {"key": "step-round-2-ligate.timer.1", "label": "Ligation", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-ligate.timer.1"}, {"key": "step-round-2-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "06-library-assembly-in-rounds.html#timer-step-round-2-grow.program.1"}, {"key": "step-round-3-open.program.1", "label": "Digest with BbsI and SrfI", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-open.program.1"}, {"key": "step-round-3-release.program.1", "label": "Digest with BsaI and PmeI", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-release.program.1"}, {"key": "step-round-3-ligate.timer.1", "label": "Ligation", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-ligate.timer.1"}, {"key": "step-round-3-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "06-library-assembly-in-rounds.html#timer-step-round-3-grow.program.1"}]}, {"key": "0f35f4735f9390c0", "title": "Final cargo ligation", "timers": [{"key": "step-release-cargo.program.1", "label": "Digest with BsaI and PmeI", "href": "07-final-cargo-ligation.html#timer-step-release-cargo.program.1"}, {"key": "step-release-cargo.program.2", "label": "BsaI heat inactivation", "href": "07-final-cargo-ligation.html#timer-step-release-cargo.program.2"}, {"key": "step-release-cargo.program.3", "label": "PmeI heat inactivation", "href": "07-final-cargo-ligation.html#timer-step-release-cargo.program.3"}, {"key": "step-assemble-into-working-vector.program.1", "label": "Golden Gate assembly", "href": "07-final-cargo-ligation.html#timer-step-assemble-into-working-vector.program.1"}, {"key": "step-electroporate-and-grow.program.1", "label": "Recovery and outgrowth at 30 °C", "href": "07-final-cargo-ligation.html#timer-step-electroporate-and-grow.program.1"}]}]</script>
 <script>
 (function () {
   "use strict";
@@ -1013,15 +1042,62 @@ tfoot .muted { font-weight: 400; }
   }
 
   // A tab out of sight is not heard by everyone, so the tab's own title says which ran out
-  // until that timer is reset.
+  // until that timer is reset. A timer is named by its page's key and its own, since the panel
+  // holds the run's other pages' timers too.
   var title = document.title;
+  var here = document.body.getAttribute("data-protocol") || "";
   var ranOut = {};
 
-  function markTitle(key, label) {
-    if (label) ranOut[key] = label;
-    else delete ranOut[key];
+  function timerId(page, key) {
+    return page + "\n" + key;
+  }
+
+  function markTitle(id, label) {
+    if (label) ranOut[id] = label;
+    else delete ranOut[id];
     var labels = Object.keys(ranOut).map(function (one) { return ranOut[one]; });
     document.title = labels.length ? "Time up: " + labels.join(", ") + " · " + title : title;
+  }
+
+  // Pages of a run are often open in several tabs, and a timer that runs out sounds once among
+  // them: each tab claims its deadline in the shared store and reads the claim back a moment
+  // later, so two claiming at once settle on the last to write. Every tab flags its title.
+  var tab = Math.random().toString(36).slice(2);
+
+  function claimKey(page, key) {
+    return "liulab-protocol-alarm:" + page + ":" + key;
+  }
+
+  function ring(page, key, label, ends) {
+    markTitle(timerId(page, key), label);
+    var claim = claimKey(page, key);
+    var mine = ends + " " + tab;
+    try {
+      var held = window.localStorage.getItem(claim);
+      if (held && held.split(" ")[0] === String(ends)) return;
+      window.localStorage.setItem(claim, mine);
+    } catch (error) {
+      alarm();
+      return;
+    }
+    window.setTimeout(function () {
+      var held = null;
+      try {
+        held = window.localStorage.getItem(claim);
+      } catch (error) {
+        /* unread: stay quiet rather than sound twice */
+      }
+      if (held === mine) alarm();
+    }, 150);
+  }
+
+  function release(page, key) {
+    markTitle(timerId(page, key), null);
+    try {
+      window.localStorage.removeItem(claimKey(page, key));
+    } catch (error) {
+      /* nothing was claimed */
+    }
   }
 
   // A running timer keeps its deadline and a paused one the seconds it has left, so turning the
@@ -1030,15 +1106,15 @@ tfoot .muted { font-weight: 400; }
   // A time the reader typed is kept beside either, and is the timer's until they take the
   // plan's back; the plan's own is `data-seconds`.
   var timers = all(".timer[data-key]");
-  timers.forEach(function (timer) {
+  // This page's timers as the panel reads them: each one's key, label, element and controls.
+  var own = timers.map(function (timer) {
     var key = timer.getAttribute("data-key");
     var plan = parseFloat(timer.getAttribute("data-seconds")) || 0;
     var label = (timer.querySelector(".timer-label") || timer).textContent;
     var field = timer.querySelector(".timer-time");
     var action = timer.querySelector(".timer-action");
     var back = timer.querySelector(".timer-plan");
-    var kept = state[key] || {};
-    var total = typeof kept.seconds === "number" ? kept.seconds : plan;
+    var total = plan;
     var left = total;
     var end = 0;
     var handle = null;
@@ -1086,10 +1162,7 @@ tfoot .muted { font-weight: 400; }
       left = 0;
       timer.classList.add("is-finished");
       show("Reset");
-      if (sounded) {
-        alarm();
-        markTitle(key, label);
-      }
+      if (sounded) ring(here, key, label, end);
     }
 
     function tick() {
@@ -1104,22 +1177,32 @@ tfoot .muted { font-weight: 400; }
       total = to;
       left = to;
       timer.classList.remove("is-finished");
-      markTitle(key, null);
+      release(here, key);
       keep();
       show("Start");
     }
 
-    if (typeof kept.ends === "number") {
-      end = kept.ends;
-      left = Math.max(0, (end - Date.now()) / 1000);
-      if (left > 0) run();
-      else finish(false);
-    } else if (typeof kept.left === "number") {
-      left = kept.left;
-      show("Resume");
-    } else {
-      show("Start");
+    // As the store holds it: on arrival, and again when another tab changes it.
+    function restore() {
+      var kept = state[key] || {};
+      stop();
+      timer.classList.remove("is-finished");
+      total = typeof kept.seconds === "number" ? kept.seconds : plan;
+      left = total;
+      if (typeof kept.ends === "number") {
+        end = kept.ends;
+        left = Math.max(0, (end - Date.now()) / 1000);
+        if (left > 0) run();
+        else finish(false);
+      } else if (typeof kept.left === "number") {
+        left = kept.left;
+        show("Resume");
+      } else {
+        show("Start");
+      }
     }
+
+    restore();
 
     action.addEventListener("click", function () {
       if (handle !== null) {
@@ -1155,17 +1238,214 @@ tfoot .muted { font-weight: 400; }
     });
 
     if (back) back.addEventListener("click", function () { ready(plan); });
+
+    return {
+      key: key,
+      label: label,
+      element: timer,
+      restore: restore,
+      reset: function () { ready(total); }
+    };
   });
 
-  // A timer still running after a reload sounds only once the page has been touched again.
-  if (timers.length) {
-    // A touch lets a page sound when it lifts, not when it lands.
-    ["pointerup", "keydown"].forEach(function (kind) {
-      document.addEventListener(kind, function () {
-        if (document.querySelector(".timer.is-running")) unlock();
-      }, true);
+  // The timer panel: every timer running, paused or finished, on this page and, on a page of a
+  // run, on the run's other protocol pages, each read from its own page's store. The one to
+  // finish soonest is on top; a finished one stays until it is dismissed or reset.
+  var panel = document.querySelector(".timer-panel");
+  var others = [];
+  try {
+    var listed = document.getElementById("run-timers");
+    if (listed) others = JSON.parse(listed.textContent) || [];
+    others = others.filter(function (page) {
+      return page.key !== here && page.timers && page.timers.length;
+    });
+  } catch (error) {
+    others = [];
+  }
+
+  function storeOf(page) {
+    if (page === here) return state;
+    try {
+      return JSON.parse(window.localStorage.getItem("liulab-protocol:" + page) || "{}") || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  var RANK = { done: 0, running: 1, paused: 2 };
+
+  function entries() {
+    var now = Date.now();
+    var list = [];
+
+    function add(kept, entry) {
+      if (!kept || typeof kept !== "object") return;
+      if (typeof kept.ends === "number") {
+        entry.ends = kept.ends;
+        entry.left = Math.max(0, (kept.ends - now) / 1000);
+        entry.status = entry.left > 0 ? "running" : "done";
+      } else if (typeof kept.left === "number") {
+        entry.left = kept.left;
+        entry.status = "paused";
+      } else {
+        return;
+      }
+      entry.id = timerId(entry.page, entry.key);
+      list.push(entry);
+    }
+
+    own.forEach(function (one) {
+      add(state[one.key], {
+        page: here, key: one.key, label: one.label, title: "",
+        href: "#" + one.element.id, element: one.element, reset: one.reset
+      });
+    });
+    others.forEach(function (page) {
+      var store = storeOf(page.key);
+      (page.timers || []).forEach(function (one) {
+        add(store[one.key], {
+          page: page.key, key: one.key, label: one.label, title: page.title, href: one.href
+        });
+      });
+    });
+    list.sort(function (a, b) { return RANK[a.status] - RANK[b.status] || a.left - b.left; });
+    return list;
+  }
+
+  // Brought into view and lit for a moment, from the panel or from another page's link.
+  function flag(element) {
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    element.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "center" });
+    element.classList.add("is-flagged");
+    window.setTimeout(function () { element.classList.remove("is-flagged"); }, 2000);
+  }
+
+  // A timer on another page is set back to ready in that page's store, keeping the reader's
+  // time; its page, if open, hears the change.
+  function dismiss(entry) {
+    if (entry.reset) {
+      entry.reset();
+    } else {
+      var store = storeOf(entry.page);
+      var kept = store[entry.key] || {};
+      if (typeof kept.seconds === "number") store[entry.key] = { seconds: kept.seconds };
+      else delete store[entry.key];
+      try {
+        window.localStorage.setItem("liulab-protocol:" + entry.page, JSON.stringify(store));
+      } catch (error) {
+        /* the store is out of reach, so the timer stays */
+      }
+      release(entry.page, entry.key);
+    }
+    draw();
+  }
+
+  function span(name, text) {
+    var one = document.createElement("span");
+    one.className = name;
+    one.textContent = text;
+    return one;
+  }
+
+  function rowFor(entry) {
+    var row = document.createElement("li");
+    var link = document.createElement("a");
+    link.href = entry.href;
+    link.appendChild(span("panel-label", entry.label));
+    if (entry.title) link.appendChild(span("panel-page", entry.title));
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "panel-dismiss";
+    button.textContent = "Dismiss";
+    row.appendChild(link);
+    row.appendChild(span("panel-time", ""));
+    row.appendChild(button);
+    if (entry.element) {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        flag(entry.element);
+      });
+    }
+    button.addEventListener("click", function () { dismiss(row.entry); });
+    return row;
+  }
+
+  var rows = {};
+  var seen = {};
+  var soon = null;
+
+  function draw() {
+    var list = entries();
+    var holder = panel.querySelector("ol");
+    var now = {};
+    list.forEach(function (entry) {
+      now[entry.id] = entry.status;
+      var row = rows[entry.id] || (rows[entry.id] = rowFor(entry));
+      row.entry = entry;
+      row.className = "is-" + entry.status;
+      row.querySelector(".panel-time").textContent =
+        entry.status === "done" ? "done" : clock(entry.left);
+      row.querySelector(".panel-dismiss").hidden = entry.status !== "done";
+      holder.appendChild(row);
+      // This page's own timers sound from their steps; another page's sounds here once this tab
+      // has seen it run out.
+      if (entry.page !== here && entry.status === "done" && seen[entry.id] === "running") {
+        ring(entry.page, entry.key, entry.label, entry.ends);
+      }
+    });
+    Object.keys(rows).forEach(function (id) {
+      if (now[id]) return;
+      holder.removeChild(rows[id]);
+      delete rows[id];
+    });
+    Object.keys(ranOut).forEach(function (id) {
+      if (now[id] !== "done") markTitle(id, null);
+    });
+    seen = now;
+    panel.hidden = !list.length;
+    // The page's end scrolls clear of the panel, so the panel never covers the credit.
+    document.body.style.paddingBottom = panel.hidden ? "" : panel.offsetHeight + 24 + "px";
+    // Another page's next deadline is waited for to the second, as this page's own are.
+    window.clearTimeout(soon);
+    var next = list.filter(function (entry) {
+      return entry.page !== here && entry.status === "running";
+    })[0];
+    if (next && next.left < 2147483) soon = window.setTimeout(draw, next.left * 1000 + 50);
+  }
+
+  if (panel && (own.length || others.length)) {
+    draw();
+    window.setInterval(draw, 500);
+    // Another tab changed a store: this page's own timers take what it holds now.
+    window.addEventListener("storage", function (event) {
+      if (event.key === storageKey) {
+        var fresh = load();
+        own.forEach(function (one) {
+          if (JSON.stringify(fresh[one.key]) === JSON.stringify(state[one.key])) return;
+          if (fresh[one.key] === undefined) delete state[one.key];
+          else state[one.key] = fresh[one.key];
+          one.restore();
+        });
+      }
+      draw();
     });
   }
+
+  // Opened at a timer, as the panel on another page of the run links one.
+  try {
+    var target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+    if (target && target.classList.contains("timer")) flag(target);
+  } catch (error) {
+    /* an address naming no timer */
+  }
+
+  // A timer still running after a reload sounds only once the page has been touched again.
+  // A touch lets a page sound when it lifts, not when it lands.
+  ["pointerup", "keydown"].forEach(function (kind) {
+    document.addEventListener(kind, function () {
+      if (document.querySelector(".timer.is-running, .timer-panel .is-running")) unlock();
+    }, true);
+  });
 })();
 </script>
 </body>

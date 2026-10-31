@@ -238,6 +238,12 @@ def test_write_puts_every_file_in_one_directory_and_the_protocol_reads_back(writ
     assert back.title
     assert [one.title for one in back.protocols]
     assert all(path.read_text(encoding="utf-8") for path in files.protocol)
+    # Every page of the run credits the documentation and the lab's home page.
+    for path in files.protocol:
+        if path.suffix == ".html":
+            page = path.read_text(encoding="utf-8")
+            assert '<a href="https://liuhlab.github.io/liulab-mbio/">' in page, path.name
+            assert '<a href="https://liuhlab.github.io/">' in page, path.name
 
 
 def test_a_pool_writes_the_block_vector_each_position_closes_into(pooled):
