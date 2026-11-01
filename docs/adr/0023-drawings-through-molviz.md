@@ -15,13 +15,14 @@ What mbio hands over is its biology: every shipped enzyme's cuts, a CDS's transl
 the bases, the bases a primer does not pair with, each result's reads and disagreements. molviz
 picks the unique cutters, places the labels and hides what will not fit. A drawing need molviz
 lacks, or a look that differs from what mbio drew, is a molviz issue, never mbio code.
+`mbio.plot` is the one seam into molviz: every other layer converts its own data and calls
+molviz through it.
 
 ## Why
 
 A page carried every layout it might show, each laid out in Python in advance: one map page held
-the circle, the line at four zoom levels and the sequence view at two row widths, so every base
-appeared four times. A viewer lays out in the browser from data a few kilobytes long, and the
-same code writes the PNG and PDF. The reasons for laying out in Python no longer held: a
+the circle, the line at every zoom level and the sequence view at every row width. A viewer
+lays out in the browser from the data alone, and the same code writes the PNG and PDF. The reasons for laying out in Python no longer held: a
 JavaScript viewer exports PNG and PDF, its label rule is tested in JavaScript, and identical
 pixels across browsers is not a goal. Other lab packages draw sequences too, so the viewer lives
 in its own repository and is written once.
@@ -36,8 +37,8 @@ in its own repository and is written once.
 
 ## Consequences
 
-- molviz's format is the one definition. The converters, `molviz_record`, `molviz_verification`
-  and those in `mbio.protocol.converter`, return plain dicts and lists, and no mbio type mirrors
+- molviz's format is the one definition. The converters, `molviz_record`, `molviz_options`,
+  `molviz_verification` and those in `mbio.protocol.converter`, return plain dicts and lists, and no mbio type mirrors
   the format. Each layer converts what it owns.
 - The pin is exact (`==`), because a drawing's bytes are that release's. Moving it regenerates
   every docs example that holds a drawing.

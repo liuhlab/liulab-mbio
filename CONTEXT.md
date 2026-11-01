@@ -949,9 +949,8 @@ _Avoid_: complexity, depth, diversity, representation
 
 A drawing of a sequence record, whole or one region of it, as a circle or a line: features as
 arrows along their strand, primers and cut sites labelled. A region is always drawn as a line,
-numbered as the record is. mbio hands over the record and its biology, and liulab-molviz draws
-it. No label overlaps another; one that will not fit is hidden, and the map counts what hid by
-kind.
+numbered as the record is. No label overlaps another; one that will not fit is hidden, and the
+map counts what hid by kind.
 _Avoid_: plasmid map (a linear record has one too), figure, plot
 
 ### Sequence view

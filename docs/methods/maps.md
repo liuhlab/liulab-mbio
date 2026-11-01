@@ -109,8 +109,8 @@ Name `--enzyme` once per enzyme to draw every site of each.
 ## Where the numbers come from
 
 A map judges nothing: no threshold, no verdict, none of the badges a plan or a barcode set
-carries. The one number it reports is how many labels it hid. Every position and length is read
-off the record itself.
+carries. The one count it reports is how many labels of each kind it hid. Every position and
+length is read off the record itself.
 
 The cut sites come from the enzyme data that ships with the package, the same data the cloning
 commands plan with, so a site on a map and a site in a protocol are one site. The drawing
