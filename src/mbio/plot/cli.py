@@ -8,7 +8,6 @@ import typer
 
 from mbio.io import read_record
 from mbio.plot.drawing import Region, draw_map
-from mbio.plot.layers import notice
 from mbio.sequence import SequenceRecord
 
 #: A span as a person types it: `START..END`, 1-based and inclusive, as the map prints one.
@@ -34,7 +33,7 @@ def map_(
             "--output",
             "-o",
             dir_okay=False,
-            help="File to write: .html, .png or .pdf. Repeat it to write several.",
+            help="File to write: .html, .svg, .png or .pdf. Repeat it to write several.",
         ),
     ],
     region: Annotated[
@@ -76,11 +75,12 @@ def map_(
     ] = None,
     source: Annotated[bool, typer.Option("--source", help="Switch the source feature on.")] = False,
     bases_per_row: Annotated[
-        int,
+        int | None,
         typer.Option(
-            help="How many bases a row of the sequence view holds; half on a narrow page."
+            help="How many bases a row of the sequence view holds. When not given, a page fits "
+            "its rows to its width, and a file holds 60."
         ),
-    ] = 60,
+    ] = None,
     one_strand: Annotated[
         bool, typer.Option("--one-strand", help="Switch the sequence view's bottom strand off.")
     ] = False,
@@ -109,9 +109,11 @@ def map_(
             both_strands=not one_strand,
         )
         for out in output:
-            typer.echo(str(drawing.write(out, dpi=dpi)))
-        if said := notice(drawing.hidden):
-            typer.echo(said)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            drawing.write(out, dpi=dpi)
+            typer.echo(str(out))
+        if drawing.notice:
+            typer.echo(drawing.notice)
     except (KeyError, ValueError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error

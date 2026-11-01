@@ -208,13 +208,11 @@ pick an enzyme for a new site.
 
 ## Draw a map
 
-`draw_map` lays a record out as a circle or a line. `Drawing.write` then writes that layout as
-an HTML page that opens offline, as a PNG or as a PDF. The layout is done once, however many
-formats you ask for.
+`draw_map` hands a record to liulab-molviz, which draws it as a circle or a line. The drawing it
+returns writes an HTML page that opens offline, an SVG, a PNG or a PDF, as
+[molviz's `Drawing`](https://liuhlab.github.io/liulab-molviz/api/) describes.
 
 ::: mbio.plot.draw_map
-
-::: mbio.plot.Drawing
 
 ## Edit a protocol
 

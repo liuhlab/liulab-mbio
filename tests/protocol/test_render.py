@@ -41,7 +41,7 @@ from mbio.protocol import (
 from mbio.protocol.converter import molviz_figure
 from mbio.protocol.render import FIELD_HELD, HIGHLIGHTS_HEADING, NO_NUMBER, page_key
 
-from ..html import Node, parse
+from ..html import Node, blocks, parse
 
 
 @pytest.fixture(scope="module")
@@ -763,7 +763,7 @@ def test_a_figure_opens_each_records_map_written_beside_the_page(
     page = parse(write_html(one, tmp_path / "pages" / "protocol.html").read_text("utf-8"))
 
     written = (tmp_path / "pages" / "pUC19-map.html").read_text(encoding="utf-8")
-    assert all(f'data-name="{enzyme}"' in written for enzyme in ("EcoRI", "HindIII"))
+    assert blocks(written)["options"]["enzymes"] == ["EcoRI", "HindIII"]
     drawn = page.find_all("figure", cls="map")
     opened = [
         [
