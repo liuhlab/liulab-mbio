@@ -108,26 +108,7 @@ def test_out_writes_the_clone_s_page_and_prints_its_path_last(planted, data_dir,
     assert "3730" in rows
 
 
-def test_two_traces_of_one_file_name_draw_without_colliding(data_dir, tmp_path):
-    """Two folders of reads may hold one file name; each result keeps its own trace."""
-    clean = read_result(data_dir / "3730.ab1")
-    first, last = clean.trusted_span
-    own = clean.bases[first:last]
-    swapped = "A" if own[300] != "A" else "C"
-    product = _consensus(tmp_path / "own.fasta", own[:300] + swapped + own[301:])
-    reads = []
-    for folder, source in (("one", "3730.ab1"), ("two", "310.ab1")):
-        (tmp_path / folder).mkdir()
-        reads.append(tmp_path / folder / "read.ab1")
-        reads[-1].write_bytes((data_dir / source).read_bytes())
-    code, lines = _run(product, *reads, "--out", tmp_path / "made")
-    assert code == 1
-    assert lines[-1] == str(tmp_path / "made" / PAGE)
-    page = parse((tmp_path / "made" / PAGE).read_text(encoding="utf-8"))
-    assert len(page.find_all("g", cls="track")) == 1
-
-
-def test_an_abi_file_is_read_as_a_trace_and_draws_its_channels(data_dir, tmp_path):
+def test_an_abi_file_is_read_as_a_trace_and_draws_its_channels(data_dir, tmp_path, handed):
     """``.abi`` is the other extension the one trace format is written under."""
     renamed = tmp_path / "read.abi"
     renamed.write_bytes((data_dir / "3730.ab1").read_bytes())
@@ -139,8 +120,8 @@ def test_an_abi_file_is_read_as_a_trace_and_draws_its_channels(data_dir, tmp_pat
     product = _consensus(tmp_path / "own.fasta", own[:300] + swapped + own[301:])
     code, _ = _run(product, renamed, "--out", tmp_path / "made")
     assert code == 1
-    page = parse((tmp_path / "made" / PAGE).read_text(encoding="utf-8"))
-    assert len(page.find_all("g", cls="track")) == 1
+    [track] = handed[0][0]["tracks"]
+    assert track["name"] == trace.name
 
 
 @pytest.mark.parametrize("given", ["folder", "calls.tsv"])

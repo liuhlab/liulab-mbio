@@ -66,14 +66,26 @@ def trace(data_dir: Path) -> tuple[SequencingResult, Channels, str]:
 def test_two_results_of_one_name_become_two_reads_told_apart_by_a_suffix(
     trace: tuple[SequencingResult, Channels, str],
 ) -> None:
-    result, _, own = trace
+    """Channels pair with results by position, as checks and placements do, not by name."""
+    result, channels, own = trace
+    halved = Channels(
+        {base: tuple(value // 2 for value in scan) for base, scan in channels.scans.items()},
+        channels.peaks,
+    )
     record = SequenceRecord(own, name="own bases")
     both = (result, result)
-    converted = molviz_verification(record, both, verified(record, both, ()))
+    made = verified(record, both, ())
+    converted = molviz_verification(record, both, made, channels=(channels, halved))
     molviz.check(molviz_record(record) | converted)
     names = [result.name, f"{result.name} (2)"]
     assert [read["name"] for read in converted["reads"]] == names
     assert [one["reads"] for one in converted["disagreements"]] == [names]
+    assert [(track["name"], track["curves"]["A"]) for track in converted["tracks"]] == [
+        (names[0], list(channels.scans["A"])),
+        (names[1], list(halved.scans["A"])),
+    ]
+    with pytest.raises(ValueError, match="one for each"):
+        molviz_verification(record, both, made, channels=(channels,))
 
 
 @pytest.mark.parametrize("reverse", [False, True])

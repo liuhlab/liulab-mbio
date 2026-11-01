@@ -1,23 +1,21 @@
 """The page sequence verification writes for one clone: its verdict, the map, each disagreement.
 
-One HTML file that loads nothing over the network, written as `mbio.plot.page` writes a map's:
-every drawing is the SVG `mbio.plot` lays out, with the fonts it was measured in embedded. It
-reads top to bottom:
+One HTML file that loads nothing over the network: every drawing is molviz's still SVG, with
+molviz's fonts written once. It reads top to bottom:
 
 1. whether the clone is verified;
 2. the table the command prints: a row per region, one per disagreement outside every region
    naming the features it falls in, with no verdict, and one per result;
-3. the map: a copy of the record with each result a primer over the bases it trusts, on its own
-   strand, and each disagreement a feature coloured by its region's verdict, each result and
-   each disagreement lit;
+3. the map: the record with each result a read over the bases it trusts, on its own strand,
+   and each disagreement coloured by its region's verdict, each result and each disagreement
+   lit, as `molviz_verification` hands them over;
 4. a close-up of each disagreement: a sequence view a few dozen bases either side, each result's
-   own disagreements marked on its arrow, and each Sanger result's trace under the bases.
+   own disagreements marked on its read, and each Sanger result's trace under the bases.
 
 A result that does not read as the record has its row and nothing drawn. When no result reads
 as it, the page holds only those rows and the verdict.
 """
 
-import dataclasses
 import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -26,45 +24,18 @@ from html import escape
 from importlib.resources import files
 from pathlib import Path
 
-from mbio.checks import Status, counted, worst
-from mbio.plot import Drawing, draw_map, layers
-from mbio.plot import sequence_view as view
-from mbio.plot.fonts import BOLD, MONO, SANS
-from mbio.plot.page import font_face
-from mbio.sequence import (
-    BindingSite,
-    Feature,
-    Primer,
-    Segment,
-    SequenceRecord,
-    Strand,
-    position_text,
-    reverse_complement,
-    span_text,
-)
-from mbio.verification.align import place
+import molviz
+
+from mbio.checks import Status, counted
+from mbio.plot.converter import molviz_record
+from mbio.sequence import SequenceRecord
+from mbio.verification.converter import molviz_verification
 from mbio.verification.judge import CONSENSUS_CAVEAT, Disagreement, Placement, Verification
 from mbio.verification.result import SequencingResult
 from mbio.verification.trace import Channels
 
 #: How many bases a close-up draws either side of its disagreement.
 FLANK = 30
-
-#: What a disagreement is coloured by its region's verdict; one outside every region by `None`.
-_VERDICT_COLORS: Mapping[Status | None, str] = {
-    "pass": "#009988",
-    "warn": "#ee7733",
-    "fail": "#cc3311",
-    None: "#bbbbbb",
-}
-
-#: Each base's curve under a close-up, in the colours a Sanger trace is read in.
-_BASE_COLORS: Mapping[str, str] = {
-    "A": "#228833",
-    "C": "#4477aa",
-    "G": "#000000",
-    "T": "#cc3311",
-}
 
 #: The most bases an insertion's caption spells out; a longer one is named by how many it adds.
 _SPELLED = 6
@@ -105,7 +76,7 @@ class CloseUp:
     disagreement: Disagreement
     name: str
     caption: str
-    drawing: Drawing
+    drawing: molviz.Drawing
 
 
 @dataclass(frozen=True, slots=True, eq=False)
@@ -121,7 +92,8 @@ class Page:
     rows
         The table, in the page's order.
     map
-        The record with its reads and disagreements; ``None`` where no result reads as it.
+        molviz's drawing of the record with its reads and disagreements; ``None`` where no
+        result reads as it.
     close_ups
         One per disagreement, in record order.
     """
@@ -129,7 +101,7 @@ class Page:
     title: str
     verified: bool
     rows: tuple[TableRow, ...]
-    map: Drawing | None
+    map: molviz.Drawing | None
     close_ups: tuple[CloseUp, ...]
 
     @property
@@ -144,34 +116,17 @@ class Page:
         ]
         if self.map is not None:
             body.append(
-                f'<section class="map"><h2>Map</h2><figure>{self.map.element()}</figure></section>'
+                '<section class="map"><h2>Map</h2>'
+                f"<figure>{self.map.still_svg()}</figure></section>"
             )
         if self.close_ups:
-            traced = any(
-                row.strips
-                for one in self.close_ups
-                if one.drawing.sequence_view is not None
-                for row in one.drawing.sequence_view.rows
-            )
-            legend = (
-                '<p class="legend">Each trace: '
-                + ", ".join(
-                    f'<span style="color: {color}">{base}</span>'
-                    for base, color in _BASE_COLORS.items()
-                )
-                + ", over the top strand's bases.</p>"
-                if traced
-                else ""
-            )
             figures = "".join(
                 f'<figure class="close-up"><figcaption><strong>{escape(one.name)}</strong> '
-                f"{escape(one.caption)}</figcaption>{one.drawing.element()}</figure>"
+                f"{escape(one.caption)}</figcaption>{one.drawing.still_svg()}</figure>"
                 for one in self.close_ups
             )
-            body.append(
-                f'<section class="close-ups"><h2>Each disagreement</h2>{legend}{figures}</section>'
-            )
-        fonts = "".join(font_face(font) for font in (SANS, BOLD, MONO))
+            body.append(f'<section class="close-ups"><h2>Each disagreement</h2>{figures}</section>')
+        fonts = f"{molviz.font_rules()}\n" if self.map is not None else ""
         return (
             '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
@@ -217,11 +172,7 @@ def draw_page(
     ValueError
         If `channels` is given, but not one for each result.
     """
-    if channels and len(channels) != len(results):
-        raise ValueError(
-            f"{counted(len(channels), 'set')} of channels were given for "
-            f"{counted(len(results), 'result')}; give one for each, None for one with no trace"
-        )
+    added = molviz_verification(expected, results, verification, channels=channels)
     statuses: dict[str, Status | None] = {one.name: one.status for one in verification.checks}
     # Withheld from a result that does not read as the record, and from one that trusts nothing.
     placed = [one for one in verification.placements if one.strand is not None]
@@ -235,7 +186,13 @@ def draw_page(
     if not placed:
         return Page(title, verification.verified, results_rows, None, ())
     n = len(expected)
-    named = [(_name(one, expected), one) for one in verification.disagreements]
+    record = molviz_record(expected) | added
+    named = [
+        (given["name"], one)
+        for given, one in zip(
+            record.get("disagreements", []), verification.disagreements, strict=True
+        )
+    ]
     rows = (
         *(TableRow(check.name, check.status, check.detail) for check in verification.checks),
         *(
@@ -245,41 +202,24 @@ def draw_page(
         ),
         *results_rows,
     )
-    colored = {name: _VERDICT_COLORS[_verdict(one, statuses)] for name, one in named}
-    features = tuple(
-        Feature(name, "misc_difference", (Segment(one.start, one.end),), color=colored[name])
-        for name, one in named
-        if one.kind != "insertion"
+    reads = [read["name"] for read in record.get("reads", [])]
+    mapped = molviz.draw(
+        record, kinds_off=["cuts"], highlight=[*(name for name, _ in named), *reads]
     )
-    insertions = tuple(
-        layers.Insertion(name, one.start, len(one.bases), colored[name])
-        for name, one in named
-        if one.kind == "insertion"
-    )
-    primers = tuple(_primer(expected, one, verification.disagreements) for one in placed)
-    copy = dataclasses.replace(
-        expected,
-        features=(*expected.features, *features),
-        primers=(*expected.primers, *primers),
-    )
-    lit = [*(name for name, _ in named), *(primer.name for primer in primers)]
-    drawn = draw_map(copy, cut_sites=False, insertions=insertions, highlight=lit)
-    tracks = _tracks(expected, results, verification, channels or [None] * len(results))
     close_ups = []
     for name, one in named:
         start, end = _window(one, expected)
-        close = draw_map(
-            copy,
-            region=(start, end),
+        close = molviz.draw(
+            record,
+            span={"start": start, "end": end},
+            map="line",
             sequence_view=True,
             bases_per_row=end - start,
-            cut_sites=False,
-            insertions=insertions,
-            tracks=tracks,
-            highlight=[name, *(primer.name for primer in primers)],
+            kinds_off=["cuts"],
+            highlight=[name, *reads],
         )
         close_ups.append(CloseUp(one, name, _caption(one, statuses), close))
-    return Page(title, verification.verified, rows, drawn, tuple(close_ups))
+    return Page(title, verification.verified, rows, mapped, tuple(close_ups))
 
 
 def _said(detail: str, result: SequencingResult, placement: Placement) -> str:
@@ -287,30 +227,6 @@ def _said(detail: str, result: SequencingResult, placement: Placement) -> str:
     if placement.strand is not None and result.quality is None and result.depth is None:
         return f"{detail}; {CONSENSUS_CAVEAT}"
     return detail
-
-
-def _verdict(one: Disagreement, statuses: Mapping[str, Status | None]) -> Status | None:
-    """Return the verdict a disagreement takes its colour from: the worst of its regions'."""
-    found: list[Status | None] = [statuses[name] for name in one.regions if name in statuses]
-    if not found or all(status is None for status in found):
-        return None
-    return worst(found)
-
-
-def _name(one: Disagreement, record: SequenceRecord) -> str:
-    """Return a disagreement's name as a reader reads it, 1-based: ``1234 C>T``.
-
-    An insertion is named as the command names it, ``insertion after 1234``.
-    """
-    n = len(record)
-    if one.kind == "insertion":
-        return one.said(n)
-    if one.kind == "deletion":
-        if one.end - one.start == 1:
-            return f"{position_text(one.start, n)} del"
-        return f"{span_text(one.start, one.end, n)} del"
-    expected = record.bases(one.start, one.end)
-    return f"{position_text(one.start, n)} {expected}>{one.bases}"
 
 
 def _outside(one: Disagreement) -> str:
@@ -348,70 +264,6 @@ def _window(one: Disagreement, record: SequenceRecord) -> tuple[int, int]:
     if start < 0:
         start, end = start + n, end + n
     return start, end
-
-
-def _primer(
-    record: SequenceRecord, placement: Placement, disagreements: Sequence[Disagreement]
-) -> Primer:
-    """Return a placed result as a primer over its trusted span, its bases those it reads.
-
-    Each disagreement it shows is written into the record's bases there, a deleted base as
-    ``N``, so the sequence view marks it on this result's arrow and on no other.
-    """
-    span, strand = placement.span, placement.strand
-    assert span is not None
-    assert strand is not None
-    n = len(record)
-    bases = list(record.bases(span.start, span.end))
-    for one in disagreements:
-        if placement.result not in one.results or one.kind == "insertion":
-            continue
-        for offset, position in enumerate(range(one.start, one.end)):
-            # Counted from the read's start round a circular record, as its span is.
-            at = (position - span.start) % n
-            if at < len(bases):
-                bases[at] = one.bases[offset] if one.bases else "N"
-    sequence = "".join(bases)
-    if strand is Strand.REVERSE:
-        sequence = reverse_complement(sequence)
-    site = BindingSite(span.start, span.end, strand)
-    return Primer(placement.result, sequence, binding_sites=(site,))
-
-
-def _tracks(
-    record: SequenceRecord,
-    results: Sequence[SequencingResult],
-    verification: Verification,
-    channels: Sequence[Channels | None],
-) -> tuple[view.Track, ...]:
-    """Return a track of each placed Sanger result's trace, each peak over the base it reads.
-
-    Only a base laid over one base places a peak; a result read along the bottom strand draws
-    each channel as the complement it reads on the top one.
-    """
-    tracks = []
-    n = len(record)
-    for result, placement, trace in zip(results, verification.placements, channels, strict=True):
-        if trace is None or placement.strand is None:
-            continue
-        laid = place(record, result)
-        if laid is None:
-            continue
-        peaks = sorted(
-            (trace.peaks[column.behind[0]], column.start % n)
-            for column in laid.placed
-            if column.end - column.start == 1 and len(column.behind) == 1
-        )
-        reverse = laid.strand is Strand.REVERSE
-        curves = tuple(
-            view.Curve(
-                tuple(trace.scans[reverse_complement(base) if reverse else base]),
-                color,
-            )
-            for base, color in _BASE_COLORS.items()
-        )
-        tracks.append(view.Track(result.name, curves, tuple(peaks)))
-    return tuple(tracks)
 
 
 def _table(rows: Sequence[TableRow]) -> str:
