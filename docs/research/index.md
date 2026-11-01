@@ -20,7 +20,7 @@ a method's name, which inverts the package boundary. The grouping belongs in thi
 note can sit under two headings at once. Within the directory, a note in a family takes the
 family's name as a prefix, so `ls` clusters it at no cost.
 
-Forty notes, under ten headings. Four of them earn a second heading, listed at the end.
+Forty notes, under ten headings. Three of them earn a second heading, listed at the end.
 
 ## Shipped data and where it came from
 
@@ -29,7 +29,6 @@ Forty notes, under ten headings. Four of them earn a second heading, listed at t
 | [`codon-usage.md`](codon-usage.md) | where the shipped codon tables come from, which published tables were refused, and why these are counted from sequence |
 | [`restriction-enzyme-data.md`](restriction-enzyme-data.md) | where the shipped enzyme records come from, what each source allows, and which value is read from whom |
 | [`ligation-fidelity.md`](ligation-fidelity.md) | the fidelity matrices' source and licence, which way round a matrix reads, and the rules applied where no measurement covers an enzyme |
-| [`fonts.md`](fonts.md) | the DejaVu release behind the shipped faces, what its licence asks, and how closely the measured tables match a browser |
 | [`dmx-destination.md`](dmx-destination.md) | what the build script does to DMX0001, why each step is there, and what the result measures |
 | [`working-vector-plvx-tetone.md`](working-vector-plvx-tetone.md) | pLVX-TetOne-Puro-GFP measured against the four requirements a lentiviral parent has to meet |
 | [`synthesis-and-assembly-barcode-kit.md`](synthesis-and-assembly-barcode-kit.md) | the 96 barcodes, their four groups, the overhangs they chain on, the two universal primers, and the accession range |
@@ -98,6 +97,7 @@ Forty notes, under ten headings. Four of them earn a second heading, listed at t
 | [`figure-sources.md`](figure-sources.md) | what four published figures show, and what ours has to vary |
 | [`offline-html-maps.md`](offline-html-maps.md) | the ways to write a record as one HTML file that opens offline, and what each costs |
 | [`offline-navigation.md`](offline-navigation.md) | how an offline document navigates with no server, measured in a browser |
+| [`fonts.md`](fonts.md) | the DejaVu faces mbio's own drawing measured text in, what their licence asks, and how closely the measured tables matched a browser |
 
 ## Writing for the bench
 
@@ -112,12 +112,11 @@ Forty notes, under ten headings. Four of them earn a second heading, listed at t
 | [`dnachisel-evaluation.md`](dnachisel-evaluation.md) | what DnaChisel and the Edinburgh Genome Foundry stack would replace here, and why little of it is worth adopting |
 | [`gantt-conventions.md`](gantt-conventions.md) | whether a ready convention charts a protocol whose durations are mostly unknown |
 
-## Four notes that belong under two headings
+## Three notes that belong under two headings
 
 This is the reason the directory has no subdirectories: a tree makes you pick one, and an index
 lists a note twice for nothing.
 
-- [`fonts.md`](fonts.md) is shipped data, and it is also how a map draws text.
 - [`ligation-fidelity.md`](ligation-fidelity.md) is shipped data, and it is also what makes a
   Golden Gate overhang set choosable.
 - [`synthesis-and-assembly-barcode-kit.md`](synthesis-and-assembly-barcode-kit.md) is shipped

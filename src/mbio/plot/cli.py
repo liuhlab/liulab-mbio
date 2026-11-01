@@ -8,11 +8,13 @@ import typer
 
 from mbio.io import read_record
 from mbio.plot.drawing import Region, draw_map
-from mbio.plot.layers import notice
 from mbio.sequence import SequenceRecord
 
 #: A span as a person types it: `START..END`, 1-based and inclusive, as the map prints one.
 _SPAN = re.compile(r"\s*(\d+)\s*\.\.\s*(\d+)\s*")
+
+#: The endings a drawing writes, checked before anything is drawn or any directory made.
+_ENDINGS = (".html", ".svg", ".png", ".pdf")
 
 app = typer.Typer(help="Draw sequence records.", no_args_is_help=True)
 
@@ -34,7 +36,7 @@ def map_(
             "--output",
             "-o",
             dir_okay=False,
-            help="File to write: .html, .png or .pdf. Repeat it to write several.",
+            help="File to write: .html, .svg, .png or .pdf. Repeat it to write several.",
         ),
     ],
     region: Annotated[
@@ -76,11 +78,12 @@ def map_(
     ] = None,
     source: Annotated[bool, typer.Option("--source", help="Switch the source feature on.")] = False,
     bases_per_row: Annotated[
-        int,
+        int | None,
         typer.Option(
-            help="How many bases a row of the sequence view holds; half on a narrow page."
+            help="How many bases a row of the sequence view holds. When not given, a page fits "
+            "its rows to its width, and a file holds 60."
         ),
-    ] = 60,
+    ] = None,
     one_strand: Annotated[
         bool, typer.Option("--one-strand", help="Switch the sequence view's bottom strand off.")
     ] = False,
@@ -93,6 +96,11 @@ def map_(
     A PNG or PDF leaves out what is switched off, and a page keeps it behind its switches.
     """
     try:
+        for out in output:
+            if out.suffix.lower() not in _ENDINGS:
+                raise ValueError(
+                    f"cannot write {out}: its ending must be .html, .svg, .png or .pdf"
+                )
         read = read_record(record)
         drawing = draw_map(
             read,
@@ -109,9 +117,11 @@ def map_(
             both_strands=not one_strand,
         )
         for out in output:
-            typer.echo(str(drawing.write(out, dpi=dpi)))
-        if said := notice(drawing.hidden):
-            typer.echo(said)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            drawing.write(out, dpi=dpi)
+            typer.echo(str(out))
+        if drawing.notice:
+            typer.echo(drawing.notice)
     except (KeyError, ValueError) as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(1) from error

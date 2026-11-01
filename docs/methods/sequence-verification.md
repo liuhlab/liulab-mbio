@@ -81,10 +81,10 @@ The page reads from the top:
 - The verdict: verified or not verified.
 - The table the command prints. Each junction and insert has a row, and so does each
   difference outside them and each result.
-- A map of the plasmid. Each result is an arrow over the bases it trusts, and every difference
+- A map of the plasmid. Each result is a bar over the bases it trusts, and every difference
   is marked in the colour of its row's verdict.
 - A close-up of each difference, a few dozen bases either side, naming the results that show
-  it. A result's changed bases are marked on its arrow, so where two results disagree at a base,
+  it. A result's changed bases are marked on its bar, so where two results disagree at a base,
   one is marked and the other is not. Under a Sanger read, the close-up draws its trace, with
   each peak under its base.
 

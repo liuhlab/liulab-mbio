@@ -2,10 +2,9 @@ import re
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+import molviz
 import pytest
 
-from mbio.bench import plates
-from mbio.plot import layers
 from mbio.protocol import (
     OVERVIEW_CHARS,
     AmountToVolume,
@@ -39,8 +38,10 @@ from mbio.protocol import (
     render_html,
     write_html,
 )
+from mbio.protocol.converter import molviz_figure
 from mbio.protocol.render import FIELD_HELD, HIGHLIGHTS_HEADING, NO_NUMBER, page_key
 
+from ..conftest import Handed
 from ..html import Node, parse
 
 
@@ -59,8 +60,9 @@ def test_the_page_loads_nothing_from_outside_itself(page_html: str, page: Node) 
     assert not [n for n in page.iter() if "src" in n.attrs]
     assert "@import" not in page_html
     links = {a.attrs["href"] for a in page.find_all("a")}
-    # The only addresses on the page are links a reader may choose to follow.
-    assert set(re.findall(r"https?://[^\s\"'<>]+", page_html)) <= links
+    # The only addresses on the page are links a reader may choose to follow. A drawing's
+    # namespace names its format and loads nothing.
+    assert set(re.findall(r"(?<!xmlns=\")https?://[^\s\"'<>]+", page_html)) <= links
 
 
 def test_text_from_the_protocol_is_escaped() -> None:
@@ -571,25 +573,12 @@ def test_a_program_held_at_one_temperature_is_not_given_ramps_it_does_not_run() 
     assert "plus ramps" not in figure.find_all("figcaption")[0].text
 
 
-def test_a_gel_draws_each_band_at_a_height_set_by_log_size(page: Node) -> None:
-    gel = page.find_all(cls="gel")[0]
-    lanes = {
-        g.attrs["data-lane"]: {
-            int(b.attrs["data-bp"]): float(b.attrs["y"]) for b in g.find_all("rect", cls="band")
-        }
-        for g in gel.find_all("g", cls="lane")
-    }
-    assert list(lanes) == ["1 kb ladder", "Sample", "No template"]
-    ladder = lanes["1 kb ladder"]
-    heights = [ladder[bp] for bp in sorted(ladder, reverse=True)]
-    assert heights == sorted(set(heights))
-    # 1000 bp is one decade from both 10000 and 100 bp.
-    assert ladder[1000] == pytest.approx((ladder[10000] + ladder[100]) / 2, abs=0.1)
-    assert lanes["Sample"] == {500: pytest.approx(ladder[500])}
-    assert lanes["No template"] == {}
-    legend = gel.find_all(cls="gel-legend")[0].text
-    assert "Sample: 500 bp" in legend
-    assert "No template: no band" in legend
+def test_a_gel_is_drawn_in_the_expected_result_each_lane_named_with_its_bands(page: Node) -> None:
+    """molviz draws the gel and its key; the page hands it the ladder and each lane's sizes."""
+    [gel] = page.find_all("figure", cls="gel")
+    drawn = [text.text for text in gel.find_all("svg")[0].find_all("text")]
+    assert {"1 kb ladder", "Sample: 500 bp", "No template: no band"} <= set(drawn)
+    assert not gel.find_all("ol")
 
 
 def test_a_timer_starts_from_the_plans_time_in_a_field_the_reader_may_type_over(
@@ -653,24 +642,23 @@ def test_expected_results_troubleshooting_and_sources_are_shown(page: Node) -> N
 
 
 def test_a_page_inlining_a_drawing_embeds_its_faces_once_and_keeps_it_on_white(page: Node) -> None:
-    """The plate is laid out on white in the faces the package measured it in, in either scheme."""
-    drawn = parse(render_html(Protocol("Pick", plates=(plates.plate("picked", 96),))))
-    style = drawn.find_all("style")[0].text
-    [figure] = drawn.find_all("figure", cls="drawing")
+    """The gel is drawn on white in the faces it was measured in, in either colour scheme."""
+    style = page.find_all("style")[0].text
+    [figure] = page.find_all("figure", cls="drawing")
 
-    families = {text.attrs["font-family"] for text in figure.find_all("text")}
-
-    faces = re.findall(r"@font-face \{([^}]*)\}", style)
+    families = {text.attrs["font-family"].strip("'\"") for text in figure.find_all("text")}
+    faces = re.findall(r"@font-face\s*\{([^}]*)\}", style)
+    declared = {re.findall(r"font-family:\s*([^;]+);", face)[0].strip("'\"") for face in faces}
 
     assert families
-    assert all(any(f"font-family: {family};" in face for face in faces) for family in families)
+    assert families <= declared
     assert len(faces) == len(set(faces))
     # One rule, under no scheme's media query, so the dark ground never shows through.
     assert style.count(".drawing svg") == 1
     [declarations] = re.findall(r"\.drawing svg \{([^}]*)\}", style)
     assert "background: #ffffff" in declarations
     # A page with no drawing carries no face: they cost more than the rest of the page.
-    assert "@font-face" not in page.find_all("style")[0].text
+    assert "@font-face" not in parse(render_html(Protocol("Pick"))).find_all("style")[0].text
 
 
 def test_the_page_fits_a_phone_prints_and_follows_dark_mode(page: Node) -> None:
@@ -707,38 +695,30 @@ def test_write_html_writes_the_rendered_page(data_dir: Path, tmp_path: Path) -> 
     assert path.read_text(encoding="utf-8") == render_html(protocol)
 
 
-def test_a_plate_says_its_kind_count_and_drops_the_legend_past_ten() -> None:
-    """A page with a 96-entry legend under it is unreadable, so the count stands instead."""
-    seating = {f"A{n + 1}": f"mark {n}" for n in range(11)}
-    page = parse(render_html(Protocol("x", plates=(Plate("index", 96, seating=seating),))))
+def test_a_plate_draws_what_its_wells_hold_and_counts_the_kinds_in_its_caption() -> None:
+    """molviz draws the plate's key inside it; the page counts the kinds its wells hold."""
+    plate = Plate("index", 96, seating={"A1": "clone 1", "A2": "clone 2"}, labels={"A1": "q1"})
+    page = parse(render_html(Protocol("x", plates=(plate,))))
 
-    figure = page.find_all("figure", cls="plate")[0]
+    [figure] = page.find_all("figure", cls="plate")
 
-    assert not figure.find_all("ul", cls="plate-legend")
-    assert "11 kinds" in figure.find_all("figcaption")[0].text
-
-
-def _drawn(caption: str) -> Protocol:
-    figure = Figure(("pUC19.dna",), caption, span=(400, 700), highlight=("MCS",))
-    return Protocol("Clone", steps=(Step("Cut the vector", figures=(figure,)),))
+    drawn = {text.text for text in figure.find_all("svg")[0].find_all("text")}
+    assert {"clone 1", "clone 2"} <= drawn
+    assert "q1" not in drawn
+    assert not figure.find_all("ul")
+    assert "2 kinds" in figure.find_all("figcaption")[0].text
 
 
-def test_a_steps_figure_draws_the_record_it_names(data_dir: Path) -> None:
-    """A figure is a spec the page draws, so the map follows the record it names."""
-    page = parse(render_html(_drawn("pUC19, cut at the MCS"), base=data_dir))
+def test_a_steps_figure_is_molvizs_still_drawing_of_it(data_dir: Path) -> None:
+    """A figure is a spec the page hands molviz, so the map follows the record it names."""
+    figure = Figure(("pUC19.dna",), "pUC19, cut at the MCS", span=(400, 700), highlight=("MCS",))
+    html = render_html(Protocol("Clone", steps=(Step("Cut", figures=(figure,)),)), base=data_dir)
+    handed = molviz_figure(figure, data_dir)
 
-    [figure] = page.find_all("figure", cls="map")
+    [drawn] = parse(html).find_all("figure", cls="map")
 
-    assert figure.find_all("svg")
-    assert "drawing" in figure.attrs["class"]
-    assert figure.find_all("figcaption")[0].text == "pUC19, cut at the MCS"
-
-
-def test_a_figure_reads_its_record_from_beside_the_page(data_dir: Path, tmp_path: Path) -> None:
-    """A pipeline writes the records, the data and the page into one directory."""
-    (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
-    path = write_html(_drawn("pUC19"), tmp_path / "protocol.html")
-    assert "<svg" in path.read_text(encoding="utf-8")
+    assert molviz.draw_figure(handed["records"], **handed["options"]).still_svg() in html
+    assert drawn.find_all("figcaption")[0].text == "pUC19, cut at the MCS"
 
 
 def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Path) -> None:
@@ -759,37 +739,50 @@ def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Pa
     assert order == ["program", "drawing map"]
 
 
-def test_a_figure_opens_to_its_record_s_map_written_beside_the_page(
-    data_dir: Path, tmp_path: Path
+def test_a_figure_opens_each_records_map_written_beside_the_page(
+    data_dir: Path, tmp_path: Path, handed: Handed
 ) -> None:
     """One map a record, with every enzyme its figures name, beside the page that opens it.
 
-    A record of the same name in another folder is another record, so its map is numbered.
+    A record of the same name in another folder is another record, so its map is numbered. A
+    figure stacking records is one drawing, with a control under it for each record's map.
     """
     for folder in ("records", "other"):
         (tmp_path / folder).mkdir()
         (tmp_path / folder / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    (tmp_path / "other" / "GFP.dna").write_bytes((data_dir / "GFP.dna").read_bytes())
     figures = (
         *(
             Figure(("../records/pUC19.dna",), f"Cut by {enzyme}", enzymes=(enzyme,))
             for enzyme in ("EcoRI", "HindIII")
         ),
-        Figure(("../other/pUC19.dna",), "The other copy", enzymes=()),
+        Figure(("../other/pUC19.dna", "../other/GFP.dna"), "The other copy, then GFP", enzymes=()),
     )
     one = Protocol("Clone", steps=(Step("Cut", figures=figures),))
     (tmp_path / "pages").mkdir()
 
     page = parse(write_html(one, tmp_path / "pages" / "protocol.html").read_text("utf-8"))
 
-    written = (tmp_path / "pages" / "pUC19-map.html").read_text(encoding="utf-8")
-    assert all(f'data-name="{enzyme}"' in written for enzyme in ("EcoRI", "HindIII"))
-    opened = [figure.find_all("details", cls="opener")[0] for figure in page.find_all("figure")]
-    assert [d.find_all("iframe")[0].attrs["data-src"] for d in opened] == [
-        "pUC19-map.html",
-        "pUC19-map.html",
-        "pUC19-2-map.html",
+    # The first map drawn is the first record's.
+    assert handed[0][1]["enzymes"] == ["EcoRI", "HindIII"]
+    drawn = page.find_all("figure", cls="map")
+    opened = [
+        [
+            (d.find_all("iframe")[0].attrs["data-src"], d.find_all(cls="to-open")[0].text)
+            for d in figure.children
+            if isinstance(d, Node) and d.tag == "details"
+        ]
+        for figure in drawn
     ]
-    assert (tmp_path / "pages" / "pUC19-2-map.html").is_file()
+    assert opened == [
+        [("pUC19-map.html", "Explore the map")],
+        [("pUC19-map.html", "Explore the map")],
+        [
+            ("pUC19-2-map.html", "Explore the map of pUC19"),
+            ("GFP-map.html", "Explore the map of GFP"),
+        ],
+    ]
+    assert len(drawn[-1].find_all("svg")) == 1
     # A page rendered with no map written has nothing to open.
     assert not parse(render_html(one, base=tmp_path / "pages")).find_all("details", cls="opener")
 
@@ -800,56 +793,26 @@ def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path
         render_html(one, base=tmp_path)
 
 
-def test_several_records_stack_as_rows_each_labelled_by_its_own_name(data_dir: Path) -> None:
-    """A figure of more than one record is the rows the iGGA assembly figure stacks."""
-    figure = Figure(("pUC19.dna", "GFP.dna"), "The vector, then the insert", linear=True)
-    one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
-
-    page = parse(render_html(one, base=data_dir))
-
-    [drawn] = page.find_all("figure", cls="rows")
-    rows = drawn.find_all("div", cls="row")
-    assert len(rows) == 2
-    assert [row.find_all("p", cls="row-name")[0].text for row in rows] == ["pUC19", "GFP"]
-    assert all(row.find_all("svg") for row in rows)
-
-
-def test_one_record_draws_as_it_did_with_no_row_around_it(data_dir: Path) -> None:
-    """A one-record figure is the common case and keeps the markup it had."""
-    page = parse(render_html(_drawn("pUC19, cut at the MCS"), base=data_dir))
-
-    [drawn] = page.find_all("figure", cls="map")
-
-    assert not drawn.find_all("div", cls="row")
-    assert "rows" not in drawn.attrs["class"]
-
-
-def test_a_highlight_lights_the_rows_answering_to_it_and_dims_the_rest(data_dir: Path) -> None:
-    """Which row is lit is the whole reason the assembly figure takes a round."""
-    figure = Figure(("pUC19.dna", "GFP.dna"), "The insert lit", linear=True, highlight=("GFP",))
-    one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
-
-    rows = parse(render_html(one, base=data_dir)).find_all("div", cls="row")
-
-    unlit, named = (_paints(row) for row in rows)
-    assert set(unlit.values()) == {layers.DIM}
-    assert named["GFP"] != layers.DIM
-
-
-def _paints(row: Node) -> dict[str, str]:
-    """What each feature of a row is drawn in: `layers.DIM` wherever the highlight left it unlit."""
-    return {
-        group.attrs["data-name"]: next(
-            n.attrs["fill"] for n in group.iter() if n.attrs.get("fill", "none") != "none"
-        )
-        for group in row.find_all("g", cls="feature")
-    }
-
-
 def test_a_highlight_no_record_answers_to_names_the_step(data_dir: Path) -> None:
     figure = Figure(("pUC19.dna", "GFP.dna"), "Nothing lit", linear=True, highlight=("mCherry",))
     one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
-    with pytest.raises(ValueError, match=r"step 1 'Join them'.*'mCherry'"):
+    with pytest.raises(ValueError, match=r"^step 1 'Join them': "):
+        render_html(one, base=data_dir)
+
+
+def test_a_figure_naming_no_shipped_enzyme_names_the_step_before_any_map_is_written(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    steps = (
+        Step("Cut", figures=(Figure(("pUC19.dna",), "Cut by EcoRI", enzymes=("EcoRI",)),)),
+        Step("Cut again", figures=(Figure(("GFP.dna",), "Cut", enzymes=("EcoRJ",)),)),
+    )
+    one = Protocol("Clone", steps=steps)
+    refused = r"^step 2 'Cut again': no shipped enzyme is called 'EcoRJ'"
+    with pytest.raises(ValueError, match=refused):
+        write_html(one, tmp_path / "protocol.html", base=data_dir)
+    assert list(tmp_path.iterdir()) == []
+    with pytest.raises(ValueError, match=refused):
         render_html(one, base=data_dir)
 
 
@@ -884,8 +847,8 @@ def test_a_stamp_is_drawn_as_its_two_plates_and_keeps_its_moves_behind_a_toggle(
     assert "picked C2" in toggle.text
 
 
-def test_a_transfer_naming_a_plate_the_protocol_does_not_declare_stays_a_table() -> None:
-    """Nothing says what those wells look like, so the moves are all the page has."""
+def test_a_transfer_that_is_no_stamp_a_drawing_can_show_stays_a_table() -> None:
+    """Here no plate is declared, so nothing says what the wells look like."""
     one = Protocol("Index", steps=(Step("Sample", transfers=(_sampled(),)),))
 
     figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
@@ -1120,25 +1083,3 @@ def test_a_warned_row_is_seen_without_opening_the_summarised_sheet() -> None:
     toggles = section.find_all("section", cls="oligos")[0].find_all("details")
 
     assert [t.attrs.get("class") for t in toggles] == ["listing", "oligo-checks"]
-
-
-def test_a_move_through_a_well_the_declared_plate_has_not_got_stays_a_table() -> None:
-    """A drawing that silently left out the wells it cannot place would claim the wrong move."""
-    moved = Transfer(
-        "Sample",
-        tuple(
-            Move(Well("picked", at), Well("index", to), 1.0)
-            for at, to in (("A1", "A1"), ("E5", "B2"))
-        ),
-    )
-    one = Protocol(
-        "Index",
-        plates=(Plate("picked", 12), Plate("index", 12)),
-        steps=(Step("Sample", transfers=(moved,)),),
-    )
-
-    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
-
-    assert moved.stamp is not None
-    assert not figure.find_all("svg")
-    assert "picked E5" in figure.find_all("table")[0].text

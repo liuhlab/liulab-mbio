@@ -27,6 +27,7 @@ from mbio.sequence import Segment, SequenceRecord, reverse_complement
 
 if TYPE_CHECKING:
     from mbio.cloning.gateway import Plan
+    from mbio.cloning.gateway.plan import Files
 
 
 def test_each_reaction_warns_of_its_own_ceiling_and_links_the_manual_it_came_from(
@@ -47,11 +48,15 @@ def test_each_reaction_warns_of_its_own_ceiling_and_links_the_manual_it_came_fro
     assert {"MAN0000470", "MAN0001032"} <= set(protocol.sources)
 
 
-def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(
-    gateway_plan: Plan, tmp_path: Path
-) -> None:
-    written = gateway_plan.write(tmp_path / "run")
+@pytest.fixture(scope="module")
+def written(tmp_path_factory: pytest.TempPathFactory, gateway_plan: Plan) -> Files:
+    """The shared plan's files, written once for every test that reads them."""
+    return gateway_plan.write(tmp_path_factory.mktemp("written") / "run")
 
+
+def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(
+    gateway_plan: Plan, written: Files
+) -> None:
     assert [path.name for path in written.paths] == [
         "product.dna",
         "primers.tsv",
@@ -65,9 +70,9 @@ def test_the_plan_writes_the_product_the_sheet_and_the_protocol_pair(
 
 
 def test_the_same_inputs_write_the_same_bytes(
-    gateway_plan: Plan, entry: SequenceRecord, destination: SequenceRecord, tmp_path: Path
+    written: Files, entry: SequenceRecord, destination: SequenceRecord, tmp_path: Path
 ) -> None:
-    first = gateway_plan.write(tmp_path / "one")
+    first = written
     second = plan_gateway(entry, destination).write(tmp_path / "two")
 
     for one, other in zip(first.paths, second.paths, strict=True):

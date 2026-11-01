@@ -226,8 +226,8 @@ primers and cut sites labelled so no label sits on another.
 pixi run mbio plot map RECORD --output map.html
 ```
 
-The suffix picks the format. Use `.html` for a page to look through, `.png` or `.pdf` for a
-figure. Repeat `--output` to write several at once.
+The suffix picks the format. Use `.html` for a page to look through, `.svg`, `.png` or `.pdf` for
+a figure. Repeat `--output` to write several at once.
 
 | Argument or option | Default | What it is |
 | --- | --- | --- |
@@ -242,7 +242,7 @@ figure. Repeat `--output` to write several at once.
 | `--enzyme` | the shipped enzymes that cut once | An enzyme whose every cut site to draw. Once per enzyme |
 | `--hide-type` | none | A feature type to leave out. Once per type |
 | `--source` | off | Show the source feature |
-| `--bases-per-row` | `60` | How many bases a row of the sequence view holds |
+| `--bases-per-row` | fitted to the page, `60` in a file | How many bases a row of the sequence view holds |
 | `--one-strand` | off | Leave the bottom strand out of the sequence view |
 | `--dpi` | `300` | Resolution of a PNG, in dots per inch |
 

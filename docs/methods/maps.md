@@ -58,7 +58,8 @@ pixi run mbio plot map docs/examples/pUC19-GFP/product.dna --enzyme BbsI -o prod
 ```
 
 Each name links to what those commands wrote, published here unedited, and the same file always
-draws the same figure. `-o` repeats, and the suffix picks the format: `.html`, `.png` or `.pdf`.
+draws the same figure. `-o` repeats, and the suffix picks the format: `.html`, `.svg`, `.png` or
+`.pdf`.
 
 **A page keeps every item behind its own switch, whatever you asked for.** A PNG or a PDF draws
 only what is switched on.
@@ -76,12 +77,13 @@ enzymes cutting there and the base they cut at.
 The line keeps the record's own numbering, so the GFP line is captioned 396 to 1112, 717 bp.
 `• • •` at each end says the molecule carries on.
 
-A page loads nothing over the network, so it opens anywhere. It carries
-the circle, the record opened as a line, that line again at two, four and eight times its length,
-and the bases. Switches above the drawing turn each kind of item and each type of feature on and
-off in place, and a click lights an item in both views.
-`--sequence-view` sets the bases on in a PNG or a PDF too, 60 to a row
-(`--bases-per-row`) and up to 100,000 of them; `--one-strand` drops the bottom strand.
+A page loads nothing over the network, so it opens anywhere. It flips between the circle and
+the line, zooms in up to eight times, and carries the bases, in rows that fit the page.
+Switches turn each kind of item, each type of feature and each enzyme on and off in place, and a
+click lights an item in both views.
+`--sequence-view` sets the bases on in a PNG or a PDF too, 60 to a row unless
+`--bases-per-row` says otherwise, and up to 100,000 of them; `--one-strand` drops the bottom
+strand.
 
 ## Before you publish
 
@@ -107,24 +109,18 @@ Name `--enzyme` once per enzyme to draw every site of each.
 ## Where the numbers come from
 
 A map judges nothing: no threshold, no verdict, none of the badges a plan or a barcode set
-carries. The one number it reports is how many labels it hid. Every position and length is read
-off the record itself.
+carries. The one count it reports is how many labels of each kind it hid. Every position and
+length is read off the record itself.
 
 The cut sites come from the enzyme data that ships with the package, the same data the cloning
-commands plan with, so a site on a map and a site in a protocol are one site. Text is measured in
-font tables that ship too, and a PNG and a PDF draw each letter as an outline, so the figure
-needs no font installed where it is opened.
+commands plan with, so a site on a map and a site in a protocol are one site. The drawing
+itself is liulab-molviz's: it measures the text, and a PNG and a PDF draw each letter as an
+outline, so the figure needs no font installed where it is opened.
 
 `pixi run mbio plot map --help` lists the rest: opening a circular record as a line, drawing the
 source feature, and a PNG's resolution.
 
 ## References
 
-No literature stands behind a drawing. Three things do, and the package ships all three:
-
-- DejaVu Fonts, release 2.37. Every label is measured and drawn in three of its faces, each
-  shipped as a subset with the release's licence.
-- Paul Tol (2022) `tol_colors`, the light qualitative scheme, under BSD-3-Clause. A feature with
-  no colour of its own takes one from it.
-- The formats. A page is HTML with the drawing written in as SVG; a PNG and a PDF are drawn from
-  that SVG, by vl-convert and pypdf.
+No literature stands behind a drawing. [liulab-molviz](https://liuhlab.github.io/liulab-molviz/)
+draws every map: its fonts, its colours by feature type and its formats are listed there.

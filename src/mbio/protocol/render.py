@@ -21,9 +21,9 @@ from pathlib import Path
 from typing import NamedTuple
 
 from mbio.checks import Status
-from mbio.plot.drawing import Drawing, draw_map, draw_plate
-from mbio.plot.fonts import BOLD, MONO, SANS
-from mbio.plot.page import font_face
+from mbio.enzymes import get_enzyme
+from mbio.plot.drawing import draw_map, faces, still
+from mbio.protocol.converter import molviz_figure, molviz_gel, molviz_plate, molviz_stamp
 from mbio.protocol.model import (
     Bill,
     Caution,
@@ -33,7 +33,6 @@ from mbio.protocol.model import (
     CountToNet,
     Expectation,
     Figure,
-    Gel,
     Hole,
     Incubation,
     Item,
@@ -444,7 +443,10 @@ def render_html(
     ------
     FileNotFoundError
         If a figure's record is not there, naming the step and the path.
+    ValueError
+        If a figure names an enzyme nothing ships, naming the step and the enzyme.
     """
+    _known_enzymes((protocol,))
     place = _place(folder, here) if folder else ""
     beside = Path() if base is None else Path(base)
     keys = _step_keys(protocol.steps)
@@ -520,8 +522,10 @@ def _write_maps(
     ``product-2-map.html``. It is the whole record behind the page's switches, so a reader
     explores what a figure shows only part of, with every enzyme the record's figures name, or
     the unique cutters where none names one. Records are named relative to `base`, as
-    `render_html` reads them, and one that is not there is left for it to refuse.
+    `render_html` reads them, and one that is not there is left for it to refuse. A figure naming
+    an enzyme nothing ships is refused before any map is written.
     """
+    _known_enzymes(protocols)
     named: dict[Path, list[str]] = {}
     enzymes: dict[Path, set[str] | None] = {}
     for protocol in protocols:
@@ -544,9 +548,31 @@ def _write_maps(
             name = f"{path.stem}-{n}-map.html"
         taken.add(name)
         chosen = enzymes[path]
-        page = draw_map(path, enzymes=None if chosen is None else sorted(chosen)).write(into / name)
-        written |= dict.fromkeys(records, page)
+        draw_map(path, enzymes=None if chosen is None else sorted(chosen)).write(into / name)
+        written |= dict.fromkeys(records, into / name)
     return written
+
+
+def _known_enzymes(protocols: Iterable[Protocol]) -> None:
+    """Refuse a figure naming an enzyme nothing ships, naming its step and the enzyme.
+
+    Raises
+    ------
+    ValueError
+        If no shipped enzyme answers to a name a figure gives.
+    """
+    for protocol in protocols:
+        for n, step in enumerate(protocol.steps, 1):
+            for name in (one for figure in step.figures for one in figure.enzymes or ()):
+                try:
+                    get_enzyme(name)
+                except KeyError as error:
+                    raise ValueError(f"{_step_named(n, step)}: {error.args[0]}") from error
+
+
+def _step_named(n: int, step: Step) -> str:
+    """Return how an error names a protocol's `n`th step."""
+    return f"step {n} {step.title!r}"
 
 
 def _addressed(maps: Mapping[str, Path]) -> dict[str, str]:
@@ -1339,7 +1365,7 @@ def _page(
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{escape(title)}</title>\n"
-        f"<style>\n{_fonts(frame)}{_asset('protocol.css')}</style>\n"
+        f"<style>\n{faces(frame)}{_asset('protocol.css')}</style>\n"
         f'</head>\n<body data-protocol="{escape(key)}">\n{frame}{_credit()}{_panel(folder)}'
         f"<script>\n{_asset('protocol.js')}</script>\n</body>\n</html>\n"
     )
@@ -1543,17 +1569,6 @@ def _page_link(page: Page) -> str:
 
 def _asset(name: str) -> str:
     return files("mbio.protocol").joinpath(name).read_text(encoding="utf-8")
-
-
-def _fonts(body: str) -> str:
-    """Each face a drawing in `body` was measured in, written once, or nothing where it draws none.
-
-    A drawing pins every line of text to the width the package measured it at, so a page drawing
-    one as text carries those faces or the browser stretches its own to fit. Every figure holding
-    a drawing is marked `drawing`, whatever it draws, so the faces follow it onto any page.
-    """
-    drawn = 'class="drawing' in body
-    return "".join(font_face(font) for font in (SANS, BOLD, MONO)) if drawn else ""
 
 
 def _duration(seconds: float) -> str:
@@ -2141,28 +2156,17 @@ def _plates(protocol: Protocol) -> str:
 
 
 def _plate(one: Plate) -> str:
-    # Labels are drawn beside the seating and resolve against nothing, so a well a step names
-    # keeps its own entry where a plate carries both.
-    drawn = draw_plate(
-        one.name,
-        one.rows,
-        one.columns,
-        one.row_labels,
-        seating={**one.labels, **one.seating},
-    )
-    legend = "".join(
-        f'<li><span class="swatch" style="background:{fill}"></span>{escape(kind)}</li>'
-        for kind, fill in drawn.layout.legend
-    )
-    # The count stands for the legend where the plate holds more kinds than a legend can list.
-    kinds = _count(drawn.layout.kinds, "kind") if drawn.layout.kinds else ""
+    """One plate molviz draws from what its wells hold, its key inside the drawing."""
+    converted = molviz_plate(one)
+    held = converted.get("wells", {})
+    kinds = _count(len(set(held.values())), "kind") if held else ""
     facts = " · ".join(
         text for text in (f"{one.wells} wells", kinds, one.catalog, one.holds, one.note) if text
     )
     return (
-        f'<figure class="drawing plate" data-plate="{escape(one.name)}">{drawn.element()}'
+        f'<figure class="drawing plate" data-plate="{escape(one.name)}">'
+        f"{still('plate', converted)}"
         f'<figcaption>{escape(one.name)} <span class="muted">{escape(facts)}</span></figcaption>'
-        + (f'<ul class="plate-legend">{legend}</ul>' if legend else "")
         # A plate the protocol makes carries its handling rules here, where a reagent carries
         # them in the materials table.
         + _rules((one.name, rule) for rule in one.rules)
@@ -2171,86 +2175,61 @@ def _plate(one: Plate) -> str:
 
 
 def _figure(figure: Figure, base: Path, where: str, maps: Mapping[str, str]) -> str:
-    """Return the figure's records drawn as maps and inlined, as `_plate` inlines a plate.
+    """Return the figure as molviz draws it, still and inlined, as `_plate` inlines a plate.
 
-    Laid out here and never stored, so the figure follows the design it is drawn from. Several
-    records stack as rows in the order they are named, each labelled by the record's own name,
-    which is how a figure shows one molecule becoming the next. One record draws as it did.
+    Drawn here and never stored, so the figure follows the design it is drawn from. Several
+    records stack in the order they are named, each under its own name, which is how a figure
+    shows one molecule becoming the next; a highlight lights what each record answers to and dims
+    the rest.
 
     The figure stands in a box of its own with its caption inside, so it never reads as one of
-    the step's instructions. A record with a map in `maps` gets a control under its drawing that
-    opens the map in place, whole and to explore, and closes it again; the page prints the
-    drawing alone.
-
-    A highlight lights each row that answers to it and dims every other row whole, so a name only
-    the lit round's record carries lights that round. A name no record answers to is a mistake.
+    the step's instructions. Under it, each record with a map in `maps` gets a control that opens
+    the map in place, whole and to explore, and closes it again, naming its record where the
+    figure stacks several; the page prints the drawing alone.
 
     Raises
     ------
     FileNotFoundError
         If a record is not there, naming the step and the path.
     ValueError
-        If no record of the figure answers to a name the highlight lights.
+        If molviz refuses the figure, such as a highlight no record answers to, naming the step.
     """
-    rows = [_row(figure, base / named, where) for named in figure.records]
-    lit = frozenset().union(*(drawn.answering for drawn in rows))
-    unlit = [name for name in figure.highlight if name.casefold() not in lit]
-    if unlit:
-        listed = ", ".join(repr(name) for name in unlit)
-        raise ValueError(f"{where}: no record of this figure draws {listed} to highlight")
+    try:
+        handed = molviz_figure(figure, base)
+    except FileNotFoundError as error:
+        raise FileNotFoundError(f"{where}: no record at {error.filename} to draw") from error
+    try:
+        drawn = still("figure", handed["records"], **handed["options"])
+    except ValueError as error:
+        raise ValueError(f"{where}: {error}") from error
     caption = f"<figcaption>{escape(figure.caption)}{_cite(figure.citation)}</figcaption>"
-    openers = [
-        _opener(maps.get(named), drawn.record.name)
-        for named, drawn in zip(figure.records, rows, strict=True)
-    ]
-    if len(rows) == 1:
-        body, stacked = f"{rows[0].element()}{caption}{openers[0]}", ""
-    else:
-        # A stacked row carries the record's own name, so a reader knows which molecule it is.
-        body = "".join(
-            f'<div class="row"><p class="row-name">{escape(drawn.record.name)}</p>'
-            f"{drawn.element()}{opener}</div>"
-            for drawn, opener in zip(rows, openers, strict=True)
-        )
-        body, stacked = body + caption, " rows"
-    return f'<figure class="drawing map{stacked}">{body}</figure>\n'
+    stacked = len(figure.records) > 1
+    # One control a record, however often the figure names it.
+    records = zip(figure.records, handed["records"], strict=True)
+    names = {named: record["name"] for named, record in records}
+    openers = "".join(_opener(maps.get(named), name, stacked) for named, name in names.items())
+    kind = "drawing map rows" if stacked else "drawing map"
+    return f'<figure class="{kind}">{drawn}{caption}{openers}</figure>\n'
 
 
-def _opener(href: str | None, name: str) -> str:
+def _opener(href: str | None, name: str, named: bool = False) -> str:
     """Return the control that opens a record's map in place, and the map; nothing without one.
 
     The map is the figure opened: the whole record behind its switches, to explore. It loads the
     first time it is opened, from its `data-src`, so a page of several costs nothing until asked,
-    and a new tab shows it whole.
+    and a new tab shows it whole. A `named` control says whose map it opens.
     """
     if href is None:
         return ""
     address = escape(href, quote=True)
+    of = f" of {escape(name)}" if named else ""
     return (
-        '<details class="opener"><summary><span class="to-open">Explore the map</span>'
-        '<span class="to-close">Close the map</span></summary>'
+        f'<details class="opener"><summary><span class="to-open">Explore the map{of}</span>'
+        f'<span class="to-close">Close the map{of}</span></summary>'
         f'<iframe data-src="{address}" title="{escape(name, quote=True)}, to explore"></iframe>'
         f'<a class="new-tab" href="{address}" target="_blank" rel="noopener">Open it in a new '
         "tab</a></details>"
     )
-
-
-def _row(figure: Figure, path: Path, where: str) -> Drawing:
-    """Return one record of a figure laid out to draw, lit as the figure says."""
-    if not path.is_file():
-        raise FileNotFoundError(f"{where}: no record at {path} to draw")
-    drawn = draw_map(
-        path,
-        region=figure.span,
-        linear=figure.linear,
-        sequence_view=figure.sequence_view,
-        enzymes=figure.enzymes,
-    )
-    if figure.highlight:
-        # Lit here rather than by `draw_map`, which refuses a name its one record does not draw:
-        # across rows a name belongs to the row it names, and dims every other row whole.
-        drawn = replace(drawn, highlight=figure.highlight)
-    return drawn
 
 
 def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
@@ -2262,21 +2241,11 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
     through a well the declared format has not got, is the table it was: nothing says what its
     wells look like, and a drawing missing the wells it cannot place would say it wrongly.
     """
-    stamp = transfer.stamp
-    declared = {plate.name: plate for plate in plates}
-    source = declared.get(transfer.plates[0])
-    destination = declared.get(transfer.plates[-1])
-    taken = {move.source.well for move in transfer.moves}
-    filled = {move.destination.well for move in transfer.moves}
-    if stamp is None or source is None or destination is None:
+    stamped = molviz_stamp(transfer, plates)
+    if not stamped:
         return _transfer_table(transfer)
-    if not (taken <= set(source.well_names) and filled <= set(destination.well_names)):
-        return _transfer_table(transfer)
-    drawn = "".join(
-        _stamped(f"{word} {one.name}", one, wells, transfer.title)
-        for word, one, wells in (("From", source, taken), ("Into", destination, filled))
-    )
-    meta = _transfer_meta(transfer, stamp)
+    drawn = "".join(f'<div class="row">{still("plate", one)}</div>' for one in stamped)
+    meta = _transfer_meta(transfer, transfer.stamp)
     return (
         f'<figure class="drawing transfer rows"><figcaption>{escape(transfer.title)} '
         f'<span class="muted">{escape(meta)}</span>{_cite(transfer.citation)}</figcaption>'
@@ -2308,14 +2277,6 @@ def _transfer_meta(transfer: Transfer, stamp: Stamp | None = None) -> str:
         )
         if text
     )
-
-
-def _stamped(name: str, plate: Plate, wells: set[str], holds: str) -> str:
-    """One plate of a stamp, every well the transfer touches filled and the rest left empty."""
-    drawn = draw_plate(
-        name, plate.rows, plate.columns, plate.row_labels, seating=dict.fromkeys(wells, holds)
-    )
-    return f'<div class="row">{drawn.element()}</div>'
 
 
 def _moves(transfer: Transfer) -> str:
@@ -2467,10 +2428,11 @@ def _step(
         parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
     # After everything the instructions point at, so "the program below" is never the map.
-    where = f"step {n} {step.title!r}"
-    parts += [_figure(f, base, where, maps) for f in step.figures]
+    parts += [_figure(f, base, _step_named(n, step), maps) for f in step.figures]
     if step.expected or step.gels or step.calculator:
-        gels = "".join(_gel(g) for g in step.gels)
+        gels = "".join(
+            f'<figure class="drawing gel">{still("gel", molviz_gel(g))}</figure>' for g in step.gels
+        )
         net = _net_count(f"{anchor}.count", step.calculator, trouble) if step.calculator else ""
         parts.append(
             '<div class="expected"><h3>Expected result</h3>'
@@ -2812,56 +2774,4 @@ def _timer(key: str, timer: Timer) -> str:
         '<button type="button" class="timer-action">Start</button>'
         '<button type="button" class="timer-plan" title="The time the protocol gives" hidden>'
         f"Back to {clock}</button></span>"
-    )
-
-
-# Gel drawing geometry, in SVG user units.
-_LABEL_W, _LANE_W, _GAP = 46, 38, 10
-_GEL_TOP, _RUN_TOP, _RUN_H = 22, 48, 210
-
-
-def _gel(gel: Gel) -> str:
-    lanes = [
-        ("L", gel.ladder.name, gel.ladder.bands_bp),
-        *((str(i), lane.label, lane.bands_bp) for i, lane in enumerate(gel.lanes, 1)),
-    ]
-    gel_w = len(lanes) * (_LANE_W + _GAP) + _GAP
-    gel_h = _RUN_TOP - _GEL_TOP + _RUN_H + 16
-    width, height = _LABEL_W + gel_w + 2, _GEL_TOP + gel_h + 2
-
-    def y(bp: int) -> float:
-        return _RUN_TOP + gel.migration(bp) * _RUN_H
-
-    label = escape(gel.title or "Simulated agarose gel")
-    svg = [
-        f'<svg class="gel-image" viewBox="0 0 {width} {height}" role="img" aria-label="{label}">',
-        f'<rect class="gel-bg" x="{_LABEL_W}" y="{_GEL_TOP}" width="{gel_w}" height="{gel_h}" rx="6"/>',
-    ]
-    last = float("-inf")
-    for bp in sorted(set(gel.ladder.bands_bp), reverse=True):
-        if y(bp) - last >= 10:
-            svg.append(f'<text class="size" x="{_LABEL_W - 5}" y="{y(bp) + 3.5:.1f}">{bp}</text>')
-            last = y(bp)
-    for k, (mark, name, bands) in enumerate(lanes):
-        x = _LABEL_W + _GAP + k * (_LANE_W + _GAP)
-        kind = "lane ladder" if k == 0 else "lane"
-        svg.append(f'<g class="{kind}" data-lane="{escape(name)}">')
-        svg.append(f'<text class="lane-mark" x="{x + _LANE_W / 2}" y="14">{escape(mark)}</text>')
-        svg.append(f'<rect class="well" x="{x}" y="{_GEL_TOP + 8}" width="{_LANE_W}" height="6"/>')
-        svg += [
-            f'<rect class="band" data-bp="{bp}" x="{x + 3}" y="{y(bp) - 2:.1f}" width="{_LANE_W - 6}"'
-            f' height="4" rx="1.5"><title>{bp} bp</title></rect>'
-            for bp in sorted(bands, reverse=True)
-        ]
-        svg.append("</g>")
-    svg.append("</svg>")
-    legend = "".join(
-        f"<li><strong>{mark}</strong> {escape(name)}"
-        + ("" if k == 0 else f": {', '.join(map(str, bands))} bp" if bands else ": no band")
-        + "</li>"
-        for k, (mark, name, bands) in enumerate(lanes)
-    )
-    caption = f"<figcaption>{escape(gel.title)}</figcaption>" if gel.title else ""
-    return (
-        f'<figure class="gel">{caption}{"".join(svg)}<ol class="gel-legend">{legend}</ol></figure>'
     )

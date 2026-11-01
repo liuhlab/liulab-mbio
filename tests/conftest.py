@@ -1,4 +1,5 @@
-"""What every test may share: the data, the pUC19 and GFP records, one across the origin, a plan.
+"""What every test may share: the data, the pUC19 and GFP records, one across the origin, a plan,
+and what each drawing hands molviz.
 
 The package is imported inside each fixture, so a module that fails to import fails the tests
 that ask for it rather than every test in the run.
@@ -7,13 +8,18 @@ that ask for it rather than every test in the run.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 if TYPE_CHECKING:
+    import molviz
+
     from mbio.cloning.goldengate import Plan
     from mbio.sequence import SequenceRecord
+
+#: What each `molviz.draw` call was handed: the record, then the options.
+type Handed = list[tuple[dict[str, Any], dict[str, Any]]]
 
 
 @pytest.fixture(scope="session")
@@ -136,3 +142,19 @@ def plan(puc19: SequenceRecord, gfp: SequenceRecord) -> Plan:
     from mbio.cloning.goldengate import plan_assembly
 
     return plan_assembly(puc19, gfp)
+
+
+@pytest.fixture
+def handed(monkeypatch: pytest.MonkeyPatch) -> Handed:
+    """Record what each `molviz.draw` call is handed, and draw it all the same."""
+    import molviz
+
+    calls: Handed = []
+    draw = molviz.draw
+
+    def spy(record: dict[str, Any], **options: Any) -> molviz.Drawing:
+        calls.append((record, options))
+        return draw(record, **options)
+
+    monkeypatch.setattr(molviz, "draw", spy)
+    return calls

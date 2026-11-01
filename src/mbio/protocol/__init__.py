@@ -68,8 +68,11 @@ lists only the sources a citation names. A number nobody published is a ``"hole"
 belongs to stays empty and the hole stands beside it, so a loader never reads a union and a
 reader never sees a guess. A rule hangs on the material it belongs to, so it follows the
 material into every step that uses it.
+
+`converter` hands a figure, a gel and a plate to molviz in its own formats.
 """
 
+from mbio.protocol.converter import molviz_figure, molviz_gel, molviz_plate, molviz_stamp
 from mbio.protocol.model import (
     FORMATS,
     OVERVIEW_CHARS,
@@ -200,6 +203,10 @@ __all__ = [
     "Well",
     "citing",
     "figured",
+    "molviz_figure",
+    "molviz_gel",
+    "molviz_plate",
+    "molviz_stamp",
     "number",
     "page_key",
     "page_name",

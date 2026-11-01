@@ -223,6 +223,33 @@ class Primer:
         object.__setattr__(self, "sequence", _dna(self.sequence))
 
 
+def mismatches(primer: Primer, site: BindingSite, record: "SequenceRecord") -> tuple[int, ...]:
+    """Return each base of `record` at `site` that `primer` does not pair with.
+
+    The primer's 3' end pairs with the site's 3' end on the primer's strand, and each base 5' of
+    it with the base as far from that end, as far as the site runs; a tail pairs with nothing.
+    A base of the record is its index, counted round a circular record's origin.
+
+    Examples
+    --------
+    >>> site = BindingSite(2, 8, Strand.FORWARD)
+    >>> mismatches(Primer("p", "GGACCAGG"), site, SequenceRecord("AAACCCGGGTTT"))
+    (5,)
+    """
+    length = len(record)
+    pairing = primer.sequence[-(site.end - site.start) :]
+    if site.strand == Strand.REVERSE:
+        reads, first = reverse_complement(pairing), site.start
+    else:
+        reads, first = pairing, site.end - len(pairing)
+    there = record.bases(first, first + len(reads))
+    return tuple(
+        (first + index) % length
+        for index, (base, paired) in enumerate(zip(reads, there, strict=True))
+        if base != paired
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class SequenceRecord:
     """A DNA sequence with its topology, features, primers and notes.

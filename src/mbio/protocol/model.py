@@ -5,7 +5,6 @@ non-positive volume, time, cycle count or band size, or a link that is not http(
 """
 
 import json
-import math
 import os
 import re
 from collections.abc import Callable, Iterable, Mapping
@@ -770,17 +769,6 @@ class Gel:
     lanes: tuple[Lane, ...]
     _: KW_ONLY
     title: str = ""
-
-    def migration(self, bp: float) -> float:
-        """Return how far a band runs: 0 for the largest band on this gel, 1 for the smallest.
-
-        Linear in the logarithm of size, the usual approximation for agarose.
-        """
-        sizes = [*self.ladder.bands_bp, *(bp for lane in self.lanes for bp in lane.bands_bp)]
-        top, bottom = math.log10(max(sizes)), math.log10(min(sizes))
-        if top == bottom:
-            return 0.5
-        return (top - math.log10(bp)) / (top - bottom)
 
 
 @dataclass(frozen=True, slots=True)

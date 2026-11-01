@@ -11,7 +11,8 @@ ship. A coding sequence the caller already holds is checked and left as it is, n
 again.
 
 `in_frame` and `stop_codons` read a span a record already carries rather than writing one: what
-a design has to be held to once its bases are fixed.
+a design has to be held to once its bases are fixed. `translation` reads a feature a record
+carries as the protein it codes, as a map shows it.
 """
 
 from collections.abc import Iterable, Mapping
@@ -85,6 +86,51 @@ def translate(dna: str) -> str:
     """
     bases = _checked_dna(dna)
     return "".join(amino_acid(bases[at : at + 3]) for at in range(0, len(bases), 3))
+
+
+def translation(feature: Feature, record: SequenceRecord) -> str:
+    """Return the amino acids `feature` of `record` codes, one letter each.
+
+    Its segments are joined on its strand, across the origin where they run past it, and read
+    from its `codon_start`; bases left over at the end make no codon. A stop is ``"*"``, and a
+    codon holding a base other than ACGT is ``"X"``. Nothing is refused: a feature that is no
+    coding sequence reads as whatever its codons spell.
+
+    Examples
+    --------
+    Read from its second base, across the origin:
+
+    >>> record = SequenceRecord("TAAATGC", topology="circular")
+    >>> cds = Feature("orf", "CDS", (Segment(3, 10),), qualifiers={"codon_start": (2,)})
+    >>> translation(cds, record)
+    'C*'
+    """
+    bases = record.extract(feature)
+    return "".join(
+        _letter(bases[at : at + 3]) for at in range(codon_start(feature) - 1, len(bases) - 2, 3)
+    )
+
+
+def codon_start(feature: Feature) -> int:
+    """Return the base, 1 to 3, a feature's ``/codon_start`` reads from: 1 unless it gives 2 or 3.
+
+    Examples
+    --------
+    >>> codon_start(Feature("orf", "CDS", (Segment(0, 9),), qualifiers={"codon_start": ("3",)}))
+    3
+    """
+    try:
+        start = int(feature.qualifiers.get("codon_start", (1,))[0])
+    except (IndexError, ValueError):
+        return 1
+    return start if start in (1, 2, 3) else 1
+
+
+def _letter(codon: str) -> str:
+    try:
+        return amino_acid(codon)
+    except KeyError:
+        return "X"
 
 
 def in_frame(span: Segment, *, offset: int = 0) -> bool:

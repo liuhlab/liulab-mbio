@@ -1,0 +1,99 @@
+"""A protocol's figures, gels and plates handed to molviz, held to its own checks of each format."""
+
+from pathlib import Path
+
+import molviz
+
+from mbio.protocol.converter import molviz_figure, molviz_gel, molviz_plate, molviz_stamp
+from mbio.protocol.model import (
+    Figure,
+    Gel,
+    Ladder,
+    Lane,
+    Move,
+    Plate,
+    Transfer,
+    Well,
+)
+
+
+def test_a_figure_names_its_records_and_says_what_differs_from_molvizs_defaults(
+    data_dir: Path,
+) -> None:
+    figure = Figure(
+        ("pUC19.dna", "GFP.dna"),
+        "pUC19, then GFP",
+        span=(390, 460),
+        linear=True,
+        sequence_view=True,
+        enzymes=("EcoRI-HF",),
+        highlight=("AmpR",),
+    )
+    converted = molviz_figure(figure, data_dir)
+    assert [record["name"] for record in converted["records"]] == ["pUC19", "GFP"]
+    assert converted["options"] == {
+        "span": {"start": 390, "end": 460},
+        "map": "line",
+        "sequence_view": True,
+        # A commercial name is handed over as the shipped enzyme it names, as a map's is.
+        "enzymes": ["EcoRI"],
+        "highlight": ["AmpR"],
+    }
+    # A stack of two records, drawn to one span, as a step's figure is drawn.
+    molviz.draw_figure(converted["records"], **converted["options"])
+    assert molviz_figure(Figure(("pUC19.dna",), "pUC19"), data_dir)["options"] == {}
+
+
+def test_a_gel_names_its_ladder_and_lanes_with_their_band_sizes() -> None:
+    gel = Gel(Ladder("100 bp", (100, 200)), (Lane("GFP", (741,)), Lane("water")), title="PCR")
+    converted = molviz_gel(gel)
+    molviz.check_gel(converted)
+    assert converted == {
+        "title": "PCR",
+        "ladder": {"name": "100 bp", "bands": [100, 200]},
+        "lanes": [{"name": "GFP", "bands": [741]}, {"name": "water", "bands": []}],
+    }
+
+
+def test_a_plate_holds_its_labels_and_seating_in_reading_order_the_seating_winning() -> None:
+    plate = Plate(
+        "picked", 96, seating={"B1": "clone 2", "A2": "clone 1"}, labels={"A1": "q1", "A2": "q2"}
+    )
+    converted = molviz_plate(plate)
+    molviz.check_plate(converted)
+    assert converted == {
+        "title": "picked",
+        "rows": 8,
+        "columns": 12,
+        "wells": {"A1": "q1", "A2": "clone 1", "B1": "clone 2"},
+    }
+    assert list(converted["wells"]) == ["A1", "A2", "B1"]
+
+
+def test_a_stamp_is_its_two_plates_every_touched_well_holding_the_transfers_title() -> None:
+    plates = (Plate("picked", 96), Plate("index", 384))
+    # Every other well of the first row, into the first wells of the next plate's.
+    moves = tuple(
+        Move(Well("picked", f"A{2 * n - 1}"), Well("index", f"A{n}"), 1.0) for n in (1, 2)
+    )
+    from_, into = molviz_stamp(Transfer("Index the clones", moves), plates)
+    molviz.check_plate(from_)
+    molviz.check_plate(into)
+    assert from_ == {
+        "title": "From picked",
+        "rows": 8,
+        "columns": 12,
+        "wells": {"A1": "Index the clones", "A3": "Index the clones"},
+    }
+    assert (into["title"], into["rows"], list(into["wells"])) == ("Into index", 16, ["A1", "A2"])
+    # Moves at two volumes repeat no one pattern, so they are no stamp and draw no plate.
+    uneven = (moves[0], Move(moves[1].source, moves[1].destination, 2.0))
+    assert molviz_stamp(Transfer("Index the clones", uneven), plates) == []
+    # Nor does a stamp from a plate nobody declared, or through a well its plate has not got.
+    assert molviz_stamp(Transfer("Index the clones", moves), plates[1:]) == []
+    far = tuple(
+        Move(Well("picked", a), Well("index", b), 1.0) for a, b in (("A1", "A1"), ("E5", "B2"))
+    )
+    small = (Plate("picked", 12), Plate("index", 12))
+    assert Transfer("Sample", far).stamp is not None
+    assert molviz_stamp(Transfer("Sample", far), small) == []

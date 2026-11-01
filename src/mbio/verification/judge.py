@@ -86,6 +86,9 @@ class Disagreement:
         What the results read there, on the record's top strand; nothing for a deletion.
     results
         The names of the results that show it.
+    shown_by
+        Where each result that shows it stands among the results given, counted from 0, which
+        tells two results of one name apart.
     regions
         The regions it falls in, in record order; empty when it falls outside every one.
     features
@@ -98,6 +101,7 @@ class Disagreement:
     bases: str
     _: KW_ONLY
     results: tuple[str, ...]
+    shown_by: tuple[int, ...]
     regions: tuple[str, ...] = ()
     features: tuple[str, ...] = ()
 
@@ -158,6 +162,11 @@ class Verification:
     def status(self) -> Status:
         """The worst verdict of every check, by `mbio.checks.worst_of`."""
         return worst_of((*self.checks, *self.result_checks))
+
+    @property
+    def verdicts(self) -> dict[str, Status | None]:
+        """Each region's verdict, by the region's name."""
+        return {one.name: one.status for one in self.checks}
 
     @property
     def verified(self) -> bool:
@@ -351,6 +360,7 @@ def verify(
     for region in regions:
         expected.extract(region)
     readings = [_read(expected, one) for one in results]
+    given = {reading: at for at, reading in enumerate(readings)}
     judged = [one for one in readings if one.lined_up and not _gated(one)]
     shown: dict[tuple[Kind, int, int, str], list[_Reading]] = {}
     for reading in judged:
@@ -381,6 +391,7 @@ def verify(
             end,
             bases,
             results=tuple(reading.result.name for reading in showing),
+            shown_by=tuple(given[reading] for reading in showing),
             regions=names,
             features=features,
         )

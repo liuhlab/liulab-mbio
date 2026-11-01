@@ -11,7 +11,7 @@ showing one puts `SOURCE` in its `sources`.
 
 from collections.abc import Iterable
 
-from mbio.plot.sequence_view import LIMIT
+from mbio.plot.drawing import SEQUENCE_VIEW_LIMIT
 from mbio.protocol.model import Citation, Figure, Source
 from mbio.sequence import BindingSite, SequenceRecord, Strand
 
@@ -47,7 +47,7 @@ def ligation_figure(
 ) -> Figure:
     """Return a Golden Gate junction at base level: both strands, each cut, the frame above.
 
-    What `mbio.plot.sequence_view` draws over the span around one junction, which is what a
+    What molviz's sequence view draws over the span around one junction, which is what a
     reader needs to see that the four bases match and that the join stays in frame. Any method's
     junction reads the same way, so the figure is the package's and not one method's.
 
@@ -95,10 +95,10 @@ def ligation_figure(
     if context < 0:
         raise ValueError(f"a ligation figure draws 0 or more bases of context, not {context}")
     span = _around(junction, context, len(record), circular=record.topology == "circular")
-    if span[1] - span[0] > LIMIT:
+    if span[1] - span[0] > SEQUENCE_VIEW_LIMIT:
         raise ValueError(
-            f"a ligation figure draws at most {LIMIT:,} bases and {caption!r} would draw "
-            f"{span[1] - span[0]:,}: give a shorter junction or less context"
+            f"a ligation figure draws at most {SEQUENCE_VIEW_LIMIT:,} bases and {caption!r} "
+            f"would draw {span[1] - span[0]:,}: give a shorter junction or less context"
         )
     return Figure(
         (path,),
@@ -124,7 +124,7 @@ def tail_figure(
 ) -> Figure:
     """Return the end of an amplicon one primer makes, at base level: its tail and each cut.
 
-    Where a primer's tail carries a recognition site, what `mbio.plot.sequence_view` draws over
+    Where a primer's tail carries a recognition site, what molviz's sequence view draws over
     that end is why the tail is there: the primer with its tail bent off the template, the site,
     and both strands cut where the enzyme cuts them, so the overhang shows between the cuts. Any
     method whose primers carry a site reads the same way, so the figure is the package's.

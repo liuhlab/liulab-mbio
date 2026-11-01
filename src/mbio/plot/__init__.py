@@ -1,19 +1,13 @@
-"""Draw a sequence record as a map, and a plate as a map of its wells.
+"""Draw a sequence record as a map through molviz, the one way mbio calls molviz.
 
-`draw_map` is the way in: it takes a record, or a file to read one from; `Drawing.write` writes it
-in the format a file's suffix names, laying out each distinct layout once.
-
-The submodules are the stages it is made of. `layers` resolves what a record draws, with its
-names, colours and hover details; `circular` lays those items out as shapes round a circle,
-`linear` along a line, and `sequence_view` base by base in rows; `labels` keeps labels apart, on
-bare boxes; `fonts` measures text in the pinned faces; `svg` holds the shapes and writes them;
-`page` wraps the SVG in one offline HTML page; `convert` turns it into a PNG or a PDF; `plate`
-lays a plate's wells out on the same substrate, which `draw_plate` is the way in to. A drawing
-is laid out as geometry before anything draws, per `docs/adr/0006-drawings-as-geometry.md`.
-
-Only the way in is re-exported. Everything else is imported by module.
+`draw_map` is the way in: it takes a record, or a file to read one from, hands it to molviz with
+the options chosen, and returns molviz's `Drawing`, whose `write` writes the format a file's
+suffix names. `converter` writes a record and its options in molviz's own format, as
+`molviz_record` and `molviz_options`; `drawing` holds every call into molviz, `still` and
+`faces` among them for a page that inlines its drawings; and `cli` holds the `plot` verbs.
 """
 
-from mbio.plot.drawing import Drawing, PlateDrawing, draw_map, draw_plate
+from mbio.plot.converter import molviz_record
+from mbio.plot.drawing import draw_map
 
-__all__ = ["Drawing", "PlateDrawing", "draw_map", "draw_plate"]
+__all__ = ["draw_map", "molviz_record"]
