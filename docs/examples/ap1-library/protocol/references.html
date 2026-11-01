@@ -262,7 +262,6 @@ tfoot .muted { font-weight: 400; }
    on white and its ink is dark, so it keeps its own ground in either colour scheme. */
 .drawing svg { display: block; max-width: 100%; height: auto; background: #ffffff; }
 .drawing.rows { display: grid; gap: 0.7rem; }
-.row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
 .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
 .listing { font-size: 0.9rem; margin-top: 0.6rem; }
 .listing summary { cursor: pointer; color: var(--muted); }
@@ -280,14 +279,14 @@ tfoot .muted { font-weight: 400; }
 .sources .cited-at, .sources .cited-by { display: block; color: var(--muted); font-size: 0.9em; }
 
 /* A step's figure stands in a box of its own with its caption inside, so it never reads as one
-   of the instructions. Its drawing is drawn small; the control under it opens the record's map in
-   place, whole and to explore, and takes the small drawing's place until closed. */
-.drawing.map { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 0.75rem; }
-.drawing.map:not(.rows), .drawing.map .row { display: flex; flex-direction: column; }
+   of the instructions. Its drawing is drawn small, a stack of records at full width; each control
+   under it opens a record's map in place, whole and to explore, and takes the drawing's place
+   until closed. */
+.drawing.map { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 0.75rem; display: flex; flex-direction: column; }
 .drawing.map .opener[open] { order: -1; margin-top: 0; }
-.drawing.map .row-name { order: -2; font-weight: 600; }
-.drawing.map:has(> .opener[open]) > svg, .row:has(> .opener[open]) > svg { display: none; }
+.drawing.map:has(> .opener[open]) > svg { display: none; }
 .drawing.map svg { max-height: 24rem; width: auto; margin-inline: auto; border-radius: 6px; }
+.drawing.map.rows svg { max-height: none; }
 .drawing.map figcaption { font-weight: 400; font-size: 0.92rem; margin: 0.6rem 0 0; }
 .opener { margin-top: 0.6rem; }
 .opener > summary { display: inline-flex; align-items: center; gap: 0.4rem; list-style: none; cursor: pointer; font-size: 0.85rem; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.8rem; min-height: 2rem; }
