@@ -13,8 +13,9 @@ geometry in Python.
 
 What mbio hands over is its biology: every shipped enzyme's cuts, a CDS's translation read from
 the bases, the bases a primer does not pair with, each result's reads and disagreements. molviz
-picks the unique cutters, places the labels and hides what will not fit. A drawing need molviz
-lacks, or a look that differs from what mbio drew, is a molviz issue, never mbio code.
+picks the unique cutters, places the labels and hides what will not fit. molviz decides how a
+drawing looks, and mbio follows it: a look that differs from what mbio drew before is not a
+defect. A drawing need molviz lacks is a molviz issue, never mbio code.
 `mbio.plot` is the one seam into molviz: every other layer converts its own data and calls
 molviz through it.
 
