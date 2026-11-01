@@ -1,7 +1,7 @@
 """An HTML page parsed into a tree a test can search, as a browser would read the markup.
 
-Each inline SVG that is well-formed XML, as `svg.document` writes one, is read by the XML parser,
-which is quicker; it gives the same tree, its names lowercased as HTML's are.
+Each inline SVG that is well-formed XML is read by the XML parser, which is quicker; it gives the
+same tree, its names lowercased as HTML's are.
 """
 
 import json

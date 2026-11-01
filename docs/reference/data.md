@@ -1,6 +1,6 @@
 # What ships with it
 
-Install the package and four sets of data come with it, in its own `data/` directory. Each one
+Install the package and three sets of data come with it, in its own `data/` directory. Each one
 is built by a script in `scripts/` from a named source. None is edited by hand.
 
 Three other files the package reads are not included. You keep your own copy of each. They are
@@ -90,27 +90,6 @@ The numbers are supplementary tables S1 to S5 of Pryor et al., *PLOS One* 15(9):
 licence asks for.
 
 What the package does with a matrix is on [ligation fidelity](ligation-fidelity.md).
-
-## Fonts
-
-`fonts/` holds three typefaces cut down from the DejaVu 2.37 release: DejaVu Sans,
-DejaVu Sans Bold and DejaVu Sans Mono. Labels on a map are set in the first two, and bases and
-translations in the mono face. Each face ships twice. One file is a JSON table of advance
-widths, kerning pairs and glyph outlines. The other is a WOFF2 subset for a page to embed. The
-release's own `LICENSE` sits beside them, unchanged.
-
-A figure carries the typefaces because of how a PNG or PDF is written. The package hands the
-renderer an SVG in which every letter has already become its outline, a shape rather than a
-character. The renderer draws nothing for text in a font it was not given, and it raises no
-error while doing it, so a map would come back with its labels quietly missing. Outlines
-remove the lookup, and the figure then draws the same on any machine. An HTML map is the other
-way round: it keeps its letters as text you can search and copy, and embeds the WOFF2 subsets
-so the text still lands where it was measured.
-
-DejaVu's own changes are public domain. The glyphs it inherited are Bitstream's, from Bitstream
-Vera, and Tavmjong Bah's, from Arev. Both grant free use and redistribution. Both ask that the
-copyright and permission notice travel with the fonts, which is what the `LICENSE` beside them
-is for.
 
 ## What does not ship
 

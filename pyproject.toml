@@ -22,8 +22,6 @@ dependencies = [
     "typer>=0.12",
     "biopython>=1.88",
     "primer3-py>=2.3",
-    "vl-convert-python>=1.9,<2",
-    "pypdf>=6",
     # On PyPI alone, so pixi takes it from there through the editable install. Exact: every
     # drawing mbio makes is this release's.
     "liulab-molviz==2026.10.1",
@@ -69,10 +67,6 @@ python = "3.13.*"
 typer = ">=0.12"
 biopython = ">=1.88"
 primer3-py = ">=2.3"
-# Below `2.0.0a0`: conda-forge carries 2.0 release candidates, and a conda range, unlike pip's,
-# admits a pre-release.
-vl-convert-python = ">=1.9,<2.0.0a0"
-pypdf = ">=6"
 # Runtime too, but on bioconda alone and not PyPI, so absent from `[project] dependencies`:
 # the genome check runs it, and says so when it is missing.
 ipcr = ">=5.0.0,<6"
@@ -111,23 +105,12 @@ docs = "zensical serve"
 docs-build = "zensical build --clean --strict"
 examples-check = "python scripts/check_examples.py"
 
-# Only `scripts/build_fonts.py` reads a font file. The package reads the tables it writes and
-# imports neither, so a rebuild is the one thing that installs these.
-[tool.pixi.feature.fonts.dependencies]
-fonttools = "*"
-brotli-python = "*"
-
-[tool.pixi.feature.fonts.tasks]
-build-fonts = "python scripts/build_fonts.py"
-
 # `default` takes `test` so pyright can resolve pytest, and not `docs`, which exists so that
-# exactly one CI job installs it, nor `fonts`, which no CI job installs.
+# exactly one CI job installs it.
 [tool.pixi.environments]
 default = { features = ["test"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
-# Out of the solve group, so a rebuild's packages never move a version the gate runs.
-fonts = { features = ["fonts"] }
 
 [tool.pixi.tasks]
 lint = "ruff check ."
