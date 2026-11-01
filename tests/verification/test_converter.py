@@ -1,5 +1,6 @@
 """A clone's verification handed to molviz: its reads, disagreements and traces, held to its check."""
 
+import dataclasses
 from pathlib import Path
 
 import molviz
@@ -66,20 +67,23 @@ def trace(data_dir: Path) -> tuple[SequencingResult, Channels, str]:
 def test_two_results_of_one_name_become_two_reads_told_apart_by_a_suffix(
     trace: tuple[SequencingResult, Channels, str],
 ) -> None:
-    """Channels pair with results by position, as checks and placements do, not by name."""
+    """Channels and disagreements pair with results by position, as checks and placements do."""
     result, channels, own = trace
     halved = Channels(
         {base: tuple(value // 2 for value in scan) for base, scan in channels.scans.items()},
         channels.peaks,
     )
     record = SequenceRecord(own, name="own bases")
-    both = (result, result)
+    # The second reads the planted base as the record has it, so only the first shows it.
+    planted = result.trusted_span[0] + PLANTED
+    agreeing = own[PLANTED].join((result.bases[:planted], result.bases[planted + 1 :]))
+    both = (result, dataclasses.replace(result, bases=agreeing))
     made = verified(record, both, ())
     converted = molviz_verification(record, both, made, channels=(channels, halved))
     molviz.check(molviz_record(record) | converted)
     names = [result.name, f"{result.name} (2)"]
     assert [read["name"] for read in converted["reads"]] == names
-    assert [one["reads"] for one in converted["disagreements"]] == [names]
+    assert [one["reads"] for one in converted["disagreements"]] == [names[:1]]
     assert [(track["name"], track["curves"]["A"]) for track in converted["tracks"]] == [
         (names[0], list(channels.scans["A"])),
         (names[1], list(halved.scans["A"])),

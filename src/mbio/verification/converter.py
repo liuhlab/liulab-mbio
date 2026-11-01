@@ -4,16 +4,18 @@
 `mbio.plot.converter.molviz_record` of the same record. Each placed result is a read over the
 bases it trusts; one that does not read as the record is left out. molviz refuses two reads of
 one name, so a later result of a name already taken is numbered, ``name (2)``, and a
-disagreement names every read of the results that show it. A disagreement is named as a reader
+disagreement names the read of each result that shows it. A disagreement is named as a reader
 reads it, ``696 A>G``, and coloured by the worst verdict of the regions it falls in, grey outside
-every region. A Sanger result's trace is a track: each peak over the one base it was read as,
-and on a bottom-strand read each channel is the base it pairs with on the top strand.
+every region. `molviz_names` gives every name, for a page to light and caption what is drawn. A
+Sanger result's trace is a track: each peak over the one base it was read as, and on a
+bottom-strand read each channel is the base it pairs with on the top strand.
 """
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any
 
-from mbio.checks import Status, worst
+from mbio.checks import Status, counted, worst
 from mbio.sequence import SequenceRecord, Strand, position_text, reverse_complement, span_text
 from mbio.verification.align import place
 from mbio.verification.judge import Disagreement, Placement, Verification
@@ -28,6 +30,39 @@ _VERDICT_COLORS: Mapping[Status | None, str] = {
     "fail": "#cc3311",
     None: "#bbbbbb",
 }
+
+
+@dataclass(frozen=True, slots=True)
+class Names:
+    """What a verification's drawing calls each result and each disagreement.
+
+    Parameters
+    ----------
+    results
+        Each result's read, in the order the results were given.
+    disagreements
+        Each disagreement's name, in record order.
+    """
+
+    results: tuple[str, ...]
+    disagreements: tuple[str, ...]
+
+    def readers(self, one: Disagreement) -> list[str]:
+        """Return the read of each result that shows `one`."""
+        return [self.results[at] for at in one.shown_by]
+
+
+def molviz_names(expected: SequenceRecord, verification: Verification) -> Names:
+    """Return what `molviz_verification` calls each result and each disagreement.
+
+    A result is its name, numbered from 2 where an earlier result has taken it; a disagreement
+    is named as a reader reads it, 1-based: ``1234 C>T``, ``1234 del``, or, as the command
+    names an insertion, ``insertion after 1234``.
+    """
+    return Names(
+        tuple(_unique(verification.placements)),
+        tuple(_name(one, expected) for one in verification.disagreements),
+    )
 
 
 def molviz_verification(
@@ -60,16 +95,14 @@ def molviz_verification(
     """
     if channels and len(channels) != len(results):
         raise ValueError(
-            f"{len(channels)} sets of channels were given for {len(results)} results; give one "
-            "for each, None for one with no trace"
+            f"{counted(len(channels), 'set')} of channels were given for "
+            f"{counted(len(results), 'result')}; give one for each, None for one with no trace"
         )
-    statuses: dict[str, Status | None] = {one.name: one.status for one in verification.checks}
-    names = _unique(verification.placements)
+    named = molviz_names(expected, verification)
     reads: list[dict[str, Any]] = []
     tracks: list[dict[str, Any]] = []
-    placed: list[tuple[str, Placement]] = []
     for name, placement, result, trace in zip(
-        names,
+        named.results,
         verification.placements,
         results,
         channels or [None] * len(results),
@@ -78,12 +111,13 @@ def molviz_verification(
         span, strand = placement.span, placement.strand
         if span is None or strand is None:
             continue
-        placed.append((name, placement))
         reads.append({"name": name, "start": span.start, "end": span.end, "strand": int(strand)})
         if trace is not None and (track := _track(name, expected, result, trace)):
             tracks.append(track)
+    verdicts = verification.verdicts
     disagreements = [
-        _disagreement(one, expected, statuses, placed) for one in verification.disagreements
+        _disagreement(one, name, named.readers(one), expected, verdicts)
+        for name, one in zip(named.disagreements, verification.disagreements, strict=True)
     ]
     out: dict[str, Any] = {}
     for key, values in (("reads", reads), ("disagreements", disagreements), ("tracks", tracks)):
@@ -93,11 +127,6 @@ def molviz_verification(
 
 
 def _name(one: Disagreement, record: SequenceRecord) -> str:
-    """Return a disagreement's name as a reader reads it, 1-based: ``1234 C>T``.
-
-    A deletion is ``1234 del``, and an insertion is named as the command names it,
-    ``insertion after 1234``.
-    """
     n = len(record)
     if one.kind == "insertion":
         return one.said(n)
@@ -124,9 +153,10 @@ def _unique(placements: Sequence[Placement]) -> list[str]:
 
 def _disagreement(
     one: Disagreement,
+    name: str,
+    reads: Sequence[str],
     record: SequenceRecord,
-    statuses: Mapping[str, Status | None],
-    placed: Sequence[tuple[str, Placement]],
+    verdicts: Mapping[str, Status | None],
 ) -> dict[str, Any]:
     where = (
         {"at": one.start % len(record) if record.topology == "circular" else one.start}
@@ -134,17 +164,17 @@ def _disagreement(
         else {"start": one.start, "end": one.end}
     )
     return {
-        "name": _name(one, record),
+        "name": name,
         **where,
         "bases": one.bases,
-        "reads": [unique for unique, placement in placed if placement.result in one.results],
-        "color": _VERDICT_COLORS[_verdict(one, statuses)],
+        "reads": list(reads),
+        "color": _VERDICT_COLORS[_verdict(one, verdicts)],
     }
 
 
-def _verdict(one: Disagreement, statuses: Mapping[str, Status | None]) -> Status | None:
+def _verdict(one: Disagreement, verdicts: Mapping[str, Status | None]) -> Status | None:
     """Return the verdict a disagreement takes its colour from: the worst of its regions'."""
-    found: list[Status | None] = [statuses[name] for name in one.regions if name in statuses]
+    found: list[Status | None] = [verdicts[name] for name in one.regions if name in verdicts]
     if not found or all(status is None for status in found):
         return None
     return worst(found)

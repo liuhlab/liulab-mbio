@@ -24,12 +24,11 @@ from html import escape
 from importlib.resources import files
 from pathlib import Path
 
-import molviz
-
 from mbio.checks import Status, counted
-from mbio.plot.converter import molviz_record
+from mbio.plot.converter import molviz_options, molviz_record
+from mbio.plot.drawing import faces, still
 from mbio.sequence import SequenceRecord
-from mbio.verification.converter import molviz_verification
+from mbio.verification.converter import Names, molviz_names, molviz_verification
 from mbio.verification.judge import CONSENSUS_CAVEAT, Disagreement, Placement, Verification
 from mbio.verification.result import SequencingResult
 from mbio.verification.trace import Channels
@@ -71,12 +70,12 @@ class TableRow:
 
 @dataclass(frozen=True, slots=True, eq=False)
 class CloseUp:
-    """One disagreement drawn close: its name, what it is, and the drawing."""
+    """One disagreement drawn close: its name, what it is, and molviz's still SVG of it."""
 
     disagreement: Disagreement
     name: str
     caption: str
-    drawing: molviz.Drawing
+    drawing: str
 
 
 @dataclass(frozen=True, slots=True, eq=False)
@@ -92,7 +91,7 @@ class Page:
     rows
         The table, in the page's order.
     map
-        molviz's drawing of the record with its reads and disagreements; ``None`` where no
+        molviz's still SVG of the record with its reads and disagreements; ``None`` where no
         result reads as it.
     close_ups
         One per disagreement, in record order.
@@ -101,7 +100,7 @@ class Page:
     title: str
     verified: bool
     rows: tuple[TableRow, ...]
-    map: molviz.Drawing | None
+    map: str | None
     close_ups: tuple[CloseUp, ...]
 
     @property
@@ -115,18 +114,15 @@ class Page:
             _table(self.rows),
         ]
         if self.map is not None:
-            body.append(
-                '<section class="map"><h2>Map</h2>'
-                f"<figure>{self.map.still_svg()}</figure></section>"
-            )
+            body.append(f'<section class="map"><h2>Map</h2><figure>{self.map}</figure></section>')
         if self.close_ups:
             figures = "".join(
                 f'<figure class="close-up"><figcaption><strong>{escape(one.name)}</strong> '
-                f"{escape(one.caption)}</figcaption>{one.drawing.still_svg()}</figure>"
+                f"{escape(one.caption)}</figcaption>{one.drawing}</figure>"
                 for one in self.close_ups
             )
             body.append(f'<section class="close-ups"><h2>Each disagreement</h2>{figures}</section>')
-        fonts = f"{molviz.font_rules()}\n" if self.map is not None else ""
+        fonts = f"{rules}\n" if (rules := faces("".join(body))) else ""
         return (
             '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
@@ -173,7 +169,7 @@ def draw_page(
         If `channels` is given, but not one for each result.
     """
     added = molviz_verification(expected, results, verification, channels=channels)
-    statuses: dict[str, Status | None] = {one.name: one.status for one in verification.checks}
+    named = molviz_names(expected, verification)
     # Withheld from a result that does not read as the record, and from one that trusts nothing.
     placed = [one for one in verification.placements if one.strand is not None]
     results_rows = tuple(
@@ -187,38 +183,33 @@ def draw_page(
         return Page(title, verification.verified, results_rows, None, ())
     n = len(expected)
     record = molviz_record(expected) | added
-    named = [
-        (given["name"], one)
-        for given, one in zip(
-            record.get("disagreements", []), verification.disagreements, strict=True
-        )
-    ]
+    disagreements = list(zip(named.disagreements, verification.disagreements, strict=True))
     rows = (
         *(TableRow(check.name, check.status, check.detail) for check in verification.checks),
         *(
-            TableRow(_outside(one), None, f"{one.said(n)}, read by {', '.join(one.results)}")
-            for _, one in named
+            TableRow(_outside(one), None, f"{one.said(n)}, {_read_by(one, named)}")
+            for _, one in disagreements
             if not one.regions
         ),
         *results_rows,
     )
     reads = [read["name"] for read in record.get("reads", [])]
-    mapped = molviz.draw(
-        record, kinds_off=["cuts"], highlight=[*(name for name, _ in named), *reads]
-    )
+    lit = [*named.disagreements, *reads]
+    mapped = still("record", record, **molviz_options(cut_sites=False, highlight=lit))
+    verdicts = verification.verdicts
     close_ups = []
-    for name, one in named:
+    for name, one in disagreements:
         start, end = _window(one, expected)
-        close = molviz.draw(
-            record,
-            span={"start": start, "end": end},
-            map="line",
+        options = molviz_options(
+            span=(start, end),
+            linear=True,
             sequence_view=True,
             bases_per_row=end - start,
-            kinds_off=["cuts"],
+            cut_sites=False,
             highlight=[name, *reads],
         )
-        close_ups.append(CloseUp(one, name, _caption(one, statuses), close))
+        drawn = still("record", record, **options)
+        close_ups.append(CloseUp(one, name, _caption(one, verdicts, named), drawn))
     return Page(title, verification.verified, rows, mapped, tuple(close_ups))
 
 
@@ -236,11 +227,16 @@ def _outside(one: Disagreement) -> str:
     return "outside every region and feature"
 
 
-def _caption(one: Disagreement, statuses: Mapping[str, Status | None]) -> str:
+def _read_by(one: Disagreement, named: Names) -> str:
+    """Return who read a disagreement, by the reads the drawings name them by."""
+    return f"read by {', '.join(named.readers(one))}"
+
+
+def _caption(one: Disagreement, verdicts: Mapping[str, Status | None], named: Names) -> str:
     """Return what a close-up says of its disagreement: what it is, where, and who read it."""
     if one.regions:
         where = "in " + ", ".join(
-            f"{region} ({_WORDS[statuses.get(region)]})" for region in one.regions
+            f"{region} ({_WORDS[verdicts.get(region)]})" for region in one.regions
         )
     elif one.features:
         where = f"in {', '.join(one.features)}, outside every region"
@@ -250,7 +246,7 @@ def _caption(one: Disagreement, statuses: Mapping[str, Status | None]) -> str:
     if kind == "insertion":
         added = one.bases if len(one.bases) <= _SPELLED else counted(len(one.bases), "base")
         kind = f"insertion of {added}"
-    return f"{kind} {where}, read by {', '.join(one.results)}."
+    return f"{kind} {where}, {_read_by(one, named)}."
 
 
 def _window(one: Disagreement, record: SequenceRecord) -> tuple[int, int]:
