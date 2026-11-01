@@ -24,11 +24,6 @@
   --expected: #1a4f8b;
   --expected-soft: #e8f1fc;
   --code-bg: #efede7;
-  --gel: #15171c;
-  --well: #030407;
-  --band: #f3f0ff;
-  --ladder: #a9bbff;
-  --gel-ink: #c9ced6;
   --radius: 10px;
   /* How much of the top a sticky bar covers. A page outside a run carries no bar. */
   --bar: 0rem;
@@ -238,16 +233,7 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 .net-sum.is-short { color: var(--caution); }
 
 /* A gel is taller than it is wide, so its height is what has to fit on the screen. */
-.gel-image { display: block; max-height: 20rem; width: auto; max-width: 100%; }
-.gel-bg { fill: var(--gel); }
-.well { fill: var(--well); }
-.band { fill: var(--band); }
-.ladder .band { fill: var(--ladder); }
-.gel-image text { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--muted); }
-.gel-image .lane-mark { text-anchor: middle; font-weight: 700; fill: var(--ink); }
-.gel-image .size { text-anchor: end; }
-.gel-legend { list-style: none; padding: 0; margin: 0.5rem 0 0; font-size: 0.88rem; }
-.gel-legend strong { display: inline-block; min-width: 1.4rem; }
+.gel svg { max-height: 20rem; width: auto; }
 
 @media (max-width: 30rem) {
   .block, .step { padding: 0.9rem; }
@@ -275,16 +261,14 @@ button.is-copied { border-color: var(--accent); color: var(--accent); }
 /* How much of the run a total covers is said beside it, and is not itself a figure. */
 tfoot .muted { font-weight: 400; }
 
-/* A drawing `plot` laid out and this page inlines: the plate, the map, the sequence view. It is
-   laid out on white and its ink is dark, so it keeps its own ground in either colour scheme. The
-   gel is drawn here instead, and has its own colours. */
+/* A drawing this page inlines: the map, the sequence view, the plate and the gel. It is laid out
+   on white and its ink is dark, so it keeps its own ground in either colour scheme. */
 .drawing svg { display: block; max-width: 100%; height: auto; background: #ffffff; }
 .drawing.rows { display: grid; gap: 0.7rem; }
 .row-name { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--muted); }
-.plate-legend, .vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+.vessels { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
 .listing { font-size: 0.9rem; margin-top: 0.6rem; }
 .listing summary { cursor: pointer; color: var(--muted); }
-.swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
 
 /* A citation: a bracketed number that lands on its entry in the sources list. The padding is a
    finger's target, the negative margin keeps the text from shifting, and a line height of
@@ -446,7 +430,7 @@ tfoot .muted { font-weight: 400; }
   .calc-value { border: none; }
   .calc-plan, .calc-held { display: none !important; }
   .calc-warning { border: 1px solid var(--line); }
-  .gel-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
+  .gel svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 22rem; }
 }
 </style>
 </head>
