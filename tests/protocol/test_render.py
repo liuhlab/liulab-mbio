@@ -693,15 +693,18 @@ def test_write_html_writes_the_rendered_page(data_dir: Path, tmp_path: Path) -> 
     assert path.read_text(encoding="utf-8") == render_html(protocol)
 
 
-def test_a_plate_says_its_kind_count_and_drops_the_legend_past_ten() -> None:
-    """A page with a 96-entry legend under it is unreadable, so the count stands instead."""
-    seating = {f"A{n + 1}": f"mark {n}" for n in range(11)}
-    page = parse(render_html(Protocol("x", plates=(Plate("index", 96, seating=seating),))))
+def test_a_plate_draws_what_its_wells_hold_and_counts_the_kinds_in_its_caption() -> None:
+    """molviz draws the plate's key inside it; the page counts the kinds its wells hold."""
+    plate = Plate("index", 96, seating={"A1": "clone 1", "A2": "clone 2"}, labels={"A1": "q1"})
+    page = parse(render_html(Protocol("x", plates=(plate,))))
 
-    figure = page.find_all("figure", cls="plate")[0]
+    [figure] = page.find_all("figure", cls="plate")
 
-    assert not figure.find_all("ul", cls="plate-legend")
-    assert "11 kinds" in figure.find_all("figcaption")[0].text
+    drawn = {text.text for text in figure.find_all("svg")[0].find_all("text")}
+    assert {"clone 1", "clone 2"} <= drawn
+    assert "q1" not in drawn
+    assert not figure.find_all("ul")
+    assert "2 kinds" in figure.find_all("figcaption")[0].text
 
 
 def _drawn(caption: str) -> Protocol:
@@ -870,8 +873,8 @@ def test_a_stamp_is_drawn_as_its_two_plates_and_keeps_its_moves_behind_a_toggle(
     assert "picked C2" in toggle.text
 
 
-def test_a_transfer_naming_a_plate_the_protocol_does_not_declare_stays_a_table() -> None:
-    """Nothing says what those wells look like, so the moves are all the page has."""
+def test_a_transfer_that_is_no_stamp_a_drawing_can_show_stays_a_table() -> None:
+    """Here no plate is declared, so nothing says what the wells look like."""
     one = Protocol("Index", steps=(Step("Sample", transfers=(_sampled(),)),))
 
     figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
@@ -1106,25 +1109,3 @@ def test_a_warned_row_is_seen_without_opening_the_summarised_sheet() -> None:
     toggles = section.find_all("section", cls="oligos")[0].find_all("details")
 
     assert [t.attrs.get("class") for t in toggles] == ["listing", "oligo-checks"]
-
-
-def test_a_move_through_a_well_the_declared_plate_has_not_got_stays_a_table() -> None:
-    """A drawing that silently left out the wells it cannot place would claim the wrong move."""
-    moved = Transfer(
-        "Sample",
-        tuple(
-            Move(Well("picked", at), Well("index", to), 1.0)
-            for at, to in (("A1", "A1"), ("E5", "B2"))
-        ),
-    )
-    one = Protocol(
-        "Index",
-        plates=(Plate("picked", 12), Plate("index", 12)),
-        steps=(Step("Sample", transfers=(moved,)),),
-    )
-
-    figure = parse(render_html(one)).find_all("figure", cls="transfer")[0]
-
-    assert moved.stamp is not None
-    assert not figure.find_all("svg")
-    assert "picked E5" in figure.find_all("table")[0].text

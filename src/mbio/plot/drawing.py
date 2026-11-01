@@ -1,16 +1,16 @@
-"""Draw a record as a map or a plate as its wells, in the format a file name asks for."""
+"""Draw a record as a map, in the format a file name asks for."""
 
 import dataclasses
 import math
 import operator
 import os
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import cast
 
 from mbio.io import read_record
-from mbio.plot import circular, convert, layers, page, plate, svg
+from mbio.plot import circular, convert, layers, page, svg
 from mbio.plot import linear as line
 from mbio.plot import sequence_view as view
 from mbio.plot.labels import Box
@@ -384,9 +384,7 @@ def _carries_sequence_view(drawing: Drawing) -> bool:
     return end - start <= view.LIMIT
 
 
-def _kept[T](
-    drawing: "Drawing | PlateDrawing", key: tuple[object, ...], make: Callable[[], T]
-) -> T:
+def _kept[T](drawing: Drawing, key: tuple[object, ...], make: Callable[[], T]) -> T:
     """Return what `make` gives, made the first time `key` is asked for and kept."""
     if key not in drawing._kept:
         drawing._kept[key] = make()
@@ -680,116 +678,3 @@ _WRITERS: dict[str, Callable[[Drawing, Path, float], None]] = {
     ".png": _png,
     ".pdf": _pdf,
 }
-
-
-@dataclass(frozen=True, slots=True, eq=False)
-class PlateDrawing:
-    """A plate to lay out as a map of its wells, to write once per format.
-
-    A plate is drawn the way a record is: laid out as geometry here, written through `svg` and
-    `page`, and turned into a PNG or a PDF by `convert`. It is one of the named visuals a
-    protocol shows, beside the plasmid map, the sequence view and the gel.
-
-    Parameters
-    ----------
-    name
-        What the plate is called.
-    rows, columns
-        The array's shape.
-    row_labels
-        One per row, top to bottom.
-    seating
-        Well name to what sits there.
-    """
-
-    name: str
-    rows: int
-    columns: int
-    row_labels: tuple[str, ...]
-    seating: Mapping[str, str]
-    _kept: dict[tuple[object, ...], object] = field(default_factory=dict, init=False, repr=False)
-
-    @property
-    def layout(self) -> plate.PlateMap:
-        """Where every well went, laid out the first time it is asked for and kept."""
-        return _kept(
-            self,
-            ("plate",),
-            lambda: plate.layout(
-                self.rows, self.columns, self.row_labels, title=self.name, seating=self.seating
-            ),
-        )
-
-    def element(self, *, outlines: bool = False) -> str:
-        """Return the plate as one SVG element, for a page or a protocol to embed."""
-        one = self.layout
-        return (
-            _outlined(one.shapes, one.extent) if outlines else svg.document(one.shapes, one.extent)
-        )
-
-    def write(self, path: str | os.PathLike[str], *, dpi: float = 300) -> Path:
-        """Write the plate to `path`, in the format its suffix names, and return the path.
-
-        A directory `path` names and that is not there is made.
-
-        Raises
-        ------
-        ValueError
-            If the suffix names no format this writes.
-        """
-        out = Path(path)
-        if out.suffix.lower() in {".html", ".png", ".pdf"}:
-            out.parent.mkdir(parents=True, exist_ok=True)
-        match out.suffix.lower():
-            case ".html":
-                out.write_text(
-                    page.render({"plate": [self.element()]}, title=self.name, shown="plate"),
-                    encoding="utf-8",
-                )
-            case ".png":
-                out.write_bytes(convert.png(self.element(outlines=True), dpi=dpi))
-            case ".pdf":
-                out.write_bytes(convert.pdf([self.element(outlines=True)]))
-            case _:
-                raise ValueError(
-                    f"cannot write a plate as {out.name!r}: the suffix must be .html, .png, .pdf"
-                )
-        return out
-
-
-def draw_plate(
-    name: str,
-    rows: int,
-    columns: int,
-    row_labels: Iterable[str],
-    *,
-    seating: Mapping[str, str] | None = None,
-) -> PlateDrawing:
-    """Lay a plate out as a map of its wells, each filled by what sits in it.
-
-    Parameters
-    ----------
-    name
-        What the plate is called, drawn above the grid.
-    rows, columns
-        The array's shape.
-    row_labels
-        One per row, top to bottom. The caller names its own rows, so this module keeps no
-        second opinion about how a plate is numbered.
-    seating
-        Well name to what sits there, such as ``{"A1": "UMI-1"}``, each named as this array
-        names its wells: a row label and a 1-based column.
-
-    Raises
-    ------
-    ValueError
-        If the array has no wells, there is not one label per row, two wells would answer to
-        one name, or a well is seated where the array has none.
-
-    Examples
-    --------
-    >>> drawn = draw_plate("barcodes", 2, 3, "AB", seating={"A1": "UMI-1"})
-    >>> drawn.layout.legend
-    (('UMI-1', '#3f90da'),)
-    """
-    return PlateDrawing(name, rows, columns, tuple(row_labels), dict(seating or {}))

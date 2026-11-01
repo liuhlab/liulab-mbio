@@ -21,10 +21,10 @@ from pathlib import Path
 from typing import NamedTuple
 
 from mbio.checks import Status
-from mbio.plot.drawing import Drawing, draw_map, draw_plate
+from mbio.plot.drawing import Drawing, draw_map
 from mbio.plot.fonts import BOLD, MONO, SANS
 from mbio.plot.page import font_face
-from mbio.protocol.converter import molviz_gel
+from mbio.protocol.converter import molviz_gel, molviz_plate, molviz_stamp
 from mbio.protocol.model import (
     Bill,
     Caution,
@@ -2144,28 +2144,19 @@ def _plates(protocol: Protocol) -> str:
 
 
 def _plate(one: Plate) -> str:
-    # Labels are drawn beside the seating and resolve against nothing, so a well a step names
-    # keeps its own entry where a plate carries both.
-    drawn = draw_plate(
-        one.name,
-        one.rows,
-        one.columns,
-        one.row_labels,
-        seating={**one.labels, **one.seating},
-    )
-    legend = "".join(
-        f'<li><span class="swatch" style="background:{fill}"></span>{escape(kind)}</li>'
-        for kind, fill in drawn.layout.legend
-    )
-    # The count stands for the legend where the plate holds more kinds than a legend can list.
-    kinds = _count(drawn.layout.kinds, "kind") if drawn.layout.kinds else ""
+    """One plate molviz draws from what its wells hold, its key inside the drawing."""
+    import molviz
+
+    converted = molviz_plate(one)
+    held = converted.get("wells", {})
+    kinds = _count(len(set(held.values())), "kind") if held else ""
     facts = " · ".join(
         text for text in (f"{one.wells} wells", kinds, one.catalog, one.holds, one.note) if text
     )
     return (
-        f'<figure class="drawing plate" data-plate="{escape(one.name)}">{drawn.element()}'
+        f'<figure class="drawing plate" data-plate="{escape(one.name)}">'
+        f"{molviz.draw_plate(converted).still_svg()}"
         f'<figcaption>{escape(one.name)} <span class="muted">{escape(facts)}</span></figcaption>'
-        + (f'<ul class="plate-legend">{legend}</ul>' if legend else "")
         # A plate the protocol makes carries its handling rules here, where a reagent carries
         # them in the materials table.
         + _rules((one.name, rule) for rule in one.rules)
@@ -2265,21 +2256,15 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
     through a well the declared format has not got, is the table it was: nothing says what its
     wells look like, and a drawing missing the wells it cannot place would say it wrongly.
     """
-    stamp = transfer.stamp
-    declared = {plate.name: plate for plate in plates}
-    source = declared.get(transfer.plates[0])
-    destination = declared.get(transfer.plates[-1])
-    taken = {move.source.well for move in transfer.moves}
-    filled = {move.destination.well for move in transfer.moves}
-    if stamp is None or source is None or destination is None:
-        return _transfer_table(transfer)
-    if not (taken <= set(source.well_names) and filled <= set(destination.well_names)):
+    import molviz
+
+    stamped = molviz_stamp(transfer, plates)
+    if not stamped:
         return _transfer_table(transfer)
     drawn = "".join(
-        _stamped(f"{word} {one.name}", one, wells, transfer.title)
-        for word, one, wells in (("From", source, taken), ("Into", destination, filled))
+        f'<div class="row">{molviz.draw_plate(one).still_svg()}</div>' for one in stamped
     )
-    meta = _transfer_meta(transfer, stamp)
+    meta = _transfer_meta(transfer, transfer.stamp)
     return (
         f'<figure class="drawing transfer rows"><figcaption>{escape(transfer.title)} '
         f'<span class="muted">{escape(meta)}</span>{_cite(transfer.citation)}</figcaption>'
@@ -2311,14 +2296,6 @@ def _transfer_meta(transfer: Transfer, stamp: Stamp | None = None) -> str:
         )
         if text
     )
-
-
-def _stamped(name: str, plate: Plate, wells: set[str], holds: str) -> str:
-    """One plate of a stamp, every well the transfer touches filled and the rest left empty."""
-    drawn = draw_plate(
-        name, plate.rows, plate.columns, plate.row_labels, seating=dict.fromkeys(wells, holds)
-    )
-    return f'<div class="row">{drawn.element()}</div>'
 
 
 def _moves(transfer: Transfer) -> str:

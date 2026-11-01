@@ -126,3 +126,11 @@ def test_a_stamp_is_its_two_plates_every_touched_well_holding_the_transfers_titl
     # Moves at two volumes repeat no one pattern, so they are no stamp and draw no plate.
     uneven = (moves[0], Move(moves[1].source, moves[1].destination, 2.0))
     assert molviz_stamp(Transfer("Index the clones", uneven), plates) == []
+    # Nor does a stamp from a plate nobody declared, or through a well its plate has not got.
+    assert molviz_stamp(Transfer("Index the clones", moves), plates[1:]) == []
+    far = tuple(
+        Move(Well("picked", a), Well("index", b), 1.0) for a, b in (("A1", "A1"), ("E5", "B2"))
+    )
+    small = (Plate("picked", 12), Plate("index", 12))
+    assert Transfer("Sample", far).stamp is not None
+    assert molviz_stamp(Transfer("Sample", far), small) == []
