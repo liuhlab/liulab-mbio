@@ -283,11 +283,12 @@ _Avoid_: cycling conditions, PCR conditions
 
 ### Figure
 
-What a step shows rather than describes: the record to draw, the stretch of it, which view, and
-what the map is pointed at. It is a spec and never a drawing, so it cannot disagree with the
-design it names, and the page lays it out when it renders. A record is named by a path, relative
-to the directory the protocol was read from, since a protocol holds no bases of its own. A map is
-what a figure becomes, not another word for one.
+What a step shows rather than describes: the records to draw, the stretch of them, which view,
+and what the map is pointed at. It is a spec and never a drawing, so it cannot disagree with the
+design it names; it is drawn when the page renders, several records stacked in one still drawing
+to the same stretch. A record is named by a path, relative to the directory the protocol was read
+from, since a protocol holds no bases of its own. A map is what a figure becomes, not another
+word for one.
 _Avoid_: image, illustration, panel, picture
 
 ### Simulated gel
@@ -947,31 +948,33 @@ _Avoid_: complexity, depth, diversity, representation
 ### Map
 
 A drawing of a sequence record, whole or one region of it, as a circle or a line: features as
-arrows along their strand, cut sites and primers labelled outside. A region is always drawn as a
-line, numbered as the record is. No label overlaps another; one that cannot be placed is hidden,
-and the map says how many.
+arrows along their strand, primers and cut sites labelled. A region is always drawn as a line,
+numbered as the record is. mbio hands over the record and its biology, and liulab-molviz draws
+it. No label overlaps another; one that will not fit is hidden, and the map counts what hid by
+kind.
 _Avoid_: plasmid map (a linear record has one too), figure, plot
 
 ### Sequence view
 
-A drawing of a sequence record base by base, in rows: both strands, the translation of every CDS,
-features as bars, primers as arrows, enzyme names above their cut, an insertion as a line between
-two bases, and each **track** under the rows it reaches. It is drawn only with a map, which shows
-where each row lies.
+A drawing of a sequence record base by base, in rows: both strands, the translation of every CDS
+over its codons, one letter an amino acid, the features, primers, cut sites and reads at the
+scale of single bases, and each **track** under the rows it reaches. It is drawn only with a map,
+which shows where each row lies. It hides no label.
 _Avoid_: sequence panel, text view
 
 ### Track
 
-Values along a record's bases, such as the four channels of a Sanger trace, drawn as curves in a
-strip under each row of a **sequence view** they reach. Where the values come with peak positions,
-each peak sits over the middle of its base, so the signal behind every base stands under it.
+Curves sampled alike along a record's bases, such as the four channels of a Sanger trace, drawn
+in a strip under each row of a **sequence view** they reach. Each peak sits over the middle of its
+base, so the signal behind every base stands under it.
 _Avoid_: chromatogram (one kind of it), lane, signal, trace (a Sanger file)
 
 ### Highlight
 
-What a map is pointed at: the names it lights. A lit item keeps its colours, and every other
-item, its label with it, paints one pale grey. Nothing moves, so each label keeps where it sits,
-and a lit label is the last to hide where labels crowd.
+What a map is pointed at: the names it lights, each a feature, a primer, a read, a
+disagreement or an enzyme. A lit item keeps its colours, and every other item, its label with it,
+dims to one grey. Nothing moves, so each label keeps where it sits, and a lit label is the last
+to hide where labels crowd. A name that lights nothing is refused.
 _Avoid_: callout, emphasis, focus, selection
 
 ### Unique cutter
