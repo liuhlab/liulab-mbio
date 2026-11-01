@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from mbio.checks import Status
+from mbio.enzymes import get_enzyme
 from mbio.plot.drawing import draw_map, faces, still
 from mbio.protocol.converter import molviz_figure, molviz_gel, molviz_plate, molviz_stamp
 from mbio.protocol.model import (
@@ -442,7 +443,10 @@ def render_html(
     ------
     FileNotFoundError
         If a figure's record is not there, naming the step and the path.
+    ValueError
+        If a figure names an enzyme nothing ships, naming the step and the enzyme.
     """
+    _known_enzymes((protocol,))
     place = _place(folder, here) if folder else ""
     beside = Path() if base is None else Path(base)
     keys = _step_keys(protocol.steps)
@@ -518,8 +522,10 @@ def _write_maps(
     ``product-2-map.html``. It is the whole record behind the page's switches, so a reader
     explores what a figure shows only part of, with every enzyme the record's figures name, or
     the unique cutters where none names one. Records are named relative to `base`, as
-    `render_html` reads them, and one that is not there is left for it to refuse.
+    `render_html` reads them, and one that is not there is left for it to refuse. A figure naming
+    an enzyme nothing ships is refused before any map is written.
     """
+    _known_enzymes(protocols)
     named: dict[Path, list[str]] = {}
     enzymes: dict[Path, set[str] | None] = {}
     for protocol in protocols:
@@ -545,6 +551,28 @@ def _write_maps(
         draw_map(path, enzymes=None if chosen is None else sorted(chosen)).write(into / name)
         written |= dict.fromkeys(records, into / name)
     return written
+
+
+def _known_enzymes(protocols: Iterable[Protocol]) -> None:
+    """Refuse a figure naming an enzyme nothing ships, naming its step and the enzyme.
+
+    Raises
+    ------
+    ValueError
+        If no shipped enzyme answers to a name a figure gives.
+    """
+    for protocol in protocols:
+        for n, step in enumerate(protocol.steps, 1):
+            for name in (one for figure in step.figures for one in figure.enzymes or ()):
+                try:
+                    get_enzyme(name)
+                except KeyError as error:
+                    raise ValueError(f"{_step_named(n, step)}: {error.args[0]}") from error
+
+
+def _step_named(n: int, step: Step) -> str:
+    """Return how an error names a protocol's `n`th step."""
+    return f"step {n} {step.title!r}"
 
 
 def _addressed(maps: Mapping[str, Path]) -> dict[str, str]:
@@ -2400,8 +2428,7 @@ def _step(
         parts.append(f'<div class="timers">{timers}</div>\n')
     parts.append(_waits(step.waits))
     # After everything the instructions point at, so "the program below" is never the map.
-    where = f"step {n} {step.title!r}"
-    parts += [_figure(f, base, where, maps) for f in step.figures]
+    parts += [_figure(f, base, _step_named(n, step), maps) for f in step.figures]
     if step.expected or step.gels or step.calculator:
         gels = "".join(
             f'<figure class="drawing gel">{still("gel", molviz_gel(g))}</figure>' for g in step.gels

@@ -800,6 +800,22 @@ def test_a_highlight_no_record_answers_to_names_the_step(data_dir: Path) -> None
         render_html(one, base=data_dir)
 
 
+def test_a_figure_naming_no_shipped_enzyme_names_the_step_before_any_map_is_written(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    steps = (
+        Step("Cut", figures=(Figure(("pUC19.dna",), "Cut by EcoRI", enzymes=("EcoRI",)),)),
+        Step("Cut again", figures=(Figure(("GFP.dna",), "Cut", enzymes=("EcoRJ",)),)),
+    )
+    one = Protocol("Clone", steps=steps)
+    refused = r"^step 2 'Cut again': no shipped enzyme is called 'EcoRJ'"
+    with pytest.raises(ValueError, match=refused):
+        write_html(one, tmp_path / "protocol.html", base=data_dir)
+    assert list(tmp_path.iterdir()) == []
+    with pytest.raises(ValueError, match=refused):
+        render_html(one, base=data_dir)
+
+
 def _sampled() -> Transfer:
     return Transfer(
         "Sample a quarter",
