@@ -1,0 +1,2351 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/lentiviral-tolerance/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>What a lentiviral vector tolerates: a domestication map - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#what-a-lentiviral-vector-tolerates-a-domestication-map" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              What a lentiviral vector tolerates: a domestication map
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-read-this-first-if-you-are-in-a-hurry" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        0. Read this first, if you are in a hurry
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-choose-the-enzyme-first-the-cheapest-domestication-is-the-one-you-skip" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Choose the enzyme first — the cheapest domestication is the one you skip
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Choose the enzyme first — the cheapest domestication is the one you skip">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sites-in-the-634-bp-hiv-1-ltr" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sites in the 634 bp HIV-1 LTR
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-bsai-site-is-hiv-1-not-clontech" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The BsaI site is HIV-1, not Clontech
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-fixes-the-transcription-start-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What fixes the transcription start site
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-thing-the-sequence-says-about-this-parent-that-the-map-does-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        One thing the sequence says about this parent that the map does not
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-same-count-on-a-second-hiv-1-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The same count on a second HIV-1 reference
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-has-someone-already-published-a-type-iis-clean-lentiviral-backbone" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Has someone already published a Type IIS-clean lentiviral backbone?
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Has someone already published a Type IIS-clean lentiviral backbone?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-one-published-precedent-vamsyb-read-first-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The one published precedent: VAMSyB, read first-hand
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The one published precedent: VAMSyB, read first-hand">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-actually-moved-base-by-base" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What actually moved, base by base
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#and-nobody-measured-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        And nobody measured it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-is-worth" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What this is worth
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-tar-and-the-six-bases" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. TAR, and the six bases
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. TAR, and the six bases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-lower-stem-is-structure-critical-not-sequence-critical" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The lower stem is structure-critical, not sequence-critical
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#is-tar-needed-at-all-once-tat-is-gone" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Is TAR needed at all once Tat is gone?
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#do-both-ltr-copies-have-to-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Do both LTR copies have to change?
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verdict-on-positions-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Verdict on positions 1–6
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-nothing-measures-in-this-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What nothing measures, in this section
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-tolerance-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. The tolerance map
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. The tolerance map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#three-things-in-this-table-that-change-how-you-domesticate" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Three things in this table that change how you domesticate
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-nothing-measures-in-this-section_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What nothing measures, in this section
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-alternative-and-engineered-ltr-designs" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Alternative and engineered LTR designs
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-if-a-permissive-change-is-wrong-how-would-you-know" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. If a permissive change is wrong, how would you know?
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-using-this-map-on-the-next-backbone" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Using this map on the next backbone
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Using this map on the next backbone">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-general-lesson" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The general lesson
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Sources
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sequence
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toolkits" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Toolkits
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tar" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        TAR
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-what-this-note-did-not-settle" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. What this note did not settle
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="what-a-lentiviral-vector-tolerates-a-domestication-map">What a lentiviral vector tolerates: a domestication map<a class="headerlink" href="#what-a-lentiviral-vector-tolerates-a-domestication-map" title="Permanent link">&para;</a></h1>
+<p>Issue #244, under the AP-1 demo spec #225, blocking #239. Written for someone domesticating a
+<strong>different</strong> backbone later: the question it answers is not "may we change pLVX" but "which
+parts of a third-generation lentiviral transfer plasmid may be changed at all, and what does it
+cost to be wrong".</p>
+<p>Two kinds of claim live here and they are marked differently. <strong>Measured</strong> means a primary source
+that changed the thing and reported a number, or a count run here on a real sequence. <strong>Inferred</strong>
+means a chain of reasoning from something measured; every inference is labelled, because an
+unmarked one in this note propagates into every future domestication. <strong>Nothing measures this</strong>
+means what it says, and is followed by what would close it.</p>
+<h2 id="0-read-this-first-if-you-are-in-a-hurry">0. Read this first, if you are in a hurry<a class="headerlink" href="#0-read-this-first-if-you-are-in-a-hurry" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Pick the enzyme before you pick the edit.</strong> The HIV-1 LTR has no BsmBI, PaqCI or BtgZI
+   site. It has one BsaI site and one BbsI site, in each copy. Section 1 is the table; changing
+   enzyme is free and changing the LTR is not.</li>
+<li><strong>BsaI's site in the LTR is not a quirk of one plasmid.</strong> <code>GGTCTC</code> is the first six bases of
+   R in the HIV-1 reference genome, which is to say the first six bases the vector transcribes.
+   Every HIV-1-derived transfer vector inherits it, twice, unless someone has removed it.</li>
+<li><strong>One group has already made the substitution, and nobody has measured what it cost.</strong>
+   VAMSyB killed the BsaI site with a single C→T at R+4, in both LTRs, and the vector still
+   packages and transduces. No titre was reported, for that vector or any other with a changed
+   R. Section 2 has the edit; section 3 says what experiment would price it.</li>
+</ol>
+<h2 id="1-choose-the-enzyme-first-the-cheapest-domestication-is-the-one-you-skip">1. Choose the enzyme first — the cheapest domestication is the one you skip<a class="headerlink" href="#1-choose-the-enzyme-first-the-cheapest-domestication-is-the-one-you-skip" title="Permanent link">&para;</a></h2>
+<p>Every count in this section was run on <strong>2026-10-06</strong> against GenBank <strong>K03455.1</strong> (HIV-1 HXB2,
+9,719 bp), the reference every HIV-1-derived transfer vector descends from, and against the
+Addgene-verified sequence of pLVX-TetOne-Puro-GFP (Addgene 171123) already held under
+<code>reference_docs/synthesis_and_assembly/working-vector/</code>. Both strands counted. Positions are
+1-based here because GenBank is; the package's own coordinates are 0-based and half-open.</p>
+<h3 id="sites-in-the-634-bp-hiv-1-ltr">Sites in the 634 bp HIV-1 LTR<a class="headerlink" href="#sites-in-the-634-bp-hiv-1-ltr" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Enzyme</th>
+<th>Site</th>
+<th>In one LTR</th>
+<th>Where</th>
+<th>In the whole HXB2 genome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BsaI</strong></td>
+<td><code>GGTCTC</code></td>
+<td><strong>1</strong></td>
+<td>offset 455, the first six bases of R</td>
+<td>4 (two of them the two LTRs)</td>
+</tr>
+<tr>
+<td><strong>BbsI</strong></td>
+<td><code>GAAGAC</code></td>
+<td><strong>1</strong></td>
+<td>offset 25, in U3</td>
+<td>7</td>
+</tr>
+<tr>
+<td>BsmBI / Esp3I</td>
+<td><code>CGTCTC</code></td>
+<td><strong>0</strong></td>
+<td>—</td>
+<td>1 (offset 8856, in <em>env</em>)</td>
+</tr>
+<tr>
+<td>PaqCI / AarI</td>
+<td><code>CACCTGC</code></td>
+<td><strong>0</strong></td>
+<td>—</td>
+<td>1 (offset 5055, in <em>pol</em>)</td>
+</tr>
+<tr>
+<td>BtgZI</td>
+<td><code>GCGATG</code></td>
+<td><strong>0</strong></td>
+<td>—</td>
+<td>0</td>
+</tr>
+<tr>
+<td>SapI / BspQI</td>
+<td><code>GCTCTTC</code></td>
+<td><strong>0</strong></td>
+<td>—</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>This is the most reusable fact in the note.</strong> The HIV-1 LTR is already clean for BsmBI, PaqCI,
+BtgZI and SapI. A method that assembles with any of those never has to touch an LTR. A method
+that assembles with BsaI meets one site per LTR — two per vector — and a method that assembles
+with BbsI meets one per LTR as well, in U3 rather than R.</p>
+<p>The same count on pLVX-TetOne-Puro-GFP reproduces the eight sites #230 reported, and adds the
+rest of the panel:</p>
+<table>
+<thead>
+<tr>
+<th>Enzyme</th>
+<th>Sites in pLVX-TetOne-Puro-GFP</th>
+<th>Positions (1-based)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BsaI</td>
+<td>6</td>
+<td>455, 3725, 5731, 6473, 7113, 8721</td>
+</tr>
+<tr>
+<td>BsmBI</td>
+<td>2</td>
+<td>3877, 5637</td>
+</tr>
+<tr>
+<td>BbsI</td>
+<td>3</td>
+<td>25, 6399, 6683</td>
+</tr>
+<tr>
+<td>SapI</td>
+<td>2</td>
+<td>1107, 7638</td>
+</tr>
+<tr>
+<td>PaqCI</td>
+<td><strong>0</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>BtgZI</td>
+<td>5</td>
+<td>833, 3122, 3936, 4432, 6181</td>
+</tr>
+</tbody>
+</table>
+<p>Positions 455 and 7113 are the two LTR copies of the BsaI site; 25 and 6683 the two LTR copies
+of the BbsI site. <strong>PaqCI is clean on the whole plasmid</strong> — zero sites in 9,895 bp. Whether the
+method may move to PaqCI is a method decision and belongs to #239, not here; what this note
+records is that the option exists and costs no base change at all.</p>
+<h3 id="the-bsai-site-is-hiv-1-not-clontech">The BsaI site is HIV-1, not Clontech<a class="headerlink" href="#the-bsai-site-is-hiv-1-not-clontech" title="Permanent link">&para;</a></h3>
+<p><code>GGTCTC</code> sits at offset 455 of the HXB2 LTR and at offset 455 of <strong>both</strong> pLVX LTRs, and the
+71 bp window around it is identical in all three. Over the 634 bp LTR, pLVX differs from HXB2 at
+<strong>nine</strong> positions, none of them in R. So the site is inherited, not introduced.</p>
+<p><strong>Inference, marked:</strong> any transfer vector whose LTRs derive from HXB2 or NL4-3 without
+deliberate recoding carries this site twice. That follows from the reference sequence and from
+R being the part of the LTR a SIN deletion does not touch; it was not checked against a panel of
+backbones here. What would close it: count <code>GGTCTC</code> in the LTRs of pLKO.1, lentiCRISPRv2, pCDH
+and FUGW.</p>
+<h3 id="what-fixes-the-transcription-start-site">What fixes the transcription start site<a class="headerlink" href="#what-fixes-the-transcription-start-site" title="Permanent link">&para;</a></h3>
+<p>The TATA box <code>TATAA</code> lies at LTR offset 427 in both copies, and R begins at 455 — 28 bp
+downstream, the canonical TATA-to-+1 spacing. That is an independent, on-sequence confirmation
+that <strong>the first <code>G</code> of <code>GGTCTC</code> is +1</strong>, the first base transcribed and the 5' end of the
+packaged genome. The BsaI site is therefore not merely <em>in</em> TAR; it <em>is</em> transcription
+positions +1 to +6.</p>
+<h3 id="one-thing-the-sequence-says-about-this-parent-that-the-map-does-not">One thing the sequence says about this parent that the map does not<a class="headerlink" href="#one-thing-the-sequence-says-about-this-parent-that-the-map-does-not" title="Permanent link">&para;</a></h3>
+<p>Both pLVX LTRs are a full 634 bp and both carry an intact U3 enhancer-promoter: two NF-κB sites
+(<code>GGGACTTTCC</code> at offsets 350 and 364), an Sp1 GC-box (offset 389) and the TATA box (offset 427).
+A self-inactivating vector's 3' LTR has U3 deleted; this one does not. The two copies differ at
+exactly <strong>one</strong> base in 634, offset 24, immediately 5' of the U3 BbsI site — <code>A</code> in the 5' copy,
+<code>C</code> in the 3' copy, where HXB2 has <code>C</code>.</p>
+<p><strong>This matters for the map, so it is stated rather than assumed.</strong> In a true ΔU3 SIN vector a
+site in U3 exists in <strong>one</strong> copy and a site in R or U5 exists in <strong>two</strong>. In this parent both
+U3s are present, so a U3 site exists in two copies as well. Whoever applies this note to another
+backbone must check which case they are in before counting copies.</p>
+<p><strong>Nothing read here establishes whether pLVX-TetOne is intended to be self-inactivating.</strong> The
+measurement above is of the Addgene-verified sequence only. What would close it: the
+manufacturer's own map or sequence, or a passage assay for LTR-driven transcription from the
+integrated provirus.</p>
+<h3 id="the-same-count-on-a-second-hiv-1-reference">The same count on a second HIV-1 reference<a class="headerlink" href="#the-same-count-on-a-second-hiv-1-reference" title="Permanent link">&para;</a></h3>
+<p>Run on <strong>2026-10-06</strong> against GenBank <strong>AF324493.2</strong> (pNL4-3, 14,825 bp, provirus plus plasmid
+backbone), the other parent most vectors descend from. The 20-mer that opens R,
+<code>GGTCTCTCTGGTTAGACCAG</code>, occurs <strong>exactly twice</strong> — at 455 and 9530, the R start of each LTR.</p>
+<p>Two strains, same offset, same 20 bases. But the U3 <code>GAAGAC</code> is <strong>not</strong> conserved: HXB2 has it in
+both LTRs, pNL4-3 only in the 3' copy. <strong>The R-region BsaI site is invariant across the two
+references; the U3 BbsI site is strain-variable.</strong> Anyone applying this note to a different
+backbone should count BbsI themselves and may take BsaI-in-R as given.</p>
+<h2 id="2-has-someone-already-published-a-type-iis-clean-lentiviral-backbone">2. Has someone already published a Type IIS-clean lentiviral backbone?<a class="headerlink" href="#2-has-someone-already-published-a-type-iis-clean-lentiviral-backbone" title="Permanent link">&para;</a></h2>
+<p>This was the ticket's highest-value question. The answer has two halves and the second one is
+the useful one.</p>
+<p><strong>One group has published a BsaI-domesticated lentiviral transfer vector — VAMSyB — and reported
+no titre for it.</strong> The edit is below, read out of the deposited sequence base by base. <strong>No titre
+measurement after such a mutation exists to cite anywhere</strong>, so a lab that wants BsaI assembly
+directly into a lentiviral backbone now has a precedent but still no price.</p>
+<p><strong>BsmBI-clean lentiviral transfer vectors are in universal use, and nobody had to domesticate
+anything to get them</strong> — because, as section 1 measures, the HIV-1 LTR never had a BsmBI site.
+Two existence proofs, both read 2026-10-06:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fonseca, J. P. <em>et al.</em> A toolkit for rapid modular construction of biological circuits in mammalian cells. <em>ACS Synth. Biol.</em> <strong>8</strong>, 2593–2606 (2019). <a href="https://doi.org/10.1021/acssynbio.9b00322">doi:10.1021/acssynbio.9b00322</a>, PMID 31686495</td>
+<td>The Mammalian ToolKit (MTK, El-Samad lab) ships lentiviral destination vectors (Addgene 123951, 194220). Its order is "BsmBI part domestication, BsaI transcriptional unit assembly, and a final BsmBI assembly". The lentiviral backbone enters at the <strong>final BsmBI</strong> step; BsaI only ever acts inside part-entry vectors. The full text never mentions the LTR, TAR or a site in the viral backbone</td>
+</tr>
+<tr>
+<td>Sanjana, N. E., Shalem, O. &amp; Zhang, F. Improved vectors and genome-wide libraries for CRISPR screening. <em>Nat. Methods</em> <strong>11</strong>, 783–784 (2014). <a href="https://doi.org/10.1038/nmeth.3047">doi:10.1038/nmeth.3047</a>, PMID 25075903</td>
+<td>lentiCRISPRv2 (Addgene 52961) clones sgRNAs by <strong>BsmBI digestion of the intact lentiviral transfer vector</strong>. The whole GeCKO/Brunello library world does Golden-Gate-style BsmBI ligation into an HIV-1 backbone. The documented v1→v2 changes are titre-related, not Type IIS domestication</td>
+</tr>
+</tbody>
+</table>
+<p><strong>EMMA</strong> (Martella, A. <em>et al.</em> <em>ACS Synth. Biol.</em> <strong>6</strong>, 1380–1392 (2017),
+<a href="https://doi.org/10.1021/acssynbio.7b00016">doi:10.1021/acssynbio.7b00016</a>, PMID 28418644, read
+2026-10-06) is a mammalian MoClo kit but delivers by PiggyBac transposon, so it ships no
+lentiviral transfer vector and the question does not arise.</p>
+<p><strong>The pattern, stated as the conclusion it is.</strong> Every published mammalian Golden Gate toolkit
+that ships a lentiviral vector puts that vector at a <strong>BsmBI</strong> step. None puts it at a BsaI
+step. That is not a coincidence anyone wrote down — no source read here says "we chose BsmBI
+because the LTR has a BsaI site" — but the sequence in section 1 explains it, and the absence of
+any BsaI-based lentiviral toolkit is consistent with it. <strong>Marked as inference.</strong> What would
+close it: a methods section or a correspondence from one of these groups saying why.</p>
+<h3 id="the-one-published-precedent-vamsyb-read-first-hand">The one published precedent: VAMSyB, read first-hand<a class="headerlink" href="#the-one-published-precedent-vamsyb-read-first-hand" title="Permanent link">&para;</a></h3>
+<p><strong>Haellman, V., Strittmatter, T., Bertschi, A., Stücheli, P. &amp; Fussenegger, M. A versatile
+plasmid architecture for mammalian synthetic biology (VAMSyB). <em>Metab. Eng.</em> </strong>66<strong>, 41–50
+(2021). PMID 33857582,
+<a href="https://doi.org/10.1016/j.ymben.2021.04.003">doi:10.1016/j.ymben.2021.04.003</a>.</strong></p>
+<p>Issue #244 recorded this as an unverified search summary. <strong>It is true, and it is now read
+first-hand.</strong> The published CC-BY PDF was retrieved on <strong>2026-10-06</strong> from the ETH Research
+Collection, handle <a href="https://doi.org/10.3929/ethz-b-000480636">20.500.11850/480636</a>, by way of
+the DSpace REST API — ScienceDirect still answers a direct fetch and an <code>r.jina.ai</code> fetch with
+a captcha page.</p>
+<p>The paper says it in one sentence. Their Tier-3 lentiviral vectors "were adapted from a
+publicly available third-generation lentiviral transfer vector (Sanjana et al., 2014)" — that
+is lentiCRISPR v2 — and:</p>
+<blockquote>
+<p>Furthermore, these vectors were mutated to remove BsaI and BsmBI cut sites within the LTRs'
+and WPRE enhancer. However, HindIII cut sites are too abundant to be easily removed, and we
+refrained from testing all mutations for functionality.</p>
+</blockquote>
+<h4 id="what-actually-moved-base-by-base">What actually moved, base by base<a class="headerlink" href="#what-actually-moved-base-by-base" title="Permanent link">&para;</a></h4>
+<p>A scan run here on <strong>2026-10-06</strong> over the Addgene-verified full sequences of the child,
+pTS1106_Tier3(Lenti) (<a href="https://www.addgene.org/169661/">Addgene 169661</a>, 5,259 bp), and of its
+parent, lentiCRISPR v2 (<a href="https://www.addgene.org/52961/">Addgene 52961</a>, 14,873 bp), both
+compared against GenBank K03455.1. <strong>Measured:</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>lentiCRISPR v2</th>
+<th>pTS1106_Tier3(Lenti)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R+U5, both copies</td>
+<td>identical to HXB2 455–634 at every base</td>
+<td>two substitutions, the <strong>same two in both copies</strong></td>
+</tr>
+<tr>
+<td>R+1..+6</td>
+<td><code>GGTCTC</code> — BsaI</td>
+<td><code>GGTTTC</code> — <strong>C→T at R+4</strong></td>
+</tr>
+<tr>
+<td>R+77..+82</td>
+<td><code>AAGCTT</code> — HindIII</td>
+<td><code>AAGTTT</code> — <strong>C→T at R+80</strong></td>
+</tr>
+<tr>
+<td>BsaI sites, whole plasmid</td>
+<td>4</td>
+<td>2, both in the designed A2 acceptor site</td>
+</tr>
+<tr>
+<td>BsmBI sites, whole plasmid</td>
+<td>2</td>
+<td>2, both in the designed A3 acceptor site</td>
+</tr>
+</tbody>
+</table>
+<p>So the LTR edit is <strong>one base per site, in both copies</strong>: <code>GGTCTC</code> → <code>GGTTTC</code> at R+4, which is
+exactly the shape section 3 arrives at independently — a single change at nt 4, 5 or 6, nt 1
+left alone, made in both LTRs.</p>
+<p>Two corrections to the paper's own sentence, and both matter:</p>
+<ul>
+<li><strong>BsmBI was never in the LTRs</strong> to remove, as section 1 measures. The two BsmBI sites in the
+  parent are the sgRNA cloning sites, not viral sequence.</li>
+<li><strong>The WPRE did not change.</strong> Its 589 annotated bases are byte-identical in parent and child,
+  and carry no BsaI, BsmBI or HindIII site in either. Nothing was removed there.</li>
+<li>The <strong>HindIII</strong> site inside R <em>was</em> removed, in both copies, by the second C→T — which the
+  paper does not say, and which sits two bases 3' of the <code>AATAAA</code> poly(A) hexamer at R+73..+78.
+  The hexamer itself is untouched.</li>
+</ul>
+<h4 id="and-nobody-measured-it">And nobody measured it<a class="headerlink" href="#and-nobody-measured-it" title="Permanent link">&para;</a></h4>
+<p><strong>This is the half that does not close.</strong> The words "titre", "titer" and "MOI" do not appear in
+the paper. The lentiviral method says only that "HEK-293T cells were transduced by adding
+various amounts of virus-containing supernatant to the culture medium", then describes a
+puromycin ramp to 2 µg/mL over 14 days. The whole lentiviral result is Fig. 3E–G: a polyclonal
+line that answers doxycycline with SEAP and with iRFP670, N = 3 in quadruplicate.</p>
+<p><strong>There is no titre, no transduction efficiency, and no side-by-side against the undomesticated
+parent anywhere in the paper.</strong> Puromycin selection hides exactly the quantity at issue: a
+vector at 1% of parental titre and one at 100% both give a resistant polyclonal pool.</p>
+<h4 id="what-this-is-worth">What this is worth<a class="headerlink" href="#what-this-is-worth" title="Permanent link">&para;</a></h4>
+<p><strong>Measured, and it is a real precedent:</strong> a third-generation transfer vector carrying C→T at
+R+4 in both LTRs packages into VSV-G particles with a third-generation packaging system,
+transduces HEK-293T, integrates, and drives a three-cassette Tet-ON circuit that responds to
+dose. The change is not lethal. That is more than this note had.</p>
+<p><strong>Not measured, and the gap is unchanged:</strong> what it costs. Section 3's gap 2 — functional titre
+of any lentiviral vector with a modified R — survives VAMSyB intact. Anyone copying this edit
+copies a vector that works, not a vector whose yield is known.</p>
+<p><strong>Not established.</strong> "LentiMoClo" does not exist as a published toolkit. Mobius/Loop mammalian,
+MTK2, GoldenBraid mammalian and CIDAR mammalian lentiviral variants were not settled either way
+— they ran past the time budget. <strong>No Tet-on (TRE / TetOne / Tet3G) lentiviral backbone already
+clean for BsaI was found.</strong> Clean for BsmBI is expected to be common, since the LTRs contribute
+none, but no specific TRE vector sequence was scanned. What would close it: scan the Addgene
+sequences of the TRE lentiviral vectors directly. <strong>Correction, 2026-10-06:</strong> this does not need
+a login. The bases and the enzyme list behind an Addgene map are served to anyone, and that is
+how section 2's base-by-base comparison was run.</p>
+<h2 id="3-tar-and-the-six-bases">3. TAR, and the six bases<a class="headerlink" href="#3-tar-and-the-six-bases" title="Permanent link">&para;</a></h2>
+<p>All sources in this section read <strong>2026-10-06</strong>.</p>
+<h3 id="the-lower-stem-is-structure-critical-not-sequence-critical">The lower stem is structure-critical, not sequence-critical<a class="headerlink" href="#the-lower-stem-is-structure-critical-not-sequence-critical" title="Permanent link">&para;</a></h3>
+<p>Three measurements say the same thing, and they are the load-bearing result of the whole note.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Measured</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Klaver, B. &amp; Berkhout, B. <em>EMBO J.</em> <strong>13</strong>, 2650–2659 (1994). PMID 8013464, PMC395139, <a href="https://doi.org/10.1002/j.1460-2075.1994.tb06555.x">doi:10.1002/j.1460-2075.1994.tb06555.x</a></td>
+<td>Base substitutions in the TAR <strong>lower stem</strong> of replication-competent HIV-1</td>
+<td>Viruses dead. Revertants recovered only after &gt;6 months; the point mutations and short deletions that rescued them "supported the notion that <strong>base-pairing</strong> of the lower stem region is essential"</td>
+</tr>
+<tr>
+<td>Das, A. T., Klaver, B. &amp; Berkhout, B. <em>J. Virol.</em> <strong>72</strong>, 9217–9223 (1998). PMID 9765469, PMC110341, <a href="https://doi.org/10.1128/jvi.72.11.9217-9223.1998">doi:10.1128/jvi.72.11.9217-9223.1998</a></td>
+<td>Mutant "Xho+10" replaces nt <strong>+3 to +16</strong> with unrelated sequence — four of the six bases at issue, plus ten more</td>
+<td>5'-only: RNA ~50% of wild type, packaging 70%, CA-p24 similar. 3'-only: RNA 100%, packaging 70%. Both: RNA ~50%, packaging 40%. <strong>A revertant that restored lower-stem pairing restored packaging</strong></td>
+</tr>
+<tr>
+<td>Das, A. T., Vrolijk, M. M., Harwig, A. &amp; Berkhout, B. <em>Retrovirology</em> <strong>9</strong>, 59 (2012). PMID 22828074, PMC3432602, <a href="https://doi.org/10.1186/1742-4690-9-59">doi:10.1186/1742-4690-9-59</a></td>
+<td>Deletions on <strong>one</strong> side of the TAR stem versus <strong>both</strong> sides</td>
+<td>"opening the 5' TAR structure through a deletion in <strong>either side</strong> of the stem region caused aberrant dimerization and reduced packaging… In contrast, <strong>truncation of the TAR hairpin through deletions in both sides of the stem did not affect RNA dimer formation and packaging</strong>"</td>
+</tr>
+</tbody>
+</table>
+<p>The 2012 result is the clean control: break the duplex and the vector suffers; shorten the
+duplex while keeping it paired and it does not. <strong>The identity of the lower-stem bases is
+dispensable. The duplex is not.</strong></p>
+<p>Two further constraints on any redesign:</p>
+<ul>
+<li><strong>A destabilised TAR damages its neighbour.</strong> Vrolijk, M. M. <em>et al.</em> <em>Retrovirology</em> <strong>6</strong>, 13
+  (2009). PMID 19210761, PMC2645353,
+  <a href="https://doi.org/10.1186/1742-4690-6-13">doi:10.1186/1742-4690-6-13</a>. Measured: destabilising
+  TAR extends the adjacent polyA hairpin and <strong>inhibits polyadenylation</strong>. Unpaired bases do not
+  stay local.</li>
+<li><strong>Over-stabilising is also costly.</strong> Da Silva Amaral, C. <em>et al.</em> <em>J. Virol.</em> (2026). PMID
+  42053302, PMC13185573, <a href="https://doi.org/10.1128/jvi.01840-25">doi:10.1128/jvi.01840-25</a>.
+  Measured: mutations that <strong>stabilise</strong> the lower stem of cTAR impair NC-mediated cTAR–TAR
+  annealing, reduce replication, and reduce full-length ssDNA in infected cells. A redesign must
+  land near wild-type free energy, not merely "paired".</li>
+</ul>
+<h3 id="is-tar-needed-at-all-once-tat-is-gone">Is TAR needed at all once Tat is gone?<a class="headerlink" href="#is-tar-needed-at-all-once-tat-is-gone" title="Permanent link">&para;</a></h3>
+<p><strong>The one published death of lower-stem mutants was measured with Tat driving the HIV-1 LTR</strong> —
+Klaver &amp; Berkhout above infer the defect is "at the level of transcription from an integrated
+provirus". That mechanism does not exist in a third-generation vector whose producer transcript
+comes from CMV or TRE and whose cells contain no Tat. Das 2012 reports that "<strong>complete TAR
+deletion is allowed</strong> in the context of an HIV-1 variant that does not depend on this Tat-TAR
+axis for transcription".</p>
+<p>So the transcriptional job of TAR is gone. <strong>Three jobs survive into a Tat-independent vector,
+and all three are structural:</strong></p>
+<ul>
+<li><strong>First strand transfer.</strong> Berkhout, B., Vastenhouw, N. L., Klasens, B. I. F. &amp; Huthoff, H.
+  <em>RNA</em> <strong>7</strong>, 1097–1114 (2001). PMID 11497429, PMC1370158,
+  <a href="https://doi.org/10.1017/s1355838201002035">doi:10.1017/s1355838201002035</a>. In an <em>in vitro</em>
+  donor/acceptor assay, mutating the TAR <strong>loop</strong> of the donor RNA reduced transfer <strong>more than
+  fivefold</strong>, and the authors conclude "it is not the RNA hairpin motif in the 5'R donor, but
+  rather the <strong>antisense motif in the ssDNA copy</strong>… that is critical for strand transfer".</li>
+<li><strong>Dimerisation and packaging.</strong> Das 1998 and Das 2012, numbers above.</li>
+<li><strong>Polyadenylation</strong>, through the neighbouring hairpin. Vrolijk 2009.</li>
+</ul>
+<h3 id="do-both-ltr-copies-have-to-change">Do both LTR copies have to change?<a class="headerlink" href="#do-both-ltr-copies-have-to-change" title="Permanent link">&para;</a></h3>
+<p><strong>Which copy is inherited.</strong> Das 1998 states that "mutations introduced in 5' TAR will be
+<strong>inherited in a dominant manner in both R regions</strong>", and that "<strong>3' TAR mutations will be lost
+after a single replication cycle</strong>". This is the authors' interpretation of their own experiment;
+the full text was blocked this run and <strong>no proviral sequencing panel was seen</strong>. Treat it as
+strongly supported mechanism, not as a sequencing measurement. What would close it: the PDF of
+PMC110341, read for the sequencing figure.</p>
+<p><strong>An asymmetric change survives — measured.</strong> Das 1998's 5'-only and 3'-only mutants both
+replicated, and on packaging the asymmetric constructs (70%) beat the symmetric double (40%).
+That is a measurement against the intuition that the copies must match.</p>
+<p><strong>But the modern field builds the symmetric mutant on purpose.</strong> Da Silva Amaral 2026 state that
+they put the mutations in both TARs so the constructs "<strong>cannot form mismatches between the cTAR
+sequence of the ssDNA and the TAR sequence at the 3'-end of the genomic RNA</strong>", and that "the
+lower stem of the 3' TAR hairpin was preserved in the double mutants because its opening
+indirectly affects the <strong>polyadenylation</strong> of the viral transcripts".</p>
+<p>That is the direct confirmation of the ticket's framing: <strong>the two copies do different jobs in
+the producer cell.</strong> The 5' copy is the transcript's 5' end and the cTAR template; the 3' copy
+is the polyadenylation context and the strand-transfer acceptor. A 5'-only change makes a
+cTAR/3'-TAR mismatch at first strand transfer; a 3'-only change perturbs polyadenylation and is
+then lost anyway.</p>
+<h3 id="verdict-on-positions-16">Verdict on positions 1–6<a class="headerlink" href="#verdict-on-positions-16" title="Permanent link">&para;</a></h3>
+<p><strong>Likely survivable, conditional on three things, and no one has measured it.</strong></p>
+<p>Survivable because the lower stem is load-bearing by pairing and not by sequence (three
+measurements), and because the one lethal result was a Tat-dependent transcription defect that a
+third-generation vector does not have. Conditional on: preserving the duplex with a compensating
+change in the partner base; keeping free energy near wild type, checked against the adjacent
+polyA hairpin as well; and making the change in <strong>both</strong> LTRs.</p>
+<p><strong>Confidence: moderate-to-high on the mechanism, low on the magnitude.</strong> Everything above is
+HIV-1 virus biology plus an <em>in vitro</em> strand-transfer assay, carried into a vector by inference.</p>
+<p>One position deserves separate treatment. <strong>Nucleotide 1 is +1</strong>, the transcription start site
+(section 1 fixes it from the TATA box at offset 427). Changing +1 risks initiation efficiency and
+cap status, which is a different failure from a broken hairpin, and <strong>nothing measures it</strong>
+(gap 1 below). Killing <code>GGTCTC</code> needs only one base; <strong>inference, marked:</strong> prefer a single
+transversion at nt 4, 5 or 6 over a rewrite of all six, and leave nt 1 alone.</p>
+<p><strong>One group has done this, and section 2 reads their sequence.</strong> VAMSyB's Tier-3 lentiviral
+vector carries C→T at R+4 in both LTRs, and the vector packages and transduces. It is a
+transition, not a transversion, and no second change was made inside TAR — so it does <strong>not</strong>
+satisfy the compensation condition above, and it still worked. <strong>What it does not supply is
+a number:</strong> they reported no titre, so the precedent says the change is survivable and says
+nothing about the cost. Gap 2 below is unchanged by it.</p>
+<p>The partner base must be read off a fold of the <strong>real</strong> R sequence of the backbone in hand. A
+complementarity scan run here on 2026-10-06 over HXB2 TAR +1..+59 finds the best 6-nt partner
+for <code>GGUCUC</code> at nt 52–57 (<code>GGAACC</code>), pairing 5 of 6 with wobble allowed — close to, but not the
+same as, the textbook register. <strong>Do not assume nt 1–14 pairs with nt 44–57; fold the sequence.</strong></p>
+<h3 id="what-nothing-measures-in-this-section">What nothing measures, in this section<a class="headerlink" href="#what-nothing-measures-in-this-section" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Pol II initiation efficiency, +1 position or capping as a function of R nt 1–6 identity
+   under a heterologous promoter.</strong> Every transcription measurement found used the HIV-1 LTR,
+   where a +1 change and a Tat-response change are confounded. <em>Closes it:</em> make the change in
+   the real backbone and measure producer-cell vector RNA by RT-qPCR against a plasmid-copy
+   control, plus the 5' end by 5'-RACE, plus functional titre.</li>
+<li><strong>Functional titre of any lentiviral transfer vector with a modified or deleted TAR/R.</strong>
+   Patents claim hybrid R regions; no measured titre was retrieved. <em>Closes it:</em> a side-by-side
+   titre against the parent — one experiment, and it also closes 1.</li>
+<li><strong>A designed compensatory double mutation in the TAR lower stem of a vector</strong>, as opposed to a
+   selected revertant in virus (Das 1998) or a both-sides deletion (Das 2012).</li>
+<li><strong>How many mismatched bases between the 5' and 3' R copies are tolerated at first strand
+   transfer, and at what cost.</strong> <em>Closes it:</em> the Berkhout 2001 <em>in vitro</em> assay, run with a
+   changed donor against a wild-type acceptor.</li>
+<li><strong>Whether the one-base asymmetry pLVX-TetOne already carries (section 1) behaves differently
+   from a six-base one.</strong> It is suggestive, not a measurement of tolerance.</li>
+</ol>
+<h2 id="4-the-tolerance-map">4. The tolerance map<a class="headerlink" href="#4-the-tolerance-map" title="Permanent link">&para;</a></h2>
+<p>All sources read <strong>2026-10-06</strong>. A number marked <strong>(unverified)</strong> was taken from an automated
+extraction of the journal page and was not matched against the saved text; it wants a one-line
+check before anyone designs against it. Everything else was matched to a saved dump.</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>What it does</th>
+<th>Class</th>
+<th>The measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>U3, 5' LTR</strong></td>
+<td>In a third-generation transfer plasmid it drives nothing — a heterologous enhancer replaces it</td>
+<td><strong>Permissive; wholly replaceable</strong></td>
+<td>pRRL fuses an RSV enhancer to HIV-1 R, pCCL a CMV one. pRRL gave 1.0 × 10⁷ TU/mL and 13,495 TU/ng p24, against 2nd-gen pHR2 at 4.1 × 10⁶ and 13,805 — higher particle titre, identical infectivity per p24 (unverified). Dull 1998</td>
+</tr>
+<tr>
+<td><strong>U3, 3' LTR (the ΔU3 / SIN deletion)</strong></td>
+<td>Carries TATA, Sp1, NF-κB; the residual stubs carry the integrase <em>att</em> site and the element licensing 3' polyadenylation</td>
+<td><strong>Mostly permissive; two sequence-critical stubs</strong></td>
+<td>SIN-18 deletes −418 to −18, leaving "only 53 nucleotides… 35 nucleotides upstream… to preserve efficient recognition and processing by integrase and 18 nucleotides downstream… to govern polyadenylation". Titre essentially unchanged (1,476 ± 232 vs 1,544 ± 126 TU/ng p24, unverified); LTR transcription down <strong>350-fold</strong>. Zufferey 1998. Independently: a 133 bp deletion, −141 to −9, titre 5.0 × 10⁵ vs 5.7 × 10⁵ TU/mL (unverified). Miyoshi 1998</td>
+</tr>
+<tr>
+<td><strong>R, outside TAR — the poly(A) signal</strong></td>
+<td><code>AATAAA</code> plus cleavage at the R/U5 boundary; present at both ends, so the 5' copy must be suppressed and the 3' copy used</td>
+<td><strong>Sequence-critical</strong> (hexamer and an upstream element), <strong>plus structure-critical</strong> (the polyA hairpin)</td>
+<td>Processing "require[s] sequences 76 nucleotides upstream of the AAUAAA hexamer", which bind CPSF-160 directly. Gilmartin 1995. Section 3's Vrolijk 2009 supplies the hairpin half</td>
+</tr>
+<tr>
+<td><strong>U5</strong></td>
+<td>Holds the GU/U-rich downstream element of the poly(A) site, the 3' half of the polyA hairpin, and the tRNA-primer surface</td>
+<td><strong>Mixed — and the structural half is an inference</strong></td>
+<td>The downstream element is sequence-defined (Gilmartin 1995). The measured U5–tRNA structural requirement is in <strong>RSV/tRNA-Trp, not HIV-1</strong> (Aiyar 1992). <strong>Calling HIV-1 U5 structure-critical is an inference by analogy</strong> and is marked as one</td>
+</tr>
+<tr>
+<td><strong>PBS</strong> (18 nt, tRNA-Lys3 complement)</td>
+<td>Primes minus-strand synthesis</td>
+<td><strong>Sequence-critical in effect, though not absolutely — and it reverts</strong></td>
+<td>PBS swapped to five other tRNA species: viruses "were able to replicate, although with delayed replication kinetics… all mutants reverted to the wild-type PBS(3Lys) sequence". Das 1995. Even a single-base change reverts fast — 10% by 12 h, 50% within 8 days. Berkhout &amp; Das 2015. <strong>Reversion is the point: a PBS edit does not stay edited</strong></td>
+</tr>
+<tr>
+<td><strong>Psi (SL1–SL4)</strong></td>
+<td>Gag recognition and genome encapsidation</td>
+<td><strong>Structure-critical</strong>, with a sequence-critical subset of base pairs</td>
+<td>The compensation experiment: destabilising substitutions plus "second-site compensatory mutations that would restore secondary structure" identified two hairpins that work by fold; "a subset of the hydrogen-bonded base pairs within the stems… is likely to be required for function in cis". McBride &amp; Panganiban 1996. Three stem-loops each bind Gag independently at ~4-fold lower affinity than full psi. Clever 1995</td>
+</tr>
+<tr>
+<td><strong>Major splice donor</strong></td>
+<td><code>GT</code> plus consensus — and it sits <strong>inside the SL2 stem</strong>, so an SD point mutation is also a psi structure mutation</td>
+<td><strong>Dual, and base changes are tolerated at modest cost</strong></td>
+<td>"Mutations of SD from GGTG to GCAG (SD1) or to GGGG (SD2) resulted in a moderate decrease (10 to 30%) in vector titer", while abrogating splicing; cytoplasmic full-length RNA fell &gt;70% (unverified). Cui 1999</td>
+</tr>
+<tr>
+<td><strong>RRE</strong> (351 nt)</td>
+<td>Rev-binding RNA; exports the unspliced genome</td>
+<td><strong>Stem-loop IIB sequence-critical; the rest structure-critical and conformationally plastic</strong></td>
+<td>Stem-loop II is "both necessary and sufficient for the binding of Rev". Malim 1990. And the fold itself carries output: wild-type RRE "exists as a mixture of both structures", and the five-stem form "promotes greater functional Rev/RRE activity". Sherpa 2015. <strong>This is the strongest warning against silent changes outside stem IIB</strong> — a change that shifts the conformer balance costs output without touching the Rev site. Deleting RRE cost &gt;90% of titre (unverified). Cui 1999</td>
+</tr>
+<tr>
+<td><strong>cPPT/CTS</strong></td>
+<td>Central plus-strand initiation and termination, making the central DNA flap</td>
+<td><strong>Sequence-critical in principle; its benefit is contested</strong></td>
+<td>For: "a 10-fold increase in the amount of integrated DNA… in the presence of the cPPT". Van Maele 2003; Zennou 2000, 2001; Follenzi 2000. <strong>Against, and a tolerance map must carry it:</strong> ten base changes within the cPPT, in two backbones — "the wild-type and cPPT-D mutant viruses replicated with similarly robust kinetics" (unverified). Dvorin 2002</td>
+</tr>
+<tr>
+<td><strong>3' PPT</strong> (15 nt)</td>
+<td>RNase-H-resistant plus-strand primer</td>
+<td><strong>3' end sequence-critical; 5' end permissive</strong></td>
+<td>"Changes at the 5' end of the PPT have no effect on primer function, whereas the identity of bases at the 3' end is crucial"; a primer keeping only the six 3' G residues worked like wild type. Powell &amp; Levin 1996. In virus, a fully randomised PPT retained <strong>12%</strong> of wild-type infectivity and reverted quickly. Miles 2005</td>
+</tr>
+<tr>
+<td><strong>WPRE</strong></td>
+<td>Post-transcriptional enhancer of transgene expression</td>
+<td><strong>Permissive — and it carries the one published domestication precedent</strong></td>
+<td>Expression up ≥5-fold, and "the WPRE did not influence titers" (unverified). Zufferey 1999. No single sub-element is essential: α, β and γ each give ~12% of full activity alone (unverified). Donello 1998. <strong>WPRE-mut6</strong>: mutating the woodchuck X-protein ORF start codon out — "the native form or mutated derivatives functioned equivalently". Zanta-Boussif 2009. The abstract gives no fold number; the panel is paywalled</td>
+</tr>
+<tr>
+<td><strong>Δgag fragment</strong></td>
+<td>Residual gag 5' end carrying SL4 and the gag start</td>
+<td><strong>Permissive at ~30% titre cost</strong></td>
+<td>A 5' gag deletion cost 30% of titre with no significant RNA effect; a combined gag/env/RRE/SD1 deletion still reached ~50% of wild type (unverified). Cui 1999</td>
+</tr>
+<tr>
+<td><strong>Internal promoter and env/SA region</strong></td>
+<td>The heterologous cassette</td>
+<td><strong>Permissive — whole-cassette swaps are free</strong></td>
+<td>PGK, CMV and gene-specific internal promoters all give normal titres across Zufferey 1998, Dull 1998 and Zanta-Boussif 2009. <strong>Nothing measures silent base changes <em>inside</em> an internal promoter</strong> — the evidence is for swapping the whole cassette</td>
+</tr>
+</tbody>
+</table>
+<h3 id="three-things-in-this-table-that-change-how-you-domesticate">Three things in this table that change how you domesticate<a class="headerlink" href="#three-things-in-this-table-that-change-how-you-domesticate" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Compensatory changes are a measured technique here, not a hope.</strong> McBride &amp; Panganiban
+  built destabilising mutations and second-site restorations in psi and read the fold back out.
+  That is the same move section 3 recommends for TAR.</li>
+<li><strong>Two elements revert rather than fail.</strong> The PBS and the 3' PPT both restore wild-type
+  sequence under selection. An edit there does not produce a stable broken vector; it produces a
+  vector that quietly turns back into the parent, which a sequencing check at passage 1 would
+  miss.</li>
+<li><strong>The RRE punishes silent changes.</strong> It is the one element where a change that touches no
+  recognised motif can still cost output, by moving a conformer equilibrium. Treat the whole 351
+  nt as off-limits, not just stem IIB.</li>
+</ul>
+<h3 id="what-nothing-measures-in-this-section_1">What nothing measures, in this section<a class="headerlink" href="#what-nothing-measures-in-this-section_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Open</th>
+<th>What would close it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tolerance to base change <strong>inside</strong> the retained 35 nt integrase stub and 18 nt poly(A) stub of a SIN 3' LTR. Zufferey 1998 kept them deliberately but ran no substitution series in them</td>
+<td>A scanning triple-base substitution walk across both stubs in a SIN-18 backbone, read as TU/mL plus integrated copies by qPCR and 2-LTR circles</td>
+</tr>
+<tr>
+<td>HIV-1 <strong>U5</strong> base changes in a vector. The only measured tRNA–U5 structural requirement is in RSV</td>
+<td>Compensatory mutation pairs across the HIV-1 U5–PBS helix in a SIN vector, titred</td>
+</tr>
+<tr>
+<td>Per-stem-loop packaging and titre numbers for <strong>SL1–SL4</strong>. The two psi papers are abstract-and-references at PMC</td>
+<td>The PDFs of PMC190155 and PMC188876 through institutional access</td>
+</tr>
+<tr>
+<td>Whether the splice donor's 10–30% titre cost is <strong>splicing or SL2 structure</strong> — the two are confounded because the SD sits in the stem</td>
+<td>Second-site changes restoring SL2 pairing while keeping the SD dead. Titre recovery would settle it</td>
+</tr>
+<tr>
+<td><strong>RRE length versus titre</strong> in an HIV-1 vector. Only the BIV analogue was found</td>
+<td>A nested truncation series, 351 → 234 → stem-IIB-only, in one backbone, titred, with the spliced/unspliced cytoplasmic ratio</td>
+</tr>
+<tr>
+<td>Base changes in the sequence <strong>flanking</strong> cPPT/CTS, independently of the cPPT itself</td>
+<td>Vary the flanks alone and measure integrated copies</td>
+</tr>
+<tr>
+<td>Silent base changes <strong>inside</strong> an internal promoter — which is where two of pLVX's own sites sit</td>
+<td>A reporter assay for promoter strength before and after</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-alternative-and-engineered-ltr-designs">5. Alternative and engineered LTR designs<a class="headerlink" href="#5-alternative-and-engineered-ltr-designs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Design</th>
+<th>Changed for</th>
+<th>Measured</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RSV-U3/HIV-R (pRRL)</strong> and <strong>CMV-U3/HIV-R (pCCL)</strong> chimeric 5' LTR</td>
+<td>Tat independence, so the third-generation system can drop <em>tat</em></td>
+<td>pRRL 1.0 × 10⁷ TU/mL; without Tat it kept 60% of control against 5–15% for pHR2 (unverified). Dull 1998</td>
+</tr>
+<tr>
+<td><strong>CMV/LTR hybrid 5' LTR plus ΔU3 3' LTR</strong></td>
+<td>The same, independently</td>
+<td>Hybrid 5' LTR <em>raised</em> titre: 9.3 × 10⁵ and 8.2 × 10⁵ against 5.7 × 10⁵ TU/mL for wild type (unverified). Miyoshi 1998</td>
+</tr>
+<tr>
+<td><strong>Varying ΔU3 extent (SIN-18 / -36 / -45 / -78)</strong></td>
+<td>Trading residual LTR activity against titre</td>
+<td>SIN-78, which keeps TATA and three Sp1 sites, still showed LTR transcript and a 21–30-fold GFP rise on HIV superinfection; SIN-18/-36/-45 showed none. <strong>The deletion must reach past the TATA box, not merely past the enhancer.</strong> Zufferey 1998</td>
+</tr>
+<tr>
+<td><strong>Insulated LTR (cHS4 in the ΔU3)</strong></td>
+<td>Shielding the transgene from position effects</td>
+<td>Titre falls with insert length <strong>in the 3' LTR specifically</strong> — the same 1.2 kb placed internally cost nothing. The block is post-entry: less reverse transcription and integration, with equal full-length mRNA in packaging cells. Urbinati 2009</td>
+</tr>
+<tr>
+<td><strong>Non-primate backbones (EIAV, FIV, BIV, SIV)</strong></td>
+<td>Avoiding HIV-derived sequence</td>
+<td>Only BIV was verified: its RRE maps to 312 bp of <em>env</em> and the first 104 bp of <em>gag</em> carries part of the packaging signal; a minimal BIV SIN vector was built from these. Molina 2002. <strong>EIAV and FIV titre comparisons surfaced only in vendor PDFs and reviews and are not cited here</strong></td>
+</tr>
+<tr>
+<td>"SIN with internal poly(A)", sequence-reduced LTRs, integrase-deficient designs</td>
+<td>—</td>
+<td><strong>Nothing primary found. Open</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two leads were found and <strong>not</strong> read, both likely to matter:</p>
+<ul>
+<li><strong>Wright <em>et al.</em> (2026)</strong>, "supA-LTRs" — sequence-upgraded polyA LTRs in real lentiviral
+  vectors, PMC13370168, open access. This is the closest published thing to changing R-region
+  sequence in a vector and reporting titre, which is gap 2 of section 3.</li>
+<li><strong>Wright <em>et al.<em>, </em>Heliyon</em></strong> — major-splice-donor mutation plus a U1 snRNA enhancer,
+  reporting 5.7- to 8.5-fold titre improvement. The numbers reached this note only through a
+  search snippet and a vendor-hosted PDF, so they are <strong>recorded as a lead, not cited</strong>.</li>
+</ul>
+<h2 id="6-if-a-permissive-change-is-wrong-how-would-you-know">6. If a permissive change is wrong, how would you know?<a class="headerlink" href="#6-if-a-permissive-change-is-wrong-how-would-you-know" title="Permanent link">&para;</a></h2>
+<p><strong>This section now lives in its own note.</strong> Read
+<a href="../vector-qc-panel/"><code>vector-qc-panel.md</code></a> — issue #271 — which supersedes the panel that used
+to sit here and goes well past it: every failure mode in turn, what each assay is blind to, the
+panel ordered cheapest first, the one assay to run if you can afford exactly one, and the
+arithmetic on whether a quiet titre loss skews a pooled library.</p>
+<p>Three things from it that change how you <em>domesticate</em>, rather than how you test:</p>
+<ul>
+<li><strong>Position matters at a resolution of a few bases.</strong> Restriction sites placed around psi in a
+  lentiviral transfer vector cost 82% of titre in one position and nothing three bases further
+  out, while p24 varied 1.2-fold across the whole panel. That is the closest published thing to
+  a domestication edit, and <strong>p24 alone would have told them nothing</strong>.</li>
+<li><strong>A two-base change can cost what neither base costs alone.</strong> Two substitutions downstream of
+  the PBS inside psi, in no reading frame, lowered packaging — either one alone changed nothing.
+  An edit landing in the 5' UTR or psi gets assayed, not reasoned about.</li>
+<li><strong>Keep every comparison paired and same-day against the undomesticated parent.</strong> Every effect
+  in this literature is a ratio to a parent, and batch variance in lentiviral packaging is
+  larger than any of these assays' CV.</li>
+</ul>
+<h2 id="7-using-this-map-on-the-next-backbone">7. Using this map on the next backbone<a class="headerlink" href="#7-using-this-map-on-the-next-backbone" title="Permanent link">&para;</a></h2>
+<p>A procedure, in the order that spends least.</p>
+<ol>
+<li><strong>Count the sites for every candidate enzyme, not just the one you meant to use.</strong> Section 1's
+   table is for HIV-1; run the same count on the backbone in hand with
+   <code>mbio.sites.find_sites</code>. If one enzyme is already clean, the whole question closes.</li>
+<li><strong>Separate the sites you must clear from the sites you merely found.</strong> Only the enzyme an
+   assembly reaction actually sees matters. #230 made this point on pLVX: narrowing the
+   requirement from "no BsaI and no BsmBI" to "no BsmBI" turned two research questions into two
+   synonymous codon changes.</li>
+<li><strong>Sort what is left by this map.</strong> Coding sequence first — a synonymous change is free and
+   <code>mbio.sites.domesticate</code> makes it. Then unannotated spacer. Then the elements this note
+   marks permissive. Leave sequence-critical elements alone; for structure-critical ones, design
+   a compensating change and check the fold.</li>
+<li><strong>Count the copies before you count the edits.</strong> A site in R or U5 exists in both LTRs. A site
+   in U3 exists in both only if the vector is not ΔU3 SIN — check, as section 1 does, rather than
+   assuming.</li>
+<li><strong>Decide what failure you could not afford to miss, and run that assay.</strong>
+   <a href="../vector-qc-panel/"><code>vector-qc-panel.md</code></a> orders them. For a pooled library the answer is
+   usually titre plus representation, because those are the two that fail quietly.</li>
+</ol>
+<h3 id="the-general-lesson">The general lesson<a class="headerlink" href="#the-general-lesson" title="Permanent link">&para;</a></h3>
+<p>Of the eight sites in pLVX, four were cheap, two were regulatory sequence nobody has measured,
+and two were in the most conserved six bases of the vector. The expensive ones were not expensive
+because the plasmid was badly designed — they were expensive because they sit in HIV-1 sequence
+that every lentiviral vector carries. <strong>Changing the enzyme is almost always cheaper than
+changing the virus.</strong> That is the finding to carry forward.</p>
+<h2 id="8-sources">8. Sources<a class="headerlink" href="#8-sources" title="Permanent link">&para;</a></h2>
+<p>Every source below was read <strong>2026-10-06</strong>. Downloads are under
+<code>reference_docs/synthesis_and_assembly/lentiviral-tolerance/</code>, whose <code>README.md</code> says which file
+is which and what was left out.</p>
+<h3 id="sequence">Sequence<a class="headerlink" href="#sequence" title="Permanent link">&para;</a></h3>
+<ul>
+<li>GenBank <strong>K03455.1</strong>, HIV-1 HXB2 reference genome, 9,719 bp.
+  <a href="https://www.ncbi.nlm.nih.gov/nuccore/K03455.1">https://www.ncbi.nlm.nih.gov/nuccore/K03455.1</a></li>
+<li>GenBank <strong>AF324493.2</strong>, HIV-1 vector pNL4-3, 14,825 bp.
+  <a href="https://www.ncbi.nlm.nih.gov/nuccore/AF324493.2">https://www.ncbi.nlm.nih.gov/nuccore/AF324493.2</a></li>
+<li>Addgene 171123, pLVX-TetOne-Puro-GFP, Addgene-verified sequence 336792, already held for #230.
+  <a href="https://www.addgene.org/171123/">https://www.addgene.org/171123/</a></li>
+</ul>
+<h3 id="toolkits">Toolkits<a class="headerlink" href="#toolkits" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fonseca, J. P. <em>et al.</em> A toolkit for rapid modular construction of biological circuits in
+  mammalian cells. <em>ACS Synth. Biol.</em> <strong>8</strong>, 2593–2606 (2019). PMID 31686495,
+  <a href="https://doi.org/10.1021/acssynbio.9b00322">doi:10.1021/acssynbio.9b00322</a>.</li>
+<li>Sanjana, N. E., Shalem, O. &amp; Zhang, F. Improved vectors and genome-wide libraries for CRISPR
+  screening. <em>Nat. Methods</em> <strong>11</strong>, 783–784 (2014). PMID 25075903,
+  <a href="https://doi.org/10.1038/nmeth.3047">doi:10.1038/nmeth.3047</a>.</li>
+<li>Martella, A. <em>et al.</em> EMMA: an extensible mammalian modular assembly toolkit. <em>ACS Synth. Biol.</em>
+  <strong>6</strong>, 1380–1392 (2017). PMID 28418644,
+  <a href="https://doi.org/10.1021/acssynbio.7b00016">doi:10.1021/acssynbio.7b00016</a>.</li>
+<li>Haellman, V. <em>et al.</em> VAMSyB. <em>Metab. Eng.</em> <strong>66</strong>, 41–50 (2021). PMID 33857582,
+  <a href="https://doi.org/10.1016/j.ymben.2021.04.003">doi:10.1016/j.ymben.2021.04.003</a>. <strong>Published
+  CC-BY PDF read in full</strong>, from the ETH Research Collection copy at
+  <a href="https://doi.org/10.3929/ethz-b-000480636">doi:10.3929/ethz-b-000480636</a>. The supplement was
+  not retrieved — it is served only from ScienceDirect, which refuses an automated fetch.</li>
+<li>Addgene-verified full sequences of <a href="https://www.addgene.org/169661/">pTS1106_Tier3(Lenti)</a>
+  (Addgene 169661) and <a href="https://www.addgene.org/52961/">lentiCRISPR v2</a> (Addgene 52961), both
+  read 2026-10-06 through the public sequence viewer.</li>
+</ul>
+<h3 id="tar">TAR<a class="headerlink" href="#tar" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Klaver, B. &amp; Berkhout, B. <em>EMBO J.</em> <strong>13</strong>, 2650–2659 (1994). PMID 8013464, PMC395139,
+  <a href="https://doi.org/10.1002/j.1460-2075.1994.tb06555.x">doi:10.1002/j.1460-2075.1994.tb06555.x</a>.
+  <strong>Abstract only</strong> — the full text was blocked this run.</li>
+<li>Das, A. T., Klaver, B. &amp; Berkhout, B. <em>J. Virol.</em> <strong>72</strong>, 9217–9223 (1998). PMID 9765469,
+  PMC110341, <a href="https://doi.org/10.1128/jvi.72.11.9217-9223.1998">doi:10.1128/jvi.72.11.9217-9223.1998</a>.
+  Read as web-page full text, <strong>not</strong> as the PDF; no figure panel was seen.</li>
+<li>Das, A. T., Vrolijk, M. M., Harwig, A. &amp; Berkhout, B. <em>Retrovirology</em> <strong>9</strong>, 59 (2012).
+  PMID 22828074, PMC3432602, <a href="https://doi.org/10.1186/1742-4690-9-59">doi:10.1186/1742-4690-9-59</a>.
+  Full text saved.</li>
+<li>Vrolijk, M. M., Harwig, A., Berkhout, B. &amp; Das, A. T. <em>Retrovirology</em> <strong>6</strong>, 13 (2009).
+  PMID 19210761, PMC2645353, <a href="https://doi.org/10.1186/1742-4690-6-13">doi:10.1186/1742-4690-6-13</a>.
+  Full text saved.</li>
+<li>Berkhout, B., Vastenhouw, N. L., Klasens, B. I. F. &amp; Huthoff, H. <em>RNA</em> <strong>7</strong>, 1097–1114 (2001).
+  PMID 11497429, PMC1370158,
+  <a href="https://doi.org/10.1017/s1355838201002035">doi:10.1017/s1355838201002035</a>. <strong>Abstract and
+  partial page only.</strong></li>
+<li>Da Silva Amaral, C. <em>et al.</em> <em>J. Virol.</em> (2026). PMID 42053302, PMC13185573,
+  <a href="https://doi.org/10.1128/jvi.01840-25">doi:10.1128/jvi.01840-25</a>. Full text saved.</li>
+</ul>
+<h2 id="9-what-this-note-did-not-settle">9. What this note did not settle<a class="headerlink" href="#9-what-this-note-did-not-settle" title="Permanent link">&para;</a></h2>
+<p>Collected here so the next reader sees the whole hole at once. Sections 2, 3 and 4 each repeat
+their own entries in place; what section 6 used to list is now in
+<a href="../vector-qc-panel/"><code>vector-qc-panel.md</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Open</th>
+<th>What would close it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pol II initiation, +1 and capping as a function of R nt 1–6, under a heterologous promoter</td>
+<td>The change made in a real backbone, then producer-cell vector RNA by RT-qPCR, the 5' end by 5'-RACE, and functional titre</td>
+</tr>
+<tr>
+<td>Functional titre of <strong>any</strong> lentiviral vector with modified or deleted TAR/R</td>
+<td>A side-by-side titre against the parent</td>
+</tr>
+<tr>
+<td>A designed compensatory lower-stem double mutant in a <strong>vector</strong></td>
+<td>Build it and titre it</td>
+</tr>
+<tr>
+<td>How many 5'/3' R mismatches first strand transfer tolerates</td>
+<td>The Berkhout 2001 <em>in vitro</em> donor/acceptor assay with a changed donor and wild-type acceptor</td>
+</tr>
+<tr>
+<td>Whether a BsaI-based lentiviral toolkit avoided BsaI for the reason section 1 gives</td>
+<td>A methods section or correspondence from the MTK or lentiCRISPR groups</td>
+</tr>
+<tr>
+<td>~~Whether VAMSyB already removed BsaI from a lentiviral LTR~~ — <strong>closed 2026-10-06, issue #262.</strong> They did: C→T at R+4 in both copies. They reported no titre, so this closes the precedent question and leaves the titre gap above exactly as it was</td>
+<td>—</td>
+</tr>
+<tr>
+<td>~~Whether any Tet-on lentiviral backbone is already BsaI-clean~~ — <strong>closed 2026-10-08, issue #485.</strong> None is. Twenty-two deposits were scanned, and the TAR 20-mer that opens R occurs exactly twice in every one: nobody has recoded an LTR. <code>working-vector-plvx-tetone.md</code> section 7 has the table</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Whether pLVX-TetOne is intended to be self-inactivating</td>
+<td>The manufacturer's map, or an LTR-transcription assay on the provirus</td>
+</tr>
+<tr>
+<td>The effect of base changes in the hPGK promoter, where two of pLVX's sites sit</td>
+<td>A reporter assay for promoter strength before and after</td>
+</tr>
+</tbody>
+</table>
+<p>Five papers central to section 3 were blocked by PMC's bot wall and read as abstracts or
+web-page text rather than PDFs: PMC110341, PMC395139, PMC1370158, PMC190280 (Harrich 1996, not
+read at all) and PMC191344. <strong>A follow-up pass should retrieve them.</strong> The one most likely to
+close the titre gap was found but not read: Wright <em>et al.</em> (2026) on "supA-LTRs", sequence-
+upgraded polyA LTRs in real lentiviral vectors — PMC13370168, open access.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1756 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/projects/igga/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../dmx/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>iGGA: a barcoded combinatorial library - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#igga-a-barcoded-combinatorial-library" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              iGGA: a barcoded combinatorial library
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#when-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        When to use it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What you need
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Run it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-wrote" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What it wrote
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-bench-works-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the bench works through
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Before you order
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-and-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Tips and troubleshooting
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-numbers-come-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Where the numbers come from
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        References
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#when-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        When to use it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What you need
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Run it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-wrote" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What it wrote
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-bench-works-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the bench works through
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Before you order
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-and-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Tips and troubleshooting
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-numbers-come-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Where the numbers come from
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        References
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="igga-a-barcoded-combinatorial-library">iGGA: a barcoded combinatorial library<a class="headerlink" href="#igga-a-barcoded-combinatorial-library" title="Permanent link">&para;</a></h1>
+<p>Iterative Golden Gate appends one list of parts a round, so a few dozen proteins become
+thousands of plasmids. Each part carries an 11 bp barcode at its junction, so sequencing a
+member says which protein sits at every position. One command designs the synthesis order,
+draws the barcodes, simulates the rounds, sizes the colonies each round needs and writes the
+bench protocol.</p>
+<h2 id="when-to-use-it">When to use it<a class="headerlink" href="#when-to-use-it" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Two or more lists of protein or DNA parts, and you want every combination as a plasmid.</li>
+<li>You want a member read back from sequencing alone, with nothing to look up.</li>
+<li>The library is too large to build member by member.</li>
+</ul>
+<p>Use <a href="../../methods/golden-gate/">Golden Gate assembly</a> for one defined construct instead, and
+<a href="../dmx/">DMX</a> to read picked wells back.</p>
+<h2 id="what-you-need">What you need<a class="headerlink" href="#what-you-need" title="Permanent link">&para;</a></h2>
+<p>One file. It names a FASTA of the parts, the vector the first round opens, the backbone the
+library ends in, and this run's own numbers. A <strong>project</strong> is the chain of protocols; a
+<strong>build</strong> is one run's choices, and the file holding a build is called <code>project.json</code>. The run
+below uses files that ship with the repo. Copy them to start one of your own.</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../examples/ap1-library/project.json">project.json</a></td>
+<td>the build: three positions, the host, the completeness, the barcode rules, and the numbers this lab set for itself</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/parts.fasta">parts.fasta</a></td>
+<td>72 proteins, 24 for each of the N, DBD and C positions. The name says the position; no overhang, stuffer, barcode or codon is given</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/vector.gb">vector.gb</a>, <a href="../../examples/ap1-library/carrier.gb">carrier.gb</a></td>
+<td>the destination the first round opens, and the plasmid each part is seated in. Leave <code>carrier</code> out and nothing is seated, which is what a lab holding its parts wants</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/working-vector.gb">working-vector.gb</a></td>
+<td>the backbone the finished library ends in. Swap in your own and name a site in it</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/primers.tsv">primers.tsv</a>, <a href="../../examples/ap1-library/prices.csv">prices.csv</a></td>
+<td>the orthogonal primer set the pool is amplified by, and what this lab pays for each thing the run buys. Replace every price row with your own quote</td>
+</tr>
+</tbody>
+</table>
+<h2 id="run-it">Run it<a class="headerlink" href="#run-it" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>synbio<span class="w"> </span>igga<span class="w"> </span>plan<span class="w"> </span>docs/examples/ap1-library/project.json<span class="w"> </span>--out<span class="w"> </span>library/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--working-site<span class="w"> </span>EGFP<span class="w"> </span>--prices<span class="w"> </span>docs/examples/ap1-library/prices.csv
+</code></pre></div>
+<p><code>--working-site</code> says where the ccdB cassette goes in a backbone carrying none; <code>--prices</code>
+points at the price list this lab holds. The run states its design in one line, then every
+file:</p>
+<div class="highlight"><pre><span></span><code>AP-1 DESynR round 3: 6435 bp, 72 parts in 3 lists, 13,824 constructs, 3 rounds, entry overhangs AGGA, AGAT, GCAT, scar TTCC, 27 amino acid changes, checks pass
+library/parts.tsv
+library/barcodes.tsv
+library/changes.tsv
+library/round-1.dna
+library/round-2.dna
+library/product.dna
+library/block-vector-1.dna
+library/block-vector-2.dna
+library/block-vector-3.dna
+library/working-vector-ccdb.dna
+library/protocol/project.json
+library/protocol/index.html
+library/protocol/01-part-carrier.html
+library/protocol/02-primer-plates.html
+library/protocol/03-cargo-ordering-and-pool-preparation.html
+library/protocol/04-cargo-creation.html
+library/protocol/05-cargo-validation-barcode-ligation.html
+library/protocol/05-cargo-validation-index-pcr.html
+library/protocol/06-library-assembly-in-rounds.html
+library/protocol/07-final-cargo-ligation.html
+library/protocol/reagents.html
+library/protocol/references.html
+library/pool.tsv
+library/pool-primers.tsv
+library/oligo.dna
+library/library-read-primers.tsv
+</code></pre></div>
+<p>Read that line first. 72 parts in three lists make 13,824 constructs. Each list enters on its
+own overhang and every part leaves the same <code>TTCC</code> scar. The planner picked that set because it
+costs the proteins fewest residues: the 27 changes in <code>changes.tsv</code> are what you pay for it.</p>
+<p>A round opens the library with BbsI and releases one part list with BsaI, in separate tubes,
+then ligates, electroporates and preps the result as the next round's destination. A 34 bp
+internal stuffer is kept each round, which is what lets the next round open the product; a
+capping block ends the chain instead. The 41 bp barcode block reads in reverse of the round
+order.</p>
+<p>The last round needs 195,386 colonies for a 0.99 chance that none of its 13,824 products is
+missing, 14 times its products. That is <strong>library coverage</strong>: colonies against distinct
+products, not sequencing depth. A round below its floor loses members no later round puts back.</p>
+<p>The run ends by moving the library into a working vector, where an application gets it. The
+plan reads that backbone's cargo enzyme first, then keeps every block clear of it: an enzyme a
+block spells cannot be the one that admits the library.</p>
+<h2 id="what-it-wrote">What it wrote<a class="headerlink" href="#what-it-wrote" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../examples/ap1-library/parts.tsv">parts.tsv</a></td>
+<td>the synthesis order sheet: 72 blocks, 133 to 1,149 bases, each with its barcode on the same row</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/pool.tsv">pool.tsv</a>, <a href="../../examples/ap1-library/pool-primers.tsv">pool-primers.tsv</a>, <a href="../../examples/ap1-library/oligo.dna">oligo.dna</a></td>
+<td>the oligo pool those blocks are synthesised as, 131 oligos every one 350 nt; the 74 primers that pull batches out of it; and one oligo drawn with its three primers</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/barcodes.tsv">barcodes.tsv</a></td>
+<td>which barcode names which part, and where it sits. This is what turns a read back into a list of parts</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/changes.tsv">changes.tsv</a></td>
+<td>every amino acid the overhang standard moved, wild type beside synthesised</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/round-1.dna">round-1.dna</a>, <a href="../../examples/ap1-library/round-2.dna">round-2.dna</a></td>
+<td>one annotated record a round. Opens in SnapGene</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/product.dna">product.dna</a></td>
+<td>one member of the library, 6,435 bases, before the move into the working vector. The product is the plasmid; an assembly product is a kit</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/block-vector-1.dna">block-vector-1.dna</a>, <a href="../../examples/ap1-library/block-vector-2.dna">-2</a>, <a href="../../examples/ap1-library/block-vector-3.dna">-3</a></td>
+<td>the vector each position's blocks are built in, one a position</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/working-vector-ccdb.dna">working-vector-ccdb.dna</a></td>
+<td>the backbone with a ccdB cassette put in at <code>--working-site</code>, 10,284 bases: what the last sitting opens</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/library-read-primers.tsv">library-read-primers.tsv</a></td>
+<td>the pairs that read linkage and representation back, with each amplicon</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/round-1-map.html">protocol/round-1-map.html</a> and one like it for each record a figure draws</td>
+<td>that record as a map you can explore, which the figure on the protocol page opens</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/index.html">protocol/</a></td>
+<td>the bench pages, and <code>project.json</code>, the whole chain as data</td>
+</tr>
+</tbody>
+</table>
+<p>Each name links to what that run wrote, published here unedited. Nothing is typed by hand, so
+the same inputs always write the same bytes. Change the build and run the command again to
+change the design. To change what a page says, edit the chain's own data file and render it
+again:</p>
+<div class="highlight"><pre><span></span><code>pixi<span class="w"> </span>run<span class="w"> </span>mbio<span class="w"> </span>protocol<span class="w"> </span>render<span class="w"> </span>library/protocol/project.json
+</code></pre></div>
+<p>Figures, drawn by <code>mbio plot map</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Figure</th>
+<th>What it draws</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../examples/ap1-library/vector-map.pdf">vector-map.pdf</a></td>
+<td>the destination the first round opens</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/round-1-map.pdf">round-1-map.pdf</a>, <a href="../../examples/ap1-library/round-2-map.pdf">round-2-map.pdf</a></td>
+<td>what each round leaves</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/product-map.pdf">product-map.pdf</a></td>
+<td>one finished member, with the four enzymes this method uses labelled</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/barcode-block.pdf">barcode-block.pdf</a></td>
+<td>the 41 bp barcode block and the stuffer ahead of it, every base shown</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-the-bench-works-through">What the bench works through<a class="headerlink" href="#what-the-bench-works-through" title="Permanent link">&para;</a></h2>
+<p>The run is not one sitting. The <code>protocol/</code> folder holds a page for each, in order.</p>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Handed</th>
+<th>Leaves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/01-part-carrier.html">Part carrier</a></td>
+<td>the 72 parts</td>
+<td>one carrier plasmid a part, one part a well</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/02-primer-plates.html">Primer plates</a></td>
+<td>nothing yet</td>
+<td>a primer stock plate, and a working copy</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/03-cargo-ordering-and-pool-preparation.html">Cargo ordering and pool preparation</a></td>
+<td>nothing yet</td>
+<td>the oligo pool</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/04-cargo-creation.html">Cargo creation</a></td>
+<td>the pool, the working plate, and a block vector a position</td>
+<td>one archived well a design</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/05-cargo-validation-barcode-ligation.html">Cargo validation: barcode ligation</a></td>
+<td>the archive plate, and the DMX barcode kit</td>
+<td>clonal wells, and a call for each</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/05-cargo-validation-index-pcr.html">Cargo validation: index PCR</a></td>
+<td>the archive plate, and the index primer plate</td>
+<td>clonal wells, and a call for each</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/06-library-assembly-in-rounds.html">Library assembly in rounds</a></td>
+<td>the carrier plate, and the clonal wells and their calls</td>
+<td>the library after round 3</td>
+</tr>
+<tr>
+<td><a href="../../examples/ap1-library/protocol/07-final-cargo-ligation.html">Final cargo ligation</a></td>
+<td>the library after round 3</td>
+<td>the library in a working vector</td>
+</tr>
+</tbody>
+</table>
+<p>Reading every well back has a page for each route, and the bench does one, never both;
+<a href="../dmx/">DMX</a> covers that job.
+<a href="../../examples/ap1-library/protocol/index.html">The way in</a> draws the chain, lists the checks,
+names every number with no source, and schedules the run: 49 steps, 19 of which hold the bench.
+Each page names the one before and after it, so you can mail one to whoever runs that sitting.</p>
+<h2 id="before-you-order">Before you order<a class="headerlink" href="#before-you-order" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Read the way in, then every page of the chain.</li>
+<li>Replace this build's numbers with yours: completeness, barcode rules, linkage fidelity and
+  final assembly.</li>
+<li>Decide that each residue change in <code>changes.tsv</code> is harmless in your proteins.</li>
+<li>Check each round's colony floor against the cells and cuvettes you hold.</li>
+<li>Re-price every row against your own vendors; a <strong>band</strong> here is a price band, not a gel
+  band.</li>
+</ul>
+<h2 id="tips-and-troubleshooting">Tips and troubleshooting<a class="headerlink" href="#tips-and-troubleshooting" title="Permanent link">&para;</a></h2>
+<p><strong>Your backbone carries Type IIS sites.</strong> The
+<a href="../../examples/ap1-library/working-vector.gb">working vector</a> here is not the file Addgene sends.
+Addgene 171123 reads six BsaI and two BsmBI sites and a round would cut every one, so all eight
+came out first. Two sit in TAR, the stem-loop at each end of the viral genome, which has to
+fold to work: removing a site there changes a shape the virus needs. <strong>Whether it still packages
+is open</strong> — the one published backbone carrying that change reports no titre. Measure it.</p>
+<p><strong>A round comes up short of colonies.</strong> Plate a dilution of every round beside a no-donor
+control, and subtract the control. The round's page does that sum for you: type both counts and
+the dilution into its expected result and it says whether the net clears the floor. Run the
+round again rather than carrying on: members lost in one round are missing from all of them
+after it.</p>
+<p><strong>A part's protein comes back changed.</strong> A junction spells whole codons, so the overhang
+decides the residues either side of it. The planner scores every candidate set across all the
+parts and keeps the cheapest, so a change in <code>changes.tsv</code> is one no other set avoided.</p>
+<h2 id="where-the-numbers-come-from">Where the numbers come from<a class="headerlink" href="#where-the-numbers-come-from" title="Permanent link">&para;</a></h2>
+<p>This run's settings are <strong>one build's answers, not the method's defaults</strong>: its completeness,
+its barcode rules, its linkage fidelity of 0.9, and the 75 ng of working vector its last tube
+takes. The build states no cargo mass, because cargo is never pipetted — the whole release goes
+in, so the digest fixes how much meets the vector. The pages label each of those as this run's
+own figure. Copy the file without replacing them and you carry someone else's settings.</p>
+<p>Volumes, units, times and temperatures are cited step by step inside each page, and
+<code>references.html</code> lists every document the run cites. Where nothing publishes a number the page
+prints a hole, not a guess: 35 here, four at the bench and 31 prices, since this lab priced nine
+of the bill's 40 rows. Round fidelity is measured ligation data — see
+<a href="../../reference/ligation-fidelity/">how fidelity is predicted</a>. A <strong>barcode</strong> names a library
+part here, where a barcode-kit member marks a well;
+<a href="../../methods/barcodes/">barcode sets</a> says how a set is drawn.</p>
+<p><code>pixi run synbio igga plan --help</code> lists the rest: what the parts FASTA holds, where a stuffer
+or cassette goes, how a record name is matched to a position, and reading a ligase matrix you
+hold.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What it gives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain recombination enhance CAR T cell antitumor function. <em>Cell</em> 189, 1-20. <a href="https://doi.org/10.1016/j.cell.2026.07.054">doi:10.1016/j.cell.2026.07.054</a></td>
+<td>Assembly in rounds, the internal stuffer and the 11 bp barcode length. The 72 AP-1 domains above were read from its Table S1 under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> and translated back to protein; the DNA here is this package's own</td>
+</tr>
+<tr>
+<td>Lund, S., Potapov, V., Johnson, S. R., Buss, J. and Tanner, N. A. (2024) Highly parallelized construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design and Golden Gate. <em>ACS Synth. Biol.</em> 13, 745-751</td>
+<td>Building each part from a cheap oligo pool: the fragment split and its overhangs</td>
+</tr>
+<tr>
+<td>Subramanian, S. K., Russ, W. P. and Ranganathan, R. (2018) A set of experimentally validated, mutually orthogonal primers for combinatorially specifying genetic components. <em>Synth. Biol.</em> 3, ysx008</td>
+<td>The orthogonal primers the pool is amplified by</td>
+</tr>
+<tr>
+<td>Clarke, L. and Carbon, J. (1976) A colony bank containing synthetic ColE1 hybrid plasmids representative of the entire E. coli genome. <em>Cell</em> 9, 91-99</td>
+<td>The colonies a round needs to hold every member</td>
+</tr>
+<tr>
+<td>Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization. <em>Nat. Commun.</em> <a href="https://doi.org/10.1038/s41467-026-76740-9">doi:10.1038/s41467-026-76740-9</a></td>
+<td>The vector each part is built in, and the barcode kit that marks its wells</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

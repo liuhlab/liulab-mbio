@@ -1,0 +1,1919 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/oligo-pool-pcr-cycles/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Cycles for the two oligo-pool PCRs - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cycles-for-the-two-oligo-pool-pcrs" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cycles for the two oligo-pool PCRs
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-contradiction" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The contradiction
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-this-note" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read this note
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-two-reactions-are-not-one-reaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The two reactions are not one reaction
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-twists-own-rule-for-an-oligo-pool" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Twist's own rule for an Oligo Pool
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-eight-cycle-rule-this-corrects" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. The eight-cycle rule this corrects
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-what-the-published-methods-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. What the published methods do
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-the-evenness-argument-actually-rests-on" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. What the evenness argument actually rests on
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-recommendation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Recommendation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-what-this-implies-in-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. What this implies in code
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Provenance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-re-checked-for-476-both-holes-stand" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. Re-checked for #476: both holes stand
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Re-checked for #476: both holes stand">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#h29-a-cycle-count-for-q5-on-a-twist-oligo-pool" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        H29 — a cycle count for Q5 on a Twist oligo pool
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#h30-a-cycle-count-for-pcr2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        H30 — a cycle count for PCR2
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-lead-not-followed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        One lead, not followed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-pass-did-not-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What this pass did not change
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="cycles-for-the-two-oligo-pool-pcrs">Cycles for the two oligo-pool PCRs<a class="headerlink" href="#cycles-for-the-two-oligo-pool-pcrs" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #340, under #225. It is hole 11 of the eleven #268's end-to-end run
+found, and the one the repository treats as worst: a number that looks sourced and is not.
+Everything below was retrieved on <strong>2026-10-07</strong> unless a row carries its own date.</p>
+<h2 id="the-contradiction">The contradiction<a class="headerlink" href="#the-contradiction" title="Permanent link">&para;</a></h2>
+<p>As read on 2026-10-07, the two cargo creation steps passed no <code>cycles</code>, so <code>pcr_program</code> fell
+through to the polymerase's own profile and the rendered protocol printed <strong>30</strong> for both PCR1
+and PCR2, while the same step's troubleshooting said <em>"Take the fewest cycles that give a
+visible band."</em> A reader at the bench had a printed count and a rule that contradicted it.</p>
+<p><strong>Section 7 has since landed.</strong> <code>docs/examples/ap1-library/protocol/project.json</code> now prints
+Twist's fewest, 12, for PCR1 and no count at all for PCR2; the one <code>"cycles": 30</code> left in that
+file is the Golden Gate assembly's own cycling, which is not a PCR.</p>
+<h2 id="how-to-read-this-note">How to read this note<a class="headerlink" href="#how-to-read-this-note" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Works</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>twistbioscience.com/content/dam/...</code> direct PDF fetch</td>
+<td>yes (<code>curl</code>)</td>
+<td>both oligo-pool amplification guides</td>
+</tr>
+<tr>
+<td>The four Twist PDFs already under <code>reference_docs/</code>, as <code>pdftotext -layout</code> dumps</td>
+<td>yes</td>
+<td>the Multiplexed Gene Fragments rule this note separates out</td>
+</tr>
+<tr>
+<td>Lund 2024, Freschlin 2026, Romanowicz 2026 text dumps already held</td>
+<td>yes</td>
+<td>every published cycle count below</td>
+</tr>
+<tr>
+<td><code>idtdna.com</code> product pages</td>
+<td>partly — a product announcement, no protocol document</td>
+<td>one contrast in <a href="#8-open-gaps">section 8</a>, and no number</td>
+</tr>
+<tr>
+<td>An Agilent oligo-pool amplification protocol</td>
+<td><strong>not fetched</strong></td>
+<td>nothing</td>
+</tr>
+</tbody>
+</table>
+<p>A value in a table is quoted from the cited document. A row marked <strong>derived</strong> is arithmetic on
+quoted values, and the arithmetic is shown. Nothing here is from memory.</p>
+<h2 id="1-the-two-reactions-are-not-one-reaction">1. The two reactions are not one reaction<a class="headerlink" href="#1-the-two-reactions-are-not-one-reaction" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>PCR1</th>
+<th>PCR2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Template</td>
+<td>the synthesised pool as it arrives</td>
+<td>PCR1's product</td>
+</tr>
+<tr>
+<td>Primers</td>
+<td>the batch's forward and outer, both shared by every oligo in the batch</td>
+<td>the batch's forward, and the block's own inner</td>
+</tr>
+<tr>
+<td>What is amplified</td>
+<td>every oligo of the batch</td>
+<td>the pieces of one block</td>
+</tr>
+<tr>
+<td>Reactions</td>
+<td>one per batch</td>
+<td>one per block</td>
+</tr>
+<tr>
+<td>In the AP-1 demo</td>
+<td>1 reaction, 153 oligos at 350 nt</td>
+<td>72 reactions</td>
+</tr>
+</tbody>
+</table>
+<p>The demo has 72 blocks and a <code>batch_size</code> of 96, so it makes <strong>one</strong> batch, and PCR1 is therefore
+a whole-pool amplification with a single universal primer pair. That is precisely the reaction
+every oligo-pool vendor protocol is written for. A build with more blocks than <code>batch_size</code>
+splits PCR1 into several reactions, each pulling its own share out of the same tube.</p>
+<p>PCR2 is a different animal. Its template is an amplified, abundant product, and it selects one
+block within it.</p>
+<h2 id="2-twists-own-rule-for-an-oligo-pool">2. Twist's own rule for an Oligo Pool<a class="headerlink" href="#2-twists-own-rule-for-an-oligo-pool" title="Permanent link">&para;</a></h2>
+<p>Twist publishes two amplification guides for two different products. This method orders an
+<strong>Oligo Pool</strong> — 20–350 nt, single-stranded, delivered at femtomole levels
+(<code>docs/research/synthesis-and-assembly-materials.md</code>). Both of its guides give the same table:</p>
+<table>
+<thead>
+<tr>
+<th>Oligo pool length</th>
+<th>Cycles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20–100 nt</td>
+<td>6–10</td>
+</tr>
+<tr>
+<td>100–150 nt</td>
+<td>10–12</td>
+</tr>
+<tr>
+<td><strong>151–350 nt</strong></td>
+<td><strong>12–14</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Source: Twist FRM-001034 REV 8 p. 2, and DOC-4060 REV 1.0 "General Notes and Precautions" and
+step 1. Two independently revised documents, identical numbers.</p>
+<p>Oligo length is a build decision. The AP-1 demo is 350 nt and the method's earlier default was
+300 nt, so both land in the top band: <strong>12–14 cycles</strong> is the sourced count for this design's
+PCR1.</p>
+<p><strong>How the pool arrives, and where the 20 ng/µL comes from.</strong> DOC-4060's "Before You Begin", the
+same document as the band table:</p>
+<blockquote>
+<p>Twist Oligo Pools are delivered as a lyophilized product pooled in a single tube. The total
+yield in ng is printed on the shipping tube label.</p>
+<p>Prepare a stock solution of your Oligo Pool by resuspending in 10 mM Tris buffer, pH 8.0 to a
+concentration of at least 20 ng/µl. Stock solution concentration (ng/µl) = Total yield (ng) /
+resuspension volume (µl).</p>
+</blockquote>
+<p>Its component table stores the pool at "-20°C for 24 months", 4 °C for 12, and -80 °C long term.</p>
+<p>Three things follow. The 20 ng/µL the PCR1 row above takes as template is the <strong>stock the reader
+prepares</strong>, not a concentration the vendor ships at — DOC-4060's own amplification table asks for
+"Oligo pool (20 ng/µl), 20 ng, 1 µl", and "at least 20 ng/µl" is the separate rule for making
+that stock. The volume is <strong>derived</strong> from the label and that floor: resuspension volume (µl) =
+total yield (ng) / 20, rounded down, leaves the stock at the floor or above it, so the table's
+1 µl still delivers its 20 ng. And the yield is printed on the tube and written in no file, so
+the protocol states the division and the reader supplies the one number in front of them — a rule
+they can execute, not a hole.</p>
+<p>The rest of the reaction, where the two revisions differ:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>FRM-001034 REV 8</th>
+<th>DOC-4060 REV 1.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Polymerase</td>
+<td>KAPA HiFi HotStart (Roche)</td>
+<td>Twist TrueAmp Polymerase Mix</td>
+</tr>
+<tr>
+<td>Reaction</td>
+<td>25 µL</td>
+<td>50 µL</td>
+</tr>
+<tr>
+<td>Template</td>
+<td>0.5 µL of 20 ng/µL — <strong>derived:</strong> 10 ng, matching the text's "~10 ng"</td>
+<td>1 µL of 20 ng/µL = 20 ng</td>
+</tr>
+<tr>
+<td>Each primer</td>
+<td>0.3 µM</td>
+<td>0.3 µM</td>
+</tr>
+<tr>
+<td>Initial denaturation</td>
+<td>95 °C 3 min</td>
+<td>98 °C 45 s</td>
+</tr>
+<tr>
+<td>Denature / anneal / extend</td>
+<td>98 °C 20 s / 15 s at optimum / 72 °C 15 s</td>
+<td>98 °C 15 s / 60 °C 15 s / 68 °C 45 s</td>
+</tr>
+<tr>
+<td>Final extension</td>
+<td>72 °C 1 min</td>
+<td>68 °C 1 min</td>
+</tr>
+<tr>
+<td>Clean-up</td>
+<td>spin column, or 1.8x SPRI above 120 nt</td>
+<td>beads; 1.8x for 120–300 nt, 1.2x for 300–500 nt</td>
+</tr>
+<tr>
+<td>Uniformity claimed</td>
+<td>&gt;90% of oligos within &lt;2x of the mean</td>
+<td>&gt;90% within &lt;2.5x of the mean</td>
+</tr>
+</tbody>
+</table>
+<p><strong>A conflict inside REV 8.</strong> Its cycling table says "6–12 Cycles**" while its own footnote
+sends the reader to the chart, which gives 12–14 for our band. DOC-4060 prints no count in the
+cycling table and defers to the chart alone. Take the chart: it is what both documents agree on,
+and what the FAQ is written against.</p>
+<p>DOC-4060's Appendix B answers this ticket's question in Twist's own words:</p>
+<blockquote>
+<p><strong>What is the relationship between uniformity and the PCR cycle number?</strong> More PCR cycles would
+lead to worse uniformity. Keeping PCR cycles in the ranges outlined in the General Notes and
+Precautions section is recommended.</p>
+</blockquote>
+<p>Three more from the same appendix bear on the design:</p>
+<ul>
+<li>20 ng input is "the optimized number to secure good uniformity and a low dropout rate"; "using
+  1 amol of each oligo would still give good uniformity and low dropout rate."</li>
+<li>GC should stay between 35% and 65%: "The higher the GC%, the less efficient PCR amplification
+  is in the same oligo pool ... to avoid bad uniformity and high dropout."</li>
+<li>Another polymerase will amplify a pool, but "there may be worse uniformity and less yield with
+  the same PCR cycle numbers when comparing with alternative polymerases."</li>
+</ul>
+<p>That last one lands on us. The pipeline uses <strong>Q5</strong>. Twist states 12–14 against KAPA HiFi HotStart
+or its own TrueAmp mix, and says in the same breath that the count does not carry to another
+enzyme unchanged.</p>
+<p><strong>The observable for over-cycling</strong>, identical in both guides, is not a smear: "The presence of a
+hump after the peak of interest indicates heteroduplexes, a result of over-amplification," remedy
+"Re-try PCR with lower number of cycles." It is read on capillary electrophoresis — a Bioanalyzer
+DNA 1000 chip, or a TapeStation — not on an agarose gel. The step's present troubleshooting looks
+for "a smear rather than a band" on a gel, which is a coarser and different observation.</p>
+<h2 id="3-the-eight-cycle-rule-this-corrects">3. The eight-cycle rule this corrects<a class="headerlink" href="#3-the-eight-cycle-rule-this-corrects" title="Permanent link">&para;</a></h2>
+<p><code>docs/research/synthesis-and-assembly.md</code>, under "Twist — inherited", records "the amplification
+rule of a hard maximum of eight cycles with a high-fidelity hot-start polymerase."</p>
+<p><strong>That rule is from the wrong product.</strong> Eight is the Multiplexed Gene Fragments figure:
+DOC-001498 REV 1.0 ("the number of amplification cycles should be minimized to fewer than 8") and
+DOC-4057 REV 1.0 ("Adhere to a strict maximum of 8 amplification cycles").</p>
+<p>The two products get opposite advice because they arrive in opposite states:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Multiplexed Gene Fragments</th>
+<th>Oligo Pools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What arrives</td>
+<td>double-stranded, 301–500 bp, ≥200 ng</td>
+<td>single-stranded, 20–350 nt, femtomole levels</td>
+</tr>
+<tr>
+<td>Twist's advice</td>
+<td>"does not recommend performing any PCR amplification ... before use"; amplifying voids the quality guarantee</td>
+<td>"we recommend including primer-binding sites in your oligo design and performing PCR amplification of the pool prior to usage"</td>
+</tr>
+<tr>
+<td>Cycles if you do</td>
+<td>fewer than 8, hard maximum 8</td>
+<td>6–14, by length band</td>
+</tr>
+</tbody>
+</table>
+<p>So the number that reads as Twist's rule for our pool is Twist's rule for a product we do not
+order, and it is wrong in the conservative direction — which is why nothing has caught it.
+<code>reference_docs/synthesis_and_assembly/twist/README.md</code> already warns against carrying a figure
+between the two; this is that warning firing on a tracked note.</p>
+<h2 id="4-what-the-published-methods-do">4. What the published methods do<a class="headerlink" href="#4-what-the-published-methods-do" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>The reaction</th>
+<th>Template</th>
+<th>Polymerase</th>
+<th>Cycles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lund et al. 2024</td>
+<td>one amplification of a Twist oligo pool, 300 nt, by a design's own primer pair</td>
+<td>3.33 pg/µL</td>
+<td>Q5 Hot Start HiFi 2X (NEB M0494)</td>
+<td><strong>none stated</strong> — run on a Bio-Rad CFX96 with LAMP Fluorescent Dye (NEB B1700) at 0.5x; "Cycles were stopped before all amplifications plateaued in fluorescence"</td>
+</tr>
+<tr>
+<td>Romanowicz et al. 2026</td>
+<td>Twist oligo subpool amplification</td>
+<td>not stated</td>
+<td>KAPA HiFi</td>
+<td><strong>none stated</strong> — "qPCR used to determine cycle numbers and minimize overamplification bias"; a later enrichment is "stopped in the late exponential phase"</td>
+</tr>
+<tr>
+<td>Freschlin et al. 2026</td>
+<td>subpool PCR off a Twist oligo pool of 300 bp oligos, orthogonal primer pairs "for selective amplification"</td>
+<td>1 ng</td>
+<td>KAPA HiFi HotStart ReadyMix 2x (Roche KK2601)</td>
+<td><strong>35</strong></td>
+</tr>
+<tr>
+<td>Qian et al. 2026</td>
+<td>one whole-library amplification off the oligo pool</td>
+<td>2.5 ng</td>
+<td>KAPA HiFi HotStart Ready Mix, with 20x EvaGreen</td>
+<td><strong>14</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two readings are worth keeping.</p>
+<p><strong>The two that state no number measure instead.</strong> Lund and Romanowicz put a dye in the reaction
+and stop on the curve. Qian puts EvaGreen in the reaction <em>and</em> prints 14 — the dye is there so
+the operator can watch the same thing, whether or not the printed count is kept. Qian's 14 also
+sits inside Twist's 12–14 band, which is the only independent agreement this note found.</p>
+<p><strong>Freschlin's 35 is the one published count above ours, and it is the one with a measured
+consequence.</strong> Their assembled libraries sit "typically within 10-fold of the median", 83% of
+constructs within 10-fold of it — against Twist's incoming claim of &gt;90% within &lt;2x of the mean.
+The widening is the whole pipeline's, not the PCR's alone, and they do not separate the two. It
+is evidence that a high-cycle subpool PCR is survivable, not evidence that it is free.</p>
+<p>The literature supplies no 30, and no single number for a nested pair. What it supplies twice
+over is a <strong>stopping rule</strong>.</p>
+<h2 id="5-what-the-evenness-argument-actually-rests-on">5. What the evenness argument actually rests on<a class="headerlink" href="#5-what-the-evenness-argument-actually-rests-on" title="Permanent link">&para;</a></h2>
+<p>The ticket's premise is that evenness over the pool's 153 members is what the coverage is counted
+on, and over-cycling is how it is lost. That is right about over-cycling and needs one correction
+about where the evenness is held.</p>
+<p>Molar representation across a part list is <strong>re-established after assembly, not carried through
+the PCRs</strong>. <code>_pool_step</code> instructs: "Resuspend every block and measure each concentration. Pool
+the members of each part list in equal molar amounts, one tube per position," and its
+troubleshooting says to pool to the lowest member rather than the mean. Every block has its own
+PCR2 well and its own assembly well, so a block that amplified unevenly is corrected by weighing.</p>
+<p>What over-cycling at PCR1 costs that no later step repairs:</p>
+<ul>
+<li><strong>Dropout.</strong> A pool member lost at PCR1 has no template at PCR2 and no block at assembly. Twist
+  names dropout as a consequence of cycle number and of GC. An equimolar pool cannot restore a
+  member that is not there.</li>
+<li><strong>Chimeras and heteroduplexes.</strong> Twist's documented over-amplification products. These put
+  wrong sequence into a block, which quantification does not see.</li>
+<li><strong>Polymerase error</strong>, which accumulates with cycles.</li>
+</ul>
+<p>PCR2 carries a risk of its own: its forward primer is the batch's, shared by every oligo in the
+batch, and only the inner primer is block-specific. One shared primer means over-cycling can pull
+a neighbour's product into the well — the step already watches for a band at PCR1's length.</p>
+<p>So the case for few cycles survives, but the mechanism is dropout, chimera and error, not the
+pool's molar evenness. The rendered protocol should give the reason that is true.</p>
+<h2 id="6-recommendation">6. Recommendation<a class="headerlink" href="#6-recommendation" title="Permanent link">&para;</a></h2>
+<p><strong>PCR1 — a sourced number, and a sourced rule beside it.</strong></p>
+<ul>
+<li>Print the count from Twist's length band, chosen from the build's own <code>oligo_length</code>:
+  <strong>12–14 cycles</strong> at 151–350 nt, 10–12 at 100–150 nt, 6–10 at 20–100 nt. Cited to Twist
+  FRM-001034 REV 8 and DOC-4060 REV 1.0. The count then follows the design rather than sitting
+  fixed in the source.</li>
+<li>Keep the stopping rule as the instruction beside it, in its sourced form rather than the present
+  wording: run the reaction on a real-time instrument with an intercalating dye and stop before
+  the curve plateaus (Lund 2024; Romanowicz 2026; and Qian, who puts EvaGreen in the same
+  reaction). Where no real-time instrument is at hand, the table's count is the starting point and
+  the symptom is the heteroduplex hump on capillary electrophoresis, not a gel smear.</li>
+<li>Record the <strong>polymerase caveat as a hole</strong> rather than transferring it silently. Twist states
+  12–14 against KAPA HiFi HotStart or TrueAmp, and its own FAQ says another polymerase may give
+  worse uniformity at the same count. The pipeline runs Q5, and nobody has published a count for
+  Q5 on a Twist pool — Lund used Q5 Hot Start and declined to state one.</li>
+</ul>
+<p><strong>PCR2 — a named hole, with the stopping rule as the instruction.</strong> No source read here covers
+it. Twist's table is for amplifying the pool as delivered; PCR2's template is PCR1's product.
+Qian's 10-cycle Day 4.1 is a sequencing-amplicon PCR, not this. Freschlin's 35 is a first subpool
+PCR. The honest instruction is the rule alone, with no printed count.</p>
+<p>PCR2's hole is <strong>H30</strong>. H27 and H28 were taken before this note reached code, and H29 records the
+polymerase caveat above. H31 to H34 have been taken since, in <code>igga/stages.py</code> and
+<code>scripts/build_working_vector.py</code>, so <strong>H35</strong> is the first free id; <code>bench-numbers.md</code> collects
+the holes and says which numbers are retired rather than free:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>missing</code></td>
+<td>no source gives a cycle count for PCR2, which pulls one block out of an already-amplified batch</td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td><code>unpublished</code></td>
+</tr>
+<tr>
+<td><code>where</code></td>
+<td>PCR2, cycle count</td>
+</tr>
+<tr>
+<td><code>filled_by</code></td>
+<td>a pilot that titrates PCR2 against the heteroduplex hump on capillary electrophoresis, or a real-time run stopped before plateau</td>
+</tr>
+</tbody>
+</table>
+<p><code>docs/research/bench-numbers.md</code> H12 — "No cycling for PCR1 or PCR2 of the three-primer scheme" —
+is <strong>half closed</strong> by this note. PCR1 now has a source; PCR2 still has none.</p>
+<p><strong>What must stop either way.</strong> The program must stop falling through to the polymerase default.
+Thirty is not above every published count — Freschlin's 35 is higher — so the defect is not that
+it is too many. The defect is that one printed number stands where every source consulted says
+the count is chosen per pool: by length, by polymerase, and by watching the reaction.</p>
+<h2 id="7-what-this-implies-in-code">7. What this implies in code<a class="headerlink" href="#7-what-this-implies-in-code" title="Permanent link">&para;</a></h2>
+<p>Not done when this note was written; all five have landed since.</p>
+<ol>
+<li><code>_pcr1_step</code> passes an explicit <code>cycles</code>, chosen from <code>project.oligo_length</code> against Twist's
+   three-band table, with a citation on the program.</li>
+<li><code>_pcr2_step</code> passes no count and carries a <code>Hole</code> instead, as <code>_assembly_step</code> already carries
+   <code>stages.HOLES</code>.</li>
+<li>PCR1's troubleshooting entry changes its observable from "a smear rather than a band" to the
+   heteroduplex hump on capillary electrophoresis, and gains the real-time stopping rule.</li>
+<li>A hole records that Twist's count is stated against KAPA HiFi HotStart or TrueAmp while the
+   pipeline uses Q5.</li>
+<li><code>docs/research/synthesis-and-assembly.md</code> drops "a hard maximum of eight cycles" from
+   "Twist — inherited", which is the Multiplexed Gene Fragments figure, and points at section 2
+   here.</li>
+</ol>
+<h2 id="8-open-gaps">8. Open gaps<a class="headerlink" href="#8-open-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>No count published for Q5 on a Twist oligo pool.</strong> Lund used Q5 Hot Start and stated none.</li>
+<li><strong>Nothing measures what the nested pair costs in evenness.</strong> Freschlin measured one selective
+  subpool PCR; nobody measured a PCR1 followed by a PCR2.</li>
+<li><strong>Twist's table is stated without data.</strong> Neither guide shows the experiment behind 12–14, and
+  neither says what the band's endpoints mean — whether 14 is a cap or a typical.</li>
+<li><strong>IDT was not read as a protocol.</strong> Its public position on oPools is that they ship at picomole
+  yields, so no pre-amplification is needed; that comes from a product announcement, not a
+  protocol document, and no number here rests on it. It is worth knowing as a vendor choice that
+  removes the problem rather than bounding it.</li>
+<li><strong>No Agilent oligo-pool amplification protocol was fetched.</strong></li>
+</ul>
+<h2 id="9-provenance">9. Provenance<a class="headerlink" href="#9-provenance" title="Permanent link">&para;</a></h2>
+<p>Downloaded for this note, into <code>reference_docs/synthesis_and_assembly/twist/protocol/</code>, with
+<code>pdftotext -layout</code> dumps beside them in <code>protocol/dump/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Source URL</th>
+<th>Retrieved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FRM-001034_AmplifyingOligoPools_REV8_singles.pdf</code></td>
+<td><code>twistbioscience.com/content/dam/twistbioscience/resources/2026-01/FRM-001034-AmplifyingOligoPools-REV8%20singles.pdf</code></td>
+<td>2026-10-07</td>
+</tr>
+<tr>
+<td><code>DOC-4060_Twist_Oligo_Pools_Amplification_Protocol_REV1_singles.pdf</code></td>
+<td><code>twistbioscience.com/content/dam/DOC_4060_Twist_Oligo_Pools_Amplification_Protocol_REV1_singles.pdf</code></td>
+<td>2026-10-07</td>
+</tr>
+</tbody>
+</table>
+<p>Already held and re-read, with provenance in <code>docs/research/synthesis-and-assembly.md</code> section 7:
+Twist DOC-001498 REV 1.0 and DOC-4057 REV 1.0; Lund et al. 2024; Freschlin et al. 2026;
+Romanowicz et al. 2026. Qian et al. 2026's numbers are quoted from
+<code>docs/research/bench-numbers.md</code>, which read the supplement directly.</p>
+<h2 id="10-re-checked-for-476-both-holes-stand">10. Re-checked for #476: both holes stand<a class="headerlink" href="#10-re-checked-for-476-both-holes-stand" title="Permanent link">&para;</a></h2>
+<p>Searched on <strong>2026-10-08</strong>, the day after everything above. Nothing a vendor publishes could
+have moved in a day, so this pass is not a re-run: it reads the two vendors section 8 left open
+and writes a plain verdict on each hole, so that a pilot is priced against a search rather than
+against a hunch.</p>
+<h3 id="h29-a-cycle-count-for-q5-on-a-twist-oligo-pool">H29 — a cycle count for Q5 on a Twist oligo pool<a class="headerlink" href="#h29-a-cycle-count-for-q5-on-a-twist-oligo-pool" title="Permanent link">&para;</a></h3>
+<p><strong>Searched.</strong> Both Twist oligo-pool guides held here, for the string <code>Q5</code>: no hit in either.
+FRM-001034 REV 8 names KAPA HiFi HotStart and DOC-4060 REV 1.0 names Twist TrueAmp, each as the
+one polymerase it recommends, and neither names a second. Then a web search for any Twist or NEB
+document stating a count for Q5 on an oligo pool, and the two other pool vendors' guides.</p>
+<p><strong>Found.</strong> No Twist document mentions Q5 at all. NEB publishes no oligo-pool amplification
+protocol; its Q5 routine-PCR page returns HTTP 403 to <code>curl</code> and to WebFetch, as <code>neb.com</code> HTML
+does throughout this repo's research, and a routine-PCR count would not be a pool count anyway.</p>
+<p>The nearest thing found is <strong>GenScript's Oligo Pool User Manual</strong>, and it is worth recording
+because it names Q5 and still does not close this:</p>
+<blockquote>
+<p>High-fidelity polymerases such as Phusion, Q5, KAPA, are recommended for PCR amplification.
+Taq polymerase is not recommended for use in amplification of oligo pools. Please follow the
+recommendations of the polymerase supplier for optimal PCR amplification conditions.</p>
+</blockquote>
+<p>Its typical procedure prints <strong>20-30 cycles</strong> from 5-100 ng of template. Three reasons it does
+not transfer. It is GenScript's pool, not Twist's, and the two arrive at different amounts.
+20-30 is roughly twice Twist's 12-14 for the same job, so taking it would mean contradicting the
+vendor whose pool the method buys, on that vendor's own product. And the same page defers twice
+over — to the polymerase supplier in the quotation above, and then to the user: "It is
+recommended to carry out pilot experiments to determine the optimal reaction conditions." It is
+evidence that Q5 amplifies a pool, which nobody doubted, not a count for this one.</p>
+<p>Agilent's SurePrint guideline surfaced in the same search and was not read as a document; what
+is quoted of it is stated against Herculase II, so it could not close a Q5 hole either.</p>
+<p><strong>Verdict: no source. H29 stands as <code>unpublished</code></strong>, filled by Twist stating a count against Q5,
+or by a pilot on this pool. A document search is finished with this one; only the bench is left.</p>
+<h3 id="h30-a-cycle-count-for-pcr2">H30 — a cycle count for PCR2<a class="headerlink" href="#h30-a-cycle-count-for-pcr2" title="Permanent link">&para;</a></h3>
+<p><strong>Searched.</strong> Both Oligo Pools guides for anything about a second round off a first PCR's
+product: <code>subpool</code>, <code>sub-pool</code>, <code>re-amplif</code>, <code>reamplif</code>, <code>nested</code>, <code>second round</code>. In the Oligo
+Pools documents there is nothing. The only hits anywhere in the Twist material are in the
+<strong>Multiplexed Gene Fragments</strong> guide, which mentions "amplifying out subpools" as a reason you
+might amplify at all and gives no count for it, and in the MGF design guidelines, where
+"split into sub-pools" is an ordering remedy for the length-spread rule and not a PCR at all.
+Section 3's warning applies to both: that is the other product.</p>
+<p><strong>Found.</strong> GenScript's manual is the one document read in this whole note that speaks to a
+sub-pool PCR, and what it says is the opposite of a count: raise the template and the cycles to
+pull more sub-pools out of one reaction, and pilot it. Nothing anywhere states a count for
+pulling one block out of a batch that has already been amplified.</p>
+<p><strong>The gap is structural, not accidental.</strong> Every vendor protocol here is written for the pool as
+delivered, because that is the reaction the vendor sells a product for. PCR2's template is
+PCR1's product, which no vendor has in hand. That is why section 4's published counts are all
+first amplifications, and why no amount of further searching is likely to produce one.</p>
+<p><strong>Verdict: no source. H30 stands as <code>unpublished</code></strong>, filled by a pilot titrated against the
+heteroduplex hump on capillary electrophoresis, or a real-time run stopped before the curve
+plateaus. The printed stopping rule remains the honest instruction.</p>
+<h3 id="one-lead-not-followed">One lead, not followed<a class="headerlink" href="#one-lead-not-followed" title="Permanent link">&para;</a></h3>
+<p>A Research Square preprint, <em>Oligo replication advantage driven by GC content and Gibbs free
+energy</em>, studies amplification bias on a commercial oligo pool and so touches both holes. Its
+body did not come back readable through the fetch, and it is a study of how bias behaves rather
+than a protocol that sets a count. Recorded here as a lead; nothing in this note rests on it.</p>
+<h3 id="what-this-pass-did-not-change">What this pass did not change<a class="headerlink" href="#what-this-pass-did-not-change" title="Permanent link">&para;</a></h3>
+<p>Section 2's 12-14 for PCR1 is still the sourced count, and still stated against a polymerase the
+method does not run. Section 8's open gaps stand, with one narrowed: GenScript has now been read
+as a protocol and found not to carry our number, and Agilent still has not.</p>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Twist Bioscience, <em>Amplifying Twist Oligo Pools</em>, FRM-001034 REV 8.</li>
+<li>Twist Bioscience, <em>Twist Oligo Pools Amplification Protocol</em>, DOC-4060 REV 1.0.</li>
+<li>Twist Bioscience, <em>Amplifying Twist Multiplexed Gene Fragments</em>, DOC-001498 REV 1.0.</li>
+<li>Twist Bioscience, <em>Multiplexed Gene Fragments Design Guidelines</em>, DOC-4057 REV 1.0.</li>
+<li>S. Lund, V. Potapov, S. R. Johnson et al., "Highly Parallelized Construction of DNA from
+  Low-Cost Oligonucleotide Mixtures Using Data-Optimized Assembly Design and Golden Gate",
+  <em>ACS Synth. Biol.</em> <strong>13</strong>, 745–751 (2024), <code>doi:10.1021/acssynbio.3c00694</code>.</li>
+<li>E. Freschlin et al., "Scalable and cost-efficient custom gene library assembly from oligopools",
+  <em>Sci. Adv.</em> <strong>12</strong>, eady2279 (2026), <code>doi:10.1126/sciadv.ady2279</code>.</li>
+<li>Romanowicz et al., "DropSynth-Gold: Golden Gate assembly in emulsions extends multiplexed gene
+  libraries to greater lengths" (2026).</li>
+<li>Qian et al. 2026, supplementary protocol, as read in <code>docs/research/bench-numbers.md</code>.</li>
+<li>GenScript, <em>Oligo Pool User Manual</em>, read 2026-10-08 from
+  <code>genscript.com/gsfiles/techfiles/oligo-pool-user-guide.pdf</code>, as a <code>pdftotext -layout</code> dump. It
+  carries no revision number. Not kept under <code>reference_docs/</code>: it closes nothing, and section 10
+  quotes everything of it that bears on either hole.</li>
+</ul>
+<p>All four Twist documents are vendor material: cite and re-enter single facts by hand, never
+mirror. The same line <code>docs/research/restriction-ligation.md</code> section 1 drew for NEB.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

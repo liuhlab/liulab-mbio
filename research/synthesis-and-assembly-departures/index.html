@@ -1,0 +1,1633 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/synthesis-and-assembly-departures/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>How our design departs from the paper - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#how-our-design-departs-from-the-paper" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              How our design departs from the paper
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#d1-the-two-enzyme-roles-moved-up-one-enzyme" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D1. The two enzyme roles moved up one enzyme
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d2-bbsi-in-the-internal-stuffer-where-the-paper-has-bsai" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D2. BbsI in the internal stuffer, where the paper has BsaI
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d3-one-overhang-pair-every-round-instead-of-one-per-position" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D3. One overhang pair every round instead of one per position
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d4-our-cargo-has-no-external-stuffers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D4. Our cargo has no external stuffers
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d5-pmei-sits-in-the-vector-not-in-the-cargo" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D5. PmeI sits in the vector, not in the cargo
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d6-our-cargo-must-be-clear-of-five-enzymes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D6. Our cargo must be clear of five enzymes
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d7-the-paper-needs-a-position-specific-terminal-molecule-we-do-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D7. The paper needs a position-specific terminal molecule, we do not
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d8-no-t2a-so-the-barcodes-are-read-inside-the-protein" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D8. No T2A, so the barcodes are read inside the protein
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d10-the-dna-comes-from-an-oligo-pool" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D10. The DNA comes from an oligo pool
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d11-both-markers-had-to-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D11. Both markers had to change
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d12-the-last-transfer-is-a-different-reaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D12. The last transfer is a different reaction
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d13-different-host-and-a-layer-the-paper-has-no-counterpart-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D13. Different host, and a layer the paper has no counterpart for
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d14-a-second-barcode-system-and-bsai-with-three-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D14. A second barcode system, and BsaI with three jobs
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d15-extra-strains-forced-by-ccdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D15. Extra strains, forced by ccdB
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d16-withdrawn-the-paper-sequences-whole-plasmids-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D16. Withdrawn: the paper sequences whole plasmids too
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d17-the-working-vectors-stuffer-is-the-parents-own-egfp-not-an-rfp" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D17. The working vector's stuffer is the parent's own EGFP, not an RFP
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d18-every-round-is-plated-the-paper-plates-none" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        D18. Every round is plated; the paper plates none
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="how-our-design-departs-from-the-paper">How our design departs from the paper<a class="headerlink" href="#how-our-design-departs-from-the-paper" title="Permanent link">&para;</a></h1>
+<p>Every way the iGGA design differs from Takacsi-Nagy et al.,
+what forced each change, and whether the reason survives checking. The paper itself, and what
+was measured from it, are in <code>docs/research/protein-library-assembly.md</code>. The design's other
+sources, and every decision still open, are in <code>docs/research/synthesis-and-assembly.md</code>.
+Drafted by one agent, then checked by two more working apart: one re-derived every fact, one
+attacked every reason. Corrections from both are folded in.</p>
+<p>Eighteen differences were found. The sixteen below are checked and sound, with nothing left to
+decide. D9, the barcode rules, is decided and lives in the method document. D16 is <strong>withdrawn</strong>:
+the paper answers it and our design matches, so it was never a difference. D18 was added by the
+decision in #259 on what bounds a round.</p>
+<p>Pointers into the method document name its sections, so they survive an edit to it. Everything
+here was simulated with <code>mbio</code>, not read off the page.</p>
+<h2 id="d1-the-two-enzyme-roles-moved-up-one-enzyme">D1. The two enzyme roles moved up one enzyme<a class="headerlink" href="#d1-the-two-enzyme-roles-moved-up-one-enzyme" title="Permanent link">&para;</a></h2>
+<p>Paper: the internal stuffer carries BsaI and opens the destination; the external stuffers carry
+BsaI and release the donor. Ours: the internal stuffer carries BbsI (<code>### iGGA cargo</code>) and
+BsaI releases the donor (<code>### iGGA pipeline</code>).</p>
+<p>Why: the DMX plate-barcode kit is used as supplied (<code>### Lab resources (build once)</code>), and its
+96 plasmids present
+<code>AGGA</code> and <code>TTCC</code> cut by BsaI. That fixes BsaI at the cargo interface, which pushes the internal
+stuffer onto a third enzyme. The DMX paper's own use of BsaI is not what forces it, since we
+rebuild that backbone anyway.</p>
+<h2 id="d2-bbsi-in-the-internal-stuffer-where-the-paper-has-bsai">D2. BbsI in the internal stuffer, where the paper has BsaI<a class="headerlink" href="#d2-bbsi-in-the-internal-stuffer-where-the-paper-has-bsai" title="Permanent link">&para;</a></h2>
+<p>PaqCI needed NEB's activator oligo. It is a multi-site enzyme, so it has to engage two copies of
+its site to cut one, and a substrate down to its last site stalls. Our destination started with
+two and had one left after the first cut. That is 5 pmol of a quarter-microlitre reagent on the
+one digest where a miss is invisible, since an uncut destination is KanR, carries a real cargo
+and is valid input next round.</p>
+<p>Simulated, BbsI does the same job: the opened destination is identical, <code>TTCC</code> and <code>AGGA</code> ends
+with 16 and 12 bp stuffer stubs where PaqCI left 19 and 15, and SPRI removes either. The stuffer
+drops from 38 bp to 34. The donor carries its two BbsI sites through its own BsaI + PmeI digest
+untouched; the two digests never share a tube.</p>
+<p>Domestication, measured: DMX0001 and DMX0002 each carry the same four BbsI sites, two in <code>lacI</code>
+and two in unannotated backbone, so four changes once on a vector already being rebuilt.
+pCR-Blunt II-TOPO and all four barcode plasmids carry none, so the KanR swap brings none in.</p>
+<p>Cargo now has to be clear of a 6 bp site instead of a 7 bp one. The paper already pays this:
+all 72 of its domains, 23,103 bp including one of 1,046 bp, carry zero BbsI, zero BsaI, zero
+SrfI and zero PmeI, against 11 BsmBI and 15 PaqCI it never had to remove. Recoded for E. coli
+the cost is about 1.5 extra synonymous changes per 2.5 kb. Non-coding fragments are unaffected
+by the choice; <code>### Cargo synthesis</code> step 2 owns them.</p>
+<p>A destination that escapes BbsI is still linearised by SrfI into blunt ends, so the parent
+could only return if the ligase joined blunt. The T7 ligase in <code>## Reagents and equipment</code> does
+not.</p>
+<h2 id="d3-one-overhang-pair-every-round-instead-of-one-per-position">D3. One overhang pair every round instead of one per position<a class="headerlink" href="#d3-one-overhang-pair-every-round-instead-of-one-per-position" title="Permanent link">&para;</a></h2>
+<p>Paper: four overhangs, <code>CTCC</code> into the vector, <code>GGAG</code> into position 2, <code>CCGA</code> into position 3,
+<code>AGCG</code> at every far end. A part's internal stuffer presents the next position's overhang, so an
+N part can only be followed by a bZIP part. Order is fixed by the DNA, and it is a cycle: the C
+part presents <code>CTCC</code> again, so a fourth round with an N pool would work. Three rounds is
+protocol, not sequence.</p>
+<p>Ours: <code>AGGA</code> and <code>TTCC</code> at every round (<code>### iGGA cargo</code>). Order is set by which pool goes in
+the tube (<code>### iGGA pipeline</code> step 1).</p>
+<p>Why: <code>AGGA</code> and <code>TTCC</code> are the published SAPP standard (<code>### Parts</code>). Position-specific
+overhangs would need a different DMX vector per position.</p>
+<p>The pot is safe. The four ends present are <code>TCCT</code> and <code>TTCC</code> from the opened destination and
+<code>AGGA</code> and <code>GGAA</code> from the released donor. The only complementary pairs among them are the two
+intended ones, so a donor cannot go in backwards, two donors cannot chain, and neither molecule
+closes on itself. Simulated, one circular product.</p>
+<p>Any pool fits any round once every fragment obeys the length rule (<code>### iGGA cargo</code>). That constraint is
+uniform across pools rather than per position, which is why ours needs no terminal molecule (D7).</p>
+<h2 id="d4-our-cargo-has-no-external-stuffers">D4. Our cargo has no external stuffers<a class="headerlink" href="#d4-our-cargo-has-no-external-stuffers" title="Permanent link">&para;</a></h2>
+<p>Paper: every synthesized block is 29 bp external stuffer, CDS, internal stuffer, 11 bp barcode,
+29 bp external stuffer, with BbsI and PmeI in the external stuffers. The C block also carries a
+54 bp T2A. Ours is <code>[AGGA]─[fragment]─[internal stuffer]─[11 bp barcode]─[TTCC]</code> and nothing
+else (<code>### iGGA cargo</code>); the BsaI sites belong to the DMX cassette (<code>### DMX vector</code>).</p>
+<p>Why: the DMX vector already supplies BsaI in the right places, so external stuffers would
+duplicate it. The oligo-pool budget is the weaker reason. 58 bp is about a quarter of one
+300-mer, roughly 14% of a pool over 10,000 fragments. Real but not decisive.</p>
+<p>A consequence worth naming: the paper's donor carries its own release sites, so a donor can be a
+PCR product or a gene fragment. Ours cannot be a donor until it is cloned.</p>
+<h2 id="d5-pmei-sits-in-the-vector-not-in-the-cargo">D5. PmeI sits in the vector, not in the cargo<a class="headerlink" href="#d5-pmei-sits-in-the-vector-not-in-the-cargo" title="Permanent link">&para;</a></h2>
+<p>The paper carries PmeI in each synthesized block's external stuffers, measured at offset 0 of
+every 5' stuffer and offset 21 of every 3' stuffer, across all 72 blocks, with none anywhere
+else in a block. Ours sits in the DMX vector, outboard of each BsaI site (<code>### DMX vector</code>).</p>
+<p>Same order of sites either way: PmeI outermost, then the enzyme that releases the donor, then
+the cargo's overhang. Only the molecule differs, because D4 left us with no external stuffers to
+put it in.</p>
+<p>Why it matters. PmeI's job is to strip the donor backbone of the overhangs that would let it
+recapture its own cargo. Cut either layout and the backbone comes out blunt at both ends, and
+the only pieces that can bridge it back to the cargo are stubs small enough for a 2X SPRI:</p>
+<div class="highlight"><pre><span></span><code>paper,  BbsI + PmeI          ours,  BsaI + PmeI
+ 2408 bp  BLUNT / BLUNT       1408 bp  BLUNT / BLUNT    backbone, cannot touch cargo
+  262 bp  GGAG  / AGCG         199 bp  AGGA  / TTCC     cargo
+   25 bp  AGCG  / BLUNT         17 bp  TTCC  / BLUNT    stub
+   21 bp  BLUNT / GGAG          13 bp  BLUNT / AGGA     stub
+</code></pre></div>
+<p>Ours is cheaper. They pay 58 bp of external stuffer on every one of 72 blocks to carry PmeI and
+BbsI; we pay once, in the backbone, and every cargo is covered.</p>
+<p>The paper never states the reason. PmeI appears in its key resources table and in one methods
+sentence pairing it with BbsI, and nowhere else; Figure S1A's
+legend names only BbsI and BsaI. The placement is theirs and measured from Table S1. The reason
+is ours, derived by digesting both layouts.</p>
+<h2 id="d6-our-cargo-must-be-clear-of-five-enzymes">D6. Our cargo must be clear of five enzymes<a class="headerlink" href="#d6-our-cargo-must-be-clear-of-five-enzymes" title="Permanent link">&para;</a></h2>
+<p>Paper: every one of the 72 published blocks contains, by design, 2 BsaI, 2 BbsI, 1 SrfI and
+2 PmeI. Ours must be clear of BsaI, BsmBI, BbsI, SrfI and PmeI outside its own stuffer
+(<code>### Vectors and parts summary</code>).</p>
+<p>Why: our cargo passes through more hands. BsmBI puts it into the DMX vector, BsaI takes it out,
+BbsI and SrfI run the rounds, PmeI kills the donor backbone. Cost: a non-coding fragment cannot
+be recoded at all, which <code>### Cargo synthesis</code> step 2 already hands back to the user.</p>
+<h2 id="d7-the-paper-needs-a-position-specific-terminal-molecule-we-do-not">D7. The paper needs a position-specific terminal molecule, we do not<a class="headerlink" href="#d7-the-paper-needs-a-position-specific-terminal-molecule-we-do-not" title="Permanent link">&para;</a></h2>
+<p>Paper: every block must present its graft point, the first base of the BsaI overhang buried in
+its internal stuffer, two bases into a codon. N and bZIP get there by sizing the insert.
+C cannot, because it carries the 54 bp T2A and ends the protein, so its insert and its T2A are
+both whole codons. It makes up the two bases with a <code>GG</code> pad in front of the stuffer's overhang,
+and that pad is the whole of the 58 bp against 56: measured, the three stuffers are identical
+from the overhang onward. Delete the pad and a stop lands at codon 366.</p>
+<p>So the C pool is a physically distinct molecule, sized by where it sits in the chain. It is not
+terminal, though. Its graft overhang is <code>CTCC</code>, which is what an N block enters on, so a fourth
+round would work (D3).</p>
+<p>Ours: one stuffer, identical in every position, its overhang at its first base, no pad, retained
+in every round. There is no terminal form.</p>
+<p>Measured on a finished three-round plasmid with the stuffer retained:</p>
+<div class="highlight"><pre><span></span><code>BbsI + SrfI   2392 bp  TTCC / AGGA     reopens, a fourth round fits
+BsaI          1438 bp  TTCC / AGGA     backbone
+               984 bp  AGGA / TTCC     cargo, into the working vector
+</code></pre></div>
+<p>So our chain is a true cycle, as theirs is, and the finished product is still releasable.</p>
+<p>Why ours can be uniform: one fragment rule (<code>### iGGA cargo</code>) serves every position, because no
+fragment
+of ours ends the protein the way the paper's C block does, and the stuffer sits at the same
+phase every round. That is what makes D3's any-pool-in-any-round real rather than nominal, and
+it is the one place our design is simpler than the paper's rather than merely different.</p>
+<h2 id="d8-no-t2a-so-the-barcodes-are-read-inside-the-protein">D8. No T2A, so the barcodes are read inside the protein<a class="headerlink" href="#d8-no-t2a-so-the-barcodes-are-read-inside-the-protein" title="Permanent link">&para;</a></h2>
+<p>Paper, measured as offsets from the N-domain ATG in the assembled product:</p>
+<div class="highlight"><pre><span></span><code>N_cds 0   bZIP 753   C_insert 948   T2A 993   C_stuffer 1047
+BC_C 1105   BC_bZIP 1120   BC_N 1135   first stop 1170
+</code></pre></div>
+<p>The 54 bp T2A sits between the C insert and the stuffer, so the stuffer and all three barcodes
+come off as a separate 41-residue peptide and the transcription factor ends at the 2A.</p>
+<p>Ours has no T2A anywhere, and the cargo sits in one ORF (<code>### Working vector</code>), so the whole
+barcode
+block is translated inside the fusion protein. Three rounds is 45 bp, fifteen residues.</p>
+<p>Why: forced. A T2A inside the cargo would end translation before the C-terminal part, so every
+C-terminal tag, degron or localisation signal would be lost. The barcodes have to accumulate at
+the assembly junction, which is inside the cargo, so there is nowhere outside the ORF to put
+them.</p>
+<p>Cost: fifteen residues of per-member sequence in the middle of every protein, and any stop codon
+in a barcode truncates it. Their barcodes are translated too, and all 72 are stop-free at their
+own phase, which is offset 2 into the barcode. At ours, offset 0, six of the 72 carry a stop, so
+their set is not reusable. Ours truncates the protein; theirs truncates a junk peptide.</p>
+<p>A last round can still put a T2A in, by swapping the stuffer for an <code>AGGA</code>/<code>TTCC</code> block that is
+1 mod 3 counted from its <code>AGGA</code> (<code>### iGGA cargo</code>). <code>AGGA</code> plus the paper's 54 bp T2A is 58,
+which is
+1 mod 3 with no padding. That ends the chain, since the product then carries no stuffer to
+reopen.</p>
+<h2 id="d10-the-dna-comes-from-an-oligo-pool">D10. The DNA comes from an oligo pool<a class="headerlink" href="#d10-the-dna-comes-from-an-oligo-pool" title="Permanent link">&para;</a></h2>
+<p>Paper: each domain codon-optimized and individually synthesized as a clonal plasmid in pTwist
+Kan, then pooled equimolar per family. Measured CDS lengths 27 to 1,046 bp.</p>
+<p>Ours: fragments come from a Twist pool, assembled by DAD, split into wells by DMX and read by
+ONT (<code>## Goal</code>, <code>### Cargo synthesis</code>, <code>### Cargo validation (optional)</code>). The oligo length is a
+build input, not a method constant.</p>
+<p>The budget fits, and the figure to use is the method page's, not this one. An earlier revision
+read "about 235 bp usable per 300-mer" off a two-primer layout; the three-primer scheme spends
+60 nt on primer sites and 14 nt on recognition sites and spacers, so a 300-mer carries a 226 nt
+span and a 350-mer a 276 nt one. <code>ap1-demo-project.md</code> §4.2 derives it and #257 settled where it
+lives. What ours carries and the paper's did not is a per-clone sequence-and-reformat step
+before assembly can start.</p>
+<h2 id="d11-both-markers-had-to-change">D11. Both markers had to change<a class="headerlink" href="#d11-both-markers-had-to-change" title="Permanent link">&para;</a></h2>
+<p>Paper: domain plasmids are pTwist Kan. The destination in round 1 is itself a domain plasmid, so
+donor and destination share a marker there too. The paper never states this; it follows.</p>
+<p>Ours: the DMX vector becomes KanR by replacing the AmpR of DMX0001 or DMX0002
+(<code>### Lab resources (build once)</code>), and the working vector it feeds is AmpR or CarbR
+(<code>### Vectors and parts summary</code>).</p>
+<p>Why: forced. Measured, DMX0001, DMX0002 and all four barcode plasmids are AmpR as supplied. The
+final step moves cargo from the DMX vector into the working vector, so the two must not share a
+marker. One of DMX0001's three BsaI sites sits inside AmpR, so the swap removes it for free.</p>
+<p>The read-back plates follow: every plate, well and broth before the final transfer takes the
+KanR backbone's own drug, so Qian's carbenicillin does not carry over with the rest of that
+protocol. The package reads the marker off the record rather than quoting either drug, which
+ADR 0016 settles and <code>bench-numbers.md</code> Stage 3 sources.</p>
+<h2 id="d12-the-last-transfer-is-a-different-reaction">D12. The last transfer is a different reaction<a class="headerlink" href="#d12-the-last-transfer-is-a-different-reaction" title="Permanent link">&para;</a></h2>
+<p>Paper: the assembled library goes into the CAR vector by the same two-digest chemistry, using
+that vector's own internal stuffer. No counter-selection; <code>ccdB</code> appears nowhere in the paper.</p>
+<p>Ours: staged in one tube. BsaI and PmeI release the cargo, heat kills them, then PaqCI and ligase
+place it in a working vector whose ccdB cassette the cargo replaces
+(<code>### Final assembly</code>).</p>
+<p>Why: the cargo already presents <code>AGGA</code>/<code>TTCC</code>, which is the working vector's interface. Both
+byproducts are covered. The released DMX backbone is KanR on an Amp plate, and released ccdB
+kills anything that takes it. The document never spells that out.</p>
+<h2 id="d13-different-host-and-a-layer-the-paper-has-no-counterpart-for">D13. Different host, and a layer the paper has no counterpart for<a class="headerlink" href="#d13-different-host-and-a-layer-the-paper-has-no-counterpart-for" title="Permanent link">&para;</a></h2>
+<p>Paper: the product is a repair template for knock-in at the human TRAC locus in primary T cells.
+Ours goes into a bacterial expression vector, with promoter and RBS either in the backbone or in
+the N-terminal part (<code>#### Input working vector</code>), and libraries in BL21(DE3)
+(<code>## Reagents and equipment</code>).</p>
+<p>Consequence: ours needs the whole working-cassette layer, reusable N- and C-terminal parts with
+their own overhangs and their own carrier vector (<code>### Parts</code>). The iGGA cargo has to
+present <code>AGGA</code>/<code>TTCC</code> cleanly to drop into it.</p>
+<h2 id="d14-a-second-barcode-system-and-bsai-with-three-jobs">D14. A second barcode system, and BsaI with three jobs<a class="headerlink" href="#d14-a-second-barcode-system-and-bsai-with-three-jobs" title="Permanent link">&para;</a></h2>
+<p>Paper: one 11 bp barcode per domain plus one in the knock-in vector. BsaI does one thing.</p>
+<p>Ours: the same per-fragment barcode plus the DMX plate-barcode kit, 96 plasmids in four groups
+of 24 (<code>### Vectors and parts summary</code>). Measured, they chain exactly as that row says: group 1
+gives <code>AGGA</code>/<code>GTTC</code>,
+group 2 <code>GTTC</code>/<code>CCTT</code>, group 3 <code>CCTT</code>/<code>TCAG</code>, group 4 <code>TCAG</code>/<code>TTCC</code>. So BsaI on the DMX vector
+does three jobs: plate barcoding, releasing cargo as the iGGA donor, releasing cargo into the
+working vector.</p>
+<p>These do not conflict. Plate barcoding runs in heat-lysed cell lysate on a throwaway aliquot and
+the product is PCR-amplified for nanopore, so it never has to grow. The culture in the well is
+the stock and is untouched. Our document does not say this, and it belongs in the DMX pipeline
+steps.</p>
+<p>We have no equivalent of the paper's vector barcode, so our final read has fewer barcode
+positions than theirs.</p>
+<h2 id="d15-extra-strains-forced-by-ccdb">D15. Extra strains, forced by ccdB<a class="headerlink" href="#d15-extra-strains-forced-by-ccdb" title="Permanent link">&para;</a></h2>
+<p>The iGGA rounds themselves are unchanged: Endura, recover and grow at 30 °C every round
+(<code>### iGGA pipeline</code>; the temperature itself belongs to the detail protocol, not the method
+page), exactly as the paper. The extra strains belong to the DMX entry step and the
+final transfer, which are layers the paper has no counterpart for. A ccdB-sensitive strain
+and NEB Stable for anything carrying ccdB, both in <code>## Reagents and equipment</code>.</p>
+<h2 id="d16-withdrawn-the-paper-sequences-whole-plasmids-too">D16. Withdrawn: the paper sequences whole plasmids too<a class="headerlink" href="#d16-withdrawn-the-paper-sequences-whole-plasmids-too" title="Permanent link">&para;</a></h2>
+<p>Carried first as a difference and then as an open question, because the method document and an
+earlier draft of this note were describing different objects. The paper settles it: "The
+sequences of a sample of individual clones from both libraries were confirmed by whole plasmid
+next-generation sequencing (Plasmidsaurus)" — a sample of a finished library, not a check on
+each round's product, and not every member.</p>
+<p>Ours does the same, so nothing departs. A round's product is a pool and holds no clone to read.
+The objects that get a whole-plasmid read are the validated part wells and any single construct
+archived as a stock.</p>
+<h2 id="d17-the-working-vectors-stuffer-is-the-parents-own-egfp-not-an-rfp">D17. The working vector's stuffer is the parent's own EGFP, not an RFP<a class="headerlink" href="#d17-the-working-vectors-stuffer-is-the-parents-own-egfp-not-an-rfp" title="Permanent link">&para;</a></h2>
+<p>Method page: <code>Stuffer cassette: RFP</code> (<code>#### Input working vector</code>). Ours: the EGFP already
+carried by pLVX-TetOne-Puro-GFP, the parent #230 measured. The paper has no counterpart — it
+builds no working vector and its destination carries no stuffer cassette — so this departs from
+the method page rather than from Takacsi-Nagy et al.</p>
+<p>Why: the transduction marker is mCherry (<code>docs/research/ap1-demo-project.md</code> section 7.1). A red
+stuffer against a red marker means colour cannot separate a vector whose cassette was never
+replaced from a cell that was simply transduced. The EGFP is being cut out of the parent anyway.</p>
+<p>Measured on the parent, 2026-10-06, across the 720 bp the method replaces, both strands: <strong>0
+BsaI, 0 BsmBI, 0 BbsI, 0 PaqCI, 0 SapI</strong>, so it sits between the cassette's two BsmBI sites
+without being cut in the middle. It translates <code>MVSKGEELFTGV…GMDELYK*</code>, one stop and it the last
+codon. It carries <strong>no <code>AATAAA</code> or <code>ATTAAA</code> on either strand</strong>, so retaining it reintroduces
+nothing the poly(A) requirement is about. It is already under the TRE3GS promoter in the right
+orientation, with the SV40 poly(A) signal beyond it.</p>
+<p>Cheaper to build, too: an RFP stuffer is sourced and inserted, while the EGFP needs only its two
+flanks replaced — <code>TATG</code> and a BsmBI site at one end, a BsmBI site and <code>CTAA</code> at the other —
+which is one PCR off the parent with tailed primers.</p>
+<p><strong>The caveat, and it applies to the RFP equally.</strong> The stuffer sits under a TRE promoter, which
+is a minimal CMV promoter and is not read in <em>E. coli</em>. <strong>No stuffer colour screens a bacterial
+colony</strong>, green or red. The colour reads in the transduced cell after induction: green means the
+cassette was never replaced, red-only means it was. A colony-level screen needs a bacterial
+promoter on the stuffer or a counter-selection marker, which is a separate decision. Nothing
+read measures TRE3GS activity in <em>E. coli</em>.</p>
+<p>Every count above is from <code>docs/research/working-vector-plvx-tetone.md</code> section 5, and none is
+recomputed here.</p>
+<h2 id="d18-every-round-is-plated-the-paper-plates-none">D18. Every round is plated; the paper plates none<a class="headerlink" href="#d18-every-round-is-plated-the-paper-plates-none" title="Permanent link">&para;</a></h2>
+<p>Paper: digest, SPRI, ligate, SPRI, electroporate, recover one hour at 30 °C, grow 12-16 hours,
+prep, next round. No colony count appears anywhere in it. Ours plates a dilution of each round's
+recovery, and a no-donor control carried through the ligation from the same digest, and gates
+the round on net colonies (<code>### iGGA pipeline</code>, step 5).</p>
+<p>Why. The design's correctness rests on the parental destination not surviving: BbsI cuts twice,
+SrfI cuts whatever BbsI missed, T7 refuses the resulting blunt ends, and the 2X SPRI takes the
+stubs. The control plate measures that chain rather than assuming it. What survives is not
+noise — it is the previous round's library, one position short, and it would reach the linkage
+read as truncated members. A round that collapsed cannot be repaired by a later one.</p>
+<p>Cost: two plates a round, both growing during the outgrowth, so no extra day.</p>
+<p>What it does not change. The library is still never read per member, and no colony is ever
+picked from these plates. It goes to a pooled screen as a pool. The plate bounds a round; the
+representation and linkage reads judge the library.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

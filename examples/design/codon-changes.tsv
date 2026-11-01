@@ -1,0 +1,4 @@
+codon_index	old_codon	new_codon	amino_acid	enzyme
+76	CAT	CAC	H	NdeI
+216	CAT	CAC	H	NdeI
+230	CAT	CAC	H	NcoI

@@ -1,0 +1,2188 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/feature-colours/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Feature colours: where a default colour for each feature type can come from - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#feature-colours-where-a-default-colour-for-each-feature-type-can-come-from" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Feature colours: where a default colour for each feature type can come from
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-what-the-files-already-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. What the files already hold
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-licences-source-by-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Licences, source by source
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-snapgenes-defaults-and-why-they-are-not-a-palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. SnapGene's defaults, and why they are not a palette
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-which-feature-types-a-default-must-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Which feature types a default must cover
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Which feature types a default must cover">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-what-real-plasmid-files-carry" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.1 What real plasmid files carry
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-two-spellings-of-the-same-thing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.2 Two spellings of the same thing
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.3 Groups
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-colour-blind-safe-palettes-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Colour-blind-safe palettes, measured
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-label-contrast-and-outlines" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Label contrast and outlines
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-primers-and-enzyme-sites" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Primers and enzyme sites
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-what-remains-a-judgement-for-the-interface-ticket" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. What remains a judgement for the interface ticket
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="feature-colours-where-a-default-colour-for-each-feature-type-can-come-from">Feature colours: where a default colour for each feature type can come from<a class="headerlink" href="#feature-colours-where-a-default-colour-for-each-feature-type-can-come-from" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #79. Everything below was read or measured on <strong>2026-09-16</strong>. It settles
+where <code>mbio.plot</code> takes the colour of a feature whose file gives it none, under a licence
+this MIT package can ship, and which feature types that default has to cover. The rule it serves
+is already settled on the map (#76): a feature keeps the colour its file gives it, and only a
+feature without one takes a colour chosen by its type.</p>
+<p>Each claim says whether it was <strong>measured</strong> (a script run over files) or <strong>read</strong> (a document or
+source file, linked).</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Source of the automatic colours</strong></td>
+<td><strong>Paul Tol's light scheme</strong>: 8 of its 9 colours, one per group of feature types</td>
+<td>Designed for black labels on coloured fills; measured distinct in simulated colour-blind vision (section 6)</td>
+</tr>
+<tr>
+<td><strong>Licence</strong></td>
+<td><strong>BSD-3-Clause</strong>, in Tol's <code>tol_colors.py</code>. Ship the copyright notice beside the values</td>
+<td>Read, section 3</td>
+</tr>
+<tr>
+<td><strong>SnapGene's colours</strong></td>
+<td><strong>Do not copy them.</strong> There is also little to copy: its per-type defaults are nearly all one grey, and its colourful maps come from per-feature colours the <code>.dna</code> file already stores</td>
+<td>Read and measured, section 4</td>
+</tr>
+<tr>
+<td><strong>Feature types to cover</strong></td>
+<td><strong>Seven groups plus "other"</strong>, which take every current INSDC key, the 12 keys INSDC retired in 2014, and SnapGene's <code>LTR</code></td>
+<td>Measured, section 5</td>
+</tr>
+<tr>
+<td><strong>Label text on a fill</strong></td>
+<td><strong>Black or white, whichever contrasts more.</strong> That never falls below 4.58:1, so it passes WCAG's 4.5:1 on any fill, a file's own included</td>
+<td>Computed, section 7</td>
+</tr>
+<tr>
+<td><strong>Arrow outline</strong></td>
+<td><strong>Always draw one.</strong> No light-scheme colour, and 77% of the colours SnapGene files give features, reach 3:1 against a white page</td>
+<td>Measured, section 7</td>
+</tr>
+<tr>
+<td><strong>Primers</strong></td>
+<td><strong>One colour, Tol bright purple <code>#AA3377</code></strong>: 6.1:1 on white</td>
+<td>Measured, section 8</td>
+</tr>
+<tr>
+<td><strong>Enzyme sites</strong></td>
+<td><strong>Black text</strong>, as SnapGene draws them</td>
+<td>Read, section 8</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The reader, not the palette, is the larger finding.</strong> The GenBank reader in <code>io.py</code> never sets
+<code>Feature.color</code>. A GenBank file that carries a colour in any of the three conventions found —
+ApE's <code>ApEinfo_fwdcolor</code>, DNA Features Viewer's <code>color</code>, SnapGene's <code>/note="color: #…"</code> — keeps it
+as a plain qualifier, so under the settled rule every GenBank feature would take the automatic
+colour even when its file names one (section 2).</p>
+<p><strong>Why Tol's light scheme and not the others.</strong> Of the twelve palettes measured, it is the only one
+that does both things a labelled arrow needs: black text passes 4.5:1 on every colour, and its
+closest pair stays 7.5 CIEDE2000 units apart or more in normal vision and in each simulated
+colour-blind vision. ColorBrewer's Set2 and Paired, SeqViz's palette and the colours SnapGene
+files carry each fall to between 0.1 and 1.8 in at least one simulation. Okabe-Ito separates further (10.9) but fails black text on its blue,
+and would serve equally well with the black-or-white rule; that choice is a judgement (section 9).</p>
+<h2 id="2-what-the-files-already-hold">2. What the files already hold<a class="headerlink" href="#2-what-the-files-already-hold" title="Permanent link">&para;</a></h2>
+<p>Read from <code>src/mbio/sequence.py</code>, <code>snapgene.py</code> and <code>io.py</code>; measured with
+<code>read_record</code> on <code>docs/examples/pUC19-GFP/product.dna</code> and on a three-feature GenBank test file.</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What the model keeps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.dna</code> feature</td>
+<td><code>Feature.color</code> from the first segment's <code>color</code> attribute; <code>Segment.color</code> only where a segment differs. All 12 features of <code>pUC19-GFP</code> carry one</td>
+</tr>
+<tr>
+<td><code>.dna</code> write</td>
+<td>a feature with no colour is written with SnapGene's grey <code>#a6acb3</code> (<code>snapgene._DEFAULT_COLOR</code>)</td>
+</tr>
+<tr>
+<td>GenBank feature</td>
+<td><code>Feature.color</code> is always <code>None</code>. Colour qualifiers survive only as qualifiers</td>
+</tr>
+<tr>
+<td>Primer</td>
+<td>no colour field at all</td>
+</tr>
+</tbody>
+</table>
+<p>The GenBank test file measured the three conventions this note found in use:</p>
+<table>
+<thead>
+<tr>
+<th>Convention</th>
+<th>Qualifier</th>
+<th><code>Feature.color</code> after <code>read_record</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ApE, and tools writing its format (<a href="https://jorgensen.biology.utah.edu/wayned/ape/Documentation/ApE_Manual_current.pdf">ApE manual</a>)</td>
+<td><code>/ApEinfo_fwdcolor="#346ee0"</code>, <code>/ApEinfo_revcolor=…</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td>DNA Features Viewer (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/master/dna_features_viewer/BiopythonTranslator/BiopythonTranslator.py">source</a>)</td>
+<td><code>/color="#ffd700"</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td>SnapGene's GenBank export (<a href="https://support.snapgene.com/hc/en-us/articles/10242682237588-What-is-Genbank-SnapGene-Format">format page</a>)</td>
+<td>last <code>/note="color: #9d1b1c"</code>; a multi-segment feature lists <code>/ #rrggbb /</code> per segment</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p>SnapGene's format page also defines a primer colour, as one of seven names (<code>black red orange
+green blue purple gray</code>) in the last <code>/note</code> of a <code>primer_bind</code> feature. None of the 1,024 <code>.dna</code>
+files of section 5 stores a colour in its primer packet (<strong>measured</strong>), so SnapGene's primer
+colour is a display default in practice.</p>
+<h2 id="3-licences-source-by-source">3. Licences, source by source<a class="headerlink" href="#3-licences-source-by-source" title="Permanent link">&para;</a></h2>
+<p>A list of hex values may not be protectable at all. This note does not rely on that: it picks
+a source whose licence says yes, and reports the rest as facts about the software.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What it offers</th>
+<th>Licence or terms</th>
+<th>Can we ship it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SnapGene</td>
+<td>per-type defaults; per-feature colours in its feature database and files</td>
+<td>EULA forbids derivative works and reverse engineering; website forbids republishing its material</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td>Addgene</td>
+<td>maps drawn by SnapGene</td>
+<td>noncommercial use only</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td>pLannotate</td>
+<td>7-row colour table by type</td>
+<td>GPL-3.0</td>
+<td><strong>No</strong>: do not copy the table</td>
+</tr>
+<tr>
+<td>DNA Features Viewer</td>
+<td>one default, <code>#7245dc</code>; reads <code>/color</code></td>
+<td>MIT</td>
+<td>Yes, but nothing per type</td>
+</tr>
+<tr>
+<td>pyGenomeViz</td>
+<td>orange for every feature; <code>CDS="orange"</code> in its GUI</td>
+<td>MIT</td>
+<td>Yes, but nothing per type</td>
+</tr>
+<tr>
+<td>pyCirclize</td>
+<td>reads a <code>/facecolor</code> qualifier or a caller's function</td>
+<td>MIT</td>
+<td>Yes, but nothing per type</td>
+</tr>
+<tr>
+<td>Open Vector Editor (TeselaGen)</td>
+<td>90 types, 86 distinct colours</td>
+<td>MIT</td>
+<td>Yes; not chosen (section 6)</td>
+</tr>
+<tr>
+<td>SeqViz</td>
+<td>12 colours, by index or at random</td>
+<td>MIT</td>
+<td>Yes, but nothing per type</td>
+</tr>
+<tr>
+<td>Benchling</td>
+<td>16 colours the user picks from</td>
+<td>proprietary</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td>ApE</td>
+<td>one default per strand; colours in its feature library</td>
+<td>free download; no licence stated</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td>SBOL Visual</td>
+<td>glyph shapes; colour left to the author</td>
+<td>spec CC BY 4.0; glyphs CC0</td>
+<td>Glyphs yes; no colours to take</td>
+</tr>
+<tr>
+<td>Okabe-Ito</td>
+<td>7 colours and black</td>
+<td>"feel free to use", crediting the authors</td>
+<td>Yes, with credit</td>
+</tr>
+<tr>
+<td>Paul Tol</td>
+<td>bright 7, vibrant 7, muted 10, light 9, and more</td>
+<td>BSD-3-Clause (<code>tol_colors.py</code>)</td>
+<td><strong>Yes</strong>, keeping the notice</td>
+</tr>
+<tr>
+<td>ColorBrewer</td>
+<td>qualitative schemes up to 12</td>
+<td>Apache-2.0</td>
+<td>Yes; not colour-blind safe past 3-4 colours</td>
+</tr>
+</tbody>
+</table>
+<p>The rows, with their sources:</p>
+<ul>
+<li><strong>SnapGene.</strong> Its <a href="https://www.snapgene.com/legal/terms-of-service">terms page</a> splits by
+  purchase date. The <a href="https://www.snapgene.com/downloads/SnapGene-Terms.pdf">SnapGene Terms</a>, last
+  updated 15 January 2026, cover SnapGene and the free SnapGene Viewer alike. Section 4.5: the
+  user "may not alter, merge, modify, adapt, translate, decompile, reverse engineer, disassemble,
+  or otherwise reduce the Software to a human-perceivable form"; 4.7: "may not create derivative
+  works based upon the Software"; 5.1: "All rights not expressly granted in this Agreement are
+  reserved by SnapGene." Purchases from 12 August 2026 fall under the
+  <a href="https://www.dotmatics.com/terms-and-conditions">Dotmatics terms</a>, whose Software License
+  Attachment, section 2.1, forbids the same: "modify, adapt, translate or create derivative works
+  based upon the Software" and "reverse engineer, decompile, disassemble or otherwise attempt to
+  derive the source code". The <a href="https://www.snapgene.com/legal-disclaimers">legal disclaimers</a> add
+  "you must not republish material from this website". Images are the one stated freedom: "We
+  place no restriction on the publication of images generated by SnapGene or SnapGene Viewer"
+  (<a href="https://support.snapgene.com/hc/en-us/articles/14097213072788-Can-I-publish-images-I-have-generated-with-SnapGene">support article</a>),
+  which covers a picture, not a colour table.</li>
+<li><strong>Addgene.</strong> Its <a href="https://www.addgene.org/terms-of-use/">terms of use</a> (updated 24 January
+  2023): "Content may not be reproduced, duplicated, copied, sold, resold, or otherwise exploited
+  for any commercial purpose without the express written consent". Its plasmid maps are SnapGene
+  drawings: the pUC19 map on <a href="https://www.addgene.org/50005/sequences/">Addgene #50005</a> is stamped
+  "Created by SnapGene" (read from the image).</li>
+<li><strong>pLannotate.</strong> <a href="https://github.com/mmcguffi/pLannotate/blob/master/plannotate/data/data/colors.csv"><code>colors.csv</code></a>
+  and <a href="https://github.com/mmcguffi/pLannotate/blob/master/plannotate/bokeh_plot.py"><code>bokeh_plot.py</code></a>
+  in a GPL-3.0 repository. Its feature database is SnapGene's: "we obtained the feature database
+  used by SnapGene, which was first constructed as the GenoLIB biological part database"
+  (<a href="https://doi.org/10.1093/nar/gkab374">McGuffie and Barrick 2021</a>, CC BY 4.0). Reading the table
+  to report what it holds is not copying it; no value of it goes into <code>src/</code>.</li>
+<li><strong>DNA Features Viewer</strong>, <strong>pyGenomeViz</strong>, <strong>pyCirclize</strong>: MIT per the GitHub licence API.
+  <code>default_feature_color = "#7245dc"</code> in
+  <a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/master/dna_features_viewer/BiopythonTranslator/BiopythonTranslator.py"><code>BiopythonTranslator.py</code></a>;
+  <code>kwargs.setdefault("fc", "orange")</code> in pyGenomeViz's
+  <a href="https://github.com/moshi4/pyGenomeViz/blob/main/src/pygenomeviz/patches.py"><code>patches.py</code></a> and
+  <code>type2color … CDS="orange"</code> in its
+  <a href="https://github.com/moshi4/pyGenomeViz/blob/main/src/pygenomeviz/gui/config.py"><code>gui/config.py</code></a>;
+  the <code>facecolor</code> qualifier in pyCirclize's
+  <a href="https://github.com/moshi4/pyCirclize/blob/main/src/pycirclize/track.py"><code>track.py</code></a>.</li>
+<li><strong>Open Vector Editor</strong>:
+  <a href="https://github.com/TeselaGen/tg-oss/blob/master/packages/sequence-utils/src/featureTypesAndColors.js"><code>featureTypesAndColors.js</code></a>,
+  MIT. <strong>SeqViz</strong>: <a href="https://github.com/Lattice-Automation/seqviz/blob/develop/src/colors.ts"><code>colors.ts</code></a>,
+  MIT.</li>
+<li><strong>Benchling.</strong> "There are 16 colors to choose from when assigning colors to annotations. Hex
+  color codes assigned to features on an import file are mapped to the closest one of these
+  colors" (<a href="https://help.benchling.com/hc/en-us/articles/39768268305805-How-to-characterize-sequences-with-annotations-and-translations">help article</a>).
+  The page does not list them. Benchling's GenBank export has an "Export Annotation Colors"
+  option (<a href="https://help.benchling.com/hc/en-us/articles/9684262210957-October-2020-Product-Release-Notes">release notes, October 2020</a>)
+  but no public page names the qualifier it writes.</li>
+<li><strong>ApE.</strong> The <a href="https://jorgensen.biology.utah.edu/wayned/ape/">home page</a> (v3.1.10.1) offers a
+  <a href="https://jorgensen.biology.utah.edu/wayned/ape/Download/Default_Features_11_10_23.txt">Default Features</a>
+  library and states no licence for it. The manual: "Feature default (fwd) / (rev) — default
+  colors for forward and reverse strand features that have no individually assigned color."</li>
+<li><strong>SBOL Visual.</strong> <a href="https://github.com/SynBioDex/SBOL-visual/blob/master/LICENSE.html"><code>LICENSE.html</code></a>:
+  "this work is licensed under a Creative Commons Attribution 4.0 International License.
+  Exception: … the SBOL developers have waived all copyright and related or neighboring rights to
+  SBOL Visual glyphs."</li>
+<li><strong>Okabe-Ito.</strong> <a href="https://jfly.uni-koeln.de/color/">Color Universal Design</a> (Okabe and Ito,
+  2002, modified 2008): "Please feel free to use these items for your classes and seminars.
+  (Please don't forget, however, to mention Masataka Okabe and Kei Ito for reference.)" The
+  values are given as RGB in the page's
+  <a href="https://jfly.uni-koeln.de/color/image/pallete.jpg">palette image</a>.</li>
+<li><strong>Paul Tol.</strong> <a href="https://sronpersonalpages.nl/~pault/data/tol_colors.py"><code>tol_colors.py</code></a>:
+  "Copyright (c) 2022, Paul Tol. All rights reserved. License: Standard 3-clause BSD". The light
+  set in that file is <code>'#77AADD', '#EE8866', '#EEDD88', '#FFAABB', '#99DDFF', '#44BB99',
+  '#BBCC33', '#AAAA00', '#DDDDDD'</code>, matching the <a href="https://sronpersonalpages.nl/~pault/">scheme page</a>.
+  The <code>tol-colors</code> package on PyPI is BSD-3-Clause too.</li>
+<li><strong>ColorBrewer.</strong> Apache-2.0 per its
+  <a href="https://github.com/axismaps/colorbrewer">repository</a>; its own colour-blind flags are read in
+  section 6.</li>
+</ul>
+<h2 id="4-snapgenes-defaults-and-why-they-are-not-a-palette">4. SnapGene's defaults, and why they are not a palette<a class="headerlink" href="#4-snapgenes-defaults-and-why-they-are-not-a-palette" title="Permanent link">&para;</a></h2>
+<p><strong>Read.</strong> SnapGene keeps a default colour per feature type, shown in Features → Manage Feature
+Types (<a href="https://support.snapgene.com/hc/en-us/articles/10383975167636-Standard-Feature-Types-in-SnapGene">Standard Feature Types in SnapGene</a>).
+The article's screenshots show grey for nearly every type — <code>-10_signal</code>, <code>3'UTR</code>, <code>enhancer</code>,
+<code>gene</code>, <code>misc_feature</code>, <code>variation</code> among them — with CDS dark magenta, the peptide types pink,
+<code>source</code> white, <code>exon</code> slate and <code>gap</code> near-white. Changing a type's default "will only apply to
+new features of that type"; existing features "retain their original set color".</p>
+<p><strong>Measured.</strong> Over 1,024 files of SnapGene's public plasmid collection (section 5), the colours
+files carry do not follow those type defaults:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Colours seen</th>
+<th>Most common</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CDS</td>
+<td>16</td>
+<td><code>#993366</code> 2,030; <code>#ccffcc</code> 1,302; <code>#cc99b2</code> 1,003</td>
+</tr>
+<tr>
+<td>promoter</td>
+<td>1</td>
+<td><code>#ffffff</code>, all 2,708</td>
+</tr>
+<tr>
+<td>enhancer</td>
+<td>2</td>
+<td><code>#ffffff</code> 324 of 337, though the type default is grey</td>
+</tr>
+<tr>
+<td>rep_origin</td>
+<td>2</td>
+<td><code>#ffff00</code> 1,592 of 1,594</td>
+</tr>
+<tr>
+<td>terminator</td>
+<td>2</td>
+<td><code>#ffffff</code> 689; <code>#ff0000</code> 82</td>
+</tr>
+<tr>
+<td>misc_feature</td>
+<td>16</td>
+<td><code>#ffe4c4</code> 595; <code>#99ccff</code> 506; <code>#a6acb3</code> 267</td>
+</tr>
+<tr>
+<td>protein_bind</td>
+<td>1</td>
+<td><code>#31849b</code>, all 644</td>
+</tr>
+<tr>
+<td>primer_bind</td>
+<td>1</td>
+<td><code>#a020f0</code>, all 317</td>
+</tr>
+<tr>
+<td>polyA_signal</td>
+<td>1</td>
+<td><code>#a6acb3</code>, all 407</td>
+</tr>
+</tbody>
+</table>
+<p>So the colour of a SnapGene map is set feature by feature, from the colour each entry in its
+feature database carries (<a href="https://support.snapgene.com/hc/en-us/articles/10383924910612-Edit-Common-Features">Edit Common Features</a>
+lists colour among the fields of an entry), and the <code>.dna</code> reader already keeps it. What SnapGene
+would give a feature <strong>without</strong> a colour is its type default — grey for most types. There is
+no SnapGene per-type palette worth copying, and the terms forbid it anyway (section 3).</p>
+<p>What is worth keeping is the <strong>look</strong>, which is not anyone's property: pale fills, a dark
+outline, purple primer labels, black enzyme names.</p>
+<h2 id="5-which-feature-types-a-default-must-cover">5. Which feature types a default must cover<a class="headerlink" href="#5-which-feature-types-a-default-must-cover" title="Permanent link">&para;</a></h2>
+<h3 id="51-what-real-plasmid-files-carry">5.1 What real plasmid files carry<a class="headerlink" href="#51-what-real-plasmid-files-carry" title="Permanent link">&para;</a></h3>
+<p><strong>Measured</strong> with <code>read_record</code> over 1,024 <code>.dna</code> files of SnapGene's public collection
+(<code>snapgene.com/local/fetch.php</code>): all 308 basic cloning vectors and 286 CRISPR plasmids, 3
+coronavirus resources, 67 fluorescent protein plasmids, and an evenly spaced 60 from each of the
+insect cell, mammalian expression, pET and Duet, plant, viral and yeast sets. 14,227 features;
+14,116 carry a colour, and the 111 without (104 introns, 7 misc_features) are stored as <code>noColor</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Features</th>
+<th>Share</th>
+<th>Cumulative</th>
+<th>Files carrying it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CDS</td>
+<td>4,578</td>
+<td>32.2%</td>
+<td>32.2%</td>
+<td>98.4%</td>
+</tr>
+<tr>
+<td>promoter</td>
+<td>2,708</td>
+<td>19.0%</td>
+<td>51.2%</td>
+<td>93.2%</td>
+</tr>
+<tr>
+<td>misc_feature</td>
+<td>1,695</td>
+<td>11.9%</td>
+<td>63.1%</td>
+<td>70.1%</td>
+</tr>
+<tr>
+<td>rep_origin</td>
+<td>1,594</td>
+<td>11.2%</td>
+<td>74.3%</td>
+<td>93.1%</td>
+</tr>
+<tr>
+<td>terminator</td>
+<td>771</td>
+<td>5.4%</td>
+<td>79.7%</td>
+<td>45.2%</td>
+</tr>
+<tr>
+<td>protein_bind</td>
+<td>644</td>
+<td>4.5%</td>
+<td>84.3%</td>
+<td>41.4%</td>
+</tr>
+<tr>
+<td>polyA_signal</td>
+<td>407</td>
+<td>2.9%</td>
+<td>87.1%</td>
+<td>30.3%</td>
+</tr>
+<tr>
+<td>enhancer</td>
+<td>337</td>
+<td>2.4%</td>
+<td>89.5%</td>
+<td>29.6%</td>
+</tr>
+<tr>
+<td>LTR</td>
+<td>329</td>
+<td>2.3%</td>
+<td>91.8%</td>
+<td>16.1%</td>
+</tr>
+<tr>
+<td>primer_bind</td>
+<td>317</td>
+<td>2.2%</td>
+<td>94.0%</td>
+<td>15.3%</td>
+</tr>
+<tr>
+<td>misc_RNA</td>
+<td>140</td>
+<td>1.0%</td>
+<td>95.0%</td>
+<td>12.9%</td>
+</tr>
+<tr>
+<td>23 more types</td>
+<td>707</td>
+<td>5.0%</td>
+<td>100%</td>
+<td>each under 11%</td>
+</tr>
+</tbody>
+</table>
+<p>The 23: <code>RBS</code>, <code>intron</code>, <code>variation</code>, <code>repeat_region</code>, <code>gene</code>, <code>misc_recomb</code>, <code>mat_peptide</code>,
+<code>mRNA</code>, <code>oriT</code>, <code>mobile_element</code>, <code>5'UTR</code>, <code>misc_signal</code>, <code>source</code>, <code>3'UTR</code>, <code>misc_binding</code>,
+<code>exon</code>, <code>polyA_site</code>, <code>stem_loop</code>, <code>TATA_signal</code>, <code>sig_peptide</code>, <code>ncRNA</code>, <code>unsure</code>, <code>regulatory</code>.
+RNA is where SnapGene's collection and other annotators differ most: <code>ncRNA</code> is 2 features here,
+but 18 features in 9 of the 10 GenBank files pLannotate keeps as annotation controls
+(<a href="https://github.com/mmcguffi/pLannotate/tree/master/tests/test_data/annotation_controls/default"><code>tests/test_data/annotation_controls/default/</code></a>),
+where Rfam finds them.</p>
+<p><strong>Ten types cover 94.0% of features.</strong> The long tail is short in count but long in names.</p>
+<h3 id="52-two-spellings-of-the-same-thing">5.2 Two spellings of the same thing<a class="headerlink" href="#52-two-spellings-of-the-same-thing" title="Permanent link">&para;</a></h3>
+<p><strong>Read.</strong> The INSDC feature table, <a href="https://www.insdc.org/submitting-standards/feature-table/">version 11.4, April 2026</a>,
+defines 52 keys. Its <code>regulatory</code> key "has replaced the following Feature Keys on 15-DEC-2014:
+enhancer, promoter, CAAT_signal, TATA_signal, -35_signal, -10_signal, RBS, GC_signal,
+polyA_signal, attenuator, terminator, misc_signal", with the kind carried by
+<code>/regulatory_class</code> from a <a href="https://www.insdc.org/submitting-standards/controlled-vocabulary-regulatoryclass/">controlled vocabulary</a>
+(<code>promoter</code>, <code>enhancer</code>, <code>terminator</code>, <code>polyA_signal_sequence</code>, <code>ribosome_binding_site</code>,
+<code>riboswitch</code>, <code>insulator</code>, <code>silencer</code>, … and <code>other</code>). <code>LTR</code> is not a current key either.</p>
+<p><strong>Measured.</strong> SnapGene still writes the retired keys — <code>promoter</code> in 93.2% of files,
+<code>terminator</code>, <code>enhancer</code>, <code>polyA_signal</code>, <code>RBS</code>, <code>LTR</code> — and only one of 14,227 features used
+<code>regulatory</code>. A default therefore has to accept both spellings, and colour a <code>regulatory</code> feature
+by its <code>/regulatory_class</code>.</p>
+<h3 id="53-groups">5.3 Groups<a class="headerlink" href="#53-groups" title="Permanent link">&para;</a></h3>
+<p>Three sources split plasmid parts along the same lines: pLannotate's seven colour
+rows (origin of replication, promoter, CDS, misc feature, primer bind, terminator, ncRNA), SBOL
+Visual's sequence-feature glyphs (<code>promoter</code>, <code>cds</code>, <code>terminator</code>, <code>origin-of-replication</code>,
+<code>primer-binding-site</code>, <code>non-coding-rna</code>, <code>specific-recombination-site</code>, <code>operator</code>, …;
+<a href="https://github.com/SynBioDex/SBOL-visual/tree/master/Glyphs/SequenceFeatures">glyph directory</a>),
+and INSDC's regulatory classes. The proposal follows them:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Keys</th>
+<th>Features measured</th>
+<th>Tol light colour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Coding</td>
+<td><code>CDS gene mat_peptide sig_peptide transit_peptide propeptide proprotein exon</code>, and the immunoglobulin segments and regions</td>
+<td>33.1%</td>
+<td>light blue <code>#77AADD</code></td>
+</tr>
+<tr>
+<td>Promoters and enhancers</td>
+<td><code>promoter enhancer RBS -10_signal -35_signal CAAT_signal TATA_signal GC_signal attenuator misc_signal 5'UTR</code>, and <code>regulatory</code> by class</td>
+<td>22.4%</td>
+<td>orange <code>#EE8866</code></td>
+</tr>
+<tr>
+<td>Terminators and polyA</td>
+<td><code>terminator polyA_signal polyA_site 3'UTR</code></td>
+<td>8.4%</td>
+<td>pink <code>#FFAABB</code></td>
+</tr>
+<tr>
+<td>Replication</td>
+<td><code>rep_origin oriT</code></td>
+<td>11.3%</td>
+<td>light yellow <code>#EEDD88</code></td>
+</tr>
+<tr>
+<td>Binding site</td>
+<td><code>protein_bind misc_binding primer_bind</code></td>
+<td>6.8%</td>
+<td>light cyan <code>#99DDFF</code></td>
+</tr>
+<tr>
+<td>RNA</td>
+<td><code>ncRNA misc_RNA mRNA tRNA rRNA tmRNA precursor_RNA prim_transcript</code></td>
+<td>1.2%</td>
+<td>mint <code>#44BB99</code></td>
+</tr>
+<tr>
+<td>Repeat and recombination</td>
+<td><code>LTR repeat_region mobile_element misc_recomb stem_loop D-loop</code></td>
+<td>3.4%</td>
+<td>pear <code>#BBCC33</code></td>
+</tr>
+<tr>
+<td>Other</td>
+<td>everything else: <code>misc_feature source variation intron unsure</code>, custom types</td>
+<td>13.2%</td>
+<td>pale grey <code>#DDDDDD</code></td>
+</tr>
+</tbody>
+</table>
+<p>Olive <code>#AAAA00</code> is left out: with pear it is the scheme's closest pair in normal, protan and
+deutan vision (<strong>measured</strong>). Every current
+INSDC key, every retired one and every key seen in the survey lands in exactly one group
+(<strong>measured</strong>); the ones left to "other" are <code>misc_feature</code>, <code>source</code>, <code>variation</code>,
+<code>intron</code>, <code>unsure</code>, <code>misc_difference</code>, <code>misc_structure</code>, <code>modified_base</code>, <code>old_sequence</code>,
+<code>operon</code>, <code>STS</code>, <code>assembly_gap</code>, <code>gap</code>, <code>centromere</code>, <code>telomere</code> and <code>iDNA</code>.</p>
+<p>With these eight colours the closest pair, in CIEDE2000 units, is 12.4 in normal vision
+(light yellow and pear), 9.2 protan and 8.4 deutan (pink and pale grey), and 7.5 tritan (light
+blue and mint, which is coding against RNA, 1.2% of features) (<strong>measured</strong>).</p>
+<h2 id="6-colour-blind-safe-palettes-measured">6. Colour-blind-safe palettes, measured<a class="headerlink" href="#6-colour-blind-safe-palettes-measured" title="Permanent link">&para;</a></h2>
+<p><strong>Method.</strong> For each palette: WCAG 2 contrast of black text on each colour; and the smallest
+CIEDE2000 difference between any two of its colours, in normal vision and in protanopia,
+deuteranopia and tritanopia simulated by <a href="https://www.inf.ufrgs.br/~oliveira/pubs_files/CVD_Simulation/CVD_Simulation.html">Machado, Oliveira and Fernandes 2009</a>
+(severity 1.0, applied in linear RGB). The CIEDE2000 code was checked against the first test pair
+of <a href="https://doi.org/10.1002/col.20070">Sharma, Wu and Dalal 2005</a> (2.0425). No
+source gives a threshold for "distinct", so the numbers compare palettes rather than pass them.</p>
+<table>
+<thead>
+<tr>
+<th>Palette</th>
+<th>Colours</th>
+<th>Black text ≥ 4.5:1</th>
+<th>Normal</th>
+<th>Protan</th>
+<th>Deutan</th>
+<th>Tritan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tol light</strong></td>
+<td>9</td>
+<td><strong>9</strong></td>
+<td>9.3</td>
+<td>8.8</td>
+<td>7.9</td>
+<td>7.5</td>
+</tr>
+<tr>
+<td>Tol light, 8 hues</td>
+<td>8</td>
+<td>8</td>
+<td>9.3</td>
+<td>8.8</td>
+<td>7.9</td>
+<td>7.5</td>
+</tr>
+<tr>
+<td>Okabe-Ito, without black</td>
+<td>7</td>
+<td>6</td>
+<td>21.7</td>
+<td>12.2</td>
+<td>11.6</td>
+<td>10.9</td>
+</tr>
+<tr>
+<td>Tol bright</td>
+<td>7</td>
+<td>5</td>
+<td>20.5</td>
+<td>14.2</td>
+<td>14.8</td>
+<td>8.6</td>
+</tr>
+<tr>
+<td>Tol vibrant</td>
+<td>7</td>
+<td>5</td>
+<td>18.3</td>
+<td>13.7</td>
+<td>14.4</td>
+<td>8.6</td>
+</tr>
+<tr>
+<td>Tol muted</td>
+<td>10</td>
+<td>6</td>
+<td>15.0</td>
+<td>11.8</td>
+<td>14.3</td>
+<td>11.5</td>
+</tr>
+<tr>
+<td>Tol pale</td>
+<td>7</td>
+<td>7</td>
+<td>7.2</td>
+<td>3.6</td>
+<td>4.4</td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>ColorBrewer Set2</td>
+<td>8</td>
+<td>8</td>
+<td>16.8</td>
+<td>1.6</td>
+<td>3.6</td>
+<td>4.6</td>
+</tr>
+<tr>
+<td>ColorBrewer Paired</td>
+<td>12</td>
+<td>8</td>
+<td>13.8</td>
+<td>1.2</td>
+<td>2.9</td>
+<td>8.2</td>
+</tr>
+<tr>
+<td>pLannotate</td>
+<td>7</td>
+<td>7</td>
+<td>16.4</td>
+<td>8.6</td>
+<td>6.8</td>
+<td>12.5</td>
+</tr>
+<tr>
+<td>SeqViz</td>
+<td>12</td>
+<td>12</td>
+<td>9.3</td>
+<td>0.1</td>
+<td>1.8</td>
+<td>3.4</td>
+</tr>
+<tr>
+<td>SnapGene files, 10 most common colours</td>
+<td>10</td>
+<td>8</td>
+<td>12.5</td>
+<td>1.9</td>
+<td>1.8</td>
+<td>5.8</td>
+</tr>
+<tr>
+<td>Open Vector Editor</td>
+<td>90</td>
+<td>64</td>
+<td>0.0</td>
+<td>—</td>
+<td>0.0</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read.</strong> Tol designed the light scheme "to fill labelled cells with more and lighter colours
+than contained in the bright scheme …, but keeping black labels clearly readable. However, it can
+also be used for general qualitative maps" (<a href="https://sronpersonalpages.nl/~pault/">scheme page</a>,
+Figure 8). An arrow with its name printed on it is a labelled cell. ColorBrewer flags its own
+schemes: in <code>colorbrewer_schemes.js</code> a <code>1</code> is "ok", <code>2</code> "maybe" and <code>0</code> not colour-blind friendly
+(<a href="https://github.com/axismaps/colorbrewer/blob/master/colorbrewer.js"><code>colorbrewer.js</code></a>); Set2 and
+Dark2 are "ok" at 3 classes only, Paired at 3-4, and Set1 is "maybe" at every size.</p>
+<p><strong>What the table says.</strong></p>
+<ul>
+<li>Only the palettes designed for colour-blind vision — Tol's and Okabe-Ito — keep every pair
+  apart under every simulation. ColorBrewer's, SeqViz's and SnapGene's each fall to between 0.1
+  and 1.8 in at least one. Tol's pale scheme, which Tol says is "not meant for lines or maps", is
+  the exception among his.</li>
+<li><strong>One colour per type does not work.</strong> Open Vector Editor's table gives 90 types 86 colours;
+  13 pairs are under 5 units in normal vision and 73 in simulated deuteranopia, and 26 of its
+  colours fail black text. Grouping is what makes a palette of 7-9 colours enough.</li>
+<li><strong>Tol light trades separation for readable labels</strong>: its closest pairs sit nearer than
+  Okabe-Ito's, but black text reads at 8.3:1 or better on every colour, and none is dark enough to
+  need white text.</li>
+</ul>
+<h2 id="7-label-contrast-and-outlines">7. Label contrast and outlines<a class="headerlink" href="#7-label-contrast-and-outlines" title="Permanent link">&para;</a></h2>
+<p><strong>Read.</strong> WCAG 2.2 asks text for "a contrast ratio of at least 4.5:1" (1.4.3) and graphical
+objects for "at least 3:1 against adjacent color(s)" (1.4.11), with contrast
+<code>(L1 + 0.05) / (L2 + 0.05)</code> over relative luminance (<a href="https://www.w3.org/TR/WCAG22/">WCAG 2.2</a>).
+ApE meets the same problem with a command that "adjusts the shade of each feature color using a
+luminance calculation to ensure sufficient contrast between the feature background and overlaid
+text" (manual, 4.12).</p>
+<p><strong>Computed.</strong> Over every luminance an sRGB colour can have, the better of black and white text
+never falls below <strong>4.583:1</strong>; the worst case is a mid-grey where the two are equal. The rule
+"black or white, whichever contrasts more" therefore passes 4.5:1 on any fill, whatever colour a
+file gives.</p>
+<p><strong>Measured</strong> over the 14,116 coloured features of section 5:</p>
+<ul>
+<li>Black text falls under 4.5:1 on <strong>17.0%</strong> of them — nearly all SnapGene's CDS magenta
+  <code>#993366</code> (3.0:1, 2,030 features) and primer-binding purple <code>#a020f0</code> (4.0:1, 317) — and white
+  contrasts more on exactly those. A black-only label rule would fail one feature in six of real
+  files.</li>
+<li><strong>76.8%</strong> of the fills are under 3:1 against a white page, the white promoters and terminators
+  first among them. A pale arrow on a white page is visible only by its outline, so the outline
+  is not optional. The same holds for every Tol light colour: none reaches 3:1 against white.</li>
+</ul>
+<h2 id="8-primers-and-enzyme-sites">8. Primers and enzyme sites<a class="headerlink" href="#8-primers-and-enzyme-sites" title="Permanent link">&para;</a></h2>
+<p>These are drawn as text on the page rather than as filled arrows, so what matters is contrast
+against white.</p>
+<p><strong>Read.</strong> SnapGene draws primer labels in purple and enzyme names in black, the unique cutters in
+bold by default (<a href="https://support.snapgene.com/hc/en-us/articles/10383729806356-Don-t-Highlight-Unique-Cutters-in-Bold">Don't Highlight Unique Cutters in Bold</a>),
+with blunt cutters optionally green (<a href="https://support.snapgene.com/hc/en-us/articles/10383756333716-Highlight-Blunt-Cutters-in-Green">Highlight Blunt Cutters in Green</a>).
+The purple is visible on the Addgene pUC19 map; SnapGene's <code>primer_bind</code> features carry <code>#a020f0</code>.</p>
+<p><strong>Measured</strong> contrast on white: SnapGene's <code>#a020f0</code> 5.3:1; <strong>Tol bright purple <code>#AA3377</code> 6.1:1</strong>,
+in <code>tol_colors.py</code> and so under the same BSD notice; Okabe-Ito's reddish purple <code>#CC79A7</code> 3.1:1,
+too faint for text; black 21:1. Tol's newer dark scheme, whose colours all reach 4.5:1 on white,
+has a purple <code>#882288</code> at 8.0:1, but it is on the scheme page only and not in <code>tol_colors.py</code>.</p>
+<h2 id="9-what-remains-a-judgement-for-the-interface-ticket">9. What remains a judgement for the interface ticket<a class="headerlink" href="#9-what-remains-a-judgement-for-the-interface-ticket" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Which hue goes to which group.</strong> Section 5.3 is one assignment. It keeps SnapGene's yellow
+  origin and puts the most common group on the calmest colour; nothing measured prefers it over
+  another.</li>
+<li><strong>Tol light or Okabe-Ito.</strong> Tol light reads with black labels throughout; Okabe-Ito separates
+  further, and its seven hues fit the seven groups with a grey borrowed for "other". With the
+  black-or-white rule both pass.</li>
+<li><strong>Where <code>primer_bind</code> goes.</strong> Here it is a binding site. It could take the primer purple instead,
+  so a primer and a feature describing one look alike.</li>
+<li><strong>Whether <code>source</code> is drawn at all.</strong> It usually spans the whole record.</li>
+<li><strong>Whether a colour qualifier in a GenBank file counts as "the file's colour".</strong> If it does, the
+  reader has to lift it into <code>Feature.color</code>, in some order among the three conventions of
+  section 2; that is a change to <code>io.py</code>, not to plotting.</li>
+<li><strong>Whether a primer keeps a colour from its file.</strong> The model has no field for one, and no
+  measured file stored one.</li>
+<li><strong>Dark backgrounds.</strong> Every measurement here assumes a white page.</li>
+</ul>
+<h2 id="open-gaps">Open gaps<a class="headerlink" href="#open-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The survey is SnapGene's own collection</strong>: vendor and repository vectors, annotated by
+  SnapGene. The lab's own files, and GenBank files from other tools, were not surveyed. Nine of
+  its nineteen sets were not sampled, and six were sampled at 60 files each after a faster
+  download was refused (HTTP 403).</li>
+<li><strong>Addgene's GenBank and <code>.dna</code> downloads returned 404</strong> to a plain request, so no Addgene file
+  was measured, only its map image.</li>
+<li><strong>Benchling's GenBank colour qualifier is undocumented</strong> and no Benchling export was measured.</li>
+<li><strong>CIEDE2000 has no agreed "distinct" threshold</strong>, and the colour-blind simulation is a model of
+  full dichromacy; milder forms sit between normal vision and it.</li>
+<li><strong>The licence reading is not legal advice.</strong> It takes the conservative position: ship only what
+  a stated licence permits.</li>
+</ul>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>All read on 2026-09-16.</p>
+<ul>
+<li>INSDC. <em>The DDBJ/ENA/GenBank Feature Table Definition</em>, version 11.4, April 2026.
+  <a href="https://www.insdc.org/submitting-standards/feature-table/">https://www.insdc.org/submitting-standards/feature-table/</a>; and the <code>/regulatory_class</code>
+  vocabulary, <a href="https://www.insdc.org/submitting-standards/controlled-vocabulary-regulatoryclass/">https://www.insdc.org/submitting-standards/controlled-vocabulary-regulatoryclass/</a>.</li>
+<li>SnapGene. Terms and Conditions page, <a href="https://www.snapgene.com/legal/terms-of-service">https://www.snapgene.com/legal/terms-of-service</a>, leading
+  to the SnapGene Terms of 15 January 2026, <a href="https://www.snapgene.com/downloads/SnapGene-Terms.pdf">https://www.snapgene.com/downloads/SnapGene-Terms.pdf</a>,
+  and to the Dotmatics terms, <a href="https://www.dotmatics.com/terms-and-conditions">https://www.dotmatics.com/terms-and-conditions</a>, with their Software
+  License Attachment of 7 February 2024; Legal Disclaimers, <a href="https://www.snapgene.com/legal-disclaimers">https://www.snapgene.com/legal-disclaimers</a>; support articles
+  10383975167636, 10242682237588, 10383924910612, 14097213072788, 10383729806356 and
+  10383756333716 at <a href="https://support.snapgene.com/">https://support.snapgene.com/</a>; plasmid collection, <a href="https://www.snapgene.com/plasmids">https://www.snapgene.com/plasmids</a>.</li>
+<li>Addgene. Terms of Use, 24 January 2023, <a href="https://www.addgene.org/terms-of-use/">https://www.addgene.org/terms-of-use/</a>; pUC19 map,
+  <a href="https://www.addgene.org/50005/sequences/">https://www.addgene.org/50005/sequences/</a>.</li>
+<li>McGuffie, M.J. and Barrick, J.E. (2021) pLannotate: engineered plasmid annotation.
+  <em>Nucleic Acids Res.</em> 49, W516-W522. <a href="https://doi.org/10.1093/nar/gkab374">doi:10.1093/nar/gkab374</a>.
+  CC BY 4.0. Source: <a href="https://github.com/mmcguffi/pLannotate">https://github.com/mmcguffi/pLannotate</a>, GPL-3.0.</li>
+<li>DNA Features Viewer, <a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer">https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer</a>, MIT.</li>
+<li>pyGenomeViz, <a href="https://github.com/moshi4/pyGenomeViz">https://github.com/moshi4/pyGenomeViz</a>, and pyCirclize,
+  <a href="https://github.com/moshi4/pyCirclize">https://github.com/moshi4/pyCirclize</a>, MIT.</li>
+<li>TeselaGen tg-oss (Open Vector Editor), <a href="https://github.com/TeselaGen/tg-oss">https://github.com/TeselaGen/tg-oss</a>, MIT.</li>
+<li>SeqViz, <a href="https://github.com/Lattice-Automation/seqviz">https://github.com/Lattice-Automation/seqviz</a>, MIT.</li>
+<li>Benchling help centre articles 39768268305805 and 9684262210957, <a href="https://help.benchling.com/">https://help.benchling.com/</a>.</li>
+<li>Davis, M.W. ApE, A plasmid Editor, v3.1.10.1, <a href="https://jorgensen.biology.utah.edu/wayned/ape/">https://jorgensen.biology.utah.edu/wayned/ape/</a>,
+  with its user manual and Default Features library.</li>
+<li>SBOL Visual 3.0 (2021), <a href="https://github.com/SynBioDex/SBOL-visual">https://github.com/SynBioDex/SBOL-visual</a>: section 4.2, "The interior of
+  a glyph MAY be given any fill color, as long as the choice of fill does not interfere with
+  recognizing the glyph"; spec CC BY 4.0, glyphs CC0.</li>
+<li>Okabe, M. and Ito, K. Color Universal Design (2002, modified 2008),
+  <a href="https://jfly.uni-koeln.de/color/">https://jfly.uni-koeln.de/color/</a>.</li>
+<li>Tol, P. Colour schemes, <a href="https://sronpersonalpages.nl/~pault/">https://sronpersonalpages.nl/~pault/</a>; <code>tol_colors.py</code>,
+  <a href="https://sronpersonalpages.nl/~pault/data/tol_colors.py">https://sronpersonalpages.nl/~pault/data/tol_colors.py</a>, BSD-3-Clause; technical note
+  SRON/EPS/TN/09-002, issue 3.2, <a href="https://sronpersonalpages.nl/~pault/data/colourschemes.pdf">https://sronpersonalpages.nl/~pault/data/colourschemes.pdf</a>.</li>
+<li>Brewer, C.A. ColorBrewer, <a href="https://github.com/axismaps/colorbrewer">https://github.com/axismaps/colorbrewer</a>, Apache-2.0.</li>
+<li>Machado, G.M., Oliveira, M.M. and Fernandes, L.A.F. (2009) A physiologically-based model for
+  simulation of color vision deficiency. <em>IEEE Trans. Vis. Comput. Graph.</em> 15, 1291-1298.
+  <a href="https://doi.org/10.1109/TVCG.2009.113">doi:10.1109/TVCG.2009.113</a>.</li>
+<li>Sharma, G., Wu, W. and Dalal, E.N. (2005) The CIEDE2000 color-difference formula:
+  implementation notes, supplementary test data, and mathematical observations. <em>Color Res. Appl.</em>
+  30, 21-30. <a href="https://doi.org/10.1002/col.20070">doi:10.1002/col.20070</a>.</li>
+<li>W3C. Web Content Accessibility Guidelines 2.2, <a href="https://www.w3.org/TR/WCAG22/">https://www.w3.org/TR/WCAG22/</a>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

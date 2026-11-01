@@ -1,0 +1,27 @@
+LOCUS       pDONR-demo               661 bp    DNA     circular UNK 01-JAN-1980
+DEFINITION  .
+ACCESSION   pDONR-demo
+VERSION     pDONR-demo
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     CDS             1..60
+                     /label="KanR"
+     CDS             294..368
+                     /label="ccdB"
+ORIGIN
+        1 ttgaccgctt aaggctaacg tcagttgcat gccttaaggc ttgaccaatg cgttcaggct
+       61 caaataatga ttttattttg actgatagtg acctgttcgt tgcaacaaat tgataagcaa
+      121 tgctttttta taatgccaac tttgtacaaa aaagctgaac gagaaacgta aaatgatata
+      181 aatatcaata tattaaatta gattttgcat aaaaaacaga ctacataata ctgtaaaaca
+      241 caacatatcc agtcactatg aatcaactac ttagatggta ttagtgacct gtaatgcagt
+      301 ttaaggttta cacctataaa agagagagcc gttatcgtct gtttgtggat gtacagagtg
+      361 atatttaata caggtcacta ataccatcta agtagttgat tcatagtgac tggatatgtt
+      421 gtgttttaca gtattatgta gtctgttttt tatgcaaaat ctaatttaat atattgatat
+      481 ttatatcatt ttacgtttct cgttcagctt tcttgtacaa agttggcatt ataagaaagc
+      541 attgcttatc aatttgttgc aacgaacagg tcactatcag tcaaaataaa atcattattt
+      601 gttgaccgct taaggctaac gtcagttgca tgccttaagg cttgaccaat gcgttcaggc
+      661 t
+//
