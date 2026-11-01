@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from mbio.checks import Status
-from mbio.plot.drawing import draw_map
+from mbio.plot.drawing import draw_map, faces, still
 from mbio.protocol.converter import molviz_figure, molviz_gel, molviz_plate, molviz_stamp
 from mbio.protocol.model import (
     Bill,
@@ -32,7 +32,6 @@ from mbio.protocol.model import (
     CountToNet,
     Expectation,
     Figure,
-    Gel,
     Hole,
     Incubation,
     Item,
@@ -1338,7 +1337,7 @@ def _page(
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{escape(title)}</title>\n"
-        f"<style>\n{_fonts(frame)}{_asset('protocol.css')}</style>\n"
+        f"<style>\n{faces(frame)}{_asset('protocol.css')}</style>\n"
         f'</head>\n<body data-protocol="{escape(key)}">\n{frame}{_credit()}{_panel(folder)}'
         f"<script>\n{_asset('protocol.js')}</script>\n</body>\n</html>\n"
     )
@@ -1542,17 +1541,6 @@ def _page_link(page: Page) -> str:
 
 def _asset(name: str) -> str:
     return files("mbio.protocol").joinpath(name).read_text(encoding="utf-8")
-
-
-def _fonts(body: str) -> str:
-    """Return the faces molviz draws in where `body` holds a drawing, once, or else nothing.
-
-    A drawing pins every line of text to the width it was measured at, so a page drawing one as
-    text carries molviz's faces or the browser stretches its own to fit.
-    """
-    import molviz
-
-    return molviz.font_rules() if 'font-family="molviz ' in body else ""
 
 
 def _duration(seconds: float) -> str:
@@ -2141,8 +2129,6 @@ def _plates(protocol: Protocol) -> str:
 
 def _plate(one: Plate) -> str:
     """One plate molviz draws from what its wells hold, its key inside the drawing."""
-    import molviz
-
     converted = molviz_plate(one)
     held = converted.get("wells", {})
     kinds = _count(len(set(held.values())), "kind") if held else ""
@@ -2151,7 +2137,7 @@ def _plate(one: Plate) -> str:
     )
     return (
         f'<figure class="drawing plate" data-plate="{escape(one.name)}">'
-        f"{molviz.draw_plate(converted).still_svg()}"
+        f"{still('plate', converted)}"
         f'<figcaption>{escape(one.name)} <span class="muted">{escape(facts)}</span></figcaption>'
         # A plate the protocol makes carries its handling rules here, where a reagent carries
         # them in the materials table.
@@ -2180,16 +2166,14 @@ def _figure(figure: Figure, base: Path, where: str, maps: Mapping[str, str]) -> 
     ValueError
         If molviz refuses the figure, such as a highlight no record answers to, naming the step.
     """
-    for named in figure.records:
-        if not (base / named).is_file():
-            raise FileNotFoundError(f"{where}: no record at {base / named} to draw")
-    import molviz
-
-    handed = molviz_figure(figure, base)
     try:
-        drawn = molviz.draw_figure(handed["records"], **handed["options"]).still_svg()
+        handed = molviz_figure(figure, base)
+    except FileNotFoundError as error:
+        raise FileNotFoundError(f"{where}: no record at {error.filename} to draw") from error
+    try:
+        drawn = still("figure", handed["records"], **handed["options"])
     except ValueError as error:
-        raise ValueError(f"{where}: {_lit(str(error), figure.highlight)}") from error
+        raise ValueError(f"{where}: {error}") from error
     caption = f"<figcaption>{escape(figure.caption)}{_cite(figure.citation)}</figcaption>"
     stacked = len(figure.records) > 1
     # One control a record, however often the figure names it.
@@ -2198,15 +2182,6 @@ def _figure(figure: Figure, base: Path, where: str, maps: Mapping[str, str]) -> 
     openers = "".join(_opener(maps.get(named), name, stacked) for named, name in names.items())
     kind = "drawing map rows" if stacked else "drawing map"
     return f'<figure class="{kind}">{drawn}{caption}{openers}</figure>\n'
-
-
-def _lit(problems: str, highlight: Sequence[str]) -> str:
-    """Return molviz's problems with each name to highlight it points at by place spelled out."""
-    return re.sub(
-        r"options\.highlight\[(\d+)\]",
-        lambda found: f"the highlight {highlight[int(found[1])]!r}",
-        problems,
-    )
 
 
 def _opener(href: str | None, name: str, named: bool = False) -> str:
@@ -2238,14 +2213,10 @@ def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:
     through a well the declared format has not got, is the table it was: nothing says what its
     wells look like, and a drawing missing the wells it cannot place would say it wrongly.
     """
-    import molviz
-
     stamped = molviz_stamp(transfer, plates)
     if not stamped:
         return _transfer_table(transfer)
-    drawn = "".join(
-        f'<div class="row">{molviz.draw_plate(one).still_svg()}</div>' for one in stamped
-    )
+    drawn = "".join(f'<div class="row">{still("plate", one)}</div>' for one in stamped)
     meta = _transfer_meta(transfer, transfer.stamp)
     return (
         f'<figure class="drawing transfer rows"><figcaption>{escape(transfer.title)} '
@@ -2432,7 +2403,9 @@ def _step(
     where = f"step {n} {step.title!r}"
     parts += [_figure(f, base, where, maps) for f in step.figures]
     if step.expected or step.gels or step.calculator:
-        gels = "".join(_gel(g) for g in step.gels)
+        gels = "".join(
+            f'<figure class="drawing gel">{still("gel", molviz_gel(g))}</figure>' for g in step.gels
+        )
         net = _net_count(f"{anchor}.count", step.calculator, trouble) if step.calculator else ""
         parts.append(
             '<div class="expected"><h3>Expected result</h3>'
@@ -2775,10 +2748,3 @@ def _timer(key: str, timer: Timer) -> str:
         '<button type="button" class="timer-plan" title="The time the protocol gives" hidden>'
         f"Back to {clock}</button></span>"
     )
-
-
-def _gel(gel: Gel) -> str:
-    """Return the gel molviz draws from its ladder and lanes, its key drawn with it."""
-    import molviz
-
-    return f'<figure class="drawing gel">{molviz.draw_gel(molviz_gel(gel)).still_svg()}</figure>'

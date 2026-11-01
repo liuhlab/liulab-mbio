@@ -1,4 +1,4 @@
-"""A sequence record in molviz's record format, as plain data for `molviz.check` and `molviz.draw`.
+"""A sequence record in molviz's record format, and the options it is drawn with, as plain data.
 
 molviz's format is the one definition of what it draws, so nothing here mirrors it as a type.
 mbio hands over its biology: each feature with a CDS's translation, each primer with the bases
@@ -6,13 +6,15 @@ it does not pair with at each binding site, and every shipped enzyme's cuts, so 
 finds the unique cutters among them. A cut that falls off a linear record cuts nothing there and
 is left out. A file's own colour is kept, SnapGene's ``noColor`` read as none, and a
 ``regulatory`` feature of a terminating class takes a terminator's colour, since molviz reads no
-qualifiers. The format's reference: <https://liuhlab.github.io/liulab-molviz/reference/record/>.
+qualifiers. `molviz_options` writes every drawing's options, each enzyme by its shipped name.
+The format's reference: <https://liuhlab.github.io/liulab-molviz/reference/record/>.
 """
 
 import re
+from collections.abc import Iterable
 from typing import Any
 
-from mbio.enzymes import enzymes
+from mbio.enzymes import enzymes, get_enzyme
 from mbio.sequence import BindingSite, Feature, Primer, SequenceRecord, mismatches
 from mbio.sites import find_sites
 from mbio.translate import codon_start, translation
@@ -47,6 +49,63 @@ def molviz_record(record: SequenceRecord) -> dict[str, Any]:
         if values:
             out[key] = values
     return out
+
+
+def molviz_options(
+    *,
+    span: tuple[int, int] | None = None,
+    linear: bool = False,
+    sequence_view: bool = False,
+    bases_per_row: int | None = None,
+    both_strands: bool = True,
+    features: bool = True,
+    primers: bool = True,
+    cut_sites: bool = True,
+    hide_types: Iterable[str] = (),
+    source: bool = False,
+    enzymes: str | Iterable[str] | None = None,
+    highlight: str | Iterable[str] = (),
+) -> dict[str, Any]:
+    """Return the options molviz draws a record or a figure with, each at its default left out.
+
+    Each keyword is `mbio.plot.draw_map`'s, `span` being a region's span. molviz ignores an
+    enzyme name that cuts nothing, so each name is handed over as the shipped enzyme it names:
+    a commercial or isoschizomer name answers for it.
+
+    Raises
+    ------
+    KeyError
+        If no shipped enzyme answers to a name in `enzymes`.
+
+    Examples
+    --------
+    >>> molviz_options(span=(10, 20), cut_sites=False)
+    {'span': {'start': 10, 'end': 20}, 'kinds_off': ['cuts']}
+    """
+    off = (("features", features), ("primers", primers), ("cuts", cut_sites))
+    types_off = sorted({*hide_types, *(() if source else ("source",))})
+    lit = [highlight] if isinstance(highlight, str) else list(highlight)
+    options: dict[str, Any] = {}
+    if span is not None:
+        options["span"] = {"start": span[0], "end": span[1]}
+    if linear:
+        options["map"] = "line"
+    if sequence_view:
+        options["sequence_view"] = True
+    if bases_per_row is not None:
+        options["bases_per_row"] = bases_per_row
+    if not both_strands:
+        options["bottom_strand"] = False
+    if kinds_off := [kind for kind, on in off if not on]:
+        options["kinds_off"] = kinds_off
+    if types_off != ["source"]:
+        options["types_off"] = types_off
+    if enzymes is not None:
+        named = (enzymes,) if isinstance(enzymes, str) else enzymes
+        options["enzymes"] = list(dict.fromkeys(get_enzyme(name).name for name in named))
+    if lit:
+        options["highlight"] = lit
+    return options
 
 
 def _feature(feature: Feature, record: SequenceRecord) -> dict[str, Any]:

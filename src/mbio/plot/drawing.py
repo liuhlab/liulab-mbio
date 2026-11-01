@@ -1,23 +1,33 @@
-"""Draw a record as a map through molviz.
+"""Every call mbio makes into molviz.
 
-`draw_map` hands molviz the record and the options a person chose, and returns molviz's own
-drawing, which writes an HTML page, an SVG, a PNG or a PDF.
+`draw_map` hands molviz a record and the options a person chose, and returns molviz's own
+drawing, which writes an HTML page, an SVG, a PNG or a PDF. A page that inlines drawings, such
+as a protocol's or a clone's verification, takes each as `still` SVG and writes `faces` once.
 """
 
 import os
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Literal
 
 import molviz
 
-from mbio.enzymes import get_enzyme
 from mbio.io import read_record
-from mbio.plot.converter import molviz_record
+from mbio.plot.converter import molviz_options, molviz_record
 from mbio.sequence import SequenceRecord, counted_round
 
 #: A region of a record: a feature's name, or a 0-based, half-open span ending past the record's
 #: length across the origin.
 type Region = str | tuple[int, int]
+
+#: The inputs molviz draws, each in its own format: a record, a figure's list of records, a gel
+#: and a plate.
+type Kind = Literal["record", "figure", "gel", "plate"]
+
+#: The most bases a sequence view draws.
+SEQUENCE_VIEW_LIMIT: int = molviz.SEQUENCE_VIEW_LIMIT
+
+#: What molviz's still SVG names each of its faces by; a page holding one needs the faces.
+_FACE = 'font-family="molviz '
 
 
 def draw_map(
@@ -58,7 +68,7 @@ def draw_map(
     linear
         Whether a circular record drawn whole is opened as a line.
     sequence_view
-        Whether the sequence view is switched on, at most `molviz.SEQUENCE_VIEW_LIMIT` bases.
+        Whether the sequence view is switched on, at most `SEQUENCE_VIEW_LIMIT` bases.
     features, primers, cut_sites
         Whether each is switched on.
     enzymes
@@ -88,27 +98,54 @@ def draw_map(
     >>> draw_map("pUC19.dna").write("pUC19.html")  # doctest: +SKIP
     """
     record = record if isinstance(record, SequenceRecord) else read_record(record)
-    off = {"features": features, "primers": primers, "cuts": cut_sites}
-    options: dict[str, Any] = {
-        "kinds_off": [kind for kind, on in off.items() if not on],
-        "types_off": sorted({*hide_types, *(() if source else ("source",))}),
-        "bottom_strand": both_strands,
-    }
-    if region is not None:
-        start, end = _span(record, region)
-        options["span"] = {"start": start, "end": end}
-    if linear:
-        options["map"] = "line"
-    if sequence_view:
-        options["sequence_view"] = True
-    if enzymes is not None:
-        named = (enzymes,) if isinstance(enzymes, str) else enzymes
-        options["enzymes"] = list(dict.fromkeys(get_enzyme(name).name for name in named))
-    if lit := [highlight] if isinstance(highlight, str) else list(highlight):
-        options["highlight"] = lit
-    if bases_per_row is not None:
-        options["bases_per_row"] = bases_per_row
+    options = molviz_options(
+        span=None if region is None else _span(record, region),
+        linear=linear,
+        sequence_view=sequence_view,
+        bases_per_row=bases_per_row,
+        both_strands=both_strands,
+        features=features,
+        primers=primers,
+        cut_sites=cut_sites,
+        hide_types=hide_types,
+        source=source,
+        enzymes=enzymes,
+        highlight=highlight,
+    )
     return molviz.draw(molviz_record(record), **options)
+
+
+def still(kind: Kind, data: Any, **options: Any) -> str:
+    """Return `data`, molviz's input of `kind`, drawn still as SVG to inline in a page.
+
+    A record and a figure take `mbio.plot.converter.molviz_options`; a gel and a plate take
+    none. The drawing shows in molviz's faces only on a page that writes `faces` once.
+
+    Raises
+    ------
+    ValueError
+        If molviz refuses the input or an option, naming each problem by its path in them.
+    """
+    match kind:
+        case "record":
+            drawn = molviz.draw(data, **options)
+        case "figure":
+            drawn = molviz.draw_figure(data, **options)
+        case "gel":
+            drawn = molviz.draw_gel(data)
+        case "plate":
+            drawn = molviz.draw_plate(data)
+    return drawn.still_svg()
+
+
+def faces(page: str) -> str:
+    """Return the CSS a page writes once for the `still` drawings it holds; nothing for none.
+
+    A still drawing pins each text to the width it was measured at, so a page showing one
+    carries molviz's faces, or the browser stretches its own to fit. A page with none carries
+    no face: they cost more than the rest of the page.
+    """
+    return molviz.font_rules() if _FACE in page else ""
 
 
 def _span(record: SequenceRecord, region: Region) -> tuple[int, int]:

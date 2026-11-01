@@ -4,12 +4,10 @@ Each inline SVG that is well-formed XML is read by the XML parser, which is quic
 same tree, its names lowercased as HTML's are.
 """
 
-import json
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
-from typing import Any
 from xml.parsers import expat
 
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "wbr"}
@@ -120,11 +118,3 @@ def parse(html: str) -> Node:
             builder.feed(image)
     builder.feed(html[at:])
     return builder.root
-
-
-_BLOCK = re.compile(r'<script type="application/json" id="([^"]+)">(.*?)</script>', re.S)
-
-
-def blocks(html: str) -> dict[str, Any]:
-    """Return each JSON block a page holds by its id: what molviz's page hands its draw call."""
-    return {name: json.loads(text) for name, text in _BLOCK.findall(html)}

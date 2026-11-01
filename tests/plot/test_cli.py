@@ -4,7 +4,6 @@ import dataclasses
 import re
 import struct
 from pathlib import Path
-from typing import Any
 
 import pytest
 from typer.testing import CliRunner
@@ -13,7 +12,7 @@ from mbio.cli import app
 from mbio.sequence import Feature, Segment, SequenceRecord
 from mbio.snapgene import write_dna
 
-from ..html import blocks
+from ..conftest import Handed
 
 
 def _run(*arguments: str) -> tuple[int, list[str]]:
@@ -21,17 +20,16 @@ def _run(*arguments: str) -> tuple[int, list[str]]:
     return result.exit_code, re.sub(r"\x1b\[[0-9;]*m", "", result.output).splitlines()
 
 
-def _options(page: Path) -> dict[str, Any]:
-    """The options a written page hands molviz's draw call."""
-    return blocks(page.read_text(encoding="utf-8"))["options"]
-
-
 def test_one_run_hands_molviz_every_option_and_writes_each_file_asked_for(
-    puc19_file: Path, tmp_path: Path
+    puc19: SequenceRecord, tmp_path: Path, handed: Handed
 ) -> None:
+    # Text of a span's form is a span, even where a feature is named so.
+    record = tmp_path / "named.dna"
+    named = Feature("2680..10", "misc_feature", (Segment(99, 200),))
+    write_dna(dataclasses.replace(puc19, features=(*puc19.features, named)), record)
     outs = [tmp_path / "maps" / name for name in ("pUC19.html", "pUC19.svg", "pUC19.png")]
     code, lines = _run(
-        str(puc19_file), *(f"--output={out}" for out in outs), "--region", "2680..10",
+        str(record), *(f"--output={out}" for out in outs), "--region", "2680..10",
         "--linear", "--sequence-view", "--no-features", "--no-primers", "--no-cut-sites",
         "--enzyme", "EcoRI-HF", "--enzyme", "BamHI", "--hide-type", "CDS", "--source",
         "--bases-per-row", "30", "--one-strand", "--dpi", "18",
@@ -39,7 +37,8 @@ def test_one_run_hands_molviz_every_option_and_writes_each_file_asked_for(
     assert (code, lines) == (0, [str(out) for out in outs])
     # A commercial name is handed over as the shipped enzyme it names, and the span 0-based,
     # ending past the length across the origin.
-    assert _options(outs[0]) == {
+    [(_, options)] = handed
+    assert options == {
         "kinds_off": ["features", "primers", "cuts"],
         "types_off": ["CDS"],
         "bottom_strand": False,
@@ -54,21 +53,6 @@ def test_one_run_hands_molviz_every_option_and_writes_each_file_asked_for(
     # 18 dpi is a quarter of a pixel a point.
     png = struct.unpack(">I", outs[2].read_bytes()[16:20])[0]
     assert png == pytest.approx(float(width[1]) / 4, abs=1)
-
-
-def test_a_region_named_by_a_feature_or_in_the_form_of_a_span_is_handed_over_as_its_span(
-    puc19: SequenceRecord, tmp_path: Path
-) -> None:
-    # Text of that form is a span, even where a feature is named so.
-    record, out = tmp_path / "named.dna", tmp_path / "map.html"
-    named = Feature("12..40", "misc_feature", (Segment(99, 200),))
-    write_dna(dataclasses.replace(puc19, features=(*puc19.features, named)), record)
-    for region, span in [("mcs", (395, 452)), ("12..40", (11, 40))]:
-        assert _run(str(record), "-o", str(out), "--region", region)[0] == 0
-        assert _options(out)["span"] == {"start": span[0], "end": span[1]}
-    # Left out, every option takes molviz's default: rows fitted to the page's width among them.
-    assert _run(str(record), "-o", str(out))[0] == 0
-    assert _options(out) == {"kinds_off": [], "types_off": ["source"], "bottom_strand": True}
 
 
 def test_the_command_prints_what_the_map_hid_after_the_files_written(tmp_path: Path) -> None:

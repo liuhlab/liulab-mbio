@@ -1,8 +1,8 @@
 """A protocol's figures, gels and plates in molviz's formats, as plain data for its draw calls.
 
 A figure becomes its records, each read relative to the protocol's folder and converted by
-`mbio.plot.converter.molviz_record`, and the options ``molviz.draw_figure`` takes, any left at
-molviz's default left out. A gel becomes molviz's gel and a plate molviz's plate, a plate's
+`mbio.plot.converter.molviz_record`, and the options ``molviz.draw_figure`` takes, as
+`mbio.plot.converter.molviz_options` writes them. A gel becomes molviz's gel and a plate molviz's plate, a plate's
 labels and seating both drawn, the seating where both name a well. A transfer that is a stamp
 becomes its two plates, every well it touches holding the transfer's title. The formats'
 reference: <https://liuhlab.github.io/liulab-molviz/reference/record/>.
@@ -14,31 +14,30 @@ from pathlib import Path
 from typing import Any
 
 from mbio.io import read_record
-from mbio.plot.converter import molviz_record
+from mbio.plot.converter import molviz_options, molviz_record
 from mbio.protocol.model import Figure, Gel, Plate, Transfer
 
 
 def molviz_figure(figure: Figure, base: str | os.PathLike[str]) -> dict[str, Any]:
     """Return `figure` as ``{"records": [...], "options": {...}}`` for ``molviz.draw_figure``.
 
-    Each record is read from its path relative to `base`, the folder the protocol was read from.
+    Each record is read from its path relative to `base`, the folder the protocol was read from,
+    and the options are `mbio.plot.converter.molviz_options`.
 
     Raises
     ------
     FileNotFoundError
         If a record is not there.
+    KeyError
+        If no shipped enzyme answers to a name the figure gives.
     """
-    options: dict[str, Any] = {}
-    if figure.span is not None:
-        options["span"] = {"start": figure.span[0], "end": figure.span[1]}
-    if figure.linear:
-        options["map"] = "line"
-    if figure.sequence_view:
-        options["sequence_view"] = True
-    if figure.enzymes is not None:
-        options["enzymes"] = list(figure.enzymes)
-    if figure.highlight:
-        options["highlight"] = list(figure.highlight)
+    options = molviz_options(
+        span=figure.span,
+        linear=figure.linear,
+        sequence_view=figure.sequence_view,
+        enzymes=figure.enzymes,
+        highlight=figure.highlight,
+    )
     records = [molviz_record(read_record(Path(base) / path)) for path in figure.records]
     return {"records": records, "options": options}
 

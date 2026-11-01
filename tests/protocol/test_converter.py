@@ -26,7 +26,7 @@ def test_a_figure_names_its_records_and_says_what_differs_from_molvizs_defaults(
         span=(390, 460),
         linear=True,
         sequence_view=True,
-        enzymes=("EcoRI",),
+        enzymes=("EcoRI-HF",),
         highlight=("AmpR",),
     )
     converted = molviz_figure(figure, data_dir)
@@ -35,6 +35,7 @@ def test_a_figure_names_its_records_and_says_what_differs_from_molvizs_defaults(
         "span": {"start": 390, "end": 460},
         "map": "line",
         "sequence_view": True,
+        # A commercial name is handed over as the shipped enzyme it names, as a map's is.
         "enzymes": ["EcoRI"],
         "highlight": ["AmpR"],
     }

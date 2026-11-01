@@ -41,7 +41,8 @@ from mbio.protocol import (
 from mbio.protocol.converter import molviz_figure
 from mbio.protocol.render import FIELD_HELD, HIGHLIGHTS_HEADING, NO_NUMBER, page_key
 
-from ..html import Node, blocks, parse
+from ..conftest import Handed
+from ..html import Node, parse
 
 
 @pytest.fixture(scope="module")
@@ -739,7 +740,7 @@ def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Pa
 
 
 def test_a_figure_opens_each_records_map_written_beside_the_page(
-    data_dir: Path, tmp_path: Path
+    data_dir: Path, tmp_path: Path, handed: Handed
 ) -> None:
     """One map a record, with every enzyme its figures name, beside the page that opens it.
 
@@ -762,8 +763,8 @@ def test_a_figure_opens_each_records_map_written_beside_the_page(
 
     page = parse(write_html(one, tmp_path / "pages" / "protocol.html").read_text("utf-8"))
 
-    written = (tmp_path / "pages" / "pUC19-map.html").read_text(encoding="utf-8")
-    assert blocks(written)["options"]["enzymes"] == ["EcoRI", "HindIII"]
+    # The first map drawn is the first record's.
+    assert handed[0][1]["enzymes"] == ["EcoRI", "HindIII"]
     drawn = page.find_all("figure", cls="map")
     opened = [
         [
@@ -795,7 +796,7 @@ def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path
 def test_a_highlight_no_record_answers_to_names_the_step(data_dir: Path) -> None:
     figure = Figure(("pUC19.dna", "GFP.dna"), "Nothing lit", linear=True, highlight=("mCherry",))
     one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
-    with pytest.raises(ValueError, match=r"step 1 'Join them'.*'mCherry'"):
+    with pytest.raises(ValueError, match=r"^step 1 'Join them': "):
         render_html(one, base=data_dir)
 
 

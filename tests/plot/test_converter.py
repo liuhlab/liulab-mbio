@@ -5,7 +5,7 @@ from pathlib import Path
 import molviz
 
 from mbio.io import read_record
-from mbio.plot.converter import molviz_record
+from mbio.plot.converter import molviz_options, molviz_record
 from mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
 
@@ -71,3 +71,36 @@ def test_a_primer_carries_its_whole_sequence_and_where_it_mismatches(data_dir: P
         {"start": 250, "end": 272, "strand": -1, "mismatches": [263]}
     ]
     assert primers["plain-fwd"]["sites"] == [{"start": 120, "end": 140, "strand": 1}]
+
+
+def test_options_name_each_shipped_enzyme_and_leave_out_each_of_molvizs_defaults() -> None:
+    every = molviz_options(
+        span=(2679, 2696),
+        linear=True,
+        sequence_view=True,
+        bases_per_row=30,
+        both_strands=False,
+        features=False,
+        primers=False,
+        cut_sites=False,
+        hide_types=("CDS",),
+        source=True,
+        enzymes=("EcoRI-HF", "EcoRI", "BamHI"),
+        highlight="lacZ",
+    )
+    assert every == {
+        "span": {"start": 2679, "end": 2696},
+        "map": "line",
+        "sequence_view": True,
+        "bases_per_row": 30,
+        "bottom_strand": False,
+        "kinds_off": ["features", "primers", "cuts"],
+        "types_off": ["CDS"],
+        # molviz ignores a name that cuts nothing, so a commercial one goes as the shipped enzyme.
+        "enzymes": ["EcoRI", "BamHI"],
+        "highlight": ["lacZ"],
+    }
+    # Left at molviz's defaults, nothing goes over: a source feature hidden, all else shown.
+    assert molviz_options() == {}
+    assert molviz_options(hide_types=("source",)) == {}
+    assert molviz_options(source=True) == {"types_off": []}

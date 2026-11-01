@@ -11,8 +11,7 @@ showing one puts `SOURCE` in its `sources`.
 
 from collections.abc import Iterable
 
-from molviz import SEQUENCE_VIEW_LIMIT
-
+from mbio.plot.drawing import SEQUENCE_VIEW_LIMIT
 from mbio.protocol.model import Citation, Figure, Source
 from mbio.sequence import BindingSite, SequenceRecord, Strand
 

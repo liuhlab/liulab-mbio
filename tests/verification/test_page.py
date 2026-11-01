@@ -16,8 +16,8 @@ from mbio.verification.judge import CONSENSUS_CAVEAT, regions, verify
 from mbio.verification.result import SequencingResult
 from mbio.verification.trace import Channels, read_channels, read_trace
 
+from ..conftest import Handed
 from ..html import parse
-from .conftest import Handed
 
 #: The worked Golden Gate example, and the consensus made from its product with two changes.
 EXAMPLE = Path(__file__).parents[2] / "docs" / "examples" / "pUC19-GFP"
