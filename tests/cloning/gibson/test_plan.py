@@ -199,14 +199,21 @@ def test_the_protocol_is_enough_to_run_the_experiment(made):
     ]
 
 
-def test_the_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
-    outputs = made.write(tmp_path / "run")
+@pytest.fixture(scope="module")
+def written(tmp_path_factory, made):
+    """The shared plan's files, written once for every test that reads them."""
+    directory = tmp_path_factory.mktemp("written") / "run"
+    return directory, made.write(directory)
+
+
+def test_the_outputs_land_in_the_directory_the_caller_names(made, written):
+    run, outputs = written
     assert [(path.parent, path.name) for path in outputs.paths] == [
-        (tmp_path / "run", "product.dna"),
-        (tmp_path / "run", "primers.tsv"),
-        (tmp_path / "run", "protocol.json"),
-        (tmp_path / "run", "product-map.html"),
-        (tmp_path / "run", "protocol.html"),
+        (run, "product.dna"),
+        (run, "primers.tsv"),
+        (run, "protocol.json"),
+        (run, "product-map.html"),
+        (run, "protocol.html"),
     ]
     assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == made.plasmid
@@ -218,8 +225,8 @@ def test_the_outputs_land_in_the_directory_the_caller_names(made, tmp_path):
     )
 
 
-def test_the_same_inputs_write_the_same_bytes(made, puc19, gfp, tmp_path):
-    first = made.write(tmp_path / "one")
+def test_the_same_inputs_write_the_same_bytes(written, puc19, gfp, tmp_path):
+    _, first = written
     second = plan_gibson(puc19, gfp).write(tmp_path / "two")
     for one, other in zip(first.paths, second.paths, strict=True):
         assert one.read_bytes() == other.read_bytes()

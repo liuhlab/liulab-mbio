@@ -131,18 +131,25 @@ def test_the_colony_pcr_sizes_are_the_ones_the_simulated_product_gives(plan, gfp
     }
 
 
-def test_the_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, tmp_path):
-    outputs = plan.write(tmp_path / "run")
+@pytest.fixture(scope="module")
+def written(tmp_path_factory, plan):
+    """The shared plan's files, written once for every test that reads them."""
+    directory = tmp_path_factory.mktemp("written") / "run"
+    return directory, plan.write(directory)
+
+
+def test_the_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, written):
+    run, outputs = written
     assert [(path.parent, path.name) for path in outputs.paths] == [
-        (tmp_path / "run", "product.dna"),
-        (tmp_path / "run", "puc19-backbone-amplicon.dna"),
-        (tmp_path / "run", "gfp-amplicon.dna"),
-        (tmp_path / "run", "primers.tsv"),
-        (tmp_path / "run", "protocol.json"),
-        (tmp_path / "run", "puc19-backbone-amplicon-map.html"),
-        (tmp_path / "run", "gfp-amplicon-map.html"),
-        (tmp_path / "run", "product-map.html"),
-        (tmp_path / "run", "protocol.html"),
+        (run, "product.dna"),
+        (run, "puc19-backbone-amplicon.dna"),
+        (run, "gfp-amplicon.dna"),
+        (run, "primers.tsv"),
+        (run, "protocol.json"),
+        (run, "puc19-backbone-amplicon-map.html"),
+        (run, "gfp-amplicon-map.html"),
+        (run, "product-map.html"),
+        (run, "protocol.html"),
     ]
     assert all(path.stat().st_size > 0 for path in outputs.paths)
     assert read_dna(outputs.product) == plan.product
@@ -158,11 +165,11 @@ def test_the_files_land_where_they_are_named_and_hold_what_the_plan_holds(plan, 
         "gfp-amplicon.dna": "gfp-amplicon-map.html",
     }
     data = read_protocol(outputs.protocol_data)
-    assert page == render_html(data, base=tmp_path / "run", maps=opened)
+    assert page == render_html(data, base=run, maps=opened)
 
 
-def test_the_same_inputs_write_the_same_bytes(plan, puc19, gfp, tmp_path):
-    first = plan.write(tmp_path / "one")
+def test_the_same_inputs_write_the_same_bytes(written, puc19, gfp, tmp_path):
+    _, first = written
     second = plan_assembly(puc19, gfp).write(tmp_path / "two")
     for one, other in (
         (first.product, second.product),

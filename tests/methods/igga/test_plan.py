@@ -264,8 +264,8 @@ def test_a_build_naming_no_primer_set_writes_no_block_vector(written):
     assert files.block_vectors == ()
 
 
-def test_the_same_inputs_write_the_same_bytes(plan, tmp_path):
-    once = plan.write(tmp_path / "once")
+def test_the_same_inputs_write_the_same_bytes(written, tmp_path):
+    plan, once = written
     twice = plan.write(tmp_path / "twice")
 
     for one, other in (

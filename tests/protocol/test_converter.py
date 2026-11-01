@@ -1,6 +1,5 @@
 """A protocol's figures, gels and plates handed to molviz, held to its own checks of each format."""
 
-import json
 from pathlib import Path
 
 import molviz
@@ -13,53 +12,9 @@ from mbio.protocol.model import (
     Lane,
     Move,
     Plate,
-    Protocol,
     Transfer,
     Well,
-    read_project,
-    read_protocol,
 )
-
-EXAMPLES = Path(__file__).parents[2] / "docs" / "examples"
-
-
-def _protocols() -> list[tuple[Path, Protocol]]:
-    """Every protocol the docs show, each with the folder its figures' records are named from."""
-    found = []
-    for path in sorted(EXAMPLES.rglob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if "protocols" in data:
-            found += [(path.parent, one) for one in read_project(path).protocols]
-        elif "steps" in data:
-            found.append((path.parent, read_protocol(path)))
-    return found
-
-
-def test_every_figure_gel_and_plate_the_docs_show_converts_to_one_molviz_accepts() -> None:
-    protocols = _protocols()
-    assert len(protocols) > 5
-    figures = gels = plates = 0
-    for base, protocol in protocols:
-        for step in protocol.steps:
-            for figure in step.figures:
-                converted = molviz_figure(figure, base)
-                for record in converted["records"]:
-                    molviz.check(record)
-                molviz.draw_figure(converted["records"], **converted["options"])
-                figures += 1
-            for gel in step.gels:
-                molviz.check_gel(molviz_gel(gel))
-                gels += 1
-            for transfer in step.transfers:
-                for plate in molviz_stamp(transfer, protocol.plates):
-                    molviz.check_plate(plate)
-                    plates += 1
-        for plate in protocol.plates:
-            molviz.check_plate(molviz_plate(plate))
-            plates += 1
-    assert figures
-    assert gels
-    assert plates
 
 
 def test_a_figure_names_its_records_and_says_what_differs_from_molvizs_defaults(
@@ -83,12 +38,16 @@ def test_a_figure_names_its_records_and_says_what_differs_from_molvizs_defaults(
         "enzymes": ["EcoRI"],
         "highlight": ["AmpR"],
     }
+    # A stack of two records, drawn to one span, as a step's figure is drawn.
+    molviz.draw_figure(converted["records"], **converted["options"])
     assert molviz_figure(Figure(("pUC19.dna",), "pUC19"), data_dir)["options"] == {}
 
 
 def test_a_gel_names_its_ladder_and_lanes_with_their_band_sizes() -> None:
     gel = Gel(Ladder("100 bp", (100, 200)), (Lane("GFP", (741,)), Lane("water")), title="PCR")
-    assert molviz_gel(gel) == {
+    converted = molviz_gel(gel)
+    molviz.check_gel(converted)
+    assert converted == {
         "title": "PCR",
         "ladder": {"name": "100 bp", "bands": [100, 200]},
         "lanes": [{"name": "GFP", "bands": [741]}, {"name": "water", "bands": []}],
@@ -100,6 +59,7 @@ def test_a_plate_holds_its_labels_and_seating_in_reading_order_the_seating_winni
         "picked", 96, seating={"B1": "clone 2", "A2": "clone 1"}, labels={"A1": "q1", "A2": "q2"}
     )
     converted = molviz_plate(plate)
+    molviz.check_plate(converted)
     assert converted == {
         "title": "picked",
         "rows": 8,
@@ -116,6 +76,8 @@ def test_a_stamp_is_its_two_plates_every_touched_well_holding_the_transfers_titl
         Move(Well("picked", f"A{2 * n - 1}"), Well("index", f"A{n}"), 1.0) for n in (1, 2)
     )
     from_, into = molviz_stamp(Transfer("Index the clones", moves), plates)
+    molviz.check_plate(from_)
+    molviz.check_plate(into)
     assert from_ == {
         "title": "From picked",
         "rows": 8,

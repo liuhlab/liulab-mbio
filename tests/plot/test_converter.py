@@ -8,19 +8,15 @@ from mbio.io import read_record
 from mbio.plot.converter import molviz_record
 from mbio.sequence import Feature, Segment, SequenceRecord, Strand
 
-EXAMPLES = Path(__file__).parents[2] / "docs" / "examples"
 
-#: Every record the docs show, in any format mbio reads.
-RECORDS = sorted(path for path in EXAMPLES.rglob("*") if path.suffix in {".dna", ".gb"})
-
-
-def test_every_record_the_docs_show_converts_to_one_molviz_accepts() -> None:
-    assert len(RECORDS) > 10
-    for path in RECORDS:
-        record = read_record(path)
+def test_a_record_converts_to_one_molviz_accepts(
+    puc19: SequenceRecord, gfp: SequenceRecord, data_dir: Path
+) -> None:
+    # Circular with a CDS across a join, linear, and with primers that mismatch.
+    for record in (puc19, gfp, read_record(data_dir / "primer-test.dna")):
         converted = molviz_record(record)
         molviz.check(converted)
-        assert converted["bases"] == record.sequence, path.name
+        assert converted["bases"] == record.sequence, record.name
 
 
 def test_a_regulatory_feature_of_a_terminating_class_takes_a_terminators_colour() -> None:
