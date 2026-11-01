@@ -97,10 +97,11 @@ def test_the_command_refuses_a_format_an_enzyme_or_a_region_it_cannot_draw(
     puc19_file: Path, tmp_path: Path, arguments: tuple[str, ...], message: str
 ) -> None:
     flag, name, *rest = arguments
-    code, lines = _run(str(puc19_file), flag, str(tmp_path / name), *rest)
+    code, lines = _run(str(puc19_file), flag, str(tmp_path / "maps" / name), *rest)
     assert code == 1
     assert lines[0].startswith(message)
-    assert not (tmp_path / name).exists()
+    # Refused before anything is written, the directory named for the files included.
+    assert not (tmp_path / "maps").exists()
 
 
 def test_the_command_refuses_a_span_across_the_origin_of_a_linear_record(

@@ -13,6 +13,9 @@ from mbio.sequence import SequenceRecord
 #: A span as a person types it: `START..END`, 1-based and inclusive, as the map prints one.
 _SPAN = re.compile(r"\s*(\d+)\s*\.\.\s*(\d+)\s*")
 
+#: The endings a drawing writes, checked before anything is drawn or any directory made.
+_ENDINGS = (".html", ".svg", ".png", ".pdf")
+
 app = typer.Typer(help="Draw sequence records.", no_args_is_help=True)
 
 
@@ -93,6 +96,11 @@ def map_(
     A PNG or PDF leaves out what is switched off, and a page keeps it behind its switches.
     """
     try:
+        for out in output:
+            if out.suffix.lower() not in _ENDINGS:
+                raise ValueError(
+                    f"cannot write {out}: its ending must be .html, .svg, .png or .pdf"
+                )
         read = read_record(record)
         drawing = draw_map(
             read,
