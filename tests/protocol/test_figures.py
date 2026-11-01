@@ -3,8 +3,8 @@
 from pathlib import Path
 
 import pytest
+from molviz import SEQUENCE_VIEW_LIMIT
 
-from mbio.plot.sequence_view import LIMIT
 from mbio.protocol import Figure, Protocol, Step, render_html
 from mbio.protocol.figures import (
     LIGATION_CITATION,
@@ -81,10 +81,14 @@ def test_context_below_zero_is_refused() -> None:
 
 def test_a_span_longer_than_a_sequence_view_holds_is_refused_where_it_is_chosen() -> None:
     """A junction on a chromosome would draw every base of it, which no page can show."""
-    long = SequenceRecord("A" * (LIMIT + 1), name="chromosome")
+    long = SequenceRecord("A" * (SEQUENCE_VIEW_LIMIT + 1), name="chromosome")
     with pytest.raises(ValueError, match="at most"):
         ligation_figure(
-            long, path="c.dna", junction=(0, LIMIT + 1), enzymes=["BsaI"], caption="All of it"
+            long,
+            path="c.dna",
+            junction=(0, SEQUENCE_VIEW_LIMIT + 1),
+            enzymes=["BsaI"],
+            caption="All of it",
         )
 
 

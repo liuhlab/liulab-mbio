@@ -21,10 +21,8 @@ from pathlib import Path
 from typing import NamedTuple
 
 from mbio.checks import Status
-from mbio.plot.drawing import Drawing, draw_map
-from mbio.plot.fonts import BOLD, MONO, SANS
-from mbio.plot.page import font_face
-from mbio.protocol.converter import molviz_gel, molviz_plate, molviz_stamp
+from mbio.plot.drawing import draw_map
+from mbio.protocol.converter import molviz_figure, molviz_gel, molviz_plate, molviz_stamp
 from mbio.protocol.model import (
     Bill,
     Caution,
@@ -545,8 +543,8 @@ def _write_maps(
             name = f"{path.stem}-{n}-map.html"
         taken.add(name)
         chosen = enzymes[path]
-        page = draw_map(path, enzymes=None if chosen is None else sorted(chosen)).write(into / name)
-        written |= dict.fromkeys(records, page)
+        draw_map(path, enzymes=None if chosen is None else sorted(chosen)).write(into / name)
+        written |= dict.fromkeys(records, into / name)
     return written
 
 
@@ -1547,16 +1545,14 @@ def _asset(name: str) -> str:
 
 
 def _fonts(body: str) -> str:
-    """Each face a drawing in `body` was measured in, written once, or nothing where it draws none.
+    """Return the faces molviz draws in where `body` holds a drawing, once, or else nothing.
 
-    A drawing pins every line of text to the width the package measured it at, so a page drawing
-    one as text carries those faces or the browser stretches its own to fit. A drawing names its
-    faces on each text, so the faces follow it onto any page: molviz's, and the package's own.
+    A drawing pins every line of text to the width it was measured at, so a page drawing one as
+    text carries molviz's faces or the browser stretches its own to fit.
     """
     import molviz
 
-    own = "".join(font_face(font) for font in (SANS, BOLD, MONO)) if "'Liulab Mbio" in body else ""
-    return own + (molviz.font_rules() if 'font-family="molviz ' in body else "")
+    return molviz.font_rules() if 'font-family="molviz ' in body else ""
 
 
 def _duration(seconds: float) -> str:
@@ -2165,86 +2161,72 @@ def _plate(one: Plate) -> str:
 
 
 def _figure(figure: Figure, base: Path, where: str, maps: Mapping[str, str]) -> str:
-    """Return the figure's records drawn as maps and inlined, as `_plate` inlines a plate.
+    """Return the figure as molviz draws it, still and inlined, as `_plate` inlines a plate.
 
-    Laid out here and never stored, so the figure follows the design it is drawn from. Several
-    records stack as rows in the order they are named, each labelled by the record's own name,
-    which is how a figure shows one molecule becoming the next. One record draws as it did.
+    Drawn here and never stored, so the figure follows the design it is drawn from. Several
+    records stack in the order they are named, each under its own name, which is how a figure
+    shows one molecule becoming the next; a highlight lights what each record answers to and dims
+    the rest.
 
     The figure stands in a box of its own with its caption inside, so it never reads as one of
-    the step's instructions. A record with a map in `maps` gets a control under its drawing that
-    opens the map in place, whole and to explore, and closes it again; the page prints the
-    drawing alone.
-
-    A highlight lights each row that answers to it and dims every other row whole, so a name only
-    the lit round's record carries lights that round. A name no record answers to is a mistake.
+    the step's instructions. Under it, each record with a map in `maps` gets a control that opens
+    the map in place, whole and to explore, and closes it again, naming its record where the
+    figure stacks several; the page prints the drawing alone.
 
     Raises
     ------
     FileNotFoundError
         If a record is not there, naming the step and the path.
     ValueError
-        If no record of the figure answers to a name the highlight lights.
+        If molviz refuses the figure, such as a highlight no record answers to, naming the step.
     """
-    rows = [_row(figure, base / named, where) for named in figure.records]
-    lit = frozenset().union(*(drawn.answering for drawn in rows))
-    unlit = [name for name in figure.highlight if name.casefold() not in lit]
-    if unlit:
-        listed = ", ".join(repr(name) for name in unlit)
-        raise ValueError(f"{where}: no record of this figure draws {listed} to highlight")
+    for named in figure.records:
+        if not (base / named).is_file():
+            raise FileNotFoundError(f"{where}: no record at {base / named} to draw")
+    import molviz
+
+    handed = molviz_figure(figure, base)
+    try:
+        drawn = molviz.draw_figure(handed["records"], **handed["options"]).still_svg()
+    except ValueError as error:
+        raise ValueError(f"{where}: {_lit(str(error), figure.highlight)}") from error
     caption = f"<figcaption>{escape(figure.caption)}{_cite(figure.citation)}</figcaption>"
-    openers = [
-        _opener(maps.get(named), drawn.record.name)
-        for named, drawn in zip(figure.records, rows, strict=True)
-    ]
-    if len(rows) == 1:
-        body, stacked = f"{rows[0].element()}{caption}{openers[0]}", ""
-    else:
-        # A stacked row carries the record's own name, so a reader knows which molecule it is.
-        body = "".join(
-            f'<div class="row"><p class="row-name">{escape(drawn.record.name)}</p>'
-            f"{drawn.element()}{opener}</div>"
-            for drawn, opener in zip(rows, openers, strict=True)
-        )
-        body, stacked = body + caption, " rows"
-    return f'<figure class="drawing map{stacked}">{body}</figure>\n'
+    stacked = len(figure.records) > 1
+    # One control a record, however often the figure names it.
+    records = zip(figure.records, handed["records"], strict=True)
+    names = {named: record["name"] for named, record in records}
+    openers = "".join(_opener(maps.get(named), name, stacked) for named, name in names.items())
+    kind = "drawing map rows" if stacked else "drawing map"
+    return f'<figure class="{kind}">{drawn}{caption}{openers}</figure>\n'
 
 
-def _opener(href: str | None, name: str) -> str:
+def _lit(problems: str, highlight: Sequence[str]) -> str:
+    """Return molviz's problems with each name to highlight it points at by place spelled out."""
+    return re.sub(
+        r"options\.highlight\[(\d+)\]",
+        lambda found: f"the highlight {highlight[int(found[1])]!r}",
+        problems,
+    )
+
+
+def _opener(href: str | None, name: str, named: bool = False) -> str:
     """Return the control that opens a record's map in place, and the map; nothing without one.
 
     The map is the figure opened: the whole record behind its switches, to explore. It loads the
     first time it is opened, from its `data-src`, so a page of several costs nothing until asked,
-    and a new tab shows it whole.
+    and a new tab shows it whole. A `named` control says whose map it opens.
     """
     if href is None:
         return ""
     address = escape(href, quote=True)
+    of = f" of {escape(name)}" if named else ""
     return (
-        '<details class="opener"><summary><span class="to-open">Explore the map</span>'
-        '<span class="to-close">Close the map</span></summary>'
+        f'<details class="opener"><summary><span class="to-open">Explore the map{of}</span>'
+        f'<span class="to-close">Close the map{of}</span></summary>'
         f'<iframe data-src="{address}" title="{escape(name, quote=True)}, to explore"></iframe>'
         f'<a class="new-tab" href="{address}" target="_blank" rel="noopener">Open it in a new '
         "tab</a></details>"
     )
-
-
-def _row(figure: Figure, path: Path, where: str) -> Drawing:
-    """Return one record of a figure laid out to draw, lit as the figure says."""
-    if not path.is_file():
-        raise FileNotFoundError(f"{where}: no record at {path} to draw")
-    drawn = draw_map(
-        path,
-        region=figure.span,
-        linear=figure.linear,
-        sequence_view=figure.sequence_view,
-        enzymes=figure.enzymes,
-    )
-    if figure.highlight:
-        # Lit here rather than by `draw_map`, which refuses a name its one record does not draw:
-        # across rows a name belongs to the row it names, and dims every other row whole.
-        drawn = replace(drawn, highlight=figure.highlight)
-    return drawn
 
 
 def _transfer(transfer: Transfer, plates: tuple[Plate, ...]) -> str:

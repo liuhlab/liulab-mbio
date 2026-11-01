@@ -2,9 +2,9 @@ import re
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+import molviz
 import pytest
 
-from mbio.plot import layers
 from mbio.protocol import (
     OVERVIEW_CHARS,
     AmountToVolume,
@@ -38,6 +38,7 @@ from mbio.protocol import (
     render_html,
     write_html,
 )
+from mbio.protocol.converter import molviz_figure
 from mbio.protocol.render import FIELD_HELD, HIGHLIGHTS_HEADING, NO_NUMBER, page_key
 
 from ..html import Node, parse
@@ -707,27 +708,16 @@ def test_a_plate_draws_what_its_wells_hold_and_counts_the_kinds_in_its_caption()
     assert "2 kinds" in figure.find_all("figcaption")[0].text
 
 
-def _drawn(caption: str) -> Protocol:
-    figure = Figure(("pUC19.dna",), caption, span=(400, 700), highlight=("MCS",))
-    return Protocol("Clone", steps=(Step("Cut the vector", figures=(figure,)),))
+def test_a_steps_figure_is_molvizs_still_drawing_of_it(data_dir: Path) -> None:
+    """A figure is a spec the page hands molviz, so the map follows the record it names."""
+    figure = Figure(("pUC19.dna",), "pUC19, cut at the MCS", span=(400, 700), highlight=("MCS",))
+    html = render_html(Protocol("Clone", steps=(Step("Cut", figures=(figure,)),)), base=data_dir)
+    handed = molviz_figure(figure, data_dir)
 
+    [drawn] = parse(html).find_all("figure", cls="map")
 
-def test_a_steps_figure_draws_the_record_it_names(data_dir: Path) -> None:
-    """A figure is a spec the page draws, so the map follows the record it names."""
-    page = parse(render_html(_drawn("pUC19, cut at the MCS"), base=data_dir))
-
-    [figure] = page.find_all("figure", cls="map")
-
-    assert figure.find_all("svg")
-    assert "drawing" in figure.attrs["class"]
-    assert figure.find_all("figcaption")[0].text == "pUC19, cut at the MCS"
-
-
-def test_a_figure_reads_its_record_from_beside_the_page(data_dir: Path, tmp_path: Path) -> None:
-    """A pipeline writes the records, the data and the page into one directory."""
-    (tmp_path / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
-    path = write_html(_drawn("pUC19"), tmp_path / "protocol.html")
-    assert "<svg" in path.read_text(encoding="utf-8")
+    assert molviz.draw_figure(handed["records"], **handed["options"]).still_svg() in html
+    assert drawn.find_all("figcaption")[0].text == "pUC19, cut at the MCS"
 
 
 def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Path) -> None:
@@ -748,22 +738,24 @@ def test_a_figure_comes_after_the_program_the_instructions_point_at(data_dir: Pa
     assert order == ["program", "drawing map"]
 
 
-def test_a_figure_opens_to_its_record_s_map_written_beside_the_page(
+def test_a_figure_opens_each_records_map_written_beside_the_page(
     data_dir: Path, tmp_path: Path
 ) -> None:
     """One map a record, with every enzyme its figures name, beside the page that opens it.
 
-    A record of the same name in another folder is another record, so its map is numbered.
+    A record of the same name in another folder is another record, so its map is numbered. A
+    figure stacking records is one drawing, with a control under it for each record's map.
     """
     for folder in ("records", "other"):
         (tmp_path / folder).mkdir()
         (tmp_path / folder / "pUC19.dna").write_bytes((data_dir / "pUC19.dna").read_bytes())
+    (tmp_path / "other" / "GFP.dna").write_bytes((data_dir / "GFP.dna").read_bytes())
     figures = (
         *(
             Figure(("../records/pUC19.dna",), f"Cut by {enzyme}", enzymes=(enzyme,))
             for enzyme in ("EcoRI", "HindIII")
         ),
-        Figure(("../other/pUC19.dna",), "The other copy", enzymes=()),
+        Figure(("../other/pUC19.dna", "../other/GFP.dna"), "The other copy, then GFP", enzymes=()),
     )
     one = Protocol("Clone", steps=(Step("Cut", figures=figures),))
     (tmp_path / "pages").mkdir()
@@ -772,13 +764,24 @@ def test_a_figure_opens_to_its_record_s_map_written_beside_the_page(
 
     written = (tmp_path / "pages" / "pUC19-map.html").read_text(encoding="utf-8")
     assert all(f'data-name="{enzyme}"' in written for enzyme in ("EcoRI", "HindIII"))
-    opened = [figure.find_all("details", cls="opener")[0] for figure in page.find_all("figure")]
-    assert [d.find_all("iframe")[0].attrs["data-src"] for d in opened] == [
-        "pUC19-map.html",
-        "pUC19-map.html",
-        "pUC19-2-map.html",
+    drawn = page.find_all("figure", cls="map")
+    opened = [
+        [
+            (d.find_all("iframe")[0].attrs["data-src"], d.find_all(cls="to-open")[0].text)
+            for d in figure.children
+            if isinstance(d, Node) and d.tag == "details"
+        ]
+        for figure in drawn
     ]
-    assert (tmp_path / "pages" / "pUC19-2-map.html").is_file()
+    assert opened == [
+        [("pUC19-map.html", "Explore the map")],
+        [("pUC19-map.html", "Explore the map")],
+        [
+            ("pUC19-2-map.html", "Explore the map of pUC19"),
+            ("GFP-map.html", "Explore the map of GFP"),
+        ],
+    ]
+    assert len(drawn[-1].find_all("svg")) == 1
     # A page rendered with no map written has nothing to open.
     assert not parse(render_html(one, base=tmp_path / "pages")).find_all("details", cls="opener")
 
@@ -787,52 +790,6 @@ def test_a_figure_whose_record_is_not_there_names_the_step_and_the_path(tmp_path
     one = Protocol("Clone", steps=(Step("Cut", figures=(Figure(("gone.dna",), "The vector"),)),))
     with pytest.raises(FileNotFoundError, match=r"step 1 'Cut'.*gone\.dna"):
         render_html(one, base=tmp_path)
-
-
-def test_several_records_stack_as_rows_each_labelled_by_its_own_name(data_dir: Path) -> None:
-    """A figure of more than one record is the rows the iGGA assembly figure stacks."""
-    figure = Figure(("pUC19.dna", "GFP.dna"), "The vector, then the insert", linear=True)
-    one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
-
-    page = parse(render_html(one, base=data_dir))
-
-    [drawn] = page.find_all("figure", cls="rows")
-    rows = drawn.find_all("div", cls="row")
-    assert len(rows) == 2
-    assert [row.find_all("p", cls="row-name")[0].text for row in rows] == ["pUC19", "GFP"]
-    assert all(row.find_all("svg") for row in rows)
-
-
-def test_one_record_draws_as_it_did_with_no_row_around_it(data_dir: Path) -> None:
-    """A one-record figure is the common case and keeps the markup it had."""
-    page = parse(render_html(_drawn("pUC19, cut at the MCS"), base=data_dir))
-
-    [drawn] = page.find_all("figure", cls="map")
-
-    assert not drawn.find_all("div", cls="row")
-    assert "rows" not in drawn.attrs["class"]
-
-
-def test_a_highlight_lights_the_rows_answering_to_it_and_dims_the_rest(data_dir: Path) -> None:
-    """Which row is lit is the whole reason the assembly figure takes a round."""
-    figure = Figure(("pUC19.dna", "GFP.dna"), "The insert lit", linear=True, highlight=("GFP",))
-    one = Protocol("Clone", steps=(Step("Join them", figures=(figure,)),))
-
-    rows = parse(render_html(one, base=data_dir)).find_all("div", cls="row")
-
-    unlit, named = (_paints(row) for row in rows)
-    assert set(unlit.values()) == {layers.DIM}
-    assert named["GFP"] != layers.DIM
-
-
-def _paints(row: Node) -> dict[str, str]:
-    """What each feature of a row is drawn in: `layers.DIM` wherever the highlight left it unlit."""
-    return {
-        group.attrs["data-name"]: next(
-            n.attrs["fill"] for n in group.iter() if n.attrs.get("fill", "none") != "none"
-        )
-        for group in row.find_all("g", cls="feature")
-    }
 
 
 def test_a_highlight_no_record_answers_to_names_the_step(data_dir: Path) -> None:
