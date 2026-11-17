@@ -1,0 +1,2139 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/dad-split/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Splitting a gene for Golden Gate: what DAD is, what implements it, and what is left to build - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#splitting-a-gene-for-golden-gate-what-dad-is-what-implements-it-and-what-is-left-to-build" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Splitting a gene for Golden Gate: what DAD is, what implements it, and what is left to build
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-method-lund-cites-and-the-tool-lund-ran" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The method Lund cites, and the tool Lund ran
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The method Lund cites, and the tool Lund ran">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-nobody-publishes-the-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1.1 Nobody publishes the search
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-what-splitset-does-which-is-worth-knowing-even-though-we-cannot-call-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1.2 What SplitSet does, which is worth knowing even though we cannot call it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-omega-implementation-judged" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. The OMEGA implementation, judged
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. The OMEGA implementation, judged">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-which-repository-and-why-it-is-the-right-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.1 Which repository, and why it is the right one
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-what-it-optimises" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.2 What it optimises
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-how-it-searches" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.3 How it searches
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-what-it-gets-right" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.4 What it gets right
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-what-is-unusable" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.5 What is unusable
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-where-it-breaks-on-a-23-kb-cargo" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.6 Where it breaks on a 2.3 kb cargo
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-what-fixing-it-would-cost-and-whether-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.7 What fixing it would cost, and whether to
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-search-problem-named" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. The search problem, named
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. The search problem, named">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-the-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 The statement
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-the-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.2 The size
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-why-it-is-hard" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.3 Why it is hard
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-the-honest-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.4 The honest naming
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-what-mbio-already-has" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. What <code>mbio</code> already has
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. What mbio already has">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-scoring-half-confirmed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.1 The scoring half: confirmed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-the-search-half-two-searches-exist-and-neither-is-the-missing-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.2 The search half: two searches exist, and neither is the missing one
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-where-the-line-actually-falls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.3 Where the line actually falls
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-236-should-take-leave-and-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. What #236 should take, leave and build
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. What #236 should take, leave and build">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#take" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Take
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#leave" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Leave
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Build
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-and-not-settled-here" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open, and not settled here
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settled-since" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Settled since
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-provenance-of-files-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Provenance of files read
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="splitting-a-gene-for-golden-gate-what-dad-is-what-implements-it-and-what-is-left-to-build">Splitting a gene for Golden Gate: what DAD is, what implements it, and what is left to build<a class="headerlink" href="#splitting-a-gene-for-golden-gate-what-dad-is-what-implements-it-and-what-is-left-to-build" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #235 (parent #225). Everything below was read on <strong>2026-10-06</strong> unless a
+line says otherwise. It establishes what the two existing implementations of the gene split
+actually do, judges the one that ships code, names the search problem, and draws the line between
+what <code>mbio</code> already covers and what #236 has to build.</p>
+<p>Step 3 of cargo synthesis is the split: break each gene into oligo-sized fragments whose internal
+overhangs are chosen on ligation fidelity, with <code>AGGA</code> and <code>TTCC</code> held out of the set. Nothing in
+this repository does it. <code>docs/research/synthesis-and-assembly.md</code> records the hole in its Open
+gaps: <em>"The split tool is unresolved. The method it names is not the tool its own source ran, and
+neither is pointed at."</em> This note closes the first half of that sentence.</p>
+<h2 id="1-the-method-lund-cites-and-the-tool-lund-ran">1. The method Lund cites, and the tool Lund ran<a class="headerlink" href="#1-the-method-lund-cites-and-the-tool-lund-ran" title="Permanent link">&para;</a></h2>
+<p>They are not the same thing, and Lund et al. never say they are.</p>
+<p>Lund et al. 2024 (<code>reference_docs/synthesis_and_assembly/long_fragment_GGA/Lund2024/main.txt</code>,
+read 2026-10-06) defines the method in its introduction:</p>
+<blockquote>
+<p>These overhangs can be methodically selected using ligation fidelity data in a process referred
+to as Data-optimized Assembly Design (DAD), which has been shown to support assemblies in as
+high complexity as 52 fragments. Rather than being a deterministic model in which a particular
+set of Golden Gate overhangs performs optimally, DAD selects overhangs based on compatibility
+with one another and ranks potential sets based on predicted fidelity.</p>
+</blockquote>
+<p>and then, in the next paragraph, names the tool:</p>
+<blockquote>
+<p>Here, we apply DAD for gene construction from oligo pools using the fragment design NEBridge
+SplitSet Tool.</p>
+</blockquote>
+<p>The three citations attached to the DAD sentence are refs 14–16 of that paper: Pryor et al. 2022
+<em>ACS Synth. Biol.</em> (40 kb from 52 parts), Pryor et al. 2020 <em>PLoS One</em>, and Sikkema et al. 2023
+<em>Curr. Protoc.</em> All three are NEB papers about overhang sets. <strong>None of them is SplitSet</strong>, and the
+SplitSet sentence carries no citation at all.</p>
+<p>NEB itself draws the same line, and more plainly than Lund does. From NEB's own request form for
+the SplitSet Lite API (<code>neb.com/en-us/forms/nebridge-splitset-lite-api</code>, read 2026-10-06):</p>
+<blockquote>
+<p>The API is intended for use in identifying an optimal set of overhangs for NEBridge Golden Gate
+Assembly near specified breakpoints in a target sequence <strong>using Data-Optimized Assembly Design
+as described in our publication</strong> "Enabling one-pot Golden Gate assemblies of unprecedented
+complexity using data-optimized assembly design."</p>
+</blockquote>
+<p>So the reading, now from both sides:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DAD</strong></td>
+<td>A named design principle: score a candidate overhang set against measured ligation-fidelity data, and rank candidate sets by that score.</td>
+</tr>
+<tr>
+<td><strong>SplitSet</strong></td>
+<td>One of NEB's tools that <em>applies</em> DAD. A tool, not a method; a web form, not a citation.</td>
+</tr>
+</tbody>
+</table>
+<p>The two are related as method and implementation, which answers the ticket's first question: <strong>not
+the same thing, and NEB says so.</strong> The paper NEB anchors DAD to is <em>"Enabling one-pot Golden Gate
+assemblies…"</em> — <strong>Pryor et al. 2020, <em>PLoS One</em></strong>, not the 2022 paper that carries DAD in its
+title. Pryor 2022 agrees, attributing the naming to the earlier work: <em>"Recent work by our
+laboratory has significantly expanded the capacity of GGA by using ligase fidelity data to select
+fusion sites, a process termed data-optimized assembly design (DAD)."</em></p>
+<p>That matters directly. Pryor 2020 is the paper this repository already ships data from, as
+<code>src/mbio/data/ligation_fidelity.json</code> under CC BY 4.0
+(<code>docs/research/ligation-fidelity.md</code>). <strong>The scoring function DAD is named for is already in the
+package</strong>, computed by <code>mbio.overhangs.fidelity</code>. Section 4 checks that against the one
+independent implementation available.</p>
+<h3 id="11-nobody-publishes-the-search">1.1 Nobody publishes the search<a class="headerlink" href="#11-nobody-publishes-the-search" title="Permanent link">&para;</a></h3>
+<p>Read Lund's definition closely: DAD <em>"selects overhangs based on compatibility with one another and
+</em><em>ranks</em><em> potential sets based on predicted fidelity."</em> Ranking is scoring. <strong>DAD names the
+objective and says nothing about how the candidate sets are generated.</strong> That is the search, and
+the search is published nowhere:</p>
+<ul>
+<li><strong>NEB does not document it.</strong> Across the SplitSet help page, the tool form, the Ligase Fidelity
+  landing page, the NEBridge tool overview and the two code-request forms (all read 2026-10-06),
+  no page says how split points or overhangs are chosen. Every statement is outcome-level — fusion
+  sites are <em>"optimized"</em>, overhangs are <em>"selected to maximize the expected ligation fidelity"</em>.</li>
+<li><strong>Pryor 2022 does not document it.</strong> The PMC full text (PMC9208013, CC BY-NC-ND, read
+  2026-10-06) contains no occurrence of "algorithm", "exhaustive", "greedy", "heuristic" or
+  "anneal". The closest it comes is constraining the search space, not describing the procedure:
+  <em>"The SplitSet tool was used to select 10 fusion sites, equally spaced in the genome, predicted
+  to be an overall high-fidelity set."</em> It points at the tools instead: <em>"the optimizer code used
+  in the SplitSet tool is available under a non-commercial use license on request."</em></li>
+<li><strong>The code exists and we cannot use it.</strong> NEB's Overhang Optimizer, holding the <code>GetSet</code> and
+  <code>SplitSet</code> modules, is released by request under terms that state: <em>"The tools are for internal
+  research only. No commercial use, reproduction or distribution of the tools is permitted. You
+  shall not cause or allow the reverse engineering, disassembly, or decompilation of a tool."</em>
+  Reading it would contaminate anything we ship.</li>
+</ul>
+<p><strong>There is no published algorithm to reimplement or to benchmark against.</strong> Our splitter has to
+stand on its own stated objective, which is the one DAD names and the one we already compute.</p>
+<h3 id="12-what-splitset-does-which-is-worth-knowing-even-though-we-cannot-call-it">1.2 What SplitSet does, which is worth knowing even though we cannot call it<a class="headerlink" href="#12-what-splitset-does-which-is-worth-knowing-even-though-we-cannot-call-it" title="Permanent link">&para;</a></h3>
+<p>From NEB's tool form and help (<code>ligasefidelity.neb.com/splitset/</code>, read 2026-10-06), SplitSet takes
+a sequence, a topology, an overhang length of 3 or 4, a ligation-condition dataset (15 of them,
+with the enzyme folded into the dataset rather than named separately), and then three inputs that
+map one-to-one onto the problem statement in section 3:</p>
+<table>
+<thead>
+<tr>
+<th>SplitSet input</th>
+<th>What it is in our terms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>"Define split regions based on: Number of fragments / Maximal fragment size / Minimal fragment size"</em></td>
+<td>the fragment-length bound, and the fragment count</td>
+</tr>
+<tr>
+<td><em>"Split regions — Provide non-overlapping regions in the nucleotide sequence where it can be divided"</em></td>
+<td>per-junction position windows</td>
+</tr>
+<tr>
+<td><em>"Excluded overhangs — Specify overhangs that must not be present in the resulting split set"</em></td>
+<td><strong>exactly the <code>AGGA</code>/<code>TTCC</code> hold-out our method needs</strong></td>
+</tr>
+</tbody>
+</table>
+<p>It returns the overhang set, the overhang coordinates, the fragments and a fidelity defined as
+<em>"the total fraction of correct ligation events out of all ligation events"</em> — the same quantity as
+ours. NEB separates its three tools cleanly: the <strong>Ligase Fidelity Viewer</strong> scores a set you
+already hold, <strong>GetSet</strong> invents a set when the overhangs <em>"may be arbitrary"</em>, and <strong>SplitSet</strong>
+cuts a given sequence so that its own bases form a good set. Our splitter is a SplitSet, not a
+GetSet, and <code>overhangs.fidelity</code> is our Viewer.</p>
+<p>It is still of no use to an agent. The full tool is web-only and runs as a queued job behind a
+request ID; the only programmatic route is the <strong>SplitSet Lite API</strong>, gated by a registration form
+and per-user Terms of Service, and SplitSet Lite is capped at about 20 fragments where the full
+tool is not. A per-user credential is not something a package can depend on.</p>
+<h2 id="2-the-omega-implementation-judged">2. The OMEGA implementation, judged<a class="headerlink" href="#2-the-omega-implementation-judged" title="Permanent link">&para;</a></h2>
+<h3 id="21-which-repository-and-why-it-is-the-right-one">2.1 Which repository, and why it is the right one<a class="headerlink" href="#21-which-repository-and-why-it-is-the-right-one" title="Permanent link">&para;</a></h3>
+<p><code>https://github.com/RomeroLab/omega</code>, commit <strong><code>160be2f7292676f64d54dad58902d5de557d9487</code></strong>
+(authored 2025-11-17, branch <code>main</code>), read 2026-10-06. Python, about 1,900 lines across seven
+files in <code>code/</code>. Licence <strong>GPL-3.0</strong>.</p>
+<p>Three independent links tie it to Freschlin et al. 2026:</p>
+<ol>
+<li>The paper's own data-availability statement (<code>Freschlin2026/main.txt</code>): <em>"OMEGA code is
+   available on GitHub and archived with Zenodo (<a href="https://zenodo.org/records/17637683">https://zenodo.org/records/17637683</a>)."</em> The
+   supplement (<code>Freschlin2026/supp.txt</code>) is explicit: <em>"full implementation is available at
+   github.com/RomeroLab/omega."</em></li>
+<li>The repository description quotes the paper's title verbatim, and the README opens <em>"This is
+   the code to run the OMEGA program presented in Freschlin et al."</em></li>
+<li>The README's Zenodo badge carries concept DOI <code>10.5281/zenodo.17637682</code>; the paper cites record
+   <code>17637683</code> under that concept.</li>
+</ol>
+<p>No GitHub discussion thread was needed; the paper points at the code directly. The one other
+candidate that surfaced, <code>scbirlab/ogilo</code>, is a different lab's oligo-pool concatenator with no
+fidelity optimisation and no connection to the paper.</p>
+<p><strong>The assembly method in this paper was rejected for our use in favour of the Baker lab's
+three-primer scheme, and nothing here reopens that.</strong> What is read below is the cut design only.</p>
+<p>The README states its own caveat, which should be read before any of the judgements that follow:
+<em>"We have not exhaustively tested this code."</em></p>
+<h3 id="22-what-it-optimises">2.2 What it optimises<a class="headerlink" href="#22-what-it-optimises" title="Permanent link">&para;</a></h3>
+<p><code>code/predict_fidelity.py:43</code>. For a set of overhangs, the product over the set of</p>
+<blockquote>
+<p>(correct ligations for the overhang, plus correct ligations for its Watson–Crick partner)
+÷ (every ligation either of them was seen making against the set and the set's reverse
+complements)</p>
+</blockquote>
+<p>This is Pryor 2020's definition. It is the same quantity <code>mbio.overhangs.fidelity</code>
+computes, down to counting both ends of each junction — the detail the docstring of our own
+function says is what reproduces the paper's worked examples. <strong>Two independent implementations
+of the same formula agree, which is the best confirmation available that our scoring half is
+right.</strong></p>
+<p>Two further metrics are computed — <code>min_gene_fidelity</code> (the worst single gene in a pool) and
+<code>min_site_fidelity</code> (the worst single overhang) — but they are <strong>reported, not optimised</strong>. The
+README says so in its own words: the optimised metric <em>"assumes that all GG sites are being used in
+a single sequential assembly — it does not fully reflect OMEGA conditions"</em>, while
+<code>min_gene_fidelity</code> <em>"is the more relevant metric for OMEGA."</em> <strong>OMEGA's search maximises a number
+its own README calls the wrong one.</strong> That is not a subtlety to pass over; it is the first thing to
+fix in any design that borrows the shape.</p>
+<h3 id="23-how-it-searches">2.3 How it searches<a class="headerlink" href="#23-how-it-searches" title="Permanent link">&para;</a></h3>
+<p>Simulated annealing over the joint space of cut positions and overhangs. The two are not separate
+variables: every candidate overhang is a 4-mer the gene already spells at a candidate cut
+(<code>Gene.__populate_sites</code>, <code>library_classes.py:710</code>), so <strong>choosing where to cut chooses the
+overhang</strong>, and the product is scarless by construction. OMEGA never recodes to reach a better
+overhang.</p>
+<p>One move (<code>Gene.shuffle_site</code>, <code>library_classes.py:754</code>): pick a gene at random, drop one of its
+cuts, split the sequence at the cuts that remain, take the <strong>longest</strong> resulting section, and
+re-place the dropped cut anywhere in that section leaving both neighbouring fragments between a
+floor and the oligo's coding space. Accept by Metropolis on a temperature ramp from 0.005 to
+0.00001 across <code>nopt_steps</code> (default 1000), with a hard reset to the best state whenever a
+candidate falls more than 0.01 fidelity below it. <code>nopt_runs</code> independent seeds run in parallel and
+the best result is kept. A <code>greedy</code> variant (<code>Pool</code>) accepts improvements only.</p>
+<h3 id="24-what-it-gets-right">2.4 What it gets right<a class="headerlink" href="#24-what-it-gets-right" title="Permanent link">&para;</a></h3>
+<p>Four things, and they are worth taking even though the code is not.</p>
+<ol>
+<li><strong>The objective is the published one, on published data.</strong> Nothing is invented, and the
+   ligation matrices are Potapov 2018 and Pryor 2020 read from CSV, cited by PMID in the directory
+   names.</li>
+<li><strong>The move repairs feasibility instead of testing it.</strong> Re-placing the dropped cut only inside
+   the longest section, bounded by both neighbours, means every state the chain visits is a legal
+   fragmentation. There is no penalty term and no infeasible region to wander into. That is the
+   right way round for a hard length constraint, and it is the one piece of the search design
+   worth copying outright.</li>
+<li><strong>It simulates the product before emitting oligos.</strong> <code>Gene.gene_assembles</code> reassembles the
+   fragments overhang by overhang, translates the result, and raises if the protein differs from
+   the input. A real round trip, not an assertion about the design.</li>
+<li><strong>The padding is screened across its own boundaries.</strong> <code>Gene.__add_padding</code> redraws random
+   filler until neither the join with the primer nor the join with the payload spells the enzyme
+   site or any caller-named illegal sequence. Checking a sequence that only exists where two
+   designed pieces meet is easy to forget, and this does not.</li>
+</ol>
+<h3 id="25-what-is-unusable">2.5 What is unusable<a class="headerlink" href="#25-what-is-unusable" title="Permanent link">&para;</a></h3>
+<p>These are not polish. Each is a correctness defect, verified against the commit named above.</p>
+<ol>
+<li><strong>The palindrome exclusion list is wrong.</strong> <code>CCGG</code> is a 4-base palindrome and is missing; <code>GGCC</code>
+   is listed twice. The literal holds 16 entries but 15 distinct values, against 16 palindromic
+   4-mers; the set difference is exactly <code>{CCGG}</code>. The same literal is pasted in two places —
+   <code>junctions.py:162</code> and <code>library_classes.py:722</code> — so both paths admit 241 overhangs where 240
+   are legal, and a fragment taking <code>CCGG</code> ligates to itself. Our <code>overhangs.refusal</code> derives the
+   rule (<code>candidate == reverse_complement(candidate)</code>) instead of listing it, and cannot have this
+   bug. A hand-written list of a thing a predicate computes is the defect; the missing member is
+   only its symptom.</li>
+<li><strong>The parameter that would hold out <code>AGGA</code> and <code>TTCC</code> is dead.</strong> <code>JunctionSet.__init__</code> accepts
+   <code>excluded_sites</code> and stores it at <code>junctions.py:73</code>; nothing reads it again anywhere in the
+   repository. <code>__site_options</code> filters on <code>fixed_sites</code> and the palindrome list only. <code>omega.py</code>
+   passes the value through from the command line. <strong>A user who excludes an overhang gets no error
+   and no exclusion.</strong> This is precisely the requirement our method states for step 3, and in
+   OMEGA's junction-set path it silently does not work. (The library path is better: <code>Gene.__populate_sites</code>
+   does exclude <code>other_used_sites</code> and their reverse complements — so the exclusion we need exists
+   in the codebase, under a different name, in the other module.)</li>
+<li><strong><code>min_size</code> is dead in the same shape.</strong> <code>Library.__init__</code> stores it at
+   <code>library_classes.py:103</code> and nothing reads it; all four calls to <code>shuffle_site</code> pass the literal
+   <code>min_dist=40</code>. The config key and the command-line flag do nothing. Two dead parameters of the
+   same shape in one small codebase is a pattern, not an accident, and it means the config file is
+   not a description of what ran.</li>
+<li><strong>The move proposal is seeded with a constant.</strong> <code>Gene.shuffle_site</code> ends in
+   <code>candidates.sample(n=1, random_state=42)</code>: the replacement cut is not drawn at random from the
+   legal candidates but is a deterministic function of the candidate frame.
+   <code>get_start_sites_range</code> shuffles with <code>random_state=42</code> likewise. The acceptance test is random;
+   the proposal is not. A chain that cannot propose two different moves from one state is not
+   sampling the neighbourhood the method describes, and the independent seeds share the proposal
+   rule. Whether this costs fidelity in practice is unmeasured here — the claim is only that the
+   code does not do what the method says.</li>
+<li><strong>A bare <code>except: continue</code> hides infeasibility.</strong> The whole candidate block in <code>shuffle_site</code>
+   sits inside <code>try: ... except: continue</code> within a 50-attempt loop, and on exhaustion the function
+   falls off the end and returns <code>None</code>. <code>permissible_pos[0]</code> raises <code>IndexError</code> when no legal
+   position exists — the genuine "this gene cannot be split here" case — and that is
+   indistinguishable from a typo. <code>SAPool.optimize</code> tests for the <code>None</code>; <code>Pool.optimize</code>
+   (<code>library_classes.py:356</code>) does not.</li>
+<li><strong>No minimum-distance rule.</strong> OMEGA refuses exact repeats, reverse-complement repeats and
+   (most) palindromes, and otherwise trusts the data. <code>MIN_DISTANCE = 2</code> in <code>overhangs.py</code> is the
+   guard it has no equivalent of. An earlier draft of this note argued the guard is needed because
+   the matrix is sparse — a pair whose cross-ligation was never observed contributes nothing to
+   the denominator, so it would score as perfectly orthogonal. That mechanism is real but it has
+   nothing to bite on here: #327 counted the shipped BsmBI matrix at <strong>65,536 of 65,536 cells
+   present</strong>, 4,130 of them nonzero, and only 4.4% of the pairs one base apart measure zero. What
+   justifies the rule is what the data says, not what it omits — a third to a half of all pairs
+   one base apart cross-ligate at or above <code>MODEST_MISMATCH</code>, and two bases apart almost none do.</li>
+</ol>
+<h3 id="26-where-it-breaks-on-a-23-kb-cargo">2.6 Where it breaks on a 2.3 kb cargo<a class="headerlink" href="#26-where-it-breaks-on-a-23-kb-cargo" title="Permanent link">&para;</a></h3>
+<p>Arithmetic taken from the code at this commit, for BsaI, 300 nt oligos and the 20 nt Subramanian
+primers OMEGA ships.</p>
+<table>
+<thead>
+<tr>
+<th>Quantity</th>
+<th>Value</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Coding space per fragment</td>
+<td>300 − 20 − 20 − (1+6)·2 − 4 = <strong>242 nt</strong></td>
+<td><code>get_coding_space</code></td>
+</tr>
+<tr>
+<td>Coding space used to pick the fragment count</td>
+<td>the same with <code>oligo_len − 24</code> → <strong>218 nt</strong></td>
+<td><code>Library.estimate_nfrags</code></td>
+</tr>
+<tr>
+<td>Fragments for 2,300 nt</td>
+<td>first <code>n</code> with <code>2300 // n ≤ 218</code> → <strong>11</strong></td>
+<td><code>Library.estimate_nfrags</code></td>
+</tr>
+<tr>
+<td>Overhangs in the set</td>
+<td>10 internal junctions + 2 backbone = <strong>12</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Starting window per junction</td>
+<td>step 210, biggest centroid gap 210, <code>(242−210)//2</code> → <strong>±16 bases</strong>, 33 positions</td>
+<td><code>get_start_sites_range</code></td>
+</tr>
+</tbody>
+</table>
+<p>Four things follow.</p>
+<ul>
+<li><strong>The fragment count is chosen, not optimised.</strong> <code>estimate_nfrags</code> takes the first value that
+  fits and stops. But the fragment count is the number that predicts whether the assembly works:
+  Lund's own measured table (held in <code>long_fragment_GGA/README.md</code>) runs 100% error-free clones at
+  2 fragments, 84.6% at 5, 66.7% at 8, <strong>40.0% at 12</strong> and 0% at 16. OMEGA's splitter puts our
+  cargo at 11 — one below the point where Lund's rate has already more than halved — and nothing
+  in the search trades a longer oligo or a different enzyme against that count.</li>
+<li><strong>The feasibility guard is a hand-tuned constant.</strong> If <code>biggest_diff</code> exceeded <code>coding_space</code>,
+  <code>half_step</code> would go negative and <code>.loc[c−half:c+half]</code> would select nothing, failing inside the
+  bare <code>except</code>. The <code>oligo_len − 24</code> in <code>estimate_nfrags</code>, commented <em>"subtract some bp from
+  oligo_len so we do not get sequences that perfectly fit oligo_len"</em>, is the only thing keeping
+  that from happening. It is a fudge factor, not a bound.</li>
+<li><strong>Every gene in a pool is forced to the same fragment count</strong>, set by the longest. A design list
+  of mixed lengths pays the longest gene's oligo count for every member. For a library of
+  same-length variants, which is what OMEGA is for, that is deliberate — it holds assembly
+  efficiency constant. For our design lists it is waste.</li>
+<li><strong>The ±16 window is narrow enough that the result depends on the starting point</strong>, and the
+  starting point is drawn with <code>random_state=42</code>.</li>
+</ul>
+<h3 id="27-what-fixing-it-would-cost-and-whether-to">2.7 What fixing it would cost, and whether to<a class="headerlink" href="#27-what-fixing-it-would-cost-and-whether-to" title="Permanent link">&para;</a></h3>
+<p>The six defects in 2.5 are each a few lines: the palindrome list becomes a predicate, the two dead
+parameters get wired through, <code>random_state=42</code> is dropped, the bare <code>except</code> becomes a typed one,
+a distance rule is added. Call it a day's work, and the code would then do what it says.</p>
+<p>That is not the reason to leave it. Two architectural facts are not patchable, and one licence
+settles the question:</p>
+<ul>
+<li><strong>The objective is pool-wide, and ours is not.</strong> OMEGA assembles a whole subpool in one tube
+  (README, assembly protocol step 5), so all ~50 junctions in a pool must be mutually orthogonal.
+  Our method retrieves each design from the pool by PCR and assembles it alone, so only one gene's
+  12 overhangs need be orthogonal at once. <strong>We have the easier problem and must not inherit the
+  harder one.</strong> Most of OMEGA's search cost — the annealing, the parallel seeds, the thousand steps
+  — is paid for a constraint our method does not have.</li>
+<li><strong>The fragment count is fixed before the search rather than searched over</strong>, and it is the number
+  that predicts success.</li>
+<li><strong>GPL-3.0.</strong> The code cannot be vendored or adapted into <code>liulab-mbio</code> whatever its quality. Read
+  it, cite it, write our own. The ligation matrices it ships under <code>data/ligation_data/</code> are the
+  same NEB datasets we already hold, and must be taken from the publishers' supplements rather than
+  from this clone.</li>
+</ul>
+<p><strong>Verdict.</strong> A faithful, readable implementation of the right objective, wrapped in a search that
+is over-powered for our instance and under-tested for its own, with a scattering of defects that a
+rule expressed as a predicate would have made impossible. Worth reading once, in full. Not worth
+depending on, and not legally available to us anyway.</p>
+<h2 id="3-the-search-problem-named">3. The search problem, named<a class="headerlink" href="#3-the-search-problem-named" title="Permanent link">&para;</a></h2>
+<h3 id="31-the-statement">3.1 The statement<a class="headerlink" href="#31-the-statement" title="Permanent link">&para;</a></h3>
+<p>Choose <code>k − 1</code> cut positions in a sequence of length <code>L</code>. A cut's overhang is the 4-mer the
+sequence already spells there, so <strong>positions and overhangs are one variable, not two</strong> — unless
+the design may recode, which OMEGA never does and Lund does only once, before the split.</p>
+<p>Constraints: every fragment between a floor and the oligo's coding space; no two overhangs equal or
+reverse-complementary; no palindrome; the reserved overhangs held out; and, ours, a minimum Hamming
+distance and a primer tail that spells no further enzyme site.</p>
+<p>Objective: the Pryor 2020 fidelity of the resulting set — a product over the set of ratios whose
+denominators depend on the whole set.</p>
+<h3 id="32-the-size">3.2 The size<a class="headerlink" href="#32-the-size" title="Permanent link">&para;</a></h3>
+<p>For <code>L = 2300</code>, <code>k = 11</code>, fragments of 40–242 nt, counted by a dynamic program over positions:</p>
+<table>
+<thead>
+<tr>
+<th>Space</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Legal cut placements</td>
+<td><strong>1.23 × 10^19</strong></td>
+</tr>
+<tr>
+<td>Subsets of 12 from the 240 legal overhangs</td>
+<td>5.77 × 10^19</td>
+</tr>
+<tr>
+<td>Placements pinned to OMEGA's ±16 windows (33^11)</td>
+<td>5.05 × 10^16</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-why-it-is-hard">3.3 Why it is hard<a class="headerlink" href="#33-why-it-is-hard" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The objective does not decompose along the sequence.</strong> Each overhang's score divides by its
+  cross-talk against every other overhang in the set. A dynamic program over cut positions would
+  have to carry the set chosen so far in its state, and that state is a subset of 240. The
+  interval-partition structure that makes the length constraint trivially tractable is exactly the
+  structure the objective does not respect. This is the whole difficulty in one sentence.</li>
+<li><strong>The set-selection half is a clique problem.</strong> Threshold the matrix to a 0/1 "these two do not
+  cross-ligate" relation, and "is there a set of <code>k</code> mutually compatible overhangs" is a <code>k</code>-clique
+  in the compatibility graph. Maximum clique is NP-hard, so no polynomial exact method should be
+  expected for the general objective. <em>(This is an argument from the structure, not a theorem
+  anyone has published about this instance.)</em></li>
+</ul>
+<h3 id="34-the-honest-naming">3.4 The honest naming<a class="headerlink" href="#34-the-honest-naming" title="Permanent link">&para;</a></h3>
+<p><strong>The general problem is a heuristic's problem. Our instance is a branch-and-bound's.</strong> <code>k</code> is
+10–12, not 52; the pairwise rules do almost all the pruning; and the per-junction candidate list,
+once a position window is pinned, is a few dozen values.</p>
+<p>The decomposition that follows: <strong>pin the cut positions first</strong>, by an interval dynamic program on
+length alone — exact, cheap, and it also answers "how few fragments does this gene need?" — then
+search the overhangs within a window at each pinned position. That second step is a bounded
+constraint problem with about 11 variables, a few dozen values each, and only pairwise constraints.
+It is not globally optimal; it is optimal given the positions. Widen the windows and re-run when no
+set is found, rather than reaching for a stochastic search.</p>
+<p>Greedy is not enough — it has no way to back out of an early overhang that blocks a later junction,
+which is exactly what happens when the windows are narrow. Simulated annealing is more than this
+instance needs, and brings a seed, a schedule and a convergence question we would then have to
+justify. Branch and bound over per-junction candidate lists is the right class, and the repository
+already runs that algorithm once (section 4).</p>
+<h2 id="4-what-mbio-already-has">4. What <code>mbio</code> already has<a class="headerlink" href="#4-what-mbio-already-has" title="Permanent link">&para;</a></h2>
+<p>The ticket's claim is <em>"The scoring half exists; the search half does not."</em> Checked against the
+code, the first half is right and the second is too strong.</p>
+<h3 id="41-the-scoring-half-confirmed">4.1 The scoring half: confirmed<a class="headerlink" href="#41-the-scoring-half-confirmed" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>overhangs.fidelity</code></td>
+<td>Pryor 2020's product, over the shipped matrices for BsaI, BsmBI, Esp3I, BbsI and SapI. Verified above to compute the same quantity as OMEGA's <code>predict_fidelity</code>. Also reports the weak junctions and every mismatch above <code>MODEST_MISMATCH</code>.</td>
+</tr>
+<tr>
+<td><code>overhangs.refusal</code></td>
+<td>Six rules, each naming itself: <code>length</code>, <code>palindrome</code>, <code>uniform</code>, <code>repeat</code>, <code>near-duplicate</code>, <code>site</code>. The palindrome rule is a predicate, not a list.</td>
+</tr>
+<tr>
+<td><code>overhangs.scoring</code></td>
+<td>Picks the enzyme's own matrix, a user-held ligase profile, or neither.</td>
+</tr>
+<tr>
+<td><code>ligase.read_profile</code></td>
+<td>Reads a ligase matrix from a copy the user holds, for an enzyme nobody has published.</td>
+</tr>
+<tr>
+<td><code>overhangs._by_rule</code></td>
+<td>A rule-based fallback score where there is no data at all, honestly labelled as a ranking and not a prediction.</td>
+</tr>
+</tbody>
+</table>
+<p>Everything DAD names as its objective is here, already cited, already licensed.</p>
+<h3 id="42-the-search-half-two-searches-exist-and-neither-is-the-missing-one">4.2 The search half: two searches exist, and neither is the missing one<a class="headerlink" href="#42-the-search-half-two-searches-exist-and-neither-is-the-missing-one" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Shape</th>
+<th>Decides</th>
+<th>Optimises</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cloning/goldengate/design.design_overhangs</code></td>
+<td>greedy, first-fit, one pass, <strong>no backtracking</strong>; junctions ordered least-free first</td>
+<td>one overhang per junction; the junction may move within its own <code>window</code></td>
+<td><strong>nothing.</strong> Free candidates are ranked by <code>table.count(one, reverse_complement(one))</code> — the overhang's own on-target count, a per-overhang proxy — and the first that <code>refusal</code> accepts is taken. <code>fidelity</code> is called once at the end to <em>report</em>, not to choose.</td>
+</tr>
+<tr>
+<td><code>synbio.igga.standard._settle</code></td>
+<td><strong>exhaustive depth-first with a lower bound</strong> — branch and bound — over per-junction candidate lists</td>
+<td>one overhang per junction; positions fixed</td>
+<td>minimum total amino-acid cost. Fidelity is not in the objective.</td>
+</tr>
+</tbody>
+</table>
+<p><code>_settle</code>'s own docstring states the structural fact the split problem shares: <em>"every rule is
+either about one overhang or about a pair of them, so a set is allowed exactly when each of its
+pairs is."</em> That is the property section 3.4 leans on, and it is already written down and already
+exploited — in synbio, for a different objective.</p>
+<h3 id="43-where-the-line-actually-falls">4.3 Where the line actually falls<a class="headerlink" href="#43-where-the-line-actually-falls" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Half</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Score a set by Pryor 2020 fidelity</td>
+<td><strong>present</strong></td>
+</tr>
+<tr>
+<td>Refuse one candidate by rule</td>
+<td><strong>present</strong></td>
+</tr>
+<tr>
+<td>Hold a named overhang out of the set</td>
+<td><strong>present in effect, absent as an argument.</strong> <code>refusal</code> has no <code>exclude</code> parameter and <code>design_overhangs</code> has no way to say "not <code>AGGA</code>". synbio reaches it by passing the reserved overhang in <code>taken</code>, which makes it a <code>repeat</code>. It works; it is not named, and a caller has to know the trick.</td>
+</tr>
+<tr>
+<td>Search overhangs at positions somebody else chose</td>
+<td><strong>present twice</strong>, in two different shapes, in two different packages, <strong>neither on fidelity</strong></td>
+</tr>
+<tr>
+<td>Search cut positions under a fragment-length bound</td>
+<td><strong>absent.</strong> Nothing in the repository chooses where to cut. <code>Junction.position</code> is given by the caller; <code>window</code> moves it by a handful of bases around that position, and no code relates one junction's window to another's or to any length budget.</td>
+</tr>
+<tr>
+<td>Choose how many fragments a gene needs</td>
+<td><strong>absent</strong></td>
+</tr>
+<tr>
+<td>Use fidelity as an objective rather than a report</td>
+<td><strong>absent</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>The line, in one sentence: <code>mbio</code> can score any overhang set and refuse any candidate, and
+can fill in overhangs at positions a caller already chose — it cannot choose the positions, and it
+has never once used fidelity as an objective rather than as a report.</strong></p>
+<p>That is two gaps, not one, and the second is the one the ticket does not predict. "The scoring half
+exists" is true of the <em>function</em> and not of its <em>use</em>: the only existing search over overhangs
+ranks candidates by a per-overhang proxy and never consults the set score it then prints.</p>
+<h2 id="5-what-236-should-take-leave-and-build">5. What #236 should take, leave and build<a class="headerlink" href="#5-what-236-should-take-leave-and-build" title="Permanent link">&para;</a></h2>
+<h3 id="take">Take<a class="headerlink" href="#take" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Pryor 2020 fidelity as the objective. Already in the package, already cited, already licensed.</li>
+<li>OMEGA's feasibility-repairing move, if a stochastic search is ever needed.</li>
+<li>OMEGA's round trip: reassemble the fragments and translate before emitting oligos.</li>
+<li>OMEGA's padding screen, which checks the sequence that exists only where two designed pieces
+  meet.</li>
+<li><code>_settle</code>'s branch-and-bound shape, which is already in this repository and already handles the
+  pairwise structure.</li>
+</ul>
+<h3 id="leave">Leave<a class="headerlink" href="#leave" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The pool-wide objective. We assemble one design at a time; adopting OMEGA's constraint would make
+  our problem harder for nothing.</li>
+<li>Simulated annealing. Over-powered at <code>k ≈ 11</code>, and it brings a seed and a schedule to justify.</li>
+<li>Every line of OMEGA's code: GPL-3.0.</li>
+<li>Hand-written exclusion lists of anything a predicate can compute.</li>
+</ul>
+<h3 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h3>
+<ul>
+<li>An interval dynamic program that places cuts under a fragment-length bound, and reports the
+  fragment count it needed. Exact and cheap, and it answers "how few fragments does this gene
+  need?" — the question the Lund table says predicts success.</li>
+<li>An <code>exclude</code> argument on <code>refusal</code>, so <code>AGGA</code>/<code>TTCC</code> is stated rather than smuggled in through
+  <code>taken</code>.</li>
+<li>Fidelity as a ranking key inside the candidate loop, not only as a report afterwards. This is a
+  change to <code>design_overhangs</code> as much as to anything new.</li>
+</ul>
+<h3 id="open-and-not-settled-here">Open, and not settled here<a class="headerlink" href="#open-and-not-settled-here" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Nothing trades a longer oligo, a different enzyme or a different reserved set against the
+  fragment count, and the fragment count is the number Lund measures success against.</li>
+<li>Whether a junction may recode to reach a better overhang. OMEGA never recodes; Lund recodes once,
+  before the split; <code>mbio.codons</code> could. Allowing it widens every candidate list and changes
+  the problem.</li>
+</ul>
+<h3 id="settled-since">Settled since<a class="headerlink" href="#settled-since" title="Permanent link">&para;</a></h3>
+<p>Whether the splitter should enforce <code>MIN_DISTANCE</code> at all when a measured matrix is available was
+open here, on the ground that the matrix is sparse and the sparsity biases the score upward.
+<strong>#327 measured it, and it should.</strong> The premise was wrong — the matrix is complete, as §2.5.6 now
+records. Two bases is the smallest separation at which every shipped matrix holds its measured
+cross-ligations under <code>MODEST_MISMATCH</code>, and it is not a free rule: on the 72 AP-1 parts at a
+200 nt oligo it takes the worst part from 0.7065 to 0.9829 for eight extra oligos out of 288,
+while three bases refuses 32 of those parts outright. It is the lookahead the one-pass greedy
+does not have, which is why dropping the branch and bound cost so little.</p>
+<h2 id="6-provenance-of-files-read">6. Provenance of files read<a class="headerlink" href="#6-provenance-of-files-read" title="Permanent link">&para;</a></h2>
+<p>The branch and bound #261 measured the greedy against lives at the <code>archive/261-dad-split</code> tag,
+kept there as evidence rather than as a tool.</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Source</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference_docs/synthesis_and_assembly/dad-split/omega-160be2f/</code></td>
+<td><code>https://github.com/RomeroLab/omega</code> at <code>160be2f7292676f64d54dad58902d5de557d9487</code>, GPL-3.0. Reference only: the licence forbids vendoring it here.</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td><code>reference_docs/synthesis_and_assembly/Freschlin2026/</code></td>
+<td>Already held. Used for the data-availability statement that confirms the repository.</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td><code>reference_docs/synthesis_and_assembly/long_fragment_GGA/Lund2024/</code></td>
+<td>Already held. Used for the DAD definition, the SplitSet sentence and the fragment-count table.</td>
+<td>2026-10-06</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Lund, S., Potapov, V., Johnson, S. R., Buss, J. and Tanner, N. A. (2024) Highly parallelized
+  construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly Design
+  and Golden Gate. <em>ACS Synth. Biol.</em> 13(3), 745–751.
+  <a href="https://doi.org/10.1021/acssynbio.3c00694">doi:10.1021/acssynbio.3c00694</a>. Read 2026-10-06.</li>
+<li>Freschlin, C. R., Yang, K. K. and Romero, P. A. (2026) Scalable and cost-efficient custom gene
+  library assembly from oligopools. <em>Sci. Adv.</em> 12, eady2279.
+  <a href="https://doi.org/10.1126/sciadv.ady2279">doi:10.1126/sciadv.ady2279</a>. Read 2026-10-06.</li>
+<li>RomeroLab/omega, commit <code>160be2f7292676f64d54dad58902d5de557d9487</code>.
+  <a href="https://github.com/RomeroLab/omega">github.com/RomeroLab/omega</a>, GPL-3.0; archived at
+  <a href="https://doi.org/10.5281/zenodo.17637682">doi:10.5281/zenodo.17637682</a>. Read 2026-10-06.</li>
+<li>Pryor, J. M., Potapov, V., Kucera, R. B., Bilotti, K., Cantor, E. J. and Lohman, G. J. S. (2020)
+  Enabling one-pot Golden Gate assemblies of unprecedented complexity using data-optimized assembly
+  design. <em>PLoS One</em> 15(9), e0238592.
+  <a href="https://doi.org/10.1371/journal.pone.0238592">doi:10.1371/journal.pone.0238592</a>. The fidelity
+  definition and the shipped matrices; see <code>docs/research/ligation-fidelity.md</code>.</li>
+<li>Sikkema, A. P., Tabatabaei, S. K., Lee, Y. J., Lund, S. and Lohman, G. J. S. (2023)
+  High-complexity one-pot Golden Gate assembly. <em>Curr. Protoc.</em> 3(9), e882. Cited by Lund as a DAD
+  source; not read in full here.</li>
+<li>Pryor, J. M., Potapov, V., Bilotti, K., Pokhrel, N. and Lohman, G. J. S. (2022) Rapid 40 kb
+  genome construction from 52 parts through data-optimized assembly design. <em>ACS Synth. Biol.</em>
+  11(6), 2036-2042. <a href="https://doi.org/10.1021/acssynbio.1c00525">doi:10.1021/acssynbio.1c00525</a>,
+  PMC9208013, CC BY-NC-ND 4.0. Read 2026-10-06 for whether it states the search; it does not.</li>
+<li>NEBridge SplitSet Tool, SplitSet Lite API and Overhang Optimizer Code. NEB web pages and request
+  forms at <code>ligasefidelity.neb.com/splitset/</code> and <code>neb.com/en-us/forms/</code>, read 2026-10-06. Read
+  in a browser: <code>neb.com</code> returns 403 to a plain fetch, as
+  <code>reference_docs/synthesis_and_assembly/README.md</code> already records.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

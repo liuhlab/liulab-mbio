@@ -1,0 +1,2345 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/sequencing-read-evidence/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>What a sequencing result holds, and what confirms a clone - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#what-a-sequencing-result-holds-and-what-confirms-a-clone" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              What a sequencing result holds, and what confirms a clone
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-a-sanger-trace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. A Sanger trace
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. A Sanger trace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-what-the-format-promises" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.1 What the format promises
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-what-two-real-files-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.2 What two real files hold
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-what-a-vendor-sends-with-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.3 What a vendor sends with it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-where-a-read-cannot-be-trusted" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.4 Where a read cannot be trusted
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-what-a-mixed-peak-looks-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.5 What a mixed peak looks like
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-a-whole-plasmid-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. A whole-plasmid result
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. A whole-plasmid result">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-plasmidsaurus" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 Plasmidsaurus
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-azentagenewiz-plasmid-ez" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.2 Azenta/GENEWIZ Plasmid-EZ
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-eurofins-genomics" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.3 Eurofins Genomics
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-what-makes-a-base-trustworthy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.4 What makes a base trustworthy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-what-a-mixture-looks-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.5 What a mixture looks like
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-the-workflow-some-results-resemble" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.6 The workflow some results resemble
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-a-dmx-well" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. A DMX well
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-confirms-a-clone" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. What confirms a clone
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. What confirms a clone">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-a-disagreement-outside-the-insert" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.1 A disagreement outside the insert
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-example-files-for-a-test-suite" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Example files for a test suite
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-holes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Holes
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Holes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-the-sibling-notes-three-holes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7.1 The sibling note's three holes
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="what-a-sequencing-result-holds-and-what-confirms-a-clone">What a sequencing result holds, and what confirms a clone<a class="headerlink" href="#what-a-sequencing-result-holds-and-what-confirms-a-clone" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #553, a sub-issue of map #551. It asks four things of each kind of
+sequencing result a construct comes back as — a Sanger trace, a whole-plasmid result, and what a
+DMX well hands over: what the files hold, what makes one base in them trustworthy, what published
+sources call a confirmed clone, and which public example files are small enough for a test suite
+held to 30 s. Sibling #552 surveys which packages could do the aligning; nothing here weighs one.</p>
+<p>Everything below was read on <strong>2026-10-09 and 2026-10-10</strong> from each owner's own documentation,
+or measured on a file this session downloaded. Two <code>.ab1</code> files were opened with Biopython 1.88,
+the version this repo pins, and their directories walked tag by tag.</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Sanger trace</th>
+<th>Whole-plasmid result</th>
+<th>DMX well</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>What arrives</strong></td>
+<td>one <code>.ab1</code> per read: calls, one quality value per call, peak positions, four raw and four processed channels; vendors add a text sequence and sometimes a quality file (section 2)</td>
+<td>a folder per sample: consensus FASTA and GenBank, a per-base table, a coverage plot, a read-length histogram, the aligned raw reads as FASTQ, a summary, and an <code>.ab1</code> drawn from the reads (section 3)</td>
+<td>a read count and the consensus sequences someone has already called, <code>judge_well(reads=..., called=...)</code> (section 4)</td>
+</tr>
+<tr>
+<td><strong>Per-base trust</strong></td>
+<td>a Phred quality value per call (section 2.4)</td>
+<td>read depth and the base counts at each position; GENEWIZ's consensus FASTQ and <code>.ab1</code> carry a quality per base, on a scale no vendor states (section 3.4)</td>
+<td>none: the consensus arrives with no per-base support</td>
+</tr>
+<tr>
+<td><strong>The ends</strong></td>
+<td>the first bases after the primer and the tail are low quality; Biopython trims both by Mott's rule, cutoff 0.05</td>
+<td>none: a circular consensus has no read ends</td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>A mixture shows as</strong></td>
+<td>two peaks at one position, written as an IUPAC code by the KB basecaller</td>
+<td>mixed base counts in the per-base table and the <code>.ab1</code>; a second species in the histogram; only the commonest species gets a consensus</td>
+<td>more than one consensus, which <code>identity_check</code> already fails</td>
+</tr>
+<tr>
+<td><strong>Public example small enough for tests</strong></td>
+<td>yes: Biopython's test traces, 0.2–0.3 MB each (section 6)</td>
+<td>no raw vendor result is public; one processed per-base table is (section 6)</td>
+<td>not applicable: the input is two values</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The strongest single finding.</strong> A whole-plasmid result is already a judged consensus: the
+vendor aligned the reads, called each base and reported what disagreed. A Sanger read is not. It
+is one strand's calls with their own quality, and only its middle is trustworthy. So the two
+kinds need different readers but can meet in one comparison — a called sequence, with a
+trustworthy span, held against the expected product — and a DMX well is that same comparison with
+the trustworthy span being the whole call.</p>
+<h2 id="2-a-sanger-trace">2. A Sanger trace<a class="headerlink" href="#2-a-sanger-trace" title="Permanent link">&para;</a></h2>
+<h3 id="21-what-the-format-promises">2.1 What the format promises<a class="headerlink" href="#21-what-the-format-promises" title="Permanent link">&para;</a></h3>
+<p>The format is Applied Biosystems' ABIF, <em>Applied Biosystems Genetic Analysis Data File Format:
+ABIF File Format Specification and Sample File Schema</em>, July 2006 (PDF metadata: created
+2005-04-13, modified 2006-07-14; © 2006 Applied Biosystems). It is a tagged binary: every item is
+a four-character tag and a number, "analogous to the keys in a (key, value) mapping". Two
+statements in it bind any reader:</p>
+<ul>
+<li>"The ABIF file format by itself does not specify the schema … which tags are written and when.
+  These schema are specific to the instrument and software version which created the file."</li>
+<li>"Applied Biosystems provides no guarantee that all tagged data elements will be present,
+  consistent, or supported in future versions of the software."</li>
+</ul>
+<p>The tags a reader of base calls needs, from the spec's Table 9 (SeqScape v2.5) and the
+Sequencing Analysis v5.2 table:</p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Number</th>
+<th>What the spec says it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PBAS</code></td>
+<td>1, 2</td>
+<td>"Basecalled sequence (edited)"; "Basecalled sequence"</td>
+</tr>
+<tr>
+<td><code>PCON</code></td>
+<td>1, 2</td>
+<td>"Per-base quality values (edited)"; "Per-base quality values"</td>
+</tr>
+<tr>
+<td><code>PLOC</code></td>
+<td>1, 2</td>
+<td>"Base locations (edited)"; "Base locations" — the scan at each call's peak</td>
+</tr>
+<tr>
+<td><code>DATA</code></td>
+<td>1–4, 9–12</td>
+<td>channels 1–4 raw data; channels 1–4 analysed data</td>
+</tr>
+<tr>
+<td><code>FWO_</code></td>
+<td>1</td>
+<td>"Base order" — which channel is which base</td>
+</tr>
+<tr>
+<td><code>phQL</code></td>
+<td>1</td>
+<td>"Maximum quality value"</td>
+</tr>
+<tr>
+<td><code>phTR</code></td>
+<td>1, 2</td>
+<td>the first and last base of a trim region, and the "Trim probability threshold used"</td>
+</tr>
+<tr>
+<td><code>SMPL</code></td>
+<td>1</td>
+<td>"Sample name"</td>
+</tr>
+<tr>
+<td><code>S/N%</code></td>
+<td>1</td>
+<td>"Signal level for each dye"</td>
+</tr>
+</tbody>
+</table>
+<p>Number 2 is what the basecaller wrote and number 1 is what a person edited. A reader judging a
+clone wants the basecaller's. The spec defines no scale for <code>PCON</code>; the phd1 equivalence it
+names for <code>phQL</code> places it on phred's scale (section 2.4).</p>
+<h3 id="22-what-two-real-files-hold">2.2 What two real files hold<a class="headerlink" href="#22-what-two-real-files-hold" title="Permanent link">&para;</a></h3>
+<p>Both are Biopython test files (section 6), read with Biopython's <code>abi</code> and <code>abi-trim</code> readers and
+a walk of the ABIF directory.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>3730.ab1</code></th>
+<th><code>310.ab1</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>299,987 bytes</td>
+<td>222,099 bytes</td>
+</tr>
+<tr>
+<td>Instrument (<code>MCHN1</code>, <code>MODL1</code>)</td>
+<td>ABI-3730-XL, <code>3730</code></td>
+<td>ABI PRISM 310, <code>310</code> and a trailing space</td>
+</tr>
+<tr>
+<td>Basecaller (<code>SVER2</code>, <code>APrN1</code>)</td>
+<td><code>KB 1.2</code>; <code>3730BDTv3-KB-DeNovo_v5.2</code></td>
+<td>not written; <code>BDTpop6Rapid</code></td>
+</tr>
+<tr>
+<td>Directory entries</td>
+<td>123</td>
+<td>113</td>
+</tr>
+<tr>
+<td>Calls (<code>PBAS2</code>)</td>
+<td>1,165</td>
+<td>868</td>
+</tr>
+<tr>
+<td>Quality (<code>PCON2</code>)</td>
+<td>0–55, mean 44.8; 1,089 calls at Q20 or above, 978 at Q30</td>
+<td><strong>every value 0</strong></td>
+</tr>
+<tr>
+<td>Non-ACGT calls</td>
+<td>7 IUPAC codes (<code>K</code>, <code>Y</code>, <code>R</code>), all outside the trimmed span</td>
+<td><code>N</code> throughout</td>
+</tr>
+<tr>
+<td>Trace length (<code>DATA9</code>)</td>
+<td>16,302 scans</td>
+<td>9,826 scans</td>
+</tr>
+<tr>
+<td><code>phTR</code> trim region</td>
+<td><code>(-1, -1)</code>, threshold <code>-1.0</code>: no trim written</td>
+<td><code>(-1, -1)</code>: no trim written</td>
+</tr>
+<tr>
+<td>Biopython <code>abi-trim</code> keeps</td>
+<td>1,075 calls, <code>[14, 1089)</code></td>
+<td>0 calls</td>
+</tr>
+<tr>
+<td>What it reads</td>
+<td>sample <code>226032_C-ME-18_pCAGseqF</code>; the calls, translated here, are mCherry, a GGSG linker, then EGFP</td>
+<td>not identified</td>
+</tr>
+</tbody>
+</table>
+<p>Four things a reader has to handle, all seen here rather than read on a page:</p>
+<ul>
+<li><strong>A file may carry no quality.</strong> The 310 trace has <code>PCON</code> present and every value zero. Any rule
+  of the form "trust Q20 and above" trusts nothing in it.</li>
+<li><strong>The file does not trim itself.</strong> Neither file wrote a trim region, so the trustworthy span is
+  the reader's to compute.</li>
+<li><strong>Edited and original tags can both be present and identical.</strong> <code>PBAS1</code> equals <code>PBAS2</code> in both.</li>
+<li><strong>No tag holds QV20+, CRL or a trace score</strong> in either file, and the 2006 specification names
+  none. Those are per-read numbers the vendor's software reports beside the file (section 2.3).</li>
+</ul>
+<h3 id="23-what-a-vendor-sends-with-it">2.3 What a vendor sends with it<a class="headerlink" href="#23-what-a-vendor-sends-with-it" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Owner</th>
+<th>What it says comes back</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GENEWIZ DNA sequencing FAQ (<a href="https://www.genewiz.com/public/resources/faqs/faqs-dna-sequencing">https://www.genewiz.com/public/resources/faqs/faqs-dna-sequencing</a>)</td>
+<td>both the ".seq and .ab1 files"; an "Analysis Result" PDF that gives "tips and suggestions"</td>
+</tr>
+<tr>
+<td>GENEWIZ Sanger service page (<a href="https://www.genewiz.com/public/services/sanger-sequencing">https://www.genewiz.com/public/services/sanger-sequencing</a>, undated)</td>
+<td>"Quality Score and Contiguous Read Length (CRL) provided in each read"; "read lengths up to ~1000 bases. A typical read will provide 800 bases Phred20" — the figure <code>domestication-methods.md</code> read on 2026-10-06, unchanged</td>
+</tr>
+<tr>
+<td>GENEWIZ blog, 2025-02-17 (<a href="https://blog.genewiz.com/analyzing-sanger-sequencing-data">https://blog.genewiz.com/analyzing-sanger-sequencing-data</a>)</td>
+<td>"The quality score (QS) is the average QV for all peaks in the trace with an assigned base"</td>
+</tr>
+<tr>
+<td>Applied Biosystems, <em>Sequencing Analysis Software v5.4 Quick Reference Card</em>, PN 4401738 Rev. B, 4/2009 (<a href="https://assets.thermofisher.com/TFS-Assets/LSG/manuals/cms_064539.pdf">https://assets.thermofisher.com/TFS-Assets/LSG/manuals/cms_064539.pdf</a>)</td>
+<td>what the vendor's software can export: the <code>.ab1</code>; a "Text file of the sequence … (.seq; all bases or only clear range bases)"; "Phred (.phd.1) files"; "Standard chromatogram format (.scf) files"; analysis reports as text, HTML, PDF or XML</td>
+</tr>
+<tr>
+<td>Thermo Fisher <em>Behind the Bench</em> blog, 2015-07-31 (<a href="https://www.thermofisher.com/blog/behindthebench/?p=9258">https://www.thermofisher.com/blog/behindthebench/?p=9258</a>)</td>
+<td>QV20+: "Total number of bases in the entire trace that have a basecaller Quality Value &gt;=20"; Trace Score: "Average of basecall quality values for bases in the clear range"</td>
+</tr>
+</tbody>
+</table>
+<p>So the <code>.ab1</code> is the one file every vendor sends, and the only one that carries per-base quality.
+A <code>.seq</code> is the calls alone, sometimes cut to the clear range. The summary numbers (QS, CRL,
+QV20+, trace score) are per read, computed by the vendor's software, and <strong>not in the <code>.ab1</code>
+files inspected</strong> (section 2.2). <strong>CRL has no published definition</strong> that this survey reached.</p>
+<h3 id="24-where-a-read-cannot-be-trusted">2.4 Where a read cannot be trusted<a class="headerlink" href="#24-where-a-read-cannot-be-trusted" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Number</th>
+<th>What it means</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QV = −10 log10(Pe); QV 20 is a 1% chance of a wrong call, 30 is 0.1%</td>
+<td>the quality scale</td>
+<td>AB v5.4 card, above; Richterich 1998, <em>Genome Res.</em> 8:251, doi:10.1101/gr.8.3.251, quoting phred: "q = −10 × log10(p)"</td>
+</tr>
+<tr>
+<td>QV 0–14 "Are not acceptable"; 15–19 "Need manual review"; 20 and above "Are acceptable"</td>
+<td>the software's default display bands</td>
+<td>AB v5.4 card</td>
+</tr>
+<tr>
+<td>"Typical high-quality pure bases have QVs of 20 to 50"; "mixed bases … 10 to 50"; the scale runs 1–99</td>
+<td>what a good call scores</td>
+<td>AB v5.4 card</td>
+</tr>
+<tr>
+<td>Clear range: what "remains after excluding the low-quality or error-prone sequence at both the 5´ and 3´ ends"</td>
+<td>the trustworthy span, computed by the software</td>
+<td>AB v5.4 card</td>
+</tr>
+<tr>
+<td>"The first 20 to 40 bases are typically not well resolved"; primers "at least 60 bp, preferably 100 bp, away from key bases"</td>
+<td>the start of a read</td>
+<td>GENEWIZ blog, 2025-02-17</td>
+</tr>
+<tr>
+<td>"The quality of the first 25 to 35 bases of the sequence is expected to be poor"; "Sequence lengths of 800 to 900 bases are possible for high-quality templates"</td>
+<td>the start and the length</td>
+<td>MSU RTSF Genomics Core, <em>Sanger Sequencing Best and Worst Practices Guide</em>, 25 April 2024 (<a href="https://rtsf.natsci.msu.edu/_assets/files/genomics/Sanger_Sequencing_Best_and_Worst_Practices_Guide_25April2024.pdf">https://rtsf.natsci.msu.edu/_assets/files/genomics/Sanger_Sequencing_Best_and_Worst_Practices_Guide_25April2024.pdf</a>)</td>
+</tr>
+<tr>
+<td>Dye blobs: "Large broad peak normally seen at 85–90 bp or 125–130 bp", in severe cases also "~ 60–65 bp"</td>
+<td>an artefact that hides calls inside an otherwise good start</td>
+<td>Thermo Fisher user bulletin MAN0014435 Rev. A.0, 15 Jan 2016 (<a href="https://assets.thermofisher.com/TFS-Assets/LSG/manuals/MAN0014435_Trbleshoot_Sanger_seq_data_UB.pdf">https://assets.thermofisher.com/TFS-Assets/LSG/manuals/MAN0014435_Trbleshoot_Sanger_seq_data_UB.pdf</a>)</td>
+</tr>
+<tr>
+<td>"Large peaks (blobs) in the first 120 bases"</td>
+<td>the same</td>
+<td>Applied Biosystems, <em>DNA Sequencing by Capillary Electrophoresis Chemistry Guide</em>, PN 4305080, ch. 8, read from the University of Notre Dame genomics core's copy (<a href="https://genomics.conductor.nd.edu/assets/324286/troubleshootingdna_sequencing_by_capillary_electrophoresis_chemistry_guide_pn_4305080_.pdf">https://genomics.conductor.nd.edu/assets/324286/troubleshootingdna_sequencing_by_capillary_electrophoresis_chemistry_guide_pn_4305080_.pdf</a>), revision not printed</td>
+</tr>
+<tr>
+<td>Best region "typically from base 150 to 200"; errors "start to exceed 10% between bases 300 and 700"</td>
+<td>error along a read, measured on 1998 instruments and gels</td>
+<td>Richterich 1998</td>
+</tr>
+<tr>
+<td>Mott trimming with <code>cutoff = 0.05</code> and a 20-base minimum</td>
+<td>Biopython's <code>abi-trim</code></td>
+<td>Biopython 1.88, <code>Bio/SeqIO/AbiIO.py</code>, <code>_abi_trim</code></td>
+</tr>
+<tr>
+<td>A homopolymer "typically observed in stretches &gt;9 bases" leads to mixed sequence or baseline noise</td>
+<td>where a Sanger read loses its place</td>
+<td>MAN0014435</td>
+</tr>
+</tbody>
+</table>
+<p>Three things follow. <strong>The start and the end of a read are always low quality, but no owner gives
+one number for how many bases</strong>: 20–40 (GENEWIZ), 25–35 (MSU), blobs to 120 (Applied
+Biosystems). A reader computes the trustworthy span from the qualities and does not assume a
+fixed margin. <strong>Q20 is the one threshold the owners agree on</strong> — Applied Biosystems' "acceptable"
+band, GENEWIZ's read-length unit. <strong>Mott's 0.05 is a Biopython default</strong>, not a published rule
+this survey could trace further: phrap.org, which Biopython's docstring cites, refused the
+connection, and Ewing and Green's full texts were behind a login.</p>
+<h3 id="25-what-a-mixed-peak-looks-like">2.5 What a mixed peak looks like<a class="headerlink" href="#25-what-a-mixed-peak-looks-like" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Owner</th>
+<th>Words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chemistry Guide PN 4305080, ch. 8</td>
+<td>the "2nd highest peak threshold for mixed base identification … The recommended range is 15 to 25%"</td>
+</tr>
+<tr>
+<td>MAN0014435</td>
+<td>a second sequence: "Mixed sequence content throughout the length of the trace"; off-target priming: "Mixed sequence content after the primer region"; a heterozygous insertion or deletion: "Mixed sequence content starting at a specific point"</td>
+</tr>
+<tr>
+<td>MSU guide</td>
+<td>"Mixed template means that there are multiple peaks (base calls) at a single position"</td>
+</tr>
+</tbody>
+</table>
+<p>In the file, a mixed position is an IUPAC code in <code>PBAS</code> with its own <code>PCON</code> value. The 3730
+trace (section 2.2) carries seven, all within the first 14 calls or the last 76, where the trim
+removes them. <strong>A mixed call in the trimmed span is the Sanger sign of two templates</strong>, and a
+whole-trace mixture is a mixed colony or prep, not a base to call.</p>
+<h2 id="3-a-whole-plasmid-result">3. A whole-plasmid result<a class="headerlink" href="#3-a-whole-plasmid-result" title="Permanent link">&para;</a></h2>
+<p>Plasmidsaurus and Eurofins say they sequence on Oxford Nanopore; GENEWIZ's Plasmid-EZ page says
+only "long-read sequencing". Each returns a consensus, not reads to assemble. <code>docs/research/domestication-methods.md</code> section 7 covers price and turnaround; this
+section covers the files.</p>
+<h3 id="31-plasmidsaurus">3.1 Plasmidsaurus<a class="headerlink" href="#31-plasmidsaurus" title="Permanent link">&para;</a></h3>
+<p>From <em>Technical Documentation: Plasmid</em>, <code>PS-0002-E | v1.2 | Revised Sept. 22, 2026</code>
+(<a href="https://plasmidsaurus.com/technical-documentation/plasmid">https://plasmidsaurus.com/technical-documentation/plasmid</a>).</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it holds, in the vendor's words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_fasta-files/&lt;OSID&gt;_&lt;SAMPLE&gt;.fasta</code></td>
+<td>"Polished plasmid consensus sequence generated from the raw sequencing reads"</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_genbank-files/….gbk</code></td>
+<td>the polished consensus, annotated</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_per-base-data/&lt;OSID&gt;_&lt;SAMPLE&gt;.tsv</code></td>
+<td>"Position-level comparison between the raw reads and consensus sequence. Includes the consensus base, aligned-read depth, and the distribution of matches, mismatches, insertions, deletions, and individual nucleotide calls"</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_ab1-files/&lt;OSID&gt;_&lt;SAMPLE&gt;.ab1</code></td>
+<td>"Chromatogram showing relative abundance of A, T, G, and C among raw reads aligned to the consensus at each sequence position"</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_coverage-plots/….png</code></td>
+<td>relative coverage; "Large coverage gaps or abrupt changes may indicate an assembly issue or the presence of multiple plasmid species"</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_histograms/….png</code></td>
+<td>the read-length histogram</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_summary_files/….txt</code></td>
+<td>"consensus length, average coverage, relative molar and mass composition, total reads, total bases, and estimated E. coli genomic DNA contamination"</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_interactive-map/….html</code></td>
+<td>an annotated map</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;_gel.png</code></td>
+<td>"Visualization of raw-read lengths across all samples"</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;.fastq.zip</code></td>
+<td>"Basecalled raw reads that align to the consensus sequence, including Phred quality scores. Reads that do not align to the consensus are excluded"</td>
+</tr>
+<tr>
+<td><code>&lt;ORDERCODE&gt;-summary-report.csv</code></td>
+<td>"Summary of sample processing status, consensus length, and estimated E. coli genomic DNA contamination"</td>
+</tr>
+</tbody>
+</table>
+<p>An archived 2024 <em>Results Interpretation Guide</em>
+(<a href="http://web.archive.org/web/20240617013345/https://plasmidsaurus.com/results_interpretation">http://web.archive.org/web/20240617013345/https://plasmidsaurus.com/results_interpretation</a>)
+also listed a <code>SAMPLE_multimer_analysis.txt</code>; v1.2 does not. <strong>The file list changes between
+versions</strong>, so a reader keys on the folder suffix and the file extension, not on a fixed list.</p>
+<h3 id="32-azentagenewiz-plasmid-ez">3.2 Azenta/GENEWIZ Plasmid-EZ<a class="headerlink" href="#32-azentagenewiz-plasmid-ez" title="Permanent link">&para;</a></h3>
+<p>From <em>Plasmid-EZ Quick Start Guide</em>, <code>11035-M&amp;G-2 1025</code>, file dated 10-29-25
+(<a href="https://web.genewiz.com/hubfs/2023-04%20GEN%20NGS%20-%20Plasmid-EZ%20Launch/Quick%20Start%20Guide/11035-M%26G-2%2010-29-25%20Plasmid-EZ%20Quick%20Start%20Guide.pdf">https://web.genewiz.com/hubfs/2023-04%20GEN%20NGS%20-%20Plasmid-EZ%20Launch/Quick%20Start%20Guide/11035-M%26G-2%2010-29-25%20Plasmid-EZ%20Quick%20Start%20Guide.pdf</a>),
+and the Plasmid-EZ FAQ (<a href="https://web.genewiz.com/faqs/ngs-plasmid-ez">https://web.genewiz.com/faqs/ngs-plasmid-ez</a>).</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>30-xxxxxxxxx_report.html</code>, <code>sample_reports/</code></td>
+<td>read counts, assembly status, contigs, a virtual gel</td>
+</tr>
+<tr>
+<td>assembly: FASTA, FASTQ and <code>.ab1</code></td>
+<td>the consensus</td>
+</tr>
+<tr>
+<td>annotation: GenBank, CSV</td>
+<td>features</td>
+</tr>
+<tr>
+<td><code>{sample_name}_base_count.tsv</code></td>
+<td>"the coverage score by base positions … also … the spread of base calling in the assembled contig"</td>
+</tr>
+<tr>
+<td><code>{sample_name}_vc.tsv</code>, a VCF and its index</td>
+<td>variant calls: "Any base position with more than 5% variability compared to the assembled contig will be highlighted"</td>
+</tr>
+<tr>
+<td><code>vs_ref.var.txt</code></td>
+<td>differences against a reference, where the customer gave one</td>
+</tr>
+<tr>
+<td>raw reads</td>
+<td>FASTQ</td>
+</tr>
+</tbody>
+</table>
+<p>Topology is reported per sample as Circular, Linear, Multiple circular, Mixed ("linear and
+circular contigs assembled"), Multiple linear or Failed ("no assembly"). Mixed here is a topology,
+not a mixed population. The guide's <code>.ab1</code> is "Sanger-like data": "hovering over each position
+provides the called base and quality score", and "Mixed base positions identified in the ab1 file
+can be further reviewed in the variation Excel file … to evaluate exact read counts".</p>
+<h3 id="33-eurofins-genomics">3.3 Eurofins Genomics<a class="headerlink" href="#33-eurofins-genomics" title="Permanent link">&para;</a></h3>
+<p>From <em>Data Deliverables</em>
+(<a href="https://eurofinsgenomics.com/en/products/nanopore-sequencing/data-deliverables/">https://eurofinsgenomics.com/en/products/nanopore-sequencing/data-deliverables/</a>, no version
+shown): an HTML analysis report; a NanoPlot summary; the consensus as FASTA and GenBank; an
+annotated map; a read-length histogram; a coverage plot; a per-base table of "position, base,
+matches, mismatches, insertions, deletions"; and raw reads that "only contain the sequences that
+align with the consensus".</p>
+<h3 id="34-what-makes-a-base-trustworthy">3.4 What makes a base trustworthy<a class="headerlink" href="#34-what-makes-a-base-trustworthy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Owner</th>
+<th>Words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Coverage that supports an accurate consensus</td>
+<td>Plasmidsaurus v1.2</td>
+<td>"coverage greater than approximately 20× generally supports a highly accurate consensus sequence"</td>
+</tr>
+<tr>
+<td>The same</td>
+<td>Eurofins <em>Results Interpretation Guide</em></td>
+<td>"coverage of approximately 20x or higher suggests a highly accurate consensus"</td>
+</tr>
+<tr>
+<td>A failed sample</td>
+<td>GENEWIZ FAQ</td>
+<td>"failure of the sample to produce consensus sequence with 10x coverage or less"</td>
+</tr>
+<tr>
+<td>A failed sample</td>
+<td>Plasmidsaurus v1.2</td>
+<td>"considered unsuccessful when the sequencing data are insufficient to generate a consensus sequence"</td>
+</tr>
+<tr>
+<td>Consensus accuracy</td>
+<td>Plasmidsaurus v1.2</td>
+<td>"often greater than Q60, corresponding to an estimated accuracy of 99.9999%"; 2024 guide: "typically &gt;99.99%"</td>
+</tr>
+<tr>
+<td>Read accuracy</td>
+<td>Eurofins product page, quoting ONT</td>
+<td>"Oxford Nanopore's reports the raw read accuracy is 98.3% and the consensus accuracy for SNPs is 99.6% with 50X coverage"; its own guide says "raw read accuracy exceeds 99%"</td>
+</tr>
+<tr>
+<td>Read counts</td>
+<td>Plasmidsaurus v1.2</td>
+<td>"read counts ranging from tens to thousands"</td>
+</tr>
+<tr>
+<td>Known error modes</td>
+<td>Plasmidsaurus FAQ (<a href="https://plasmidsaurus.com/faq/plasmid">https://plasmidsaurus.com/faq/plasmid</a>, undated)</td>
+<td>"methylation sites and homopolymers with a length &gt;9"</td>
+</tr>
+<tr>
+<td>The methylation motifs</td>
+<td>Plasmidsaurus technical note, Sep 12, 2025 (<a href="https://plasmidsaurus.com/technical-note/oxford-nanopore-specific-error-modes">https://plasmidsaurus.com/technical-note/oxford-nanopore-specific-error-modes</a>)</td>
+<td>"Dam motif Gm6ATC and the Dcm motif … C5mCTGG or C5mCAGG"; a homopolymer "&gt;9" is "often truncated by a base or two"; any other mismatch is "almost certainly real"</td>
+</tr>
+<tr>
+<td>The same, per vendor</td>
+<td>GENEWIZ guide</td>
+<td>"GATC, CCAGG and CCTGG sites are methylation sites in E. coli. These sites may show discrepancy"; at a methyl GATC "the variation file will show half A/half G"; "Sanger sequencing follow-up may be needed"</td>
+</tr>
+<tr>
+<td>The same</td>
+<td>Eurofins guide</td>
+<td>"Dcm methylation sites (CC[A/T]GG)" and homopolymer deletions are "the most common error modes"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The earlier caution is settled.</strong> <code>domestication-methods.md</code> flagged that its Plasmidsaurus and
+Eurofins figures came back in overlapping wording. Read again at each owner: Q60 is
+Plasmidsaurus's own (FAQ and v1.2), and 98.3% / 99.6% at 50X is on Eurofins' product page, quoted
+from Oxford Nanopore rather than measured by Eurofins. Neither figure is on the other's pages.</p>
+<h3 id="35-what-a-mixture-looks-like">3.5 What a mixture looks like<a class="headerlink" href="#35-what-a-mixture-looks-like" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Owner</th>
+<th>Words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plasmidsaurus FAQ</td>
+<td>"This service is intended for a clonal population of molecules. If your species are very similar … the pipeline will most likely create a single consensus file, with mixed peaks observed in the .ab1 file where there are SNPs and indels. If your species are sufficiently distinct … a single consensus sequence for the molecular species that produces the largest amounts of total sequencing data"</td>
+</tr>
+<tr>
+<td>Plasmidsaurus FAQ</td>
+<td>multimers "are not considered different molecular species … you will only receive the monomer consensus"; "Sequencing is considered successful if the pipeline is able to generate a consensus, even if it is not your target"</td>
+</tr>
+<tr>
+<td>Plasmidsaurus histogram note, Oct 8, 2025 (<a href="https://plasmidsaurus.com/technical-note/how-to-interpret-plasmid-read-length-histograms">https://plasmidsaurus.com/technical-note/how-to-interpret-plasmid-read-length-histograms</a>)</td>
+<td>the histogram colours reads mapping to the consensus, to <em>E. coli</em>, and unmapped, which is how a second species shows</td>
+</tr>
+<tr>
+<td>GENEWIZ FAQ</td>
+<td>"This service is intended for a clonal population of plasmids. If plasmid pools or mixtures are submitted, the sequencing and analysis results cannot be guaranteed"</td>
+</tr>
+<tr>
+<td>GENEWIZ guide</td>
+<td>the 5% highlight in <code>_vc.tsv</code>; a worked example of 144 G against 46 A reported as "22% variation"</td>
+</tr>
+</tbody>
+</table>
+<p>So <strong>a whole-plasmid consensus can be confidently wrong</strong>: a second species that out-reads the
+target becomes the consensus and the sample still counts as successful. The consensus alone does
+not show a mixture. The per-base table, the <code>.ab1</code> and the histogram do.</p>
+<h3 id="36-the-workflow-some-results-resemble">3.6 The workflow some results resemble<a class="headerlink" href="#36-the-workflow-some-results-resemble" title="Permanent link">&para;</a></h3>
+<p>Oxford Nanopore's open workflow <code>wf-clone-validation</code> (v1.8.4,
+<a href="https://github.com/epi2me-labs/wf-clone-validation">https://github.com/epi2me-labs/wf-clone-validation</a>) writes a consensus with a per-base
+quality, <code>{alias}.final.fastq</code>, "Sequence and quality score of the final assembly"; a
+<code>sample_status.txt</code> whose values include "Completed successfully" and "Failed due to insufficient
+reads"; annotations; and, given a reference, a BAM and variant calls. Its README says "The
+workflow has no way of reporting contaminants". No vendor read here says it runs this workflow,
+so it is evidence of a file shape, not of what any vendor sends. How it aligns and judges is
+<code>sequencing-read-packages.md</code>'s.</p>
+<h2 id="4-a-dmx-well">4. A DMX well<a class="headerlink" href="#4-a-dmx-well" title="Permanent link">&para;</a></h2>
+<p>What <code>synbio/dmx/method.py</code> hands over today, read from the code on <code>main</code>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>barcode ligation</th>
+<th>index PCR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input to <code>judge_well</code></td>
+<td><code>reads: int</code>, <code>called: Sequence[str]</code></td>
+<td>the same</td>
+</tr>
+<tr>
+<td>Depth wanted</td>
+<td>above 150 (Qian SI, "Generation of consensus sequences")</td>
+<td>above 20, 10 tolerated (LevSeq SI)</td>
+</tr>
+<tr>
+<td>How a consensus base is called</td>
+<td>at ≥51% read support (Qian SI, per <code>route-choice.md</code> section 4)</td>
+<td>not stated in the code</td>
+</tr>
+<tr>
+<td>What the pass is</td>
+<td><code>identity_check</code>: an exact match, upper-cased, across the whole designed region; more than one consensus is mixed and fails</td>
+<td>the same</td>
+</tr>
+</tbody>
+</table>
+<p>The code's own comment on <code>ROUTE_INDEX_PCR</code> names the gap: LevSeq's second criterion, a mean
+error below 10%, "is a mean over per-position base counts, and a well reaches this package as a
+read count and a consensus call". <strong>So a DMX well hands over no per-base support.</strong> It is the
+whole-plasmid shape with the per-base table removed: a called sequence, how many reads stood
+behind it, and nothing per position. Whether that changes is #551's "DMX's call through it", not
+this note's.</p>
+<h2 id="5-what-confirms-a-clone">5. What confirms a clone<a class="headerlink" href="#5-what-confirms-a-clone" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Owner</th>
+<th>What it reads</th>
+<th>Words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Addgene, J. Taylor-Parker, "Addgene's Tips for Plasmid Quality Control", 2016-01-14 (<a href="https://blog.addgene.org/addgenes-tips-for-plasmid-quality-control">https://blog.addgene.org/addgenes-tips-for-plasmid-quality-control</a>)</td>
+<td>Sanger, before 2017</td>
+<td>"All of our incoming plasmids are sequenced at least twice"; "We then select forward and reverse primers for each sample"; "Important features may include cloning junctions (where most sequence assembly errors occur)"; "If the insert is large, we may only check the 5’ and 3’ ends to verify that the sequence assembly and identity of the insert are correct"</td>
+</tr>
+<tr>
+<td>Addgene, A. Hazen, 2017-08-03, updated 2021-04-06 (<a href="https://blog.addgene.org/addgene-moves-to-ngs-verification-powered-by-seqwell">https://blog.addgene.org/addgene-moves-to-ngs-verification-powered-by-seqwell</a>)</td>
+<td>whole plasmid, MiSeq "2x251"</td>
+<td>"we will often find a few mismatches in the origin of replication or other common backbone elements"; "these few minor mismatches usually don't affect the function of the plasmid"</td>
+</tr>
+<tr>
+<td>Addgene, A. Shepard, "A Look at Addgene's QC Process", 2025-05-06, with a footnote dated March 2026 (<a href="https://blog.addgene.org/a-look-at-addgenes-qc-process">https://blog.addgene.org/a-look-at-addgenes-qc-process</a>)</td>
+<td>whole plasmid, now mostly long-read</td>
+<td>"a QC issue is defined as a discrepancy that we believe may affect the function of the plasmid"; otherwise a note that "it is not known to impact the function of the plasmid"; "the QC team finds errors in 30% of deposited plasmids!"</td>
+</tr>
+<tr>
+<td>Twist Bioscience, <em>Clonal Genes</em> datasheet, DOC-001424 REV9, 2026-01 (<a href="https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/DOC-001424%20Clonal%20Genes%20REV9%20singles.pdf">https://www.twistbioscience.com/content/dam/twistbioscience/resources/2026-01/DOC-001424%20Clonal%20Genes%20REV9%20singles.pdf</a>)</td>
+<td>NGS</td>
+<td>"Clonal Genes are made by cloning an insert (synthesized sequence) into a vector (non-synthesized sequence). After synthesis and cloning, we use NGS to verify that the insert is 100% sequence perfect"; its example shows "sufficient read depth across the entire plasmid"</td>
+</tr>
+<tr>
+<td>Bio-Synthesis FAQ (<a href="https://biosyn.com/faq/assurance-of-correct-gene-sequence.aspx">https://biosyn.com/faq/assurance-of-correct-gene-sequence.aspx</a>, undated)</td>
+<td>Sanger</td>
+<td>clones are verified "to at least single-strand depth across the synthesized insert"</td>
+</tr>
+<tr>
+<td>This repo: <code>bench/steps.py</code>, the sequencing step a cloning method's protocol ends with</td>
+<td>Sanger</td>
+<td>"Check the read across every junction and the whole of each insert."</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What the owners agree on.</strong> A confirmed clone has <strong>every junction read and the whole insert
+covered</strong>, and the read agrees with the expected sequence there. One strand is enough for a clone
+(Bio-Synthesis's "at least single-strand depth"). Addgene reads two reactions from opposite sides,
+but for reach, not for a second strand at every base. The one relaxation in print is Addgene's
+for a large insert by Sanger, which reads only its two ends. Twist holds the insert to "100%
+sequence perfect" and says nothing of the vector.</p>
+<p><strong>No owner sets a standard.</strong> This survey found no published rule for read depth, for both
+strands, or for how far past a junction a read must run. "Sequence-verified" is each owner's
+practice, stated in its own words.</p>
+<h3 id="51-a-disagreement-outside-the-insert">5.1 A disagreement outside the insert<a class="headerlink" href="#51-a-disagreement-outside-the-insert" title="Permanent link">&para;</a></h3>
+<p>Three readings, each with an owner:</p>
+<ol>
+<li><strong>The parent plasmid was never what its map says.</strong> Addgene finds errors in 30% of deposited
+   plasmids, and "a few mismatches in the origin of replication or other common backbone elements"
+   often enough to say so. Bai et al. 2025, <em>Nucleic Acids Res.</em> 53(14):gkaf697,
+   doi:10.1093/nar/gkaf697, PMID 40794862 (authors at VectorBuilder), abstract: of the plasmids
+   they received "nearly half of them contained design and/or sequence errors", and of AAV
+   transfer plasmids "about 40% carried mutations in the inverted terminal repeat (ITR) regions".
+   The abstract does not split backbone from insert. So an expected product built from a vector's
+   map inherits the map's errors. <code>vector-qc-panel.md</code> section 5 already asks for the parent to
+   be sequenced beside the prep; a backbone disagreement the parent shares was not made by the
+   cloning.</li>
+<li><strong>A sequencing artefact.</strong> On a nanopore consensus, a disagreement at a Dam or Dcm motif or in
+   a homopolymer longer than 9 is a known error mode, which Plasmidsaurus marks "Likely Match";
+   any other mismatch is "almost certainly real" (section 3.4). GENEWIZ sends such a position to
+   Sanger.</li>
+<li><strong>A real change that does not matter.</strong> Addgene's rule is functional: a discrepancy is an
+   issue when "we believe [it] may affect the function of the plasmid", and otherwise a note.</li>
+</ol>
+<p>So no owner fails a clone for a disagreement outside the insert as such. Each judges it by the
+feature it falls in, and first asks whether the sequencer or the reference made it.</p>
+<h2 id="6-example-files-for-a-test-suite">6. Example files for a test suite<a class="headerlink" href="#6-example-files-for-a-test-suite" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Where</th>
+<th>Size</th>
+<th>Licence</th>
+<th>What it held, opened here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>3730.ab1</code></td>
+<td>Biopython, <code>Tests/Abi/</code> (<a href="https://github.com/biopython/biopython/tree/master/Tests/Abi">https://github.com/biopython/biopython/tree/master/Tests/Abi</a>)</td>
+<td>299,987 bytes</td>
+<td>Biopython License Agreement (<code>LICENSE.rst</code>)</td>
+<td>a 3730xl KB-called read with qualities and 7 IUPAC mixed calls at its ends; the calls read mCherry then EGFP (section 2.2)</td>
+</tr>
+<tr>
+<td><code>310.ab1</code></td>
+<td>the same</td>
+<td>222,099 bytes</td>
+<td>the same</td>
+<td>a 310 read with every quality zero and <code>N</code> calls: the no-quality case</td>
+</tr>
+<tr>
+<td><code>3100.ab1</code>, <code>A6_1-DB3.ab1</code>, <code>no_smpl1.ab1</code>, <code>nonascii_encoding.ab1</code>, <code>empty.ab1</code>, <code>fake.ab1</code></td>
+<td>the same</td>
+<td>209,224; 261,660; 253,428; 295,984; 261,522; 26 bytes</td>
+<td>the same</td>
+<td>not opened; the names say what each tests</td>
+</tr>
+<tr>
+<td><code>per_base_df.csv</code></td>
+<td><code>odcambc/dimple-qc-app</code> (<a href="https://github.com/odcambc/dimple-qc-app">https://github.com/odcambc/dimple-qc-app</a>)</td>
+<td>192,143 bytes</td>
+<td>MIT</td>
+<td>a <strong>processed</strong> copy of a Plasmidsaurus per-base table: the columns <code>pos, ref, reads_all, matches, mismatches, deletions, insertions, A, C, T, G, low_conf, homopolymer, methylation</code> as the app reads them, then columns the app adds; <code>pos</code> starts at 1</td>
+</tr>
+<tr>
+<td><code>wf-clone-validation-demo.tar.gz</code></td>
+<td>Oxford Nanopore (<a href="https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-clone-validation/wf-clone-validation-demo.tar.gz">https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-clone-validation/wf-clone-validation-demo.tar.gz</a>)</td>
+<td>23,389,102 bytes</td>
+<td>Oxford Nanopore Public License 1.0, research purposes only</td>
+<td>raw reads for 11 barcodes and ~3 kb references: inputs to a consensus, not a result. Too large, and the wrong stage</td>
+</tr>
+<tr>
+<td>Addgene sequencing results</td>
+<td>each plasmid's <code>/sequences/</code> page</td>
+<td>—</td>
+<td>Addgene's terms</td>
+<td>Sanger and full-plasmid results exist per plasmid, but downloading one needs a login, so CI cannot fetch them</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sanger: public files are enough to test a reader.</strong> Biopython's traces are small, carry both
+the quality and the no-quality case, and are under a licence that allows copying with the notice.
+<strong>None comes with the construct it was read from</strong>, so a test of a junction verdict builds its
+expected record around the read's own trimmed calls and plants the disagreement it wants.</p>
+<p><strong>Tracked.</strong> <code>3730.ab1</code> and <code>310.ab1</code> are copied unchanged into <code>tests/data/</code> from Biopython at
+commit <code>e38c64daa2</code> (<a href="https://github.com/biopython/biopython/tree/e38c64daa2/Tests/Abi">https://github.com/biopython/biopython/tree/e38c64daa2/Tests/Abi</a>), fetched
+2026-10-10. Biopython's <code>LICENSE.rst</code> from the same commit sits beside them as
+<code>tests/data/biopython-LICENSE.rst</code>, the notice its licence asks a copy to carry. SHA-256:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>3730.ab1</code></td>
+<td><code>e4663e4db40232576ccdda5b878dddb01ef80a3d1b032941ba053146ce53f77b</code></td>
+</tr>
+<tr>
+<td><code>310.ab1</code></td>
+<td><code>0a395d39520d24a89af4c77dd55fd7fb632e732a6da807ceb6ead0c2465cb887</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Whole-plasmid: no public raw vendor result exists.</strong> No vendor publishes a demo folder, and the
+one public per-base table has been processed. The lab supplies its own result — one Plasmidsaurus
+folder for a plasmid it already holds — or a test writes a small file in the vendor's documented
+shape. The header of Plasmidsaurus's per-base table is unpublished, so the lab's own file is the
+only source for it.</p>
+<h2 id="7-holes">7. Holes<a class="headerlink" href="#7-holes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>CRL has no published definition</strong> that this survey reached; GENEWIZ reports it per read.</li>
+<li><strong>Ewing and Green 1998 were not read in full</strong> (<em>Genome Res.</em> 8:175–185 and 186–194; the
+  publisher's pages asked for a login). The quality formula is cited from Richterich 1998 and
+  Applied Biosystems instead. phrap.org, which documents phred's trimming, refused the
+  connection, so <strong>Mott's 0.05 rests on Biopython's code alone</strong>.</li>
+<li><strong>How many bases at the start of a read are unreadable has no single number</strong>: 20–40, 25–35,
+  and blobs to 120, from three owners.</li>
+<li><strong>The KB basecaller's default mixed-base threshold</strong> is not stated; only the recommended
+  15–25%.</li>
+<li><strong>Plasmidsaurus publishes no column header for its per-base table</strong>, and no vendor says whether
+  its positions start at 0 or 1. The processed copy starts at 1. ADR 0001 says such a file
+  converts at its own boundary.</li>
+<li><strong>No vendor defines a per-base confidence</strong>, the scale of the qualities in a consensus FASTQ,
+  or the smallest mixture it detects. GENEWIZ's 5% highlight is the only number.</li>
+<li><strong>Whether GENEWIZ's Plasmid-EZ runs on Oxford Nanopore</strong> is not stated on its pages.</li>
+<li><strong>No standard defines a sequence-verified clone</strong>: no depth, no strand rule, no distance past a
+  junction.</li>
+<li><strong>Bai et al. 2025 was read only to its abstract</strong>; figures from its body are left out.</li>
+<li><strong>NEB's sequencing-analysis page and an Addgene help article</strong> returned 403.</li>
+<li><strong>A DMX well hands over no per-base support</strong> (section 4), so nothing here judges LevSeq's mean
+  error criterion.</li>
+</ul>
+<h3 id="71-the-sibling-notes-three-holes">7.1 The sibling note's three holes<a class="headerlink" href="#71-the-sibling-notes-three-holes" title="Permanent link">&para;</a></h3>
+<p><code>sequencing-read-packages.md</code> (#552) section 6 left three numbers without a source. What this
+survey found for each:</p>
+<table>
+<thead>
+<tr>
+<th>Its hole</th>
+<th>What an owner states</th>
+<th>Where here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A margin between the two strands' scores</td>
+<td>nothing</td>
+<td>—</td>
+</tr>
+<tr>
+<td>A mixed-peak ratio</td>
+<td>Sanger: a "2nd highest peak threshold for mixed base identification", "recommended range is 15 to 25%" (Applied Biosystems Chemistry Guide). The 0.33 the tools use sits outside that range. Whole plasmid: GENEWIZ highlights a position at "more than 5% variability"</td>
+<td>sections 2.5, 3.2</td>
+</tr>
+<tr>
+<td>An identity or coverage threshold</td>
+<td>identity: the insert "100% sequence perfect" (Twist); coverage: every junction and the whole insert, "at least single-strand depth" (Bio-Synthesis, Addgene); whole-plasmid depth: "approximately 20×" supports an accurate consensus (Plasmidsaurus, Eurofins), "10x coverage or less" is a failure (GENEWIZ). None sets a share of the backbone, so wf-clone-validation's 99% identity and 95% coverage still have no source</td>
+<td>sections 3.4, 5</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-sources">8. Sources<a class="headerlink" href="#8-sources" title="Permanent link">&para;</a></h2>
+<p>Read 2026-10-09 and 2026-10-10 unless a date is given. URLs, editions and quotes are inline where
+each is used; this list adds what is not.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Edition</th>
+<th>How read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Applied Biosystems, <em>Applied Biosystems Genetic Analysis Data File Format</em></td>
+<td>July 2006; © 2006 Applied Biosystems</td>
+<td>PDF from a mirror at Moscow State University (<a href="https://kodomo.fbb.msu.ru/~lewis/terms/term3/pr6/ABIF_File_Format.pdf">https://kodomo.fbb.msu.ru/~lewis/terms/term3/pr6/ABIF_File_Format.pdf</a>); the Applied Biosystems address other readers cite, <code>www6.appliedbiosystems.com/support/software_community/ABIF_File_Format.pdf</code>, was not tried</td>
+</tr>
+<tr>
+<td>Biopython</td>
+<td>1.88, the version this repo pins</td>
+<td><code>Bio/SeqIO/AbiIO.py</code> in the pixi environment; test files from <code>master</code></td>
+</tr>
+<tr>
+<td>Plasmidsaurus <em>Technical Documentation: Plasmid</em></td>
+<td>PS-0002-E v1.2, revised Sept. 22, 2026</td>
+<td>page text</td>
+</tr>
+<tr>
+<td>Plasmidsaurus FAQ, and two technical notes</td>
+<td>FAQ undated; notes Sep 12, 2025 and Oct 8, 2025</td>
+<td>page text</td>
+</tr>
+<tr>
+<td>Plasmidsaurus <em>Results Interpretation Guide</em></td>
+<td>archived 2024-06-17</td>
+<td>Wayback Machine</td>
+</tr>
+<tr>
+<td>Eurofins Genomics: <em>Whole Plasmid Sequencing</em> (<a href="https://eurofinsgenomics.com/en/products/nanopore-sequencing/whole-plasmid-sequencing">https://eurofinsgenomics.com/en/products/nanopore-sequencing/whole-plasmid-sequencing</a>), <em>Data Deliverables</em>, <em>Results Interpretation Guide</em> (<a href="https://eurofinsgenomics.com/en/products/nanopore-sequencing/results-interpretation-guide-for-nanopore-sequencing/">https://eurofinsgenomics.com/en/products/nanopore-sequencing/results-interpretation-guide-for-nanopore-sequencing/</a>)</td>
+<td>no version shown</td>
+<td>page text</td>
+</tr>
+<tr>
+<td>Azenta/GENEWIZ <em>Plasmid-EZ Quick Start Guide</em> and FAQ</td>
+<td>11035-M&amp;G-2 1025 (10-29-25); FAQ undated</td>
+<td>PDF and page text</td>
+</tr>
+<tr>
+<td>Oxford Nanopore, <code>wf-clone-validation</code> (<a href="https://github.com/epi2me-labs/wf-clone-validation">https://github.com/epi2me-labs/wf-clone-validation</a>)</td>
+<td>v1.8.4</td>
+<td>README, CHANGELOG and source</td>
+</tr>
+<tr>
+<td>MGH DNA Core, sequencing troubleshooting (<a href="https://dnacore.mgh.harvard.edu/new-cgi-bin/site/pages/sequencing_pages/seq_troubleshooting.jsp">https://dnacore.mgh.harvard.edu/new-cgi-bin/site/pages/sequencing_pages/seq_troubleshooting.jsp</a>)</td>
+<td>undated</td>
+<td>page text; agrees with section 2.5: "There is more than one template present in the sequence reaction"</td>
+</tr>
+<tr>
+<td>Richterich, P. <em>Genome Res.</em> 8:251–259 (1998), doi:10.1101/gr.8.3.251</td>
+<td>PMC310698</td>
+<td>full text</td>
+</tr>
+</tbody>
+</table>
+<p>Text copies of the ABIF specification and of the whole-plasmid vendor pages are kept under
+<code>reference_docs/sequencing-read-evidence/</code>.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

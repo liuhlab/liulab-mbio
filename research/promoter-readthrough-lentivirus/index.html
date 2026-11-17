@@ -1,0 +1,1612 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/promoter-readthrough-lentivirus/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Read-through and promoter interference between two promoters inside the LTRs - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#read-through-and-promoter-interference-between-two-promoters-inside-the-ltrs" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Read-through and promoter interference between two promoters inside the LTRs
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-what-each-source-measures" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. What each source measures
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. What each source measures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-tian-and-andreadis-2009-read-through-in-a-lentivirus-with-a-number-attached" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.1 Tian and Andreadis 2009 — read-through, in a lentivirus, with a number attached
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-curtin-et-al-2008-bidirectional-in-a-late-generation-lentivirus" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.2 Curtin et al. 2008 — bidirectional, in a late-generation lentivirus
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-eszterhas-et-al-2002-whether-order-matters-and-the-causal-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.3 Eszterhas et al. 2002 — whether order matters, and the causal test
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-benabdellah-et-al-2016-the-closest-thing-to-our-arrangement" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.4 Benabdellah et al. 2016 — the closest thing to our arrangement
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-promoter-order-what-is-settled" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Promoter order: what is settled
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-mitigation-ranked-by-what-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Mitigation, ranked by what was measured
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-is-still-open-and-the-experiment-that-closes-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. What is still open, and the experiment that closes it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-what-7-should-say-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. What §7 should say now
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="read-through-and-promoter-interference-between-two-promoters-inside-the-ltrs">Read-through and promoter interference between two promoters inside the LTRs<a class="headerlink" href="#read-through-and-promoter-interference-between-two-promoters-inside-the-ltrs" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #231, under #225. Everything below was read on <strong>2026-10-06</strong>. It answers
+what <code>docs/research/ap1-demo-project.md</code> §7.3 left open: what a primary source measures when a
+lentiviral transfer vector carries a constitutive promoter upstream of an inducible one, and what
+that does to the inducible promoter's background without doxycycline.</p>
+<p>The arrangement at issue is the one §7.1 committed to: between the LTRs, a constitutive promoter
+driving Tet3G, puromycin resistance and mCherry, then a TRE promoter driving the cargo.</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<p><strong>Read-through from an upstream internal promoter into a downstream transcription unit is
+measured in a lentiviral vector, and it contributes to the downstream unit's expression. No
+source read measures it into an inducible promoter, and none reports an uninduced background
+figure for this arrangement.</strong></p>
+<p>Three things are measured and three are not.</p>
+<p>Measured:</p>
+<ul>
+<li>Transcription from an upstream internal promoter reaches the downstream transcription unit in a
+  SIN lentiviral vector. Cutting it with a polyadenylation signal between the two cassettes
+  <em>lowered</em> downstream expression (Tian and Andreadis 2009).</li>
+<li>Two internal promoters in one vector interfere, bidirectionally, and the interference is large
+  (Curtin et al. 2008; Tian and Andreadis 2009).</li>
+<li>Which upstream constitutive promoter drives the regulator changes how much a downstream
+  inducible promoter leaks, and not through the regulator's own level (Benabdellah et al. 2016).</li>
+</ul>
+<p>Not measured anywhere read:</p>
+<ul>
+<li>The uninduced background of a TRE promoter sitting downstream of a constitutive promoter,
+  against a matched control with the upstream promoter removed. That is the number this build
+  wants and nobody has published it.</li>
+<li>The reverse arrangement §7.2 would need — a constitutive promoter downstream of an induced one
+  in a lentivirus. Nothing read puts an inducible promoter upstream.</li>
+<li>Any of this with Tet3G or another rtTA transactivator in a third-generation vector. The one
+  all-in-one lentiviral measurement read uses the TetR repressor, which fails in the other
+  direction.</li>
+</ul>
+<p>Section 5 says what experiment closes it.</p>
+<h2 id="2-what-each-source-measures">2. What each source measures<a class="headerlink" href="#2-what-each-source-measures" title="Permanent link">&para;</a></h2>
+<h3 id="21-tian-and-andreadis-2009-read-through-in-a-lentivirus-with-a-number-attached">2.1 Tian and Andreadis 2009 — read-through, in a lentivirus, with a number attached<a class="headerlink" href="#21-tian-and-andreadis-2009-read-through-in-a-lentivirus-with-a-number-attached" title="Permanent link">&para;</a></h3>
+<p><em>System.</em> A self-inactivating lentiviral vector carrying two internal transcription units in
+tandem: PGK driving ZsGreen, then CMV driving DsRed (<code>P-G-C-R</code>). Both cassettes were cloned
+<strong>antisense to the viral LTRs</strong>, deliberately, so that polyadenylation signals could be put
+between them without terminating the packaged genome in the producer cell. Read out by flow
+cytometry in human hair-follicle stem cells, A431 cells, bone-marrow mesenchymal stem cells and
+primary keratinocytes, at matched transduction and copy number.</p>
+<p><em>What interference cost.</em> In the untreated <code>P-G-C-R</code> vector the PGK–ZsGreen unit was nearly
+silent: mean green fluorescence 13.7 ± 0.4, against 1688.3 ± 17.3 for the same unit in the
+optimised vector — over 120-fold. DsRed, the downstream unit, lost far less: 128.8 ± 1.7 against
+177.8 ± 2.6, about 40%. The authors also saw cells expressing DsRed but not EGFP in every cell
+type tested, so a single vector gave one gene and not the other.</p>
+<p><em>The read-through measurement.</em> Inserting a polyadenylation signal between the two cassettes
+raised the upstream gene and <strong>lowered the downstream one</strong>: "while all poly(A) sequences
+increased GFI significantly, no poly(A) increased red fluorescence intensity (RFI) and some of
+them (rGBpA and SPA) decreased RFI compared to control lentivirus". Their explanation of their
+own result: "one possible explanation may be reduction of read-through transcription by the PGK
+promoter."</p>
+<p>That is the load-bearing fact for this build. Part of what the downstream unit expressed was
+not its own promoter firing; it was polymerase arriving from the upstream promoter. The
+mechanism is the authors' reading of the measurement, not a separate experiment — they did not
+sequence a transcript across the junction.</p>
+<p><em>Mitigation, measured.</em> Stacked between the two cassettes, each over the one before:</p>
+<table>
+<thead>
+<tr>
+<th>Element, between the cassettes</th>
+<th>Upstream gene</th>
+<th>Downstream gene</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SPA polyadenylation signal + f1 spacer</td>
+<td>highest of the polyA set</td>
+<td>rGBpA and SPA lowered it</td>
+</tr>
+<tr>
+<td>Tactb pause site after SPA</td>
+<td>+20.0 ± 6.1%</td>
+<td>—</td>
+</tr>
+<tr>
+<td>cHS4 insulator after Tactb</td>
+<td>+41.8 ± 0.8%</td>
+<td>+9.0 ± 3.6%</td>
+</tr>
+<tr>
+<td>sMAR8, downstream of the second polyA</td>
+<td>+14.7 ± 3.2%</td>
+<td>+30.9 ± 6.9%</td>
+</tr>
+</tbody>
+</table>
+<p>MAZ4 gave little gain upstream and lowered the downstream gene; CoTC and Tmsa were
+worse than an inert spacer. The finished vector (SPA, Tactb, cHS4 between the units,
+sMAR8 after the second polyA) expressed both genes as well as single-cassette vectors did, in
+every cell type, and the downstream gene's level did not move when the upstream promoter was
+swapped — which is what "interference eliminated" means here.</p>
+<h3 id="22-curtin-et-al-2008-bidirectional-in-a-late-generation-lentivirus">2.2 Curtin et al. 2008 — bidirectional, in a late-generation lentivirus<a class="headerlink" href="#22-curtin-et-al-2008-bidirectional-in-a-late-generation-lentivirus" title="Permanent link">&para;</a></h3>
+<p><em>Read as abstract only.</em> Gene Therapy is paywalled and no open copy was found; the full text was
+not read and no number from it is quoted here.</p>
+<p>The abstract states that interference between two internal heterologous promoters — human CMV
+immediate-early and human EF-1α — in a late-generation lentiviral vector "occurred bidirectionally
+with both promoters markedly impairing expression of the adjacent transcription unit". It names
+no magnitude and no order effect that can be checked without the full text.</p>
+<p>Cite it for one thing: the interference is not one-way, so putting the weaker promoter downstream
+does not make the problem someone else's.</p>
+<h3 id="23-eszterhas-et-al-2002-whether-order-matters-and-the-causal-test">2.3 Eszterhas et al. 2002 — whether order matters, and the causal test<a class="headerlink" href="#23-eszterhas-et-al-2002-whether-order-matters-and-the-causal-test" title="Permanent link">&para;</a></h3>
+<p><em>System.</em> Not a lentivirus. Two reporter units, GFP and YFP, each with its own promoter, enhancer
+and a strong polyadenylation signal, placed by recombinase-mediated cassette exchange into two
+tagged chromosomal sites (RL5 and RL6) in mouse erythroleukaemia cells, so the comparison is one
+arrangement against a single-gene construct at the <em>same</em> site. Both promoters constitutive.</p>
+<p><em>Arrangements, measured.</em></p>
+<table>
+<thead>
+<tr>
+<th>Arrangement</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Convergent</td>
+<td>Expression "barely above the background level of fluorescence"</td>
+</tr>
+<tr>
+<td>Divergent</td>
+<td>Three- to six-fold reduction in each gene</td>
+</tr>
+<tr>
+<td>Tandem</td>
+<td>"Most strongly influenced by the integration site and the genes' orientation"</td>
+</tr>
+</tbody>
+</table>
+<p>Within tandem, the direction was not fixed. At RL5 in one orientation "the upstream gene almost
+completely suppresses the downstream gene … but the upstream gene is itself also suppressed to
+&lt;50% of the single gene"; in the other orientation at the same site both fell and the upstream
+gene ended up lower than the downstream one. At RL6 in one orientation the upstream gene matched
+a single gene while the downstream gene was strongly suppressed.</p>
+<p><em>The causal test.</em> "Deletion of the upstream promoter fully restored expression of the downstream
+gene to levels that are not significantly different from those with a single gene." Transcription
+from the upstream unit, not its mere presence, is what suppressed the downstream one.</p>
+<p><em>What it does and does not say for us.</em> It answers the order question — order matters, and in
+tandem the common pattern is the upstream unit suppressing the downstream one — but it adds the
+qualifier that matters most for a pooled library: the size and even the sign vary with the
+integration site. Every member of a lentiviral library integrates somewhere different, so leak is
+a distribution across cells, not one number. It measures <em>suppression</em> of a constitutive
+downstream gene. It does not measure <em>elevation</em> of a repressed one, which is our failure mode.</p>
+<h3 id="24-benabdellah-et-al-2016-the-closest-thing-to-our-arrangement">2.4 Benabdellah et al. 2016 — the closest thing to our arrangement<a class="headerlink" href="#24-benabdellah-et-al-2016-the-closest-thing-to-our-arrangement" title="Permanent link">&para;</a></h3>
+<p><em>System.</em> All-in-one Tet-On lentiviral vectors. Inside the LTRs: an internal constitutive
+promoter — SFFV or human EF-1α — driving the TetR repressor, then a CMV–TetO inducible promoter
+driving eGFP. So: constitutive promoter upstream, inducible promoter downstream, one packaged
+transcript. Measured in 293T, human mesenchymal stromal cells and two human embryonic stem cell
+lines, by flow cytometry, with leak defined as <code>%eGFP+(−Dox) × 100 / %eGFP+(+Dox)</code>, from 0 to 100.</p>
+<p><em>The upstream promoter's identity changes the downstream promoter's leak.</em> Swapping only the
+upstream constitutive promoter, SFFV for hEF-1α, lowered leak and lowered induced output (293T
+whole-cell mean fluorescence 4652 for SFFV against 1976 for hEF-1α).</p>
+<p>The control that makes this interesting: in mesenchymal stromal cells the hEF-1α vector expressed
+<em>less</em> TetR than the SFFV vector and still leaked less. The authors conclude "the lower leaking of
+the CEETnl2 is not due to higher expression levels of the repressor but to the Lent-On-Plus
+backbone configuration". Something other than repressor dose — the configuration of the two
+promoters — sets the downstream promoter's background.</p>
+<p>Do not stretch that further than they did. They name no mechanism, do not say "read-through", and
+run no transcript assay.</p>
+<p><em>Mitigation, measured.</em> The Is2 insulator — the chicken β-globin HS4-650 element joined to a
+synthetic 388 bp SAR, built in Benabdellah et al. 2014 and placed in the 3′ LTR, so it is
+duplicated on integration and flanks the provirus.</p>
+<table>
+<thead>
+<tr>
+<th>Cells</th>
+<th>Leak, without Is2</th>
+<th>Leak, with Is2</th>
+<th>Fold induction, without → with</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>293T, fully responsive population</td>
+<td>66.2</td>
+<td>7.4</td>
+<td>5.7 → 38.8</td>
+</tr>
+<tr>
+<td>hMSC, sorted, one copy per cell</td>
+<td>54</td>
+<td>2.6</td>
+<td>2.8 → 14</td>
+</tr>
+<tr>
+<td>hESC, sorted</td>
+<td>4.7</td>
+<td>1.3</td>
+<td>5.5 → 5.2</td>
+</tr>
+</tbody>
+</table>
+<p>The cost they report: titre down 2–3 fold against the uninsulated vector.</p>
+<p><em>The caveats, which are large.</em> This is the TetR repressor, not an rtTA transactivator — TetR sits
+on the operator and is displaced by doxycycline, so its leak is a failure of occupancy, while a
+Tet3G vector's leak is a minimal promoter firing without its activator. And Is2 flanks the
+provirus; it does not sit between the two promoters, so what it was measured to fix is chromatin
+reaching in, not polymerase arriving from the cassette next door. It is evidence that this
+arrangement leaks and that leak is tunable. It is not a measurement of read-through.</p>
+<h2 id="3-promoter-order-what-is-settled">3. Promoter order: what is settled<a class="headerlink" href="#3-promoter-order-what-is-settled" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Interference runs both ways between two internal promoters in a lentiviral vector (Curtin 2008).</li>
+<li>In tandem, the upstream unit suppressing the downstream one is the common pattern, but the
+  magnitude and the sign depend on the integration site (Eszterhas 2002).</li>
+<li>Transcription from the upstream promoter reaches the downstream unit and contributes to its
+  output (Tian and Andreadis 2009).</li>
+</ul>
+<p>Nothing read tests an inducible promoter upstream of a constitutive one, which is the comparison
+§7.2's rejected placement would need. On the evidence above, putting the marker's constitutive
+promoter downstream of the TRE does not avoid the problem — it trades a background risk for a
+marker-silencing risk, and no source read measures either side of that trade.</p>
+<h2 id="4-mitigation-ranked-by-what-was-measured">4. Mitigation, ranked by what was measured<a class="headerlink" href="#4-mitigation-ranked-by-what-was-measured" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Both internal cassettes antisense to the LTRs, with a polyadenylation signal between them.</strong>
+   Tian and Andreadis's answer to §7.2's objection that a terminator truncates the packaged
+   genome: flip the cassettes, and the internal polyA is on the strand the producer cell does not
+   package. Measured to restore the suppressed unit and to cut the read-through contribution to
+   the downstream one.</li>
+<li><strong>A pause site after the polyadenylation signal.</strong> Tactb was best of four tested;
+   MAZ4, CoTC and Tmsa were not worth their length in that vector.</li>
+<li><strong>cHS4 between the cassettes.</strong> Gained both genes.</li>
+<li><strong>An insulator flanking the provirus</strong> — Is2 in the 3′ LTR, or sMAR8 after the second polyA.
+   Large effect on leak in a Tet vector (66.2 → 7.4 in 293T), at 2–3 fold titre.</li>
+<li><strong>Choosing a weaker upstream constitutive promoter.</strong> hEF-1α for SFFV lowered leak and lowered
+   induced output with it. Measured, and not free.</li>
+</ol>
+<p>None of 1 to 3 has been measured with an inducible downstream promoter.</p>
+<h2 id="5-what-is-still-open-and-the-experiment-that-closes-it">5. What is still open, and the experiment that closes it<a class="headerlink" href="#5-what-is-still-open-and-the-experiment-that-closes-it" title="Permanent link">&para;</a></h2>
+<p>Open: how much of the committed vector's uninduced cargo expression comes from the upstream
+constitutive promoter, in the cells this build uses, at one copy per cell.</p>
+<p>The experiment, as small as it goes:</p>
+<ol>
+<li>Build the committed vector and one matched control in which the upstream constitutive promoter
+   alone is deleted, leaving the cassette's length and sequence otherwise intact. A length-matched
+   promoterless control, not a shorter vector — Eszterhas's deletion control is the precedent.</li>
+<li>Transduce at a multiplicity that keeps transduced cells under 30%, so most carry one
+   integration, and confirm copy number.</li>
+<li>Without doxycycline, measure cargo expression by flow cytometry inside the mCherry-positive
+   gate. The difference between the two vectors is the read-through contribution. Report it as the
+   distribution across single-copy cells, not a mean — Eszterhas's integration-site result says
+   the spread is the finding.</li>
+<li>Confirm the mechanism rather than inferring it: strand-specific RT-PCR or long-read sequencing
+   across the TRE, showing transcripts that start in the upstream cassette and continue past the
+   inducible promoter.</li>
+<li>If the contribution is material, test mitigation 1 above — cassettes antisense to the LTRs with
+   SPA plus Tactb between them — against the same control, and check titre.</li>
+</ol>
+<p>Until step 3 has a number, the build should treat uninduced background as unquantified and
+design around it: carry a no-doxycycline arm for every screen, and read each library member's
+phenotype against its own uninduced well rather than against a pooled baseline.</p>
+<h2 id="6-what-7-should-say-now">6. What §7 should say now<a class="headerlink" href="#6-what-7-should-say-now" title="Permanent link">&para;</a></h2>
+<p>§7.3 can stop saying "no source read measures read-through or promoter interference for either".
+Three do, and §2 above is what they measure. What stays open is narrower and worth stating as
+such: no source measures the uninduced background of a TRE promoter downstream of a constitutive
+one. The backbone placement §7.1 chose is still the arrangement with a track record, and that
+record now includes a measured cost — interference is bidirectional and read-through is real — and
+a measured set of fixes nobody has yet tried on an inducible promoter.</p>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Tian, J. and Andreadis, S.T. (2009) Independent and high-level dual-gene expression in adult
+  stem-progenitor cells from a single lentiviral vector. <em>Gene Ther.</em> 16, 874–884.
+  <a href="https://doi.org/10.1038/gt.2009.46">doi:10.1038/gt.2009.46</a>; full text read via Europe PMC,
+  <a href="https://europepmc.org/article/MED/19440229">PMC2714872</a> (author manuscript)</li>
+<li>Curtin, J.A., Dane, A.P., Swanson, A., Alexander, I.E. and Ginn, S.L. (2008) Bidirectional
+  promoter interference between two widely used internal heterologous promoters in a
+  late-generation lentiviral construct. <em>Gene Ther.</em> 15, 384–390.
+  <a href="https://doi.org/10.1038/sj.gt.3303105">doi:10.1038/sj.gt.3303105</a>. <strong>Abstract only</strong> — closed
+  access, full text not read</li>
+<li>Eszterhas, S.K., Bouhassira, E.E., Martin, D.I.K. and Fiering, S. (2002) Transcriptional
+  interference by independently regulated genes occurs in any relative arrangement of the genes
+  and is influenced by chromosomal integration position. <em>Mol. Cell. Biol.</em> 22, 469–479.
+  <a href="https://doi.org/10.1128/MCB.22.2.469-479.2002">doi:10.1128/MCB.22.2.469-479.2002</a>, full text
+  via <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC139736/">PMC139736</a></li>
+<li>Benabdellah, K., Muñoz, P., Cobo, M., Gutierrez-Guerrero, A., Sánchez-Hernández, S.,
+  Garcia-Perez, A., Anderson, P., Carrillo-Gálvez, A.B., Toscano, M.G. and Martin, F. (2016)
+  Lent-On-Plus lentiviral vectors for conditional expression in human stem cells. <em>Sci. Rep.</em> 6,</li>
+<li><a href="https://doi.org/10.1038/srep37289">doi:10.1038/srep37289</a>, full text via
+  <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5112523/">PMC5112523</a> (CC BY 4.0)</li>
+<li>Benabdellah, K., Cobo, M., Muñoz, P., Toscano, M.G. and Martin, F. (2011) Development of an
+  all-in-one lentiviral vector system based on the original TetR for the easy generation of Tet-ON
+  cell lines. <em>PLoS ONE</em> 6, e23734.
+  <a href="https://doi.org/10.1371/journal.pone.0023734">doi:10.1371/journal.pone.0023734</a>, full text via
+  <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3158098/">PMC3158098</a> (CC BY) — the parent CEST vector
+  of the 2016 study</li>
+<li>Benabdellah, K., Gutierrez-Guerrero, A., Cobo, M., Muñoz, P. and Martín, F. (2014) A chimeric
+  HS4-SAR insulator (IS2) that prevents silencing and enhances expression of lentiviral vectors in
+  pluripotent stem cells. <em>PLoS ONE</em> 9, e84268.
+  <a href="https://doi.org/10.1371/journal.pone.0084268">doi:10.1371/journal.pone.0084268</a> — abstract read,
+  for what Is2 is and where it sits</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

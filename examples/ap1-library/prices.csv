@@ -1,0 +1,16 @@
+# name: AP-1 demo price record
+# date: 2026-10-08
+# Prices move. Re-check every row against the vendor on the day you order.
+# A charge per unit is the pack price divided by what the pack holds; the item
+# column names the pack it was divided by and the date it was read. An enzyme row carries no
+# band: a vial is priced by what it holds, and the item says what that is.
+key,item,bands,charge,basis,currency
+oligo-pool,"Twist oligo pool, Tier 2 (101-500 oligos) at 301-350 nt. This lab's account pricing, read 2026-09-17; Twist publishes no pool pricing in public.",count 101-500; length 301-350,2575.00,per order,USD
+pool-primers,"IDT 25 nmole DNA oligos on a 96-well plate at $0.25 per base. IDT list price, read 2026-10-08. $5.00 is one 20-base primer; tubes are $0.47 per base.",count 1-96,5.00,per unit,USD
+R3539,"BbsI-HF R3539S, 300 units at 20,000 units/mL = 15 µL for $83.00. NEB list price, read 2026-10-08. R3539L is $4.573/µL and R3539M is 50,000 units/mL at $8.60/µL, so a bare R3539 does not price itself.",,5.533,per unit,USD
+R3733,"BsaI-HFv2 R3733S, 1,000 units at 20,000 units/mL = 50 µL for $83.00. NEB list price, read 2026-10-08.",,1.66,per unit,USD
+R0629,"SrfI R0629S, 500 units at 20,000 units/mL = 25 µL for $93.00. NEB list price, read 2026-10-08.",,3.72,per unit,USD
+R0560,"PmeI R0560S, 500 units at 10,000 units/mL = 50 µL for $88.00. NEB list price, read 2026-10-08. PmeI is the only one of the four at 10,000 units/mL.",,1.76,per unit,USD
+60242-2,"Endura ElectroCompetent Cells, 24 transformations (12 DUO vials of 50 µL, each 2 x 25 µL) for $568.40. Fisher Scientific 50-104-7946, read 2026-10-08: a distributor price that may carry a surcharge, never an LGC list price, which is quoted on request.",count 1-24,23.68,per unit,USD
+cuvettes,"Bio-Rad 1652089 electroporation cuvettes, 0.1 cm gap, 50 per pack for $197.00. Bio-Rad list price, read 2026-10-08; Lucigen manual MA133 names 165-2089, the old number for this one.",count 1-50,3.94,per unit,USD
+plasmid prep,"QIAprep Spin Miniprep Kit, Qiagen 27104, 50 preps for $128.00. Qiagen list price, read 2026-10-08.",count 1-50,2.56,per unit,USD

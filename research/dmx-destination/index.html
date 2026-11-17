@@ -1,0 +1,1454 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/dmx-destination/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>The rebuilt DMX destination - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-rebuilt-dmx-destination" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              The rebuilt DMX destination
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-parent" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The parent
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-five-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. The five steps
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. The five steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-the-parents-cassette-becomes-the-methods-internal-stuffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.1 The parent's cassette becomes the method's internal stuffer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-a-blunt-site-goes-outboard-of-each-releasing-cut" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.2 A blunt site goes outboard of each releasing cut
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-ampr-leaves-kanr-arrives-and-the-third-bsai-site-goes-with-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.3 AmpR leaves, KanR arrives, and the third BsaI site goes with them
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-bbsi-leaves-the-backbone" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2.4 BbsI leaves the backbone
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-what-the-result-measures" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. What the result measures
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-why-the-record-ships" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Why the record ships
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="the-rebuilt-dmx-destination">The rebuilt DMX destination<a class="headerlink" href="#the-rebuilt-dmx-destination" title="Permanent link">&para;</a></h1>
+<p>What <code>scripts/build_dmx_vector.py</code> does to DMX0001, why each step is there, and what the result
+measures. Written for #358, which is #331 absorbing #334 and #353; #374 added the marker swap
+of §2.3. Every number below was produced by running the script; none was typed in from
+somewhere else.</p>
+<h2 id="1-the-parent">1. The parent<a class="headerlink" href="#1-the-parent" title="Permanent link">&para;</a></h2>
+<p><code>reference_docs/synthesis_and_assembly/dmx/addgene/addgene-plasmid-247434-sequence-494299.dna</code>
+— DMX0001, Addgene 247434, the depositor's own map, <strong>5,839 bp circular</strong>. The provenance table
+in <code>docs/research/synthesis-and-assembly.md</code> §7 records the download. DMX0002 (Addgene 247435,
+5,842 bp) sits beside it and measures the same way; the rebuild uses the first.</p>
+<p>Measured with <code>mbio.sites</code>, not read off the map:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>sites</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BsaI</td>
+<td>3 — 355 F, 797 R, 1664 R (inside AmpR)</td>
+</tr>
+<tr>
+<td>BsmBI</td>
+<td>2 — 367 R, 785 F</td>
+</tr>
+<tr>
+<td>BbsI</td>
+<td>4 — 4130 F, 4490 F, 4878 R, 5217 R</td>
+</tr>
+<tr>
+<td>PaqCI</td>
+<td>0</td>
+</tr>
+<tr>
+<td>PmeI</td>
+<td>0</td>
+</tr>
+<tr>
+<td>SrfI</td>
+<td>1 — 557 F, inside ccdB</td>
+</tr>
+</tbody>
+</table>
+<p>Both enzymes give up the same piece: <code>BsaI 362-792 (430 bp) AGGA/TTCC</code>, and
+<code>BsmBI 362-792 (430 bp) AGGA/TTCC</code>. Those are the method's own cargo overhangs, which is what
+makes the parent a destination already — and what lets the script find the cassette by digesting
+rather than by a coordinate.</p>
+<h2 id="2-the-five-steps">2. The five steps<a class="headerlink" href="#2-the-five-steps" title="Permanent link">&para;</a></h2>
+<h3 id="21-the-parents-cassette-becomes-the-methods-internal-stuffer">2.1 The parent's cassette becomes the method's internal stuffer<a class="headerlink" href="#21-the-parents-cassette-becomes-the-methods-internal-stuffer" title="Permanent link">&para;</a></h3>
+<p><code>vector.released_cargo</code> reads the 430 bp piece off a BsaI digest, and <code>edits.replace</code> puts the
+method's 34-base internal stuffer there. The parent's own BsaI sites at 355 and 797 are <strong>kept</strong>:
+they are what releases the cargo at the end, and under the tube model of
+<code>docs/adr/0014-one-record-one-tube.md</code> a destination carries them outboard on purpose.</p>
+<p>The parent's BsmBI sites lay inside the replaced piece, so both go with it, and so does the ccdB
+cassette and its SrfI site. The SrfI the result reads is the internal stuffer's own.</p>
+<p><em>The method page's step 2 says the rebuild keeps the ccdB cassette. It cannot: the piece a round
+gives up is 34 bases, and ccdB is 306. Counter-selection on a round's destination is a separate
+question from this record and is left open.</em></p>
+<h3 id="22-a-blunt-site-goes-outboard-of-each-releasing-cut">2.2 A blunt site goes outboard of each releasing cut<a class="headerlink" href="#22-a-blunt-site-goes-outboard-of-each-releasing-cut" title="Permanent link">&para;</a></h3>
+<p>The method asks for one PmeI site between each BsaI cut and the primer that reads a well, and no
+more. The script inserts <code>GTTTAAAC</code> 12 bases before the cassette and 33 bases after it, locating
+both off the cassette it has just read rather than off a coordinate.</p>
+<p><code>gate.check_dmx_vector</code> is what holds those two offsets honest. It computes the clear windows off
+the record — each primer's footprint and the releasing cut it faces bound them — and on the
+result they are <strong>277..363 and 416..503</strong>, with the two sites at 350 and 437 inside them.</p>
+<p>This closes the "Where the added PmeI sites go" decision, which recorded that there is no free
+space on one parent without sacrificing an annotated tag. There is. <code>6xHis</code> ends at 432 on the
+rebuilt record and the right-hand window runs to 503, so a site at 437 sacrifices nothing. The
+worry came from inserting immediately outboard of the BsaI site; the rule only asks for a site
+between that cut and the primer's footprint, which leaves 87 bases to choose from.</p>
+<h3 id="23-ampr-leaves-kanr-arrives-and-the-third-bsai-site-goes-with-them">2.3 AmpR leaves, KanR arrives, and the third BsaI site goes with them<a class="headerlink" href="#23-ampr-leaves-kanr-arrives-and-the-third-bsai-site-goes-with-them" title="Permanent link">&para;</a></h3>
+<p>Departure D11 forces this step. The final transfer moves cargo out of this vector and into a
+working vector that is AmpR or CarbR, so the two must not share a marker. The marker is read as
+well as plated: <code>igga.stages.selection_for</code> names the drug off the record's own marker, so an
+AmpR destination would plate every round on the carbenicillin D11 says does not carry over.</p>
+<p><strong>What goes in.</strong> The <code>NeoR/KanR</code> of <code>pCR-Blunt II-TOPO</code>, in the same reference directory —
+the Zero Blunt TOPO carrier, whose guide <code>bench-numbers.md</code> already sources this method's
+50 µg/mL kanamycin from. Measured off that map and the bases under it: <code>[1236, 2031)</code> forward,
+<strong>795 bp</strong>, <code>ATG</code> to <code>TGA</code>, no internal stop, and <strong>no site of any of the six method enzymes</strong>
+in either orientation.</p>
+<p><strong>Where it starts and ends.</strong> Exactly where the parent's <code>AmpR</code> coding sequence did: <code>[1144,
+2005)</code> on the record as the three steps above leave it, which is DMX0001's <code>[1524, 2385)</code>
+carried through them. Both ends are a boundary one of the two deposited maps already draws, so
+this step chooses no coordinate of its own.</p>
+<p><strong>Which promoter drives it.</strong> DMX0001's own. The parent draws <code>AmpR promoter</code> at <code>[2385, 2490)</code>
+butted against the coding sequence it drives, and the end of it is the native <em>bla</em> ribosome
+binding site: <code>AATATTGAAAAAGGAAGAGT</code> reads straight into <code>ATGAGTATTCAA</code>. Only the reading frame
+behind that changes, so the new start codon keeps the old one's spacing from the binding site
+and nothing is claimed about expression that the parent was not already carrying. The feature
+is renamed <code>KanR promoter</code>, because a map that still said <code>AmpR</code> on a kanamycin vector is the
+confusion this step exists to remove.</p>
+<p><strong>Which orientation.</strong> The parent's. <code>AmpR</code> reads on the reverse strand, so the coding sequence
+goes in reverse-complemented and reads on the reverse strand under the promoter already pointing
+at it. The script takes the strand off the feature it replaces rather than naming one, so the
+step holds on DMX0002 too, whose <code>AmpR</code> reads forward.</p>
+<p><strong>What it takes with it.</strong> The parent's third BsaI site, at 1664, is the only site of any method
+enzyme in the whole of <code>[1524, 2490)</code>, so the swap removes it. The synonymous codon that used to
+stand in for the swap is no longer changed, and <code>domesticate</code> is left with nothing to do for
+BsaI. The four parental BbsI sites — 4130, 4490, 4878 and 5217 — all lie outside the swapped
+span, so the swap does not touch them and the next step still has all four to clear.</p>
+<h3 id="24-bbsi-leaves-the-backbone">2.4 BbsI leaves the backbone<a class="headerlink" href="#24-bbsi-leaves-the-backbone" title="Permanent link">&para;</a></h3>
+<p>Four parental sites. Two (4878, 5217 on the parent; 4432, 4771 after the edits above) lie inside
+<code>lacI</code>, and <code>mbio.sites.domesticate</code> takes both away with one synonymous codon each,
+<code>GAC</code> to <code>GAT</code>.</p>
+<p>The other two (4130, 4490 on the parent; 3684, 4044 after) lie in <strong>no annotated feature at
+all</strong> — backbone between <code>rop</code> and <code>lacI</code>. <code>domesticate</code> reports such a site and leaves it,
+because changing it changes what the record spells and no method decides that on its own. Here
+the script decides it, and says so: one base each, <code>G</code> to <code>A</code> at 3684 and at 4044. It reads the
+site left to right and A, C, G, T in turn and takes the first change that removes the site
+without spelling a new site of any method enzyme, so the same parent gives the same record.</p>
+<h2 id="3-what-the-result-measures">3. What the result measures<a class="headerlink" href="#3-what-the-result-measures" title="Permanent link">&para;</a></h2>
+<p><strong>5,393 bp circular</strong>, named <code>DMX-iGGA</code>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>sites</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BsaI</td>
+<td>2 — 363 F, 409 R</td>
+</tr>
+<tr>
+<td>BsmBI</td>
+<td>0</td>
+</tr>
+<tr>
+<td>BbsI</td>
+<td>2 — 376 R, 392 F</td>
+</tr>
+<tr>
+<td>PaqCI</td>
+<td>0</td>
+</tr>
+<tr>
+<td>PmeI</td>
+<td>2 — 350 F, 437 F</td>
+</tr>
+<tr>
+<td>SrfI</td>
+<td>1 — 383 F</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>BbsI digest</code> → 370-400 (30 bp) AGGA/TTCC: what a round opens it on.</li>
+<li><code>BsaI digest</code> → 370-404 (34 bp) AGGA/TTCC, so <code>vector.released_cargo</code> is <code>Segment(370, 404)</code>.</li>
+<li><code>KanR</code> is at <code>[1144, 1939)</code> reverse, with <code>KanR promoter</code> at <code>[1939, 2044)</code> reverse behind it.</li>
+<li><code>bench.phenotype.selection_marker</code> reads that <code>KanR</code>, <code>stages.selection_for</code> names
+  <strong>50 µg/mL kanamycin</strong> for it, and <code>stages.holes_for</code> raises no <code>H22</code>.</li>
+<li><code>vector.destination_vector</code> takes it as it stands, with its outboard BsaI and PmeI.</li>
+<li><code>vector.donor_cassette</code> takes it as a donor backbone, the same record in the other tube.</li>
+<li><code>gate.check_dmx_vector</code> passes with two blunt sites, "in 277..363 or 416..503".</li>
+<li><code>gate._read_by_a_well_primer</code> is <code>True</code>: both LevSeq primers bind, at 245 F and 883 R on the
+  parent, flanking the cassette.</li>
+</ul>
+<p>Every one of these reproduces the numbers #331's resolution comment predicted.</p>
+<h2 id="4-why-the-record-ships">4. Why the record ships<a class="headerlink" href="#4-why-the-record-ships" title="Permanent link">&para;</a></h2>
+<p>The rebuilt vector is a plasmid the lab builds, not one that is deposited anywhere. The parents
+are deposited and are already held. A DNA sequence carries no licence, so none was weighed —
+an MTA or a UBMTA governs a plasmid, never its bases. #287 settled the same include-or-not for
+the ccdB cassette and decided that synbio ships the method's own DNA, with the input vector
+staying a build input. This record is the method's own molecule by that test, and it ships as
+the worked example's destination, written by the script rather than by hand.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

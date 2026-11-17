@@ -1,0 +1,1586 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/gantt-conventions/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Gantt conventions: is there a ready way to chart a protocol whose durations are mostly unknown? - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gantt-conventions-is-there-a-ready-way-to-chart-a-protocol-whose-durations-are-mostly-unknown" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Gantt conventions: is there a ready way to chart a protocol whose durations are mostly unknown?
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-how-this-was-read-and-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. How this was read and measured
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-uncertainty-in-a-duration-and-a-plan-with-no-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Uncertainty in a duration, and a plan with no dependencies
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Uncertainty in a duration, and a plan with no dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-a-tool-does-with-a-duration-it-does-not-know" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What a tool does with a duration it does not know
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-gantt-chart-with-no-predecessors" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        A Gantt chart with no predecessors
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-what-the-renderers-can-actually-express" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. What the renderers can actually express
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-the-protocol-venues-publish" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. What the protocol venues publish
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-what-to-build-instead" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. What to build instead
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="gantt-conventions-is-there-a-ready-way-to-chart-a-protocol-whose-durations-are-mostly-unknown">Gantt conventions: is there a ready way to chart a protocol whose durations are mostly unknown?<a class="headerlink" href="#gantt-conventions-is-there-a-ready-way-to-chart-a-protocol-whose-durations-are-mostly-unknown" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #404. Everything below was read or measured on <strong>2026-10-07</strong>.</p>
+<p>Issue #404 measured one <code>mbio</code> bench protocol: of 42 steps, 17 hold a bounded duration
+(70.0 h in total) and 24 hold none; four unattended overnight outgrowths are 74% of the held
+hours; and no dependency, parallelism or hands-on time is recorded anywhere. The strings
+"meanwhile", "in parallel", "next day" and "stopping point" appear zero times.</p>
+<p>We decided not to draw a Gantt chart from that. This note asks whether we were wrong — whether
+an established scheduling tool or convention already solves a chart in which many tasks have an
+unknown duration and the dependency graph is absent.</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<p><strong>No ready convention exists, and the evidence supports a plain schedule table with explicit
+holes.</strong></p>
+<p>Three findings decide it.</p>
+<p><strong>Uncertainty collapses before anything is drawn.</strong> Every established treatment of an unsure
+duration — Microsoft Project's estimated-duration <code>?</code>, a PERT three-point estimate, a hammock
+task — resolves to a single number before a bar reaches the page. The <code>?</code> is a flag on a value
+that is still a value: Microsoft gives a new task "an estimate of one day" and draws the bar at
+one day. PERT's <code>(O + 4M + P)/6</code> exists to collapse three numbers into one, and no mainstream
+renderer draws the spread — only risk-analysis software does. Two products fade or lighten a bar
+whose end is unknown, and neither is a convention anyone else follows (section 3). The
+established answer to an unknown duration is to guess one, flag the guess, and draw the guess.</p>
+<p>That is the one thing this repo has already refused to do. A <code>Hole</code> in
+<code>mbio.protocol.model</code> is "a number nobody sourced, standing where the number would be",
+and "filling one with a guess is the defect a hole exists to prevent". Adopting the
+estimated-duration convention means adopting the defect.</p>
+<p><strong>A Gantt with no predecessors is a bar chart with a date axis.</strong> Nothing in a Gantt survives
+the loss of the dependency graph except the bar lengths. With every task unconstrained and
+starting as soon as possible, the bars stack at the project start; the chart's links, critical
+path, float and sequence all read as empty. Section 3 finds no named convention for
+"unsequenced" — the recognised answer is that the chart is not the right form yet.</p>
+<p><strong>No renderer we could reach meets the output constraint and the data at once.</strong> A chart here
+must be inline SVG inside an offline <code>file://</code> page with no network and no script. Of the five
+checked, only Vega-Lite through <code>vl-convert-python</code>, which we already ship, clears the output
+constraint in process with no browser (section 4, measured). It can draw an uncertainty range
+and a split bar. It cannot draw an open end: a null <code>x2</code> yields a rect with no width, so nothing
+is drawn. An open end would be a convention we invent, not one we adopt.</p>
+<p><strong>The venues that publish protocols chart none of this — but one of them has the field we are
+missing.</strong> Nature Protocols, protocols.io, Bio-protocol and JoVE all express a time plan as prose
+or a list attached to a step or a step range, never as a schedule diagram (section 5). Nature's
+form is <code>Steps 1-17, designing and cloning a targeted screen: 3-5 w, 1 w hands-on</code> — a duration
+and a hands-on share, carried on a range of steps. That is a list, and it is the convention the
+field settled on.</p>
+<p><strong>What to build instead.</strong> A schedule table: one row per step, its duration where the protocol
+holds one, a <code>Hole</code> where it does not, and the kind of time it is. Filling in durations,
+hands-on time and the first dependency is the work; the chart is a question to reopen once the
+table stops being mostly holes.</p>
+<h2 id="2-how-this-was-read-and-measured">2. How this was read and measured<a class="headerlink" href="#2-how-this-was-read-and-measured" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Measured locally</strong>: <code>vl_convert</code> 1.9.0 in this repo's pixi environment, driven from
+  <code>pixi run python</code>. Four Gantt-shaped Vega-Lite specs were compiled with <code>vegalite_to_svg</code> and
+  one inspected through <code>vegalite_to_scenegraph</code>. Every count in section 4 is from that run.</li>
+<li><strong>Read</strong>: the <code>Step</code> and <code>Hole</code> dataclasses in <code>src/mbio/protocol/model.py</code>.</li>
+<li><strong>Read with a link</strong>: tool documentation, library source and journal author instructions, as
+  cited. Where a source is silent rather than negative, this note says so.</li>
+<li>The four non-Vega-Lite renderers were read, not run.</li>
+</ul>
+<h2 id="3-uncertainty-in-a-duration-and-a-plan-with-no-dependencies">3. Uncertainty in a duration, and a plan with no dependencies<a class="headerlink" href="#3-uncertainty-in-a-duration-and-a-plan-with-no-dependencies" title="Permanent link">&para;</a></h2>
+<h3 id="what-a-tool-does-with-a-duration-it-does-not-know">What a tool does with a duration it does not know<a class="headerlink" href="#what-a-tool-does-with-a-duration-it-does-not-know" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>What it is</th>
+<th>Does it reach the bar?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Estimated duration, the <code>?</code> suffix</td>
+<td>A flag meaning "this number is a guess". Microsoft: the Estimated field "indicates whether the task's duration is flagged as an estimate", and "by default, when you first add a new task, it is given an estimate of one day"</td>
+<td>No. The bar is drawn at the guessed value. The <code>?</code> shows in the Duration column</td>
+</tr>
+<tr>
+<td>Elapsed duration, <code>ed</code></td>
+<td>Time counted around the clock: "7d is seven working days", "7ed is seven elapsed days, such as Monday - Sunday"</td>
+<td>It changes the length, not the look</td>
+</tr>
+<tr>
+<td>Manual scheduling and placeholder tasks</td>
+<td>A task may hold a text duration "Project doesn't use for scheduling". A placeholder with only a duration gets "a lighter-colored placeholder Gantt bar"; with only one date it gets a "bookend" mark</td>
+<td><strong>Yes</strong> — the one mainstream tool that draws "not known"</td>
+</tr>
+<tr>
+<td>PERT three-point estimate</td>
+<td>Optimistic, most likely, pessimistic, collapsed by <code>(O + 4M + P)/6</code></td>
+<td>No. It is arithmetic before the drawing. Microsoft removed the PERT Analysis add-in in Project 2010</td>
+</tr>
+<tr>
+<td>Hammock task</td>
+<td>A grouping whose duration is derived from the earliest start and latest finish of what it spans, never entered</td>
+<td>No. It still resolves to one span</td>
+</tr>
+</tbody>
+</table>
+<p>Sources: Microsoft's
+<a href="https://support.microsoft.com/en-us/office/estimated-task-field-d5bd2410-9e1e-428f-bdb3-806cd2d8beff">Estimated field</a>
+("a question mark appears with any estimated duration in the Duration field"), the
+<a href="https://support.microsoft.com/en-us/project/duration-task-field">Duration field</a>, the
+<a href="https://learn.microsoft.com/en-us/office-project/xml-data-interchange/durationformat-element">DurationFormat reference</a>
+for the elapsed units <code>em</code>, <code>eh</code>, <code>ed</code>, <code>ew</code>, <code>emo</code> and the estimated twins <code>d?</code> and <code>ed?</code>,
+<a href="https://support.microsoft.com/en-us/project/how-project-schedules-tasks-behind-the-scenes">how Project schedules tasks</a>,
+the <a href="https://support.microsoft.com/en-us/project/placeholder-task-field">Placeholder field</a>,
+<a href="https://learn.microsoft.com/en-us/previous-versions/office/office-2010/cc178965(v=office.14)">changes in Project 2010</a>
+listing "Pert Analysis" among removed add-ins, and
+<a href="https://en.wikipedia.org/wiki/Hammock_activity">hammock activity</a>.</p>
+<p><strong>Who draws a spread.</strong> Only risk-analysis software. Intaver's RiskyProject shows "the ranges and
+distributions for early and late start time and finish times" as "small triangles at the beginning
+and end of each bar" (<a href="https://intaver.com/?p=3022">Intaver</a>). That is a Monte Carlo result, which
+needs a distribution per task and a dependency graph to propagate through. We have neither.</p>
+<p><strong>Who draws an open end.</strong> Two products, independently. Microsoft's lighter placeholder bar, above;
+and BigPicture, where "if the start/end date is not defined, the relevant side of the taskbar is
+faded"
+(<a href="https://appfire.atlassian.net/wiki/spaces/DLP/pages/2212497400">Appfire</a>). OmniPlan answered a
+2017 request for exactly this with "doesn't currently offer built-in functionality for
+uncertain/estimated date entry"
+(<a href="https://discourse.omnigroup.com/t/uncertain-start-end-dates-for-a-task-way-to-show-it/34357">OmniGroup</a>).
+Two vendors with different pictures and no shared vocabulary is not a convention to adopt.</p>
+<h3 id="a-gantt-chart-with-no-predecessors">A Gantt chart with no predecessors<a class="headerlink" href="#a-gantt-chart-with-no-predecessors" title="Permanent link">&para;</a></h3>
+<p><strong>Every bar stacks at the start date.</strong> As Soon As Possible is "the default in a project scheduled
+from the start date"
+(<a href="https://support.microsoft.com/en-US/project/constraint-type-task-field">constraint type</a>), and
+"when you add a new task to a schedule, it automatically is scheduled to start on the project's
+start date"; with nothing linked, "the project's duration is the same as the duration of the
+longest task"
+(<a href="https://support.microsoft.com/en-us/project/how-project-schedules-tasks-behind-the-scenes">scheduling</a>).
+So 42 bars would all begin at hour zero, and the longest one would set the width.</p>
+<p><strong>There is no name for it, because the field treats it as a defect, not a mode.</strong> Schedule-quality
+practice calls a task with no predecessor and no successor "dangling" or "missing logic", and the
+DCMA 14-point assessment caps those at 5% of incomplete tasks
+(<a href="https://www.deltek.com/en/project-and-portfolio-management/project-scheduling/dcma-14-point-assessment">Deltek</a>,
+<a href="https://tensix.com/the-14-point-assessment-and-schedule-missing-logic-inspection/">Tensix</a>).
+Our protocol would be at 100%. Float and the critical path, the two things a Gantt computes, are
+undefined without logic.</p>
+<p><strong>What is used instead is a list.</strong> No standards body says so; the statement comes from vendors,
+and the plainest is Instagantt's: a Gantt chart "without dependencies is just a list of tasks with
+dates" (<a href="https://www.instagantt.com/guides/project-dependencies">Instagantt</a>). The alternatives
+offered are a task list, a calendar view or a Kanban board - each of which is a table with a time
+column, drawn differently.</p>
+<h2 id="4-what-the-renderers-can-actually-express">4. What the renderers can actually express<a class="headerlink" href="#4-what-the-renderers-can-actually-express" title="Permanent link">&para;</a></h2>
+<p>The constraint: inline SVG in a self-contained offline <code>file://</code> page, no network, no script at
+view time.</p>
+<table>
+<thead>
+<tr>
+<th>Renderer</th>
+<th>(a) open end</th>
+<th>(b) uncertainty range</th>
+<th>(c) hands-on / unattended split</th>
+<th>(d) static SVG, no JS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vega-Lite</strong> via <code>vl-convert-python</code></td>
+<td>No. A null <code>x2</code> draws nothing</td>
+<td>Yes, <code>errorbar</code> or a layered <code>rule</code></td>
+<td>Yes, a stacked bar on one row</td>
+<td><strong>Yes, in process, measured</strong></td>
+</tr>
+<tr>
+<td>Mermaid <code>gantt</code></td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Only through <code>mmdc</code>, which needs Node, Puppeteer and Chromium</td>
+</tr>
+<tr>
+<td>frappe-gantt</td>
+<td>No — a task with no end is dropped</td>
+<td>No</td>
+<td>Partial, one <code>progress</code> fill from the left edge</td>
+<td>No render path outside a live browser DOM</td>
+</tr>
+<tr>
+<td>vis-timeline</td>
+<td>No — a missing end changes the shape to a box</td>
+<td>No</td>
+<td>No</td>
+<td>No, and it draws HTML, not SVG</td>
+</tr>
+<tr>
+<td>Plotly <code>px.timeline</code></td>
+<td>No, fakeable with a second faded bar</td>
+<td>Yes, <code>error_x</code></td>
+<td>Yes, several bars on one y value</td>
+<td>Only with Kaleido 1 and an installed Chrome</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Vega-Lite, measured.</strong> <code>vl_convert.vegalite_to_svg</code> compiled a layered Gantt-shaped spec in
+0.50 s to 11,618 characters of SVG. The output starts with <code>&lt;svg</code>, contains no <code>&lt;script</code>, and
+its only <code>http</code> strings are the SVG and xlink namespace URIs — nothing is fetched at view time.
+A stacked hands-on and unattended split compiled, an <code>errorbar</code> layer compiled, and a dashed
+<code>rule</code> with a <code>triangle-right</code> point compiled with <code>stroke-dasharray</code> intact. A <code>linearGradient</code>
+survives, so a fading bar end is drawable.</p>
+<p><strong>But Vega-Lite will not draw an unknown end for us.</strong> With <code>x2</code> set to <code>null</code>, the scenegraph
+holds the rect — <code>(x=75, x2=None, width=None)</code> — and it has no geometry, so nothing renders. The
+caller must supply a finish. Any open end is a picture we design and a number we invent.</p>
+<p><strong>One dependency note.</strong> <code>vl-convert-python</code> is already a dependency, but
+<code>src/mbio/plot/convert.py</code> uses only <code>svg_to_png</code> and <code>svg_to_pdf</code> — the package treats it
+as an SVG rasteriser. <code>vegalite_to_svg</code> would be a new use of a shipped library, not a new
+library.</p>
+<p>Mermaid's <code>gantt</code> syntax has <code>section</code>, <code>milestone</code>, <code>excludes</code> and <code>until</code>, but a duration is a
+single value such as <code>3d</code> and the only task tags are <code>active</code>, <code>done</code>, <code>crit</code> and <code>milestone</code>
+(<a href="https://mermaid.js.org/syntax/gantt.html">syntax</a>); <code>mmdc</code> lists <code>puppeteer</code> as a peer
+dependency (<a href="https://github.com/mermaid-js/mermaid-cli">mermaid-cli</a>). frappe-gantt logs
+<code>task "..." doesn't have an end date</code> and drops the task
+(<a href="https://raw.githubusercontent.com/frappe/gantt/master/src/index.js">src/index.js</a>); its
+<code>progress</code> field draws one <code>bar-progress</code> rect from the left
+(<a href="https://raw.githubusercontent.com/frappe/gantt/master/src/bar.js">src/bar.js</a>). vis-timeline
+"uses regular HTML DOM to render the timeline and items", and an item with no end becomes a box
+rather than a range (<a href="https://visjs.github.io/vis-timeline/docs/timeline/">docs</a>). Plotly marks
+<code>x_start</code> and <code>x_end</code> required
+(<a href="https://plotly.com/python-api-reference/generated/plotly.express.timeline.html">API</a>), carries
+<code>error_x</code> on a bar trace (<a href="https://plotly.com/python/reference/bar/">reference</a>), allows
+"multiple bars on the same horizontal line" (<a href="https://plotly.com/python/gantt/">Gantt</a>), and
+exports SVG through Kaleido 1, which from v1 does not ship Chrome
+(<a href="https://plotly.com/python/static-image-export/">static export</a>).</p>
+<p><strong>Reading of the table.</strong> Only one renderer clears the output constraint without a browser, and
+even that one cannot say "unknown" — it can only draw a number we would have had to make up.</p>
+<h2 id="5-what-the-protocol-venues-publish">5. What the protocol venues publish<a class="headerlink" href="#5-what-the-protocol-venues-publish" title="Permanent link">&para;</a></h2>
+<p><strong>None of the four draws a schedule.</strong> All express time as prose or a list attached to a step or a
+stage. None models a dependency, and only one names parallelism at all.</p>
+<p><strong>Nature Protocols is the only venue with a real convention, and it is a list.</strong> The author
+guidelines ask authors to "include a timeline indicating the approximate time each step or stage
+will take", to "also provide this information as a list at the end of the procedure", and, under
+Procedure, to "include a TIMING callout with each subheading and state how long the section will
+take to complete"
+(<a href="https://www.nature.com/nprot/for-authors/protocols">for authors</a>). So the inline callout is per
+stage, and step ranges appear only in the closing list.</p>
+<p>The published form, read from Joung 2017 in
+<code>reference_docs/synthesis_and_assembly/lentiviral-tolerance/assays/fm5-joung2017-natprotoc.txt</code>:</p>
+<ul>
+<li>inline, after a subheading: <code>Designing a custom sgRNA library ● TIMING 3-5 w; 1 w hands-on</code></li>
+<li>in the closing Timing section: <code>Steps 1-17, designing and cloning a targeted screen: 3-5 w, 1 w hands-on</code></li>
+</ul>
+<p>Two things in that line matter to us. It carries <strong>hands-on time as a second number on the same
+duration</strong> — the exact field issue #404 found missing — and it is attached to a <strong>step range</strong>,
+not a step, which is how a protocol that cannot time every step still states a time.</p>
+<p>The inline flags are five: <code>TIMING</code>, <code>PAUSE POINT</code> ("followed by a brief description of the
+options available", for example "Can be left overnight at 4°C"), <code>CRITICAL STEP</code>, <code>CAUTION</code> and
+<code>TROUBLESHOOTING</code>. A schedule diagram is not among the standard elements; the guidelines offer
+only "consider including a flow diagram to demonstrate how the stages fit together".</p>
+<p><strong>protocols.io stores a duration and nothing else about time.</strong> A step's <code>components</code> array holds
+an entity of type <code>duration</code>, whose data are <code>duration</code> (seconds), <code>label</code>, <code>pause</code>, <code>preset</code> and
+<code>start</code> (<a href="https://apidoc.protocols.io/">API</a>). Steps are an ordered list linked by <code>previous_guid</code>.
+No dependency, no parallel step, no stopping-point field, and no protocol-level total.</p>
+<p><strong>Bio-protocol asks for incubation times inside the sentence and nothing structured.</strong> Its template
+says to include "incubation time" per step and to "avoid using vague terms such as 'several,'
+'enough,' 'about,' or 'around'", and it carries <code>Caution</code>, <code>Pause point</code>, <code>Critical</code> and
+<code>See Troubleshooting</code> labels
+(<a href="https://bio-protocol.org/bio101/standardformat.aspx">format</a>). There is no Timing section.</p>
+<p><strong>JoVE records no timing at all.</strong> Its author instructions give numbered steps of "1-2 actions" and
+ask only: "Indicate any points at which the experiment can be paused and then restarted later"
+(<a href="https://www.jove.com/files/Instructions_for_Authors.pdf">instructions</a>).</p>
+<p><strong>The day-numbered schematic is a figure habit, not a standard.</strong> Biology papers draw a line with
+an anchor at day 0 and events at named days, and BioRender sells it as a template
+(<a href="https://www.biorender.com/template/mouse-experimental-timeline">Mouse Experimental Timeline</a>). It
+encodes where events sit on a calendar. It encodes no step duration, no hands-on split, no resource
+and no dependency — which is to say it encodes none of what a Gantt chart is for.</p>
+<h2 id="6-what-to-build-instead">6. What to build instead<a class="headerlink" href="#6-what-to-build-instead" title="Permanent link">&para;</a></h2>
+<p>A <strong>schedule table</strong>, one row per step, in the shape the venues already use:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Where it comes from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Step range</td>
+<td>Nature's <code>Steps 1-17, ...: 3-5 w, 1 w hands-on</code> form — a range where no single step is timed</td>
+</tr>
+<tr>
+<td>Duration</td>
+<td>Summed from the step's <code>timers</code> and <code>programs</code> where it holds them</td>
+</tr>
+<tr>
+<td>Hands-on</td>
+<td>A new field. Nature publishes it, so it is a number a protocol is expected to know</td>
+</tr>
+<tr>
+<td>Kind</td>
+<td>Hands-on, attended wait, or unattended — the distinction that makes the four overnight outgrowths read as 74% of the hours without implying anyone is present for them</td>
+</tr>
+<tr>
+<td>Missing</td>
+<td>A <code>Hole</code>, where the protocol holds no duration</td>
+</tr>
+</tbody>
+</table>
+<p>A hole here is the same device the package already uses for an unsourced number, so 24 untimed
+steps become 24 visible questions rather than 24 invented bars. <code>mbio.protocol.model.Step</code>
+holds <code>timers</code>, <code>programs</code> and <code>holes</code> today and no duration, hands-on or predecessor field; the
+table is what those fields would feed.</p>
+<p><strong>Reopen the chart when the table is no longer mostly holes.</strong> Two things would change the answer:
+durations on most steps, and a first dependency — even "these two steps may run at once" as an
+explicit pair. With both, Vega-Lite can draw it offline today, and the picture would be worth more
+than the table. Without them, the chart would be an argument about invented numbers.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

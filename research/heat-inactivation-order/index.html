@@ -1,0 +1,1564 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/heat-inactivation-order/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Does an 80 °C hold inactivate an enzyme listed at 65 °C? - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#does-an-80-c-hold-inactivate-an-enzyme-listed-at-65-c" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Does an 80 °C hold inactivate an enzyme listed at 65 °C?
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-each-source-gives-for-the-two-enzymes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. What each source gives for the two enzymes
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-crux-what-neb-says-about-the-two-temperatures" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. The crux: what NEB says about the two temperatures
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-other-two-things-the-brief-asked-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. The other two things the brief asked for
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-sources-consulted" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Sources consulted
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-was-searched-and-did-not-answer-the-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. What was searched and did not answer the question
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-how-nebcom-was-reachable-today-and-how-it-was-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. How <code>neb.com</code> was reachable today, and how it was not
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-what-would-settle-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. What would settle it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="does-an-80-c-hold-inactivate-an-enzyme-listed-at-65-c">Does an 80 °C hold inactivate an enzyme listed at 65 °C?<a class="headerlink" href="#does-an-80-c-hold-inactivate-an-enzyme-listed-at-65-c" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #522. <code>mbio.bench.inactivation.heat_inactivations</code> groups the
+enzymes in one tube by the condition each supplier gives, so a tube holding BsaI-HFv2 and PmeI
+is held twice: 80 °C for 20 minutes, then 65 °C for 20 minutes. Forty minutes, two stages, one
+tube.</p>
+<p><strong>The question.</strong> Does the 80 °C hold already inactivate PmeI, making the 65 °C hold redundant
+and the two collapsible into one?</p>
+<p><strong>The answer is no source says so.</strong> The condition each enzyme carries is the condition New
+England Biolabs assayed, and the assay held a reaction at one temperature, not at both. NEB's
+only statement about the two temperatures runs the other way: 80 °C is offered as a fallback for
+enzymes that 65 °C fails to stop. Nothing published says the hotter hold covers the cooler
+enzyme, so on present evidence the two holds stay.</p>
+<p>A quoted row below is verbatim from the cited document. A row marked <strong>no source</strong> means the
+document was searched and states nothing; it is not an invitation to supply a figure.</p>
+<h2 id="1-what-each-source-gives-for-the-two-enzymes">1. What each source gives for the two enzymes<a class="headerlink" href="#1-what-each-source-gives-for-the-two-enzymes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>PmeI (NEB #R0560)</th>
+<th>BsaI-HFv2 (NEB #R3733)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Heat Inactivation</em> usage guideline, table</td>
+<td><code>65°C</code> / <code>20minutes</code></td>
+<td><code>80°C</code> / <code>20minutes</code></td>
+</tr>
+<tr>
+<td>product page, <strong>Heat Inactivation</strong> field</td>
+<td><code>65°C for 20 minutes</code></td>
+<td><code>80°C for 20 minutes</code></td>
+</tr>
+<tr>
+<td>product page, property icon</td>
+<td><code>heat inactivation 65°</code></td>
+<td><code>heat inactivation 80°</code></td>
+</tr>
+<tr>
+<td>product specification sheet</td>
+<td><strong>no source</strong> — the field is absent</td>
+<td><strong>no source</strong> — the field is absent</td>
+</tr>
+<tr>
+<td>NEBcutter 3 enzyme table</td>
+<td><strong>no source</strong> — no such field</td>
+<td><strong>no source</strong> — no such field</td>
+</tr>
+<tr>
+<td>NEBridge Golden Gate kit manual</td>
+<td>not applicable</td>
+<td><strong>no source</strong> — the word <em>inactivation</em> is absent</td>
+</tr>
+</tbody>
+</table>
+<p>The two readings agree with each other and with what <code>src/mbio/data/enzymes.json</code>
+already ships, which <code>docs/research/restriction-enzyme-data.md</code> section 6 records as checked
+live on 2026-09-18.</p>
+<p><strong>One trap worth naming.</strong> The guideline table carries three BsaI rows, and they disagree:
+<code>BsaI-HF®</code> is <code>65°C</code> / <code>20minutes</code> while <code>BsaI-HF®v2</code> is <code>80°C</code> / <code>20minutes</code>. Read the v2 row.
+Reading the wrong one makes the question disappear by making both enzymes 65 °C.</p>
+<h2 id="2-the-crux-what-neb-says-about-the-two-temperatures">2. The crux: what NEB says about the two temperatures<a class="headerlink" href="#2-the-crux-what-neb-says-about-the-two-temperatures" title="Permanent link">&para;</a></h2>
+<p>The <em>Heat Inactivation</em> usage guideline opens with this, verbatim:</p>
+<blockquote>
+<p>Heat inactivation is a convenient method for stopping a restriction endonuclease reaction.
+Incubation at 65°C for 20 minutes inactivates the majority of restriction endonucleases that
+have an optimal incubation temperature of 37°C. Enzymes that cannot be inactivated at 65°C can
+often be inactivated by incubation at 80°C for 20 minutes. The table below indicates whether or
+not an enzyme can be heat inactivated and the temperature needed to do so.</p>
+</blockquote>
+<p>This is the only sentence on any source read here that puts 65 °C and 80 °C in one claim, and it
+points the opposite way from the one the question needs. It says what to try when 65 °C is not
+enough. It does not say that 80 °C does everything 65 °C does, and an enzyme listed at 65 °C is
+by that same sentence one of the majority that 65 °C already handles — so it was never a
+candidate for the 80 °C fallback and NEB has no occasion to say what 80 °C does to it.</p>
+<p>The same page then states how the table was measured, verbatim:</p>
+<blockquote>
+<p>Heat inactivation was performed as follows to approximate a typical experiment. A 50 µl
+reaction mixture containing the appropriate NEBuffer, 0.5 µg of calf thymus DNA, and 5 or 10 µl
+of restriction endonuclease (at selling concentration) was incubated at 37°C for 60 minutes and
+then at 65°C or 80°C for 20 minutes. 0.5 µg of substrate DNA (usually lambda) was added to the
+reaction mixture and incubated at the optimal reaction temperature of the enzyme for 60 minutes.
+Any digestion (complete or partial) of the substrate DNA after the second incubation, as seen by
+agarose gel electrophoresis, was interpreted as incomplete heat inactivation.</p>
+</blockquote>
+<p><strong>"65°C or 80°C"</strong> is the load-bearing word. Each enzyme's reaction was held at one of the two,
+and the table reports that one result. PmeI's entry is therefore evidence that PmeI stops at
+65 °C and evidence about nothing else. It is not a measurement at 80 °C, and no column of that
+table reports one.</p>
+<p>The wording is stable. An archived copy of the same page from 2021-04-20 carries both paragraphs
+word for word, so this is not a recent edit that a later page might undo.</p>
+<h2 id="3-the-other-two-things-the-brief-asked-for">3. The other two things the brief asked for<a class="headerlink" href="#3-the-other-two-things-the-brief-asked-for" title="Permanent link">&para;</a></h2>
+<p><strong>Is either enzyme flagged as not heat inactivatable?</strong> No. Both carry a temperature. The
+guideline does use <code>No</code> as a value — <code>CviKI-1</code> and <code>CviQI</code> read <code>No</code> / <code>--</code> in the 2026 copy,
+<code>AclI</code>, <code>AlwI</code> and <code>ApaLI</code> in the 2021 one — and <code>docs/research/bench-numbers.md</code> records T7
+DNA Ligase the same way, with the
+further caution that its 65 °C option is void in a buffer carrying PEG. So <code>No</code> is an answer NEB
+gives when it applies, which makes the temperatures it does give meaningful rather than
+boilerplate.</p>
+<p><strong>Does any source give a combined condition for two enzymes in one tube?</strong> No. The <em>Double
+Digests</em> usage guideline is the nearest, and it describes the sequential case only:</p>
+<blockquote>
+<p>If two different incubation temperatures are necessary, choose the optimal reaction buffer and
+set up reaction accordingly. Add the first enzyme and incubate at the desired temperature. Then,
+heat inactivate the first enzyme, add the second enzyme and incubate at the recommended
+temperature.</p>
+</blockquote>
+<p>In that procedure the second enzyme is not in the tube during the heat step, so the page never
+has to say what one hold does to two enzymes, and it names no temperature for the step at all.
+<em>Optimizing Restriction Endonuclease Reactions</em> mentions heat inactivation in one line and links
+straight back to the guideline. Both NEBridge Golden Gate Assembly Kit manuals, E1601 and E1602,
+contain no occurrence of <em>inactiv</em> in any form.</p>
+<h2 id="4-sources-consulted">4. Sources consulted<a class="headerlink" href="#4-sources-consulted" title="Permanent link">&para;</a></h2>
+<p>Read on <strong>2026-10-08</strong> unless the date column says otherwise.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>URL</th>
+<th>How read</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NEB, <em>Heat Inactivation</em> usage guideline</td>
+<td><code>https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation</code></td>
+<td>held under <code>reference_docs/synthesis_and_assembly/bench/neb/</code>, fetched through <code>r.jina.ai</code></td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>the same page, re-read</td>
+<td><code>https://web.archive.org/web/20260305053645/https://www.neb.com/en-us/tools-and-resources/usage-guidelines/heat-inactivation</code></td>
+<td>Wayback snapshot, plain <code>curl</code></td>
+<td>2026-10-08</td>
+</tr>
+<tr>
+<td>the same page, five years earlier</td>
+<td>archived copy under <code>reference_docs/restriction-ligation/web/archived/</code></td>
+<td>already held</td>
+<td>2021-04-20</td>
+</tr>
+<tr>
+<td>NEB PmeI (#R0560) product page</td>
+<td><code>https://www.neb.com/en-us/products/r0560-pmei</code></td>
+<td>held under <code>reference_docs/synthesis_and_assembly/bench/neb/</code>, fetched through <code>r.jina.ai</code></td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>NEB BsaI-HFv2 (#R3733) product page</td>
+<td><code>https://web.archive.org/web/20260221183023/https://www.neb.com/en-us/products/r3733-bsai-hf-v2</code></td>
+<td>Wayback snapshot, plain <code>curl</code></td>
+<td>2026-10-08</td>
+</tr>
+<tr>
+<td>NEB product specification PS-R0560S/L v1.0, 30 Jul 2013</td>
+<td><code>https://www.neb.com/en/-/media/catalog/specifications/r/0/r0560s_l_v1.pdf</code></td>
+<td>PDF held under <code>reference_docs/</code>, with its text dump; URL re-checked by <code>curl</code></td>
+<td>2026-10-08</td>
+</tr>
+<tr>
+<td>NEB product specification PS-R3733S/L v1.0, 13 Dec 2017</td>
+<td><code>https://www.neb.com/en/-/media/catalog/specifications/r/3/r3733s_l_v1.pdf</code></td>
+<td>PDF held under <code>reference_docs/</code>, with its text dump; URL re-checked by <code>curl</code></td>
+<td>2026-10-08</td>
+</tr>
+<tr>
+<td>NEBridge Golden Gate Assembly Kit manual E1601</td>
+<td><code>https://www.neb.com/-/media/nebus/files/manuals/manuale1601.pdf</code></td>
+<td>PDF held under <code>reference_docs/</code>, with its text dump</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>NEBridge Golden Gate Assembly Kit manual E1602</td>
+<td><code>https://www.neb.com/-/media/nebus/files/manuals/manuale1602.pdf</code></td>
+<td>PDF held under <code>reference_docs/</code>, with its text dump</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>NEB, <em>Double Digests</em> usage guideline</td>
+<td><code>https://www.neb.com/en-us/tools-and-resources/usage-guidelines/double-digests</code></td>
+<td>held under <code>reference_docs/restriction-ligation/web/live/</code></td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>NEB, <em>Optimizing Restriction Endonuclease Reactions</em></td>
+<td><code>https://www.neb.com/en-us/tools-and-resources/usage-guidelines/optimizing-restriction-endonuclease-reactions</code></td>
+<td>held under <code>reference_docs/restriction-ligation/web/live/</code></td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>NEBcutter 3 enzyme table</td>
+<td><code>https://nc3.neb.com/NEBcutter/data/enzymes.json</code></td>
+<td>plain <code>curl</code></td>
+<td>2026-10-08</td>
+</tr>
+<tr>
+<td>NEB restriction enzyme technical guide</td>
+<td>held under <code>reference_docs/restriction-ligation/manuals/</code></td>
+<td>already held</td>
+<td>2026-10-06</td>
+</tr>
+</tbody>
+</table>
+<p>The BsaI-HFv2 product page needed a fresh read because the copy held under <code>reference_docs/</code>
+is a <code>Page Not Found</code> shell: it was fetched from <code>r3733-bsai-hfv2</code>, and the live slug is
+<code>r3733-bsai-hf-v2</code>. The shell carries the full site navigation, so it greps like a real page
+and reads like one until you check its title.</p>
+<h2 id="5-what-was-searched-and-did-not-answer-the-question">5. What was searched and did not answer the question<a class="headerlink" href="#5-what-was-searched-and-did-not-answer-the-question" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>NEB's two product specification sheets.</strong> Both were read end to end. They give
+  concentration, unit definition, shelf life, storage and the release assays, and no heat
+  inactivation condition at all. The product page is the only place NEB states one.</li>
+<li><strong>The NEBcutter 3 enzyme table.</strong> It carries the recognition sequence, both cut offsets, the
+  incubation temperature, the supplied buffer, the Time-Saver flag and methylation notes. There
+  is no heat-inactivation key in the record for either enzyme.</li>
+<li><strong>Both Golden Gate kit manuals.</strong> A kit manual that ran BsaI-HFv2 and a second enzyme in one
+  tube would be the natural place for a combined hold. Neither manual mentions inactivation.</li>
+<li><strong>Two NEB FAQ pages that a web search surfaced</strong>, under <code>neb.com/en-us/faqs/</code>: the slugs
+  <code>how-should-i-stop-my-restriction-digest</code> and
+  <code>are-certain-restriction-enzymes-more-active-at-higher-incubation-temperatures-than-what-is-recommended</code>.
+  Neither has a Wayback snapshot, by its CDX query, and <code>neb.com</code> would not serve either today.
+  Their text is therefore unverified and nothing from them is quoted here. The first is worth
+  another attempt whenever <code>neb.com</code> opens again; by the search engine's own summary it points
+  the reader back to per-enzyme catalogue information, which would strengthen this note's answer
+  rather than change it.</li>
+<li><strong>A forum thread reporting an e-mail from NEB.</strong> A Protocol Online post says NEB replied by
+  e-mail that the higher of two temperatures should be used. It is a user post quoting private
+  correspondence, unverifiable, and it is not a published statement. It is recorded here so the
+  next person does not spend the search finding it again.</li>
+</ul>
+<h2 id="6-how-nebcom-was-reachable-today-and-how-it-was-not">6. How <code>neb.com</code> was reachable today, and how it was not<a class="headerlink" href="#6-how-nebcom-was-reachable-today-and-how-it-was-not" title="Permanent link">&para;</a></h2>
+<p><code>docs/research/bench-numbers.md</code> records the routes past NEB's HTTP 403. One of them has
+closed since, so this note updates that record.</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Result on 2026-10-08</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>web.archive.org</code> snapshots, plain <code>curl</code></td>
+<td><strong>works</strong> — both pages this note depends on came through it</td>
+</tr>
+<tr>
+<td><code>nc3.neb.com/NEBcutter/data/enzymes.json</code>, plain <code>curl</code></td>
+<td><strong>works</strong></td>
+</tr>
+<tr>
+<td>the specification and manual PDFs, plain <code>curl</code></td>
+<td><strong>works</strong>, and the spelling matters: <code>/r/0/r0560s_l_v1.pdf</code> returns the PDF where <code>r0560.pdf</code>, <code>r0560s.pdf</code>, <code>ps-r0560.pdf</code> and four other spellings all redirect to the 403 error page. Take <code>&lt;catalog&gt;s_l_v1.pdf</code> as the pattern for a product sold in two pack sizes</td>
+</tr>
+<tr>
+<td><code>r.jina.ai/&lt;neb url&gt;</code></td>
+<td><strong>closed.</strong> Returns HTTP 401, <code>AuthenticationRequiredError</code>: <code>You have been blocked from performing anonymous queries due to bad network reputation (AS7018). Please authenticate.</code> This is not the rate limit the earlier note describes, and waiting does not clear it</td>
+</tr>
+<tr>
+<td>plain <code>curl</code> to <code>neb.com</code> with a browser user agent</td>
+<td>HTTP 403, as before</td>
+</tr>
+<tr>
+<td><code>WebFetch</code> on a <code>neb.com</code> HTML page</td>
+<td>HTTP 403, as before</td>
+</tr>
+<tr>
+<td><code>prd-sccd00</code>, <code>prd-sccd01</code>, <code>prd-sccd02.neb.com</code>, <code>www.neb.cn</code></td>
+<td>HTTP 403 — the mirrors a search engine lists are behind the same block</td>
+</tr>
+<tr>
+<td>headless Chrome</td>
+<td>a Cloudflare <code>Verifying you're human</code> interstitial that does not clear</td>
+</tr>
+</tbody>
+</table>
+<p>So the live HTML routes are all shut, and the archive is what is left. A snapshot is dated,
+which the table in section 4 records per source; the 2021 copy agreeing word for word with the
+2026 one is the reason that matters less here than it usually would.</p>
+<h2 id="7-what-would-settle-it">7. What would settle it<a class="headerlink" href="#7-what-would-settle-it" title="Permanent link">&para;</a></h2>
+<p>Nothing in this note forbids collapsing the two holds. It records that no published source
+permits it. Three things would:</p>
+<ul>
+<li><strong>NEB saying so in writing.</strong> A reply from technical support, quoted and dated, is a source;
+  a reply a forum reports is not.</li>
+<li><strong>A measurement.</strong> The guideline's own assay is the protocol to copy: hold a PmeI reaction at
+  80 °C for 20 minutes, add fresh substrate DNA, incubate at 37 °C for an hour, and run a gel.
+  Any digestion means incomplete inactivation.</li>
+<li><strong>Finding the FAQ page.</strong> Section 5 names the one page that might already answer this and
+  could not be read today.</li>
+</ul>
+<p>Until one of those lands, the two holds are what the suppliers' own conditions add up to, and
+<code>heat_inactivations</code> grouping by condition is reporting that honestly rather than padding the
+protocol.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

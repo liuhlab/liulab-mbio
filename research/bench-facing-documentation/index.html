@@ -1,0 +1,2244 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/bench-facing-documentation/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>How comparable tools document themselves for a wet-lab reader - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#how-comparable-tools-document-themselves-for-a-wet-lab-reader" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              How comparable tools document themselves for a wet-lab reader
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-pydna-the-closest-analogue" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. pydna — the closest analogue
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. pydna — the closest analogue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#section-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Section tree
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Page shape
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Examples
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-to-orientation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Time to orientation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#right-for-our-reader" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Right for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-for-our-reader" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Wrong for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-biopython-the-genres-reference-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Biopython — the genre's reference point
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Biopython — the genre&#x27;s reference point">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#section-tree_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Section tree
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-shape_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Page shape
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Examples
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-to-orientation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Time to orientation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#right-for-our-reader_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Right for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-for-our-reader_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Wrong for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-benchling-developer-docs-a-commercial-tool-the-same-reader" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Benchling developer docs — a commercial tool, the same reader
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Benchling developer docs — a commercial tool, the same reader">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#section-tree_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Section tree
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-shape_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Page shape
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Examples
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-to-orientation_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Time to orientation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#right-for-our-reader_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Right for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-for-our-reader_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Wrong for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-snapgene-help-written-for-exactly-our-audience" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. SnapGene help — written for exactly our audience
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. SnapGene help — written for exactly our audience">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#section-tree_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Section tree
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-shape_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Page shape
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Examples
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-to-orientation_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Time to orientation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#right-for-our-reader_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Right for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-for-our-reader_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Wrong for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-addgene-protocols-bench-procedures-for-people-who-run-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Addgene protocols — bench procedures for people who run them
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Addgene protocols — bench procedures for people who run them">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#section-tree_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Section tree
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-shape_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Page shape
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Examples
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-to-orientation_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Time to orientation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#right-for-our-reader_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Right for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-for-our-reader_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Wrong for our reader
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-what-recurs-across-all-five" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. What recurs across all five
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-what-this-suggests-for-us" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. What this suggests for us
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. What this suggests for us">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#section-tree_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Section tree
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-shape-the-model-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Page shape — the model page
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Example policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-things-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Two things to avoid
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="how-comparable-tools-document-themselves-for-a-wet-lab-reader">How comparable tools document themselves for a wet-lab reader<a class="headerlink" href="#how-comparable-tools-document-themselves-for-a-wet-lab-reader" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #489, a sub-issue of map #487. It surveys five comparable tools and asks
+one question of each: how fast does an experimental biologist — strong wet-lab knowledge, basic
+programming — learn what the tool ships and what it does for them at the bench? Findings feed the
+page list (#490) and the model page (#488).</p>
+<p>Everything below was read on <strong>2026-10-08</strong> from each tool's own documentation. No blog posts or
+third-party tutorials were used as evidence.</p>
+<p><strong>One access note.</strong> <code>support.snapgene.com</code> returns HTTP 403 to a scripted fetch of its HTML. Its
+section tree and article bodies came from the Zendesk Help Center JSON API on the same host, which
+answers plainly: <code>/api/v2/help_center/en-us/categories.json</code>, <code>/sections.json</code>, and
+<code>/api/v2/help_center/articles/search.json</code>. Those are the same articles the site serves.</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Reader it actually writes for</th>
+<th>Time to "what can this do for me"</th>
+<th>Takes</th>
+<th>Leaves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>pydna</strong></td>
+<td>a biologist who already decided to script</td>
+<td>Fast — the top nav is four items and one is a cloning notebook list</td>
+<td>A section tree named after bench operations: restriction and ligation, PCR, primer design, Gibson, CRISPR</td>
+<td>Toy sequences; nothing says what comes out at the bench; no protocol, no order sheet</td>
+</tr>
+<tr>
+<td><strong>Biopython</strong></td>
+<td>a bioinformatician</td>
+<td>Slow — 26 chapters, and chapter 2 is the only orientation</td>
+<td>Chapter 2 is the best single page in the survey: one real dataset carried the whole way</td>
+<td>A flat chapter list sorted by module, not by task; cloning is absent</td>
+</tr>
+<tr>
+<td><strong>Benchling SDK</strong></td>
+<td>a developer integrating a platform</td>
+<td>Never, for our reader — the docs answer "how do I call the API", not "what does this do"</td>
+<td>Honest scoping: it says up front the SDK adds nothing the API does not already have</td>
+<td>Biology appears only as sample data; every heading is a software noun</td>
+</tr>
+<tr>
+<td><strong>SnapGene</strong></td>
+<td>exactly our reader</td>
+<td>Immediate — the user guide's sections are named after methods and menus a biologist already knows</td>
+<td>A section per cloning method, each holding three to eight short task articles; six short videos as the front door</td>
+<td>Nothing reusable in the writing itself — it is screenshot-led and tied to one GUI</td>
+</tr>
+<tr>
+<td><strong>Addgene protocols</strong></td>
+<td>the person running the bench step</td>
+<td>Immediate — a flat list of ~50 procedures grouped by what you are trying to do</td>
+<td>Page shape worth copying outright: Summary, Why this method, Procedure, Tips and Troubleshooting, Resources and References</td>
+<td>No software at all, so nothing about where a number came from</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The strongest single finding.</strong> The two tools written for our reader — SnapGene and Addgene —
+both organise by <strong>what the reader is trying to do</strong>, and both put a short orienting page in front
+of the detail. The two written for programmers — Biopython and Benchling — both organise by <strong>what
+the software contains</strong>. pydna sits between: its section tree is bench-named, but its pages are
+written as library tutorials.</p>
+<h2 id="2-pydna-the-closest-analogue">2. pydna — the closest analogue<a class="headerlink" href="#2-pydna-the-closest-analogue" title="Permanent link">&para;</a></h2>
+<p>Sources: <a href="https://pydna.readthedocs.io/">docs home</a>,
+<a href="https://pydna.readthedocs.io/stable/_sources/index.rst"><code>index.rst</code></a>,
+<a href="https://pydna.readthedocs.io/latest/_sources/getting_started.rst"><code>getting_started.rst</code></a>,
+<a href="https://pydna.readthedocs.io/stable/example_gallery.html">example gallery</a>,
+<a href="https://pydna.readthedocs.io/stable/how_pydna_works.html">how pydna works</a>,
+<a href="https://github.com/BjornFJohansson/pydna/blob/master/README.md">README</a>.</p>
+<h3 id="section-tree">Section tree<a class="headerlink" href="#section-tree" title="Permanent link">&para;</a></h3>
+<p>Four top-level pages, plus an API reference:</p>
+<div class="highlight"><pre><span></span><code>installation
+getting_started
+example_gallery
+how_pydna_works
+reference/pydna
+</code></pre></div>
+<p><code>getting_started</code> is itself a grouped list of nine notebooks:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Notebooks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First steps</td>
+<td><code>Dseq</code>, <code>Dseq_Features</code>, <code>Importing_Seqs</code></td>
+</tr>
+<tr>
+<td>Cloning</td>
+<td><code>Restrict_Ligate_Cloning</code>, <code>PCR</code>, <code>primer_design</code>, <code>Gibson</code>, <code>CRISPR</code></td>
+</tr>
+<tr>
+<td>Cloning history</td>
+<td><code>history</code></td>
+</tr>
+<tr>
+<td>More examples</td>
+<td>a pointer to the gallery</td>
+</tr>
+</tbody>
+</table>
+<p>That is the whole nav. A reader sees the entire surface on one screen.</p>
+<h3 id="page-shape">Page shape<a class="headerlink" href="#page-shape" title="Permanent link">&para;</a></h3>
+<p>Every teaching page is a Jupyter notebook rendered to HTML. <code>Restrict_Ligate_Cloning</code> runs:
+title, then <em>Cutting with one or more restriction enzymes</em>, <em>Ligating fragments</em>, <em>Circularizing
+fragments</em>, and a closing <em>Extra Notes: what happens to features when cutting and ligating?</em> Prose
+and code are roughly balanced, about six code cells, each followed by its real printed output —
+<code>Dseqrecord</code> summaries showing size, circularity, feature count and sticky or blunt ends.</p>
+<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
+<p>Inline, executed, with outputs shown. The first cell of every notebook is a <code>%%capture</code> block that
+installs pydna when running on Colab, and each notebook carries a Colab badge, so a reader can run
+it in a browser with nothing installed. That is a real strength.</p>
+<p>The sequences are <strong>toy</strong>: <code>Restrict_Ligate_Cloning</code> works on a 338 bp circular <code>sample_seq.gb</code>
+with one gene feature. The example gallery is where real material lives — Gibson assembly of
+<em>R. cellulolyticum</em> fragments reproducing the original Gibson paper, CRISPR deletion in
+<em>K. phaffi</em>, promoter libraries in <em>S. cerevisiae</em> — but the gallery is a link index with
+one-line descriptions and no code on the page.</p>
+<h3 id="time-to-orientation">Time to orientation<a class="headerlink" href="#time-to-orientation" title="Permanent link">&para;</a></h3>
+<p>Fast. The README's opening sentence states the scope ("a human-readable formal description of
+cloning and genetic assembly strategies", for simulation and verification) and then lists the
+operations: primer design, PCR, restriction digestion, ligation, gel image generation, homologous
+recombination, Gibson assembly, with Golden Gate marked in progress. The first README code example
+builds a 60 bp record, labels a feature, and prints GenBank.</p>
+<h3 id="right-for-our-reader">Right for our reader<a class="headerlink" href="#right-for-our-reader" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The section tree is named in bench words.</strong> "Restriction and ligation", "PCR", "Gibson",
+  "CRISPR" — a biologist scanning the nav knows immediately whether their job is covered.</li>
+<li><strong>Capability list on the landing page</strong>, as a plain list of operations, not of modules.</li>
+<li><strong>Runnable in a browser.</strong> The Colab badge removes the install from the first contact.</li>
+<li><strong>Outputs are shown.</strong> The reader sees what a result looks like before deciding to install.</li>
+</ul>
+<h3 id="wrong-for-our-reader">Wrong for our reader<a class="headerlink" href="#wrong-for-our-reader" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Toy sequences teach nothing about the bench.</strong> A 338 bp <code>sample_seq.gb</code> is a software fixture.
+  The biologist cannot map it onto their own plasmid, and the gallery that would — real genomes,
+  a reproduced paper — is one click away and carries no code on the page.</li>
+<li><strong>The output stops at the screen.</strong> Nothing in the teaching pages produces a file anyone takes
+  to a bench: no primer sheet, no order list, no protocol. The reader learns the library can
+  simulate a ligation, not what they then do on Monday.</li>
+<li><strong>No page says what is shipped as a whole.</strong> There is no catalogue. <code>how_pydna_works</code> is one
+  section long and covers only the assembly model.</li>
+<li><strong>The API reference is docstrings.</strong> The project's own guidance is to read them with Python's
+  <code>help()</code>. Our reader will not.</li>
+</ul>
+<h2 id="3-biopython-the-genres-reference-point">3. Biopython — the genre's reference point<a class="headerlink" href="#3-biopython-the-genres-reference-point" title="Permanent link">&para;</a></h2>
+<p>Sources: <a href="https://biopython.org/docs/latest/Tutorial/index.html">Tutorial contents</a>,
+<a href="https://biopython.org/docs/latest/Tutorial/chapter_quick_start.html">chapter 2, Quick Start</a>.</p>
+<h3 id="section-tree_1">Section tree<a class="headerlink" href="#section-tree_1" title="Permanent link">&para;</a></h3>
+<p>26 chapters, flat, in this order: Introduction; Quick Start; Sequence objects; Sequence annotation
+objects; Sequence Input/Output; Sequence alignments; Pairwise sequence alignment; Multiple Sequence
+Alignment objects; pairwise2; BLAST (new); BLAST and other search tools; Entrez; Swiss-Prot and
+ExPASy; the PDB module; PopGen; Phylo; motifs; Cluster analysis; Graphics including GenomeDiagram;
+KEGG; phenotype; Cookbook; the testing framework; contributing; a Python appendix; bibliography.</p>
+<p>The ordering axis is the package's own module layout. A reader with a task in hand has to already
+know which module owns it.</p>
+<h3 id="page-shape_1">Page shape<a class="headerlink" href="#page-shape_1" title="Permanent link">&para;</a></h3>
+<p>A chapter is a long linear essay with numbered subsections, prose alternating with interactive
+sessions. Chapter 2 runs: <em>General overview of what Biopython provides</em>; <em>Working with sequences</em>;
+<em>A usage example</em>; <em>Parsing sequence file formats</em> (with FASTA, GenBank, and a subsection titled
+"I love parsing — please don't stop talking about it!"); <em>Connecting with biological databases</em>;
+<em>What to do next</em>.</p>
+<h3 id="examples_1">Examples<a class="headerlink" href="#examples_1" title="Permanent link">&para;</a></h3>
+<p>Interactive <code>&gt;&gt;&gt;</code> sessions with <code>...</code> continuation and the printed result below. The first example
+is three lines — <code>from Bio.Seq import Seq</code>, then <code>Seq("AGTACACTGGT")</code> — self-contained and runnable
+in a bare Python session.</p>
+<p>The data is <strong>real and carried through</strong>: <code>ls_orchid.fasta</code> and <code>ls_orchid.gbk</code>, a genuine NCBI
+nucleotide search for Cypripedioideae returning 94 records, with real accessions (Z78533.1,
+Z78439.1) quoted in the output. The orchid dataset runs through the entire chapter, so every later
+example builds on something the reader has already seen.</p>
+<h3 id="time-to-orientation_1">Time to orientation<a class="headerlink" href="#time-to-orientation_1" title="Permanent link">&para;</a></h3>
+<p>Slow by structure, fast if the reader lands on chapter 2. Chapter 2 is doing all the work: it
+opens with a prose overview of what the package provides, then gets the reader to a running
+example within a screen. Chapters 3 to 26 are reference material that happens to be written as
+prose.</p>
+<h3 id="right-for-our-reader_1">Right for our reader<a class="headerlink" href="#right-for-our-reader_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>One real dataset, carried through a whole chapter.</strong> This is the single most transferable idea
+  in the survey. The reader builds a mental model of one record and reuses it; no example costs
+  them a fresh setup.</li>
+<li><strong>A deliberate orientation chapter</strong> that exists only to answer "what can you do with this".
+  It is even titled with the question.</li>
+<li><strong>Output shown under every snippet</strong>, so the page can be read without running anything.</li>
+</ul>
+<h3 id="wrong-for-our-reader_1">Wrong for our reader<a class="headerlink" href="#wrong-for-our-reader_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The chapter list is the module list.</strong> A biologist wanting to clone has no entry point —
+  cloning is not a chapter, because it is not a module.</li>
+<li><strong>26 chapters is not a surface anyone scans.</strong> There is no page saying what the package ships.</li>
+<li><strong>Chapter length.</strong> A chapter is an essay; the reader cannot tell where their answer sits.</li>
+<li><strong>No bench artefact anywhere.</strong> It is a library tutorial throughout, which is correct for
+  Biopython and wrong for us.</li>
+</ul>
+<h2 id="4-benchling-developer-docs-a-commercial-tool-the-same-reader">4. Benchling developer docs — a commercial tool, the same reader<a class="headerlink" href="#4-benchling-developer-docs-a-commercial-tool-the-same-reader" title="Permanent link">&para;</a></h2>
+<p>Sources: <a href="https://help.benchling.com/hc/en-us/articles/9714802977805">developer platform access</a>,
+<a href="https://docs.benchling.com/docs">docs index</a>,
+<a href="https://docs.benchling.com/docs/getting-started-with-the-sdk">Getting Started with the SDK</a>,
+<a href="https://docs.benchling.com/docs/common-sdk-interactions-and-examples">Common SDK Interactions and Examples</a>.</p>
+<h3 id="section-tree_2">Section tree<a class="headerlink" href="#section-tree_2" title="Permanent link">&para;</a></h3>
+<p>Titled "Warehouse &amp; API Guides". Sections: General (Developer Platform Overview, Limits,
+Stability); Benchling Apps (nine pages); Webhooks; App Canvas; Python SDK (one page: Common SDK
+Interactions and Examples); Warehouse (an overview, then fifteen warehouse-table pages including
+Molecular Biology, Inventory, Workflows, Registry); Events; Analyses; Documents; Technical
+Accelerators; Examples (four, including "Interacting with the API using R"); V3 APIs.</p>
+<p>Every heading names a part of the platform.</p>
+<h3 id="page-shape_2">Page shape<a class="headerlink" href="#page-shape_2" title="Permanent link">&para;</a></h3>
+<p><em>Getting Started with the SDK</em> runs: About; Why Use the SDK; Getting Started (Installation —
+stable and preview; Using the SDK — API-key auth, OAuth auth, then one sample call listing DNA
+sequences); Next Steps; Support. Callouts carry caveats — one notes the models come from
+Benchling's OpenAPI spec, another states plainly that the SDK adds no functionality beyond the
+underlying APIs.</p>
+<p><em>Common SDK Interactions and Examples</em> is a long single page of software concerns: entity
+creation, updates, registration, pagination, schema fields, async tasks, retries, error handling,
+the <code>returning</code> parameter, unsupported endpoints, client customisation, self-signed certificates,
+the <code>Unset</code> type, and forward compatibility in enums and polymorphic types.</p>
+<h3 id="examples_2">Examples<a class="headerlink" href="#examples_2" title="Permanent link">&para;</a></h3>
+<p>Inline Python with placeholder values — <code>https://my.benchling.com</code>, an API-key stand-in. Biology
+appears only as sample payload: a DNA sequence entity built from a base string with <code>species</code> set
+to <code>"mouse"</code>. The task framing is entirely software: client, endpoint, serialisation, timeout,
+enum.</p>
+<h3 id="time-to-orientation_2">Time to orientation<a class="headerlink" href="#time-to-orientation_2" title="Permanent link">&para;</a></h3>
+<p>Our reader never gets there, and before that they cannot even open the door: developer-platform
+access is gated behind a tenant admin setting it to Full in the Tenant Admin Console. The docs
+assume the reader has decided to integrate and now needs call mechanics.</p>
+<h3 id="right-for-our-reader_2">Right for our reader<a class="headerlink" href="#right-for-our-reader_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Scope stated up front, including what the thing is not.</strong> "The SDK adds no functionality
+  beyond the underlying APIs" saves a reader an hour. We should be as blunt about what the package
+  does not do.</li>
+<li><strong>Callouts carry the caveat, not the body text.</strong> The prose stays an instruction; the warning
+  sits beside it. That maps cleanly onto our protocol <code>cautions</code> discipline.</li>
+<li><strong>Installation split stable and preview</strong>, so nobody installs an alpha by accident.</li>
+</ul>
+<h3 id="wrong-for-our-reader_2">Wrong for our reader<a class="headerlink" href="#wrong-for-our-reader_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Every heading is a software noun.</strong> "Pagination", "Forward-Compatibility in Enums". A
+  biologist scanning this tree learns nothing about what they could accomplish.</li>
+<li><strong>No task is ever posed in biology terms.</strong> Nothing is titled "register a plasmid" or "pull a
+  sequence into a notebook entry"; the Molecular Biology page is a warehouse-table schema.</li>
+<li><strong>Access gating comes before orientation.</strong> The reader must be entitled before they can read
+  what they would be entitled to.</li>
+</ul>
+<h2 id="5-snapgene-help-written-for-exactly-our-audience">5. SnapGene help — written for exactly our audience<a class="headerlink" href="#5-snapgene-help-written-for-exactly-our-audience" title="Permanent link">&para;</a></h2>
+<p>Sources: <a href="https://help.snapgene.com">old guide redirect</a>,
+<a href="https://support.snapgene.com/api/v2/help_center/en-us/categories.json">help-centre categories</a>,
+<a href="https://support.snapgene.com/api/v2/help_center/en-us/sections.json">sections</a>,
+<a href="https://support.snapgene.com/api/v2/help_center/articles/search.json">article search</a>,
+<a href="https://snapgene.com/series/getting-started">Get Started series</a>.</p>
+<h3 id="section-tree_3">Section tree<a class="headerlink" href="#section-tree_3" title="Permanent link">&para;</a></h3>
+<p>Three categories: <strong>SnapGene User Guide</strong>, <strong>SnapGene FAQ</strong>, <strong>SnapGene Server Guide</strong>.</p>
+<p>The User Guide holds 46 sections, in this order: What's New; Installation and License Management;
+Preferences; Projects; Display Options for DNA Sequences; Display Options for Protein Sequences;
+Other Display Options; Info Panel; Enzymes; Features; Custom Feature Types; Primers; Primer
+Database; Translations; Colors; Searching; Focus on Region; History; RNA; Proteins; CRISPR;
+<strong>Restriction Cloning and Linear Ligation; Gateway Cloning; Gibson Assembly; Golden Gate Assembly;
+NEBuilder HiFi DNA Assembly; In-Fusion Cloning; TA or GC Cloning; TOPO Cloning</strong>; PCR and
+Mutagenesis; Agarose Gel Simulation; Collections; Batch Operations; Importing and Exporting;
+Editing Sequences; Assembly and Alignment; Pairwise and Multiple Alignment; Single Stranded
+Sequences; Nucleic Acid Secondary Structure; Designing Sequences; Codon Usage; Dotmatics
+Bioregister; Electronic Laboratory Notebooks; Command Line Interface; Blast; Localization;
+Shortcuts.</p>
+<p>The FAQ is a parallel 15-section tree — General, Licenses, SSO, Printing and Exporting, Importing
+Files, Files, Primers, Restriction Enzymes, Features, Translations, Agarose Gels, Alignment and
+Assembly, Sequence Traces, History, Troubleshooting, Actions.</p>
+<p><strong>Three things to notice.</strong> First, each cloning method is its own section — eight of them, by
+name, in the order a reader would meet them. Second, display and preferences come <em>before</em> the
+methods: orientation first. Third, the FAQ is not a dumping ground; it mirrors the guide's topics,
+so "how do I" and "why did it" live in parallel trees.</p>
+<h3 id="page-shape_3">Page shape<a class="headerlink" href="#page-shape_3" title="Permanent link">&para;</a></h3>
+<p>A section holds three to eight short task articles. Golden Gate Assembly holds, among others: <em>Set
+the Enzymes for Golden Gate Assembly</em>; <em>Golden Gate Cloning of a Single Fragment into a Vector</em>;
+<em>Golden Gate Cloning of Multiple Fragments into a Vector with Type IIS Sites</em>; <em>…with no Type IIS
+sites</em>; <em>Golden Gate Cloning into a Vector Cut with non-Type IIS Enzymes</em>; <em>How is Golden Gate
+Fidelity Predicted in SnapGene?</em>; <em>Golden Gate Assembly in Older Versions of SnapGene</em>.</p>
+<p>Note the shape of that set: <strong>one article per situation the reader is actually in</strong>, not one
+article per feature. "Does my vector have Type IIS sites?" is a question the biologist can answer
+about their own plasmid, and it is the title.</p>
+<p>Note also the one explanatory article, <em>How is Golden Gate Fidelity Predicted?</em> — a single page
+answering "where does this number come from", separate from the task articles.</p>
+<p>An article is short, imperative, and screenshot-led. <em>Set the Enzymes for Golden Gate Assembly</em>
+states the default list (nine Type IIS enzymes, BsaI the default), gives the menu path, says what
+each checkbox does, and says what the reader will then see in the dropdown. It is four screens
+long and answers one question.</p>
+<h3 id="examples_3">Examples<a class="headerlink" href="#examples_3" title="Permanent link">&para;</a></h3>
+<p>There are no code examples — it is a GUI. The equivalent is the screenshot plus the menu path. The
+material is real throughout: real enzyme names, real menus, real defaults.</p>
+<h3 id="time-to-orientation_3">Time to orientation<a class="headerlink" href="#time-to-orientation_3" title="Permanent link">&para;</a></h3>
+<p>Immediate, by two routes. Six videos, 1m30 to 3m each: <em>A Brief Tour of the Interface</em>; <em>Create,
+Open and Import a File</em>; <em>Using the Project Panel</em>; <em>Annotating Sequences</em>; <em>Use Actions to Plan
+and Predict</em>; <em>Use Tools to Analyze and Verify</em>. About fourteen minutes end to end, and the arc
+goes orientation → daily file work → planning → verification. The written guide then covers
+everything in detail.</p>
+<h3 id="right-for-our-reader_3">Right for our reader<a class="headerlink" href="#right-for-our-reader_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>A section per method, named after the method.</strong> This is the clearest answer in the survey to
+  "what does this ship": the reader counts eight cloning methods in the nav. We ship four plus
+  two named methods, and should be as countable.</li>
+<li><strong>One article per situation, not per feature.</strong> Titles phrased as the reader's own case.</li>
+<li><strong>A separate "where does this number come from" page per method</strong>, so the task article stays
+  imperative and the explanation still exists.</li>
+<li><strong>Orientation before methods</strong>, and a short video arc as the front door.</li>
+<li><strong>A FAQ mirroring the guide's topics</strong>, so troubleshooting has a predictable address.</li>
+</ul>
+<h3 id="wrong-for-our-reader_3">Wrong for our reader<a class="headerlink" href="#wrong-for-our-reader_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>46 sections is a lot of nav</strong> — it works only because the method names are self-evident.</li>
+<li><strong>Screenshot-led writing does not survive.</strong> Every article is tied to one version of one GUI.
+  Nothing in it transfers to a package whose surface is a CLI and a protocol page.</li>
+<li><strong>It stops at the screen.</strong> SnapGene tells the reader what to click, never what to pipette. The
+  bench step is assumed. That gap is exactly what we fill, and the survey's two halves —
+  SnapGene's method tree and Addgene's procedure page — do not exist together anywhere.</li>
+</ul>
+<h2 id="6-addgene-protocols-bench-procedures-for-people-who-run-them">6. Addgene protocols — bench procedures for people who run them<a class="headerlink" href="#6-addgene-protocols-bench-procedures-for-people-who-run-them" title="Permanent link">&para;</a></h2>
+<p>Sources: <a href="https://www.addgene.org/protocols/">protocols index</a>,
+<a href="https://www.addgene.org/protocols/gibson-assembly/">Gibson Assembly</a>,
+<a href="https://www.addgene.org/protocols/subcloning/">Plasmid Cloning by Restriction Enzyme Digest</a>.</p>
+<h3 id="section-tree_4">Section tree<a class="headerlink" href="#section-tree_4" title="Permanent link">&para;</a></h3>
+<p>Five groups, flat inside each, roughly fifty protocols:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Count</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intro to the Lab Bench</td>
+<td>7</td>
+<td>PPE, biosafety, water baths, pipetting, centrifugation, microscopy, weighing</td>
+</tr>
+<tr>
+<td>Basic Molecular Biology</td>
+<td>18</td>
+<td>plates, streaking, cultures, glycerol stocks, DNA purification and quantification, restriction digests, gels, ligation, transformation, PCR, gel purification, <em>How to Design a Primer</em>, <em>Sequence Analysis</em></td>
+</tr>
+<tr>
+<td>Plasmid Cloning</td>
+<td>6</td>
+<td>Restriction Cloning, Cloning by PCR, Annealed Oligo Cloning, Gibson Assembly, Ligation Independent Cloning, pLKO.1</td>
+</tr>
+<tr>
+<td>Virus</td>
+<td>11</td>
+<td>transfection, lentivirus, AAV production, purification, titration</td>
+</tr>
+<tr>
+<td>Antibodies</td>
+<td>6</td>
+<td>transfection, purification, stains, western, ICC, ELISA</td>
+</tr>
+</tbody>
+</table>
+<p>The grouping axis is <strong>how far along the reader is</strong>, not what Addgene's software contains. The
+first group assumes nothing. The methods group assumes the first.</p>
+<h3 id="page-shape_4">Page shape<a class="headerlink" href="#page-shape_4" title="Permanent link">&para;</a></h3>
+<p>Consistent and short. The Gibson page runs:</p>
+<ol>
+<li>Title</li>
+<li><strong>You may also like…</strong> — three cross-links, above the content</li>
+<li><strong>Summary</strong> — about 85 words</li>
+<li><strong>Why Gibson Cloning?</strong> — four bullets, about 35 words</li>
+<li><strong>Procedure</strong> — six numbered steps, about 400 words, the bulk of the page</li>
+<li><strong>Tips and Troubleshooting</strong> — about 100 words, with named sub-cases ("Stitching fragments
+   together using oligos"; "Number of fragments assembled simultaneously")</li>
+<li><strong>Resources and References</strong> — about 150 words: Gibson 2009, Gibson 2010, Rabe and Cepko 2020,
+   plus an NEB resource</li>
+</ol>
+<p>Three diagrams, four "Pro-Tip" callouts, no tables, no video. <strong>The whole page is about 800
+words.</strong></p>
+<p>The subcloning page is the same skeleton with a <em>Background</em> and a <em>Design (Choosing enzymes)</em>
+section added, and its procedure split into five named stages rather than numbered steps: Digest
+your DNA; Isolate your insert and vector by gel purification; Ligate your insert into your vector;
+Transformation; Isolate the Finished Plasmid.</p>
+<h3 id="examples_4">Examples<a class="headerlink" href="#examples_4" title="Permanent link">&para;</a></h3>
+<p>There is no code and no worked numeric example. The equivalent is the <strong>expected result stated
+inline</strong>: the transformation step says the insert plate should carry significantly more colonies
+than the vector-only plate; the diagnostic digest step says expect two bands, one vector-sized and
+one insert-sized; gel purification asks for crisp bands. The reader is told what success looks
+like at the step where they would doubt it.</p>
+<p>Instructions are plain imperatives that name the number: "Incubate the mix for 1 hour at 50 °C or
+follow manufacturer's instructions." Advice that is not an instruction goes to a Pro-Tip: "Avoid
+strong secondary structures in the homology region."</p>
+<h3 id="time-to-orientation_4">Time to orientation<a class="headerlink" href="#time-to-orientation_4" title="Permanent link">&para;</a></h3>
+<p>Immediate. Fifty titles on one page, each one naming a thing the reader has either done or needs
+to do.</p>
+<h3 id="right-for-our-reader_4">Right for our reader<a class="headerlink" href="#right-for-our-reader_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The page skeleton is directly copyable</strong>: Summary → Why this method → Procedure → Tips and
+  Troubleshooting → Resources and References. We already render most of these fields in a protocol;
+  the method pages should use the same spine so a reader meets one shape twice.</li>
+<li><strong>Why this method, in four bullets.</strong> The reader's real first question is "should I use this",
+  and it is answered before any procedure. No tool in the survey other than Addgene answers it.</li>
+<li><strong>Expected result stated at the step.</strong> This is our <code>expected</code> field, and Addgene shows it
+  belongs in the narrative page too, not only in the rendered protocol.</li>
+<li><strong>Pro-Tips keep the imperative clean.</strong> Same separation Benchling gets with callouts.</li>
+<li><strong>References named and dated</strong>, three or four per page — a bar our method pages can meet.</li>
+<li><strong>800 words is enough for a complete method.</strong> Our method pages should be judged against that,
+  not against a tutorial's length.</li>
+<li><strong>Cross-links above the content.</strong> "You may also like" sits at the top, where a reader who
+  landed on the wrong page can leave at once.</li>
+</ul>
+<h3 id="wrong-for-our-reader_4">Wrong for our reader<a class="headerlink" href="#wrong-for-our-reader_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>No design work shown.</strong> The page says "design primers with 15–40 bp of homology" and leaves
+  the reader to do it. That is the gap the package closes, and our pages must show the design
+  being done, not just prescribed.</li>
+<li><strong>No provenance per number.</strong> Numbers appear as settled fact with a reference list at the end,
+  not a citation at the number. ADR 0019 already holds us to the stricter rule.</li>
+<li><strong>No materials list.</strong> Reagents are named inside prose. Our protocol renders a materials table
+  and an order sheet, which is better; the method page should link to it.</li>
+</ul>
+<h2 id="7-what-recurs-across-all-five">7. What recurs across all five<a class="headerlink" href="#7-what-recurs-across-all-five" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>A landing page that lists operations, not modules.</strong> pydna's README and SnapGene's video arc
+  both do it; Biopython's chapter 2 does it in prose. Benchling does not, and is the hardest to
+  orient in.</li>
+<li><strong>One short orienting unit in front of the detail.</strong> Chapter 2; the six videos; the Summary
+  block. In all three cases it is under fifteen minutes of the reader's time.</li>
+<li><strong>Real material beats toy material, and carried-through material beats both.</strong> Biopython's
+  orchids are the best example in the survey; pydna's <code>sample_seq.gb</code> the weakest.</li>
+<li><strong>Explanation is separated from instruction</strong>, always by the same device: a Pro-Tip, a callout,
+  or a separate "how is this predicted" article.</li>
+<li><strong>Every tool that works for our reader is organised by reader intent.</strong> Every tool organised by
+  software structure fails them. Map #487 already settled a reader-intent nav axis; this survey is
+  evidence for it, not against.</li>
+</ul>
+<h2 id="8-what-this-suggests-for-us">8. What this suggests for us<a class="headerlink" href="#8-what-this-suggests-for-us" title="Permanent link">&para;</a></h2>
+<p>For the page list (#490) and the model page (#488).</p>
+<h3 id="section-tree_5">Section tree<a class="headerlink" href="#section-tree_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Keep the settled reader-intent axis</strong> — Home / Methods / Protocols / Projects / Reference. The
+  survey supports it: every bench-facing tool in it is organised that way.</li>
+<li><strong>Under Methods, one page per method, titled by the method.</strong> SnapGene's eight cloning sections
+  are the model. A reader should be able to count what we ship off the nav: Golden Gate, Gibson,
+  restriction and ligation, Gateway, plus primer design, barcodes, codon optimisation and maps.
+  Resist a "Cloning / Design / Maps" sub-layer unless the page list grows past what one screen
+  holds — map #487 already flags that subsection split as unsettled, and this survey says collapse
+  it.</li>
+<li><strong>One "what this ships" page on Home</strong>, listing operations in bench words, as a list a reader
+  scans in under a minute. pydna's four-item nav and SnapGene's video arc both achieve this; a
+  97-module API dump achieves the opposite.</li>
+<li><strong>Protocols as a flat catalogue grouped by how far along the reader is</strong>, after Addgene: the
+  procedure comes first, the protocol system beneath it. Map #487 settled that order; Addgene's
+  five groups show the grouping axis to use.</li>
+<li><strong>A FAQ or troubleshooting tree that mirrors the Methods tree</strong>, after SnapGene, rather than one
+  undifferentiated troubleshooting page.</li>
+</ul>
+<h3 id="page-shape-the-model-page">Page shape — the model page<a class="headerlink" href="#page-shape-the-model-page" title="Permanent link">&para;</a></h3>
+<p>Adopt Addgene's spine, with two additions the survey says are missing everywhere:</p>
+<table>
+<thead>
+<tr>
+<th>Block</th>
+<th>Length</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Summary</td>
+<td>~80 words</td>
+<td>what this method does, in one paragraph</td>
+</tr>
+<tr>
+<td>When to use this</td>
+<td>4 bullets</td>
+<td>the reader's real first question. Addgene's "Why Gibson Cloning?"</td>
+</tr>
+<tr>
+<td>What you need</td>
+<td>short</td>
+<td>the inputs: which files, which sequences — our analogue of a materials list</td>
+</tr>
+<tr>
+<td>Worked run</td>
+<td>the bulk</td>
+<td>one command or one function call, its real printed output, and the files it writes, named</td>
+</tr>
+<tr>
+<td>What it produced</td>
+<td>short</td>
+<td>each output file, what it is for, with a link to the rendered protocol</td>
+</tr>
+<tr>
+<td>Tips and troubleshooting</td>
+<td>~100 words</td>
+<td>named sub-cases</td>
+</tr>
+<tr>
+<td>Where the numbers come from</td>
+<td>short</td>
+<td>the research note or ADR behind the design choices — SnapGene's "How is Golden Gate Fidelity Predicted?", made a standing block</td>
+</tr>
+<tr>
+<td>References</td>
+<td>3–5</td>
+<td>named and dated</td>
+</tr>
+</tbody>
+</table>
+<p>Target <strong>under 1000 words</strong> for a method page. Addgene covers a complete method in 800.</p>
+<h3 id="example-policy">Example policy<a class="headerlink" href="#example-policy" title="Permanent link">&para;</a></h3>
+<p>Map #487 settled a full generated, committed corpus per page. The survey sharpens three choices
+inside that:</p>
+<ul>
+<li><strong>One real record, carried across pages.</strong> Biopython's orchids are the pattern. We already have
+  <code>docs/examples/pUC19-GFP/</code>; reuse it everywhere a method page needs an input, so a reader builds
+  one mental model and never pays a setup cost twice. A method that cannot use it gets its own
+  named record, not a toy.</li>
+<li><strong>Show the output, not just the call.</strong> Every example on a method page carries its real printed
+  result, and names the files written. pydna shows outputs and is better for it; its failing is
+  that no output is a bench artefact.</li>
+<li><strong>Name the bench artefact in the example.</strong> This is where we beat every tool in the survey. The
+  worked run ends by naming <code>protocol.html</code>, the primer sheet and the product, and linking the
+  rendered protocol. SnapGene stops at the screen; Addgene starts at the bench; nothing joins them.</li>
+</ul>
+<h3 id="two-things-to-avoid">Two things to avoid<a class="headerlink" href="#two-things-to-avoid" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Do not organise anything by module, package or import name.</strong> The split between <code>mbio</code> and
+  <code>synbio</code> is stated once on the "two packages" page and shown by the CLI prefix — already settled
+  on #487, and the survey is strong evidence for it. Benchling's tree is what happens otherwise.</li>
+<li><strong>Do not let the orientation page grow.</strong> Its job is to be scanned in a minute. Every tool that
+  kept it short is easy to enter.</li>
+</ul>
+<h2 id="open-gaps">Open gaps<a class="headerlink" href="#open-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The SnapGene article bodies were read through the help-centre search API</strong>, not the rendered
+  pages, so screenshot density and page length were inferred from the text rather than measured on
+  screen. SnapGene Viewer is installed on this machine and was not opened.</li>
+<li><strong>Benchling's help centre (<code>help.benchling.com</code>)</strong>, which is the non-developer side and may be
+  closer to our reader than <code>docs.benchling.com</code>, was read only through the one access article.</li>
+<li><strong>Article counts per SnapGene section were not tallied</strong>; "three to eight" comes from the Golden
+  Gate search result and the section list, not a full enumeration.</li>
+<li><strong>No reader was timed.</strong> "Time to orientation" is read off structure — nav width, position of
+  the first runnable example — not measured on anyone.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,4674 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/synthesis-and-assembly/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Highly parallel DNA synthesis and assembly: the evidence behind the method - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#highly-parallel-dna-synthesis-and-assembly-the-evidence-behind-the-method" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Highly parallel DNA synthesis and assembly: the evidence behind the method
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-this-note" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to read this note
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-the-method-is-in-one-paragraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. What the method is, in one paragraph
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-sources-and-the-date-each-was-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Sources, and the date each was read
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Sources, and the date each was read">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-but-not-drawn-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Read but not drawn from
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-what-the-design-takes-from-each-source-and-what-is-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. What the design takes from each source, and what is ours
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. What the design takes from each source, and what is ours">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qian-et-al-inherited" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Qian et al. — inherited
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qian-et-al-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Qian et al. — ours
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#takacsi-nagy-et-al-inherited" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Takacsi-Nagy et al. — inherited
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#takacsi-nagy-et-al-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Takacsi-Nagy et al. — ours
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lund-et-al-inherited" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Lund et al. — inherited
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lund-et-al-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Lund et al. — ours
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subramanian-et-al-inherited" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Subramanian et al. — inherited
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subramanian-et-al-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Subramanian et al. — ours
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#baker-lab-inherited" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Baker lab — inherited
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#baker-lab-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Baker lab — ours
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#twist-inherited" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Twist — inherited
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#twist-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Twist — ours
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#long-et-al-levseq-inherited" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Long et al. (LevSeq) — inherited
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#long-et-al-ours" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Long et al. — ours
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-departures-from-a-source-and-the-reason-for-each" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Departures from a source, and the reason for each
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Departures from a source, and the reason for each">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-takacsi-nagy-et-al-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        From Takacsi-Nagy et al. 2026
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-qian-et-al-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        From Qian et al. 2026
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-lund-et-al-2024" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        From Lund et al. 2024
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-long-et-al-levseq" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        From Long et al. (LevSeq)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-twist" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        From Twist
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-reviews-measurements" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. The review's measurements
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. The review&#x27;s measurements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#computed-against-the-plasmid-maps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Computed against the plasmid maps
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#computed-against-the-published-sequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Computed against the published sequences
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#computed-against-vendor-material" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Computed against vendor material
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-open-design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Open design decisions
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Open design decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-where-the-type-iis-sites-sit-on-the-oligo-dad-gga-dmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 Where the Type IIS sites sit on the oligo — DAD-GGA-DMX
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-the-padding-rule-dad-gga-dmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.2 The padding rule — DAD-GGA-DMX
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-the-split-of-the-orthogonal-primer-set-across-its-three-roles-dad-gga-dmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.3 The split of the orthogonal primer set across its three roles — DAD-GGA-DMX
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-batch-size-dad-gga-dmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.4 Batch size — DAD-GGA-DMX
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#65-the-barcode-sets-enzyme-site-freedom-igga" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.5 The barcode set's enzyme-site freedom — iGGA
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#66-the-pass-criterion-for-a-well-dad-gga-dmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.6 The pass criterion for a well — DAD-GGA-DMX
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#67-how-donor-pools-are-built-igga" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.7 How donor pools are built — iGGA
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#68-clean-up-ratios-igga" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.8 Clean-up ratios — iGGA
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#69-the-per-round-bound-igga" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.9 The per-round bound — iGGA
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#610-the-primers-for-the-library-reads-igga" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.10 The primers for the library reads — iGGA
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#611-what-the-part-carrier-brings-into-the-assembly-neither-the-working-vector" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.11 What the part carrier brings into the assembly — neither; the working vector
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#612-when-a-design-needs-validation-dad-gga-dmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.12 When a design needs validation — DAD-GGA-DMX
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#613-the-pass-mark-for-the-library-reads-igga" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.13 The pass mark for the library reads — iGGA
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#also-open-and-smaller" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Also open, and smaller
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-provenance-of-downloaded-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Provenance of downloaded files
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-two-things-the-review-got-wrong-and-one-inherited-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Two things the review got wrong, and one inherited claim
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-ap-1-demo-planned-and-compared-against-the-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The AP-1 demo, planned and compared against the source
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The AP-1 demo, planned and compared against the source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-input-was-and-what-it-was-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the input was, and what it was not
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-pipeline-chose" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the pipeline chose
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-comparison-difference-by-difference" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The comparison, difference by difference
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-residue-rule-and-its-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The residue rule, and its prediction
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-things-the-specification-says-that-this-run-does-not-reproduce" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Two things the specification says that this run does not reproduce
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-planner-could-not-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What the planner could not do
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-method-as-specified" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The method as specified
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The method as specified">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Goal
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vectors-and-parts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Vectors and parts
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vectors and parts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vectors-and-parts-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Vectors and parts summary
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vectors and parts summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-each-molecule-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What each molecule is
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-cuts-each-molecule" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What cuts each molecule
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-cargo-enzyme-is-chosen-per-working-vector" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The cargo enzyme is chosen per working vector
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Parts
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#form-and-carrier" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Form and carrier
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rules-a-part-obeys" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Rules a part obeys
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#working-vector" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Working vector
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Working vector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-working-vector" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Input working vector
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#working-cassette" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Working cassette
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dmx-vector" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        DMX vector
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-vector" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Final vector
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#igga-cargo" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        iGGA cargo
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#experiment-sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Experiment sections
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Experiment sections">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lab-resources-build-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Lab resources (build once)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#working-vector-per-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Working vector (per application)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cargo-synthesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Cargo synthesis
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cargo-validation-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Cargo validation (optional)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cargo validation (optional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#getting-to-clonal-wells" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Getting to clonal wells
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#barcode-ligation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Barcode ligation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-pcr" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Index PCR
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-barcodes-mark-a-well" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Which barcodes mark a well
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-counts-as-a-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What counts as a pass
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-either-route" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        After either route
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#igga-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        iGGA pipeline
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-assembly" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Final assembly
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reagents-and-equipment" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reagents and equipment
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reagents and equipment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#equipment-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Equipment list
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plasmid-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Plasmid list
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primer-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Primer list
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reagent-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reagent list
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="highly-parallel-dna-synthesis-and-assembly-the-evidence-behind-the-method">Highly parallel DNA synthesis and assembly: the evidence behind the method<a class="headerlink" href="#highly-parallel-dna-synthesis-and-assembly-the-evidence-behind-the-method" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #212, under the spec at #210. It holds the specification
+itself, under <em>The method as specified</em> at the end, and the evidence behind it: every source
+read and when, what the design took from each, where it departs and why, what the review
+measured, and every design decision still open with its live options.</p>
+<p>Four companion documents sit beside it and are cited rather than restated. The first three were
+written while the method was designed and are tracked here for the first time; the fourth is
+the existing note for the paper the assembly rounds come from.</p>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/research/synthesis-and-assembly-materials.md</code></td>
+<td>Every plasmid, primer, enzyme and strain, grouped by the process that uses it</td>
+</tr>
+<tr>
+<td><code>docs/research/synthesis-and-assembly-barcode-kit.md</code></td>
+<td>The 96-plasmid plate-barcode kit: how it chains, what each group primes, what to order</td>
+</tr>
+<tr>
+<td><code>docs/research/synthesis-and-assembly-departures.md</code></td>
+<td>Each departure from Takacsi-Nagy et al., worked through base by base</td>
+</tr>
+<tr>
+<td><code>docs/research/protein-library-assembly.md</code></td>
+<td>Takacsi-Nagy et al. itself: its method, its numbers, its licence</td>
+</tr>
+</tbody>
+</table>
+<p>The last of those is the account of the iterative-assembly paper. Nothing here repeats it;
+section 3 says only what this design takes from it and section 4 where it departs.</p>
+<h2 id="how-to-read-this-note">How to read this note<a class="headerlink" href="#how-to-read-this-note" title="Permanent link">&para;</a></h2>
+<p><strong>Dates.</strong> A source's read date is the date the local copy was retrieved, taken from that
+copy's timestamp. Where a directory note records a date of its own, that date wins. Timestamps
+on three files predate the project because the publisher's date survived the download; those
+rows carry the directory's retrieval window instead.</p>
+<p><strong>Measurements.</strong> Section 5 carries every number the review computed, with what it was computed
+over. A number with no source is not in this note and does not belong in the method page.</p>
+<p><strong>The demo build.</strong> <code>docs/research/ap1-demo-project.md</code> specifies one real build against the
+specification and answers section 6's open decisions for that build alone. Nothing it decides
+is a default here.</p>
+<p><strong>Paths.</strong> Downloaded files are named in section 7 so the provenance survives the file. They
+are git-ignored and a fresh clone does not have them, so nothing outside section 7 cites one:
+claims cite the source itself.</p>
+<h2 id="1-what-the-method-is-in-one-paragraph">1. What the method is, in one paragraph<a class="headerlink" href="#1-what-the-method-is-in-one-paragraph" title="Permanent link">&para;</a></h2>
+<p>Cargo fragments are synthesised in one oligo pool, amplified out of it gene by gene with a
+nested three-primer scheme, assembled by Golden Gate into a counter-selection vector, split one
+clone per well, and read by nanopore. Validated cargo then goes two ways: through a working
+vector that gives it an application, or through rounds of iterative Golden Gate that chain
+fragments with a barcode at every junction. Four published systems meet here and none of them
+covers the whole of it.</p>
+<h2 id="2-sources-and-the-date-each-was-read">2. Sources, and the date each was read<a class="headerlink" href="#2-sources-and-the-date-each-was-read" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What it is</th>
+<th>Read</th>
+<th>Drawn from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qian et al. 2026, <em>Nat. Commun.</em></td>
+<td>The counter-selection vector, the plate-barcode kit, the barcoding and sequencing protocol</td>
+<td>2026-10-01 to 2026-10-05</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Takacsi-Nagy et al. 2026, <em>Cell</em></td>
+<td>Iterative Golden Gate in rounds, with a barcode per part</td>
+<td>2026-09-14</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Lund et al. 2024, <em>ACS Synth. Biol.</em></td>
+<td>Genes built from a cheap oligo pool by Golden Gate, one gene per reaction</td>
+<td>2026-10-01 to 2026-10-05</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Subramanian et al. 2018, <em>Synth. Biol.</em></td>
+<td>The mutually orthogonal 20-mer primer set</td>
+<td>2026-10-01</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Twist product and protocol material</td>
+<td>Oligo pool and gene fragment products, lengths, prices, design rules</td>
+<td>2026-09-14 to 2026-09-17</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Baker lab three-primer scheme</td>
+<td>The nested-PCR variant, as a diagram sent to us</td>
+<td>2026-10-01</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Correspondence with the Baker lab</td>
+<td>Which primer set, which read-out, what scale</td>
+<td>2026-10-05</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Long et al. 2025, <em>ACS Synth. Biol.</em> (LevSeq)</td>
+<td>Index PCR per well, pooled per plate, read by nanopore</td>
+<td>2026-10-05</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Molecular Devices QPix material</td>
+<td>Colony picker models</td>
+<td>2026-10-03</td>
+<td>background only</td>
+</tr>
+<tr>
+<td>Freschlin et al. 2026, <em>Sci. Adv.</em> (OMEGA)</td>
+<td>Oligo-pool gene libraries, one reaction per subpool</td>
+<td>2026-10-05</td>
+<td><strong>no</strong></td>
+</tr>
+<tr>
+<td>Romanowicz et al. 2026, <em>bioRxiv</em> (DropSynth-Gold)</td>
+<td>Pooled synthesis in emulsion droplets, one gene per droplet</td>
+<td>2026-10-05</td>
+<td><strong>no</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Full citations are in <a href="#sources">Sources</a>.</p>
+<h3 id="read-but-not-drawn-from">Read but not drawn from<a class="headerlink" href="#read-but-not-drawn-from" title="Permanent link">&para;</a></h3>
+<p><strong>Freschlin et al. 2026</strong> and <strong>Romanowicz et al. 2026</strong> were read while comparing assembly
+strategies and neither shaped the design. They are listed here rather than in the method page's
+reference table, which means "what the design took".</p>
+<p>Both measure what the method page's goal asserts, so both are worth citing the moment that goal
+is restated. Freschlin measures oligo-pool gene assembly to 2,598 bp, gives $1.50 to $14 per
+gene for constructs up to 2.6 kb, and gives about 246 bp of usable coding sequence per 300 nt
+oligo — the denominator the page's per-kb figure is missing. Romanowicz measures architectures
+from five 300-mers to twelve 350-mers, about 3 kb, with per-design success rates.</p>
+<p>Two of their findings bear on open decisions in section 6 and are cited there: Freschlin pads
+every oligo to a uniform 300 nt and screens the padding for enzyme sites, and Freschlin lost
+whole replicates to enzyme sites inside a barcode payload.</p>
+<p><strong>Molecular Devices QPix material</strong> supports one equipment row and nothing else. The two
+candidate models are real; which to buy is undecided and is not a design question.</p>
+<h2 id="3-what-the-design-takes-from-each-source-and-what-is-ours">3. What the design takes from each source, and what is ours<a class="headerlink" href="#3-what-the-design-takes-from-each-source-and-what-is-ours" title="Permanent link">&para;</a></h2>
+<h3 id="qian-et-al-inherited">Qian et al. — inherited<a class="headerlink" href="#qian-et-al-inherited" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The counter-selection vector family and its nested cassette: BsaI and BsmBI cutting the same
+  four bases, <code>AGGA</code> on one side of the counter-selection cassette and <code>TTCC</code> on the other.</li>
+<li>The <code>AGGA</code>/<code>TTCC</code> entry overhang standard itself.</li>
+<li>The 96-plasmid plate-barcode kit, used as supplied: four groups of 24, one barcode per group
+  per well, their chaining overhangs, and the three primer pairs that read them.</li>
+<li>Barcoding in heat-lysed lysate on a throwaway aliquot, so a barcoded molecule never grows.</li>
+<li>The acoustic dispense into a 1536-well plate, and the compression of four 384-well plates
+  into one.</li>
+<li>The strain rule for the counter-selection cassette, inherited as written. See section 8.</li>
+</ul>
+<h3 id="qian-et-al-ours">Qian et al. — ours<a class="headerlink" href="#qian-et-al-ours" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Rebuilding the vector before first use: the marker swap to KanR, removing its four BbsI
+  sites, adding one PmeI site outboard of each BsaI site.</li>
+<li>The accession formula for the whole kit, inferred from the four plasmids we hold.</li>
+<li>The mapping of barcode group to primer, derived from the published sequences.</li>
+<li>Using the kit's BsaI for three jobs rather than one.</li>
+</ul>
+<h3 id="takacsi-nagy-et-al-inherited">Takacsi-Nagy et al. — inherited<a class="headerlink" href="#takacsi-nagy-et-al-inherited" title="Permanent link">&para;</a></h3>
+<p>The paper's own account is <code>docs/research/protein-library-assembly.md</code>. What this design takes
+from it:</p>
+<ul>
+<li>The round structure: a destination opened internally, a donor released externally, the
+  product reopening for the next round.</li>
+<li>The idea of an internal stuffer carrying the enzyme that opens the destination, with a blunt
+  cutter inside the piece that leaves.</li>
+<li>The 11 bp barcode length, and a barcode per part accumulating at the junction.</li>
+<li>Endura electrocompetent cells, recovery and growth at 30 °C each round.</li>
+<li>T7 ligase with its branded buffer.</li>
+</ul>
+<h3 id="takacsi-nagy-et-al-ours">Takacsi-Nagy et al. — ours<a class="headerlink" href="#takacsi-nagy-et-al-ours" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The enzyme assignment, the stuffer sequence, the entry overhangs, the barcode set, the read
+  platforms and the acronym <code>iGGA</code>. None of these is the paper's. Section 4 and the departures
+  note give each one's reason.</li>
+</ul>
+<h3 id="lund-et-al-inherited">Lund et al. — inherited<a class="headerlink" href="#lund-et-al-inherited" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The shape of the pipeline: codon-optimise and domesticate, split the gene into oligo-sized
+  pieces with overhangs chosen on ligation fidelity, pad, append primer sites, order one pool,
+  amplify per gene, assemble by Golden Gate.</li>
+<li>Fixed terminal overhangs so one acceptor vector serves every design, with the split tool
+  choosing only the internal ones.</li>
+<li>Adding the Type IIS site and the terminal overhang to the gene <strong>before</strong> the split.</li>
+<li>The error-free ceiling and the fragment-count curve, as evidence rather than as a rule.</li>
+</ul>
+<h3 id="lund-et-al-ours">Lund et al. — ours<a class="headerlink" href="#lund-et-al-ours" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The counter-selection vector as the acceptor, in place of their two acceptors.</li>
+<li>The nested three-primer scheme in place of their one amplification per pool, which is the
+  Baker lab's variant rather than Lund's.</li>
+</ul>
+<h3 id="subramanian-et-al-inherited">Subramanian et al. — inherited<a class="headerlink" href="#subramanian-et-al-inherited" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The orthogonal 20-mer primer set itself, as the inventory the three-primer scheme draws on.</li>
+</ul>
+<h3 id="subramanian-et-al-ours">Subramanian et al. — ours<a class="headerlink" href="#subramanian-et-al-ours" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The split of that set across the three roles. Undecided; see section 6.3.</li>
+</ul>
+<h3 id="baker-lab-inherited">Baker lab — inherited<a class="headerlink" href="#baker-lab-inherited" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The three-primer architecture: an oligo reads <code>[P1][fragment][P2][P3]</code>, the outer pair pulls
+  a subpool, the inner pair nested inside it pulls one gene, and the Type IIS cuts sit inboard
+  of P1 and P2.</li>
+<li>The scale anchors: hundreds of oligos to a well for a subpool, one to eight for one gene.</li>
+</ul>
+<h3 id="baker-lab-ours">Baker lab — ours<a class="headerlink" href="#baker-lab-ours" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Everything downstream of the second PCR. The diagram is the only description of the scheme we
+  hold and it stops at the Golden Gate.</li>
+</ul>
+<h3 id="twist-inherited">Twist — inherited<a class="headerlink" href="#twist-inherited" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Which products exist, their length bands, their pool-size tiers and their prices.</li>
+<li>The uniformity gate, and the product it belongs to. A pool whose shortest member is more than
+  15% below the longest is refused by the ordering interface — but that is a <strong>Multiplexed Gene
+  Fragments</strong> rule, dsDNA at 301–500 bp, not an oligo-pool one. Verbatim, from
+  <code>twist/protocol/dump/DOC4057_Multiplexed_Gene_Fragments_Design_Guidelines_REV1.txt</code> lines
+  43–45: "Length Variation | ≤ 15%* | The shortest fragment in your pool must be no more than
+  15% shorter than the longest fragment." <strong>No vendor publishes a length-spread rule for an
+  ssDNA oligo pool at all.</strong> Both Twist Oligo Pools documents held here give only "20–350
+  nucleotides" and state no spread, so nothing a pool is ordered against forces a padding rule.</li>
+<li>The flank specification, and the amplification rule: a high-fidelity hot-start polymerase, and
+  a cycle count banded by the pool's length — 6–10 at 20–100 nt, 10–12 at 100–150 nt, 12–14 at
+  151–350 nt. <code>oligo-pool-pcr-cycles.md</code> section 2 gives the two guides it is read from, and its
+  section 3 separates it from the Multiplexed Gene Fragments maximum, which is another product's
+  and does not apply to a pool.</li>
+</ul>
+<h3 id="twist-ours">Twist — ours<a class="headerlink" href="#twist-ours" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Any per-kb figure. Twist prices per pool and states none. See section 5.</li>
+</ul>
+<h3 id="long-et-al-levseq-inherited">Long et al. (LevSeq) — inherited<a class="headerlink" href="#long-et-al-levseq-inherited" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The index-PCR read-out: one barcoded primer pair per well, the reverse barcode naming the
+  plate, pooled per plate and read by nanopore.</li>
+<li>The published barcode-linked primer plates, which are ordered as given.</li>
+<li>The read-depth and per-base criteria as one of the two candidate pass rules.</li>
+</ul>
+<h3 id="long-et-al-ours">Long et al. — ours<a class="headerlink" href="#long-et-al-ours" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Using them against this vector family rather than the paper's. The match was measured; see
+  section 5.</li>
+</ul>
+<h2 id="4-departures-from-a-source-and-the-reason-for-each">4. Departures from a source, and the reason for each<a class="headerlink" href="#4-departures-from-a-source-and-the-reason-for-each" title="Permanent link">&para;</a></h2>
+<h3 id="from-takacsi-nagy-et-al-2026">From Takacsi-Nagy et al. 2026<a class="headerlink" href="#from-takacsi-nagy-et-al-2026" title="Permanent link">&para;</a></h3>
+<p><code>docs/research/synthesis-and-assembly-departures.md</code> works each one through base by base. The
+summary, one line each:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Departure</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>The two enzyme roles move up one enzyme</td>
+<td>The plate-barcode kit is used as supplied and fixes BsaI at the cargo interface</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>BbsI in the internal stuffer, where the paper has BsaI</td>
+<td>D1 pushes the stuffer onto a third enzyme; PaqCI needs an activator oligo on the one digest where a miss is invisible</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>One entry overhang pair every round, not one per position</td>
+<td><code>AGGA</code>/<code>TTCC</code> is the published standard; position-specific overhangs would need a different vector per position</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>No external stuffers on the cargo</td>
+<td>The vector supplies BsaI in the right places already</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>PmeI sits in the vector, not in the cargo</td>
+<td>D4 left no external stuffer to carry it; paid once in the backbone rather than on every block</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Cargo must be clear of five enzymes, not zero</td>
+<td>Our cargo passes through more hands than theirs</td>
+</tr>
+<tr>
+<td>D7</td>
+<td>No position-specific terminal molecule</td>
+<td>One fragment rule serves every position, because no fragment of ours ends the protein</td>
+</tr>
+<tr>
+<td>D8</td>
+<td>No T2A, so the barcode block is translated inside the protein</td>
+<td>A T2A inside the cargo would end translation before the C-terminal part</td>
+</tr>
+<tr>
+<td>D10</td>
+<td>Fragments come from an oligo pool, not clonal plasmids</td>
+<td>The whole point of the method; costs a sequence-and-reformat step they do not pay</td>
+</tr>
+<tr>
+<td>D11</td>
+<td>Both markers change</td>
+<td>The last transfer moves cargo between two vectors, which must not share a marker</td>
+</tr>
+<tr>
+<td>D12</td>
+<td>The last transfer is one pot with counter-selection</td>
+<td>The cargo already presents the working vector's interface</td>
+</tr>
+<tr>
+<td>D13</td>
+<td>Bacterial expression host, and a working-cassette layer they have no counterpart for</td>
+<td>Different application</td>
+</tr>
+<tr>
+<td>D14</td>
+<td>A second barcode system, and BsaI doing three jobs</td>
+<td>The plate-barcode kit is added on top of the per-fragment barcode</td>
+</tr>
+<tr>
+<td>D15</td>
+<td>Extra strains</td>
+<td>Forced by the counter-selection cassette</td>
+</tr>
+</tbody>
+</table>
+<p>Three further departures the review established and the departures note does not yet carry:</p>
+<ul>
+<li><strong>The barcode set is drawn to an indel-aware metric, with a homopolymer cap the paper has
+  none of.</strong> The paper states a minimum Hamming distance of 3 between domain barcodes and
+  imposes no GC band and no cap; measured, its own set spans GC 2 to 9 of 11 and reaches a run
+  of 6. Ours is a minimum Sequence-Levenshtein distance of 3 within a part list, a homopolymer
+  run of 5, and still no GC band. The reason is the read-out: 92.0% of the residual
+  discordances of a HiFi read are indels in homopolymers, one every 477 bp, and no Hamming
+  distance sees a deleted base at any value. It costs nothing measured — each of the paper's
+  three part lists already stands 3 apart under the indel-aware metric, and the cap rejects one
+  of its 72 barcodes. <code>docs/research/barcode-design.md</code> holds every measurement, and the
+  method page carries the rules.</li>
+<li><strong>Both library reads move to nanopore.</strong> The paper ran linkage on PacBio HiFi and
+  representation on Illumina. Our equipment list has one nanopore sequencer. The reason is
+  equipment, not biology, and the move is undocumented in the departures note.</li>
+<li><strong>The source contradicts itself on which molecule each digest opens.</strong> Its Methods put
+  BsaI with SrfI on the donor; its own supplementary figure legend puts BsaI on the
+  destination. The design follows the figure, which is the assignment that simulates. The
+  disagreement is recorded here because neither the paper nor the method page records it.</li>
+</ul>
+<p>Departures D9 and D16 were open decisions when the departures note was written. D9, the barcode
+rules, is decided and in the method page. D16, whether an assembled clone is sequenced whole,
+is <strong>not</strong> decided and the departures note's claim that it is should not be relied on; the open
+form is section 6.9.</p>
+<h3 id="from-qian-et-al-2026">From Qian et al. 2026<a class="headerlink" href="#from-qian-et-al-2026" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The vector is rebuilt rather than used as supplied.</strong> The marker swap is forced by D11. The
+  BbsI removal is forced by D2. The PmeI additions are forced by D5.</li>
+<li><strong>The route from a transformation to a clonal well is ours.</strong> Qian goes transformation,
+  dilution plates for a colony count, bulk plate, picker. The method page spots a frozen
+  polyclonal archive and regrows it, which has no counterpart in any source and no stated
+  dilution, titre or plating density. Its handling is ours as well: duplicate plates, drawn one
+  way and never re-frozen. This is invention and should be marked as such or replaced. See
+  section 6.6.</li>
+<li><strong>A well's barcode combination is derived, not drawn.</strong> Qian generates the combinations
+  randomly in a script and records them. Ours factorises the well's address across the four
+  groups, group 4 carrying the plate, so the combination is arithmetic and two plates stay apart
+  on one flow cell without a file to keep. See section 6.6.</li>
+<li><strong>The library primers are replaced.</strong> Qian amplifies a whole pool in one reaction with a
+  primer pair carrying the BsmBI sites that give <code>AGGA</code>/<code>TTCC</code>. The three-primer scheme replaces
+  that pair with orthogonal 20-mers, which carry no site. Nothing then puts a Type IIS site on
+  the oligo. This is the method's one genuine gap; see section 6.1.</li>
+</ul>
+<h3 id="from-lund-et-al-2024">From Lund et al. 2024<a class="headerlink" href="#from-lund-et-al-2024" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>One acceptor becomes the counter-selection vector</strong>, so the cargo arrives already able to
+  be barcoded and released.</li>
+<li><strong>One amplification per pool becomes two nested ones</strong>, following the Baker lab rather than
+  Lund. It costs more reactions, N plus one per subpool, and buys a primer inventory that stops
+  growing with the library.</li>
+<li><strong>The split tool is named but not fixed.</strong> Lund calls NEB's SplitSet tool; they do not
+  implement the design method they cite. The method page names the method, not the tool. See
+  section 6.1.</li>
+</ul>
+<h3 id="from-long-et-al-levseq">From Long et al. (LevSeq)<a class="headerlink" href="#from-long-et-al-levseq" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The primers are used against a different backbone.</strong> The published set is specific to the
+  paper's expression vector. Measured against ours they match at full length, so they are
+  ordered unchanged. See section 5.</li>
+<li><strong>An exact match is required on top of the criterion.</strong> LevSeq calls mutations it does not know
+  in advance, so its per-base test is what it has. We know the design, so a well passes only on
+  an exact match across the whole designed region, and a silent mismatch inside a barcode
+  mislabels a member for the rest of the project. See section 6.6.</li>
+</ul>
+<h3 id="from-twist">From Twist<a class="headerlink" href="#from-twist" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>No departure.</strong> The vendor's limits are constraints, not choices. The method page's price
+  and per-kb figures depart from the published tiers, which is an error rather than a design
+  departure; see section 5.</li>
+</ul>
+<h2 id="5-the-reviews-measurements">5. The review's measurements<a class="headerlink" href="#5-the-reviews-measurements" title="Permanent link">&para;</a></h2>
+<p>Five independent reviewers read the method page and its supporting documents on one lens each.
+Every number below was computed on <strong>2026-10-06</strong> unless another date is given, and the column
+says what each was computed over. Numbers computed earlier and carried in from the drafting
+session are dated separately.</p>
+<h3 id="computed-against-the-plasmid-maps">Computed against the plasmid maps<a class="headerlink" href="#computed-against-the-plasmid-maps" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th>Computed over</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PmeI sites: 0 in each counter-selection vector parent</td>
+<td>The two depositor maps, 5,839 bp and 5,842 bp</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>SrfI sites: 1 in each parent, inside the counter-selection coding sequence</td>
+<td>The same two maps</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>BsaI 3, BsmBI 2, BbsI 4, PaqCI 0 in each parent; one BsaI inside the AmpR marker</td>
+<td>The same two maps</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td>Four barcode plasmids: BsaI 2, BsmBI 0, BbsI 0, PaqCI 0, AmpR, no counter-selection cassette</td>
+<td>The four maps held</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>Part carrier: BsmBI 0, <strong>BsaI 1</strong>, and its own selection is the counter-selection cassette</td>
+<td>The carrier's map</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>The barcode chain runs <code>TTCC</code>-BC4-<code>TCAG</code>-BC3-<code>CCTT</code>-BC2-<code>GTTC</code>-BC1-<code>AGGA</code> on the map strand</td>
+<td>BsaI sites in the four barcode maps, against all 96 rows of the barcode table</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>The published index-PCR primers' two constant backbone tails match both parents at full length, each pair bracketing the counter-selection cassette</td>
+<td>The two parents against the published primer tables</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>Inserting PmeI outboard of the right-hand cassette BsaI lands in or abuts the <code>6xHis</code> coding sequence</td>
+<td>Annotated features of the first parent</td>
+<td>2026-10-06</td>
+</tr>
+</tbody>
+</table>
+<h3 id="computed-against-the-published-sequences">Computed against the published sequences<a class="headerlink" href="#computed-against-the-published-sequences" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th>Computed over</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The internal stuffer is 34 bp, <code>AGGA</code> at 0-3, SrfI at 13-20, BbsI cutting to <code>TTCC</code> at 30-33, and 34 + 11 is 0 mod 3</td>
+<td>The 34-mer</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td>SrfI's site lies inside the piece BbsI releases, so after BbsI it cuts only a discarded fragment</td>
+<td>The same 34-mer</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>After the two digests the only complementary end pairs are the two intended ones; one circular product</td>
+<td>The destination and donor ends</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td>Six of the paper's 72 barcodes carry a stop at our frame offset; fifteen at offset 1; none at the paper's own offset</td>
+<td>All 72 published 11 bp barcodes</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td>The paper's 72 domains, 23,103 bp, carry zero BbsI, BsaI, SrfI and PmeI, against 11 BsmBI and 15 PaqCI</td>
+<td>The published domain sequences</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td>An 11-mer drawn to the stated barcode rules alone carries one of the eight enzyme motifs <strong>0.90%</strong> of the time, 1,798 of 200,000 draws; the union bound gives 0.0089</td>
+<td>200,000 random 11-mers against eight motifs</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>All 96 barcode rows are 97 bp with the same layout and 96 distinct 25 nt payloads; one overhang pair per group across all 24 members</td>
+<td>The barcode table</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>Two of the eight constant regions flanking the payload match no published primer</td>
+<td>All six primers and their reverse complements against all 96 rows</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>The paper's internal stuffer carries BsaI and SrfI, not PaqCI, which appears nowhere in it</td>
+<td>The paper's text, supplement and constants</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>The orthogonal primer supplement has 165 rows kept of 185; the paper's abstract says 166</td>
+<td>The primer supplement</td>
+<td>2026-10-06</td>
+</tr>
+</tbody>
+</table>
+<h3 id="computed-against-vendor-material">Computed against vendor material<a class="headerlink" href="#computed-against-vendor-material" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th>Computed over</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>18,000 oligos at 251-300 nt cost <strong>$10,004</strong>; $12,505 is the 301-350 nt band; 18,000 at 20-120 nt cost $4,056</td>
+<td>The oligo pool price table, captured 2026-09-17</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>Per-kb cost runs $1.85 (251-300 nt) to $2.82 (301-350 nt), synthesis only</td>
+<td>The same table, with Freschlin's 246 usable bp per 300-mer as the denominator</td>
+<td>2026-10-06</td>
+</tr>
+<tr>
+<td>101-500 oligos at 301-350 nt cost <strong>$2,575</strong>, the tier this demo's 152-oligo pool sits in</td>
+<td>The same capture, which bands pools from 2 oligos up; this lab's account pricing, as Twist publishes no pool price</td>
+<td>2026-10-08</td>
+</tr>
+</tbody>
+</table>
+<p>Three of these settle a claim in the method page rather than inform one, and are the
+corrections ticket #214 carries: PmeI is added and not removed, SrfI needs no edit, and the
+index-PCR primers need no redesign.</p>
+<h2 id="6-open-design-decisions">6. Open design decisions<a class="headerlink" href="#6-open-design-decisions" title="Permanent link">&para;</a></h2>
+<p>Each lists what is on the table and the evidence for each option, so a decision is made rather
+than rediscovered. A section opening <strong>Decided in #N</strong> is closed and that ticket is where the
+argument was had; the rest are open.</p>
+<p>Each heading names the experiment the decision belongs to, because the two are judged
+differently and a rule written for one does not transfer. <strong>DAD-GGA-DMX</strong> builds cargo and
+reads each well back, so a member is picked and its identity read. <strong>iGGA</strong> mixes those
+parts in rounds and yields a pool nobody picks from, judged by representation and linkage
+reads over the whole of it. <code>CONTEXT.md</code> defines both. A decision belonging to neither
+says so.</p>
+<h3 id="61-where-the-type-iis-sites-sit-on-the-oligo-dad-gga-dmx">6.1 Where the Type IIS sites sit on the oligo — DAD-GGA-DMX<a class="headerlink" href="#61-where-the-type-iis-sites-sit-on-the-oligo-dad-gga-dmx" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #257: templated on the oligo, inboard of P1 and P2.</strong> Every oligo reads
+<code>[P1][BsmBI][span][BsmBI][pad][P2][P3]</code>, both sites inward-facing. The two outermost cuts across
+a part yield <code>AGGA</code> and <code>TTCC</code>; every internal cut yields the overhang the split chose. One rule
+serves the vector interface and the internal junctions alike.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On the gene, before the split</td>
+<td>What Lund does: the site and the terminal overhang go on the gene, then the split, then padding, then the primer sites. It makes the site part of the designed sequence, which the split tool then has to respect.</td>
+</tr>
+<tr>
+<td>On the amplification primers</td>
+<td>What Qian does: the library primer pair carries the BsmBI sites that give <code>AGGA</code>/<code>TTCC</code>. It costs nothing in oligo length, but the three-primer scheme's inner primers are drawn from an orthogonal set with no site, so the set would have to be retailored or one role exempted.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The second option cannot express an internal junction at all.</strong> Every fragment of one gene
+carries the same P1 and P2 — that is what lets one PCR2 pull all of a gene's pieces — so a
+primer-borne site gives every fragment of that gene the same overhang. Qian can do it because
+Qian's members are not split. The cost of retailoring the primer set was never the deciding
+term.</p>
+<p><strong>And the 14 nt it would save buys almost nothing.</strong> Counted over the 72 blocks of
+<code>ap1-demo-project.md</code> §4.1 at a 350 nt oligo: 152 oligos templated against 150 with the sites on
+the primers, the worst part at five fragments either way.</p>
+<p>An earlier revision of this section read the Baker lab diagram as the second option. That is
+wrong, and <code>ap1-demo-project.md</code> §9.1 read the same diagram correctly: the cuts are drawn on the
+oligo, between P1 and the fragment and between the fragment and P2, which is the first option.</p>
+<h3 id="62-the-padding-rule-dad-gga-dmx">6.2 The padding rule — DAD-GGA-DMX<a class="headerlink" href="#62-the-padding-rule-dad-gga-dmx" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #257: pad every oligo to the build's one oligo length.</strong> Filler sits between the
+3' BsmBI recognition site and P2, outboard of the cut, so it never enters the product. It is
+screened for the eight enzyme motifs, for the orthogonal primer sites, and at both of its
+junctions for a motif the join creates.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pad every oligo to one length</td>
+<td>Freschlin pads to a uniform 300 nt and screens the padding for enzyme sites, having lost whole replicates to a site inside a payload.</td>
+</tr>
+<tr>
+<td>Pad to a target, then append constant flanks</td>
+<td>Lund pads to about 260 nt before appending the 20 nt primer sites, giving 300 nt oligos.</td>
+</tr>
+<tr>
+<td>Bin by length into sub-pools</td>
+<td>Romanowicz builds fixed-architecture libraries by length instead. The vendor will discount split sub-pools.</td>
+</tr>
+</tbody>
+</table>
+<p>Uniform padding makes a pool-uniformity check unfailable, so none is shipped. That reason is the
+package's own: the vendor's 15% spread rule is a Multiplexed Gene Fragments rule and does not
+reach an ssDNA oligo pool, which is ordered against no spread rule at all (section 3). The second
+option reaches the same uniform oligo by a different route and differs only in where the filler
+sits. Binning buys nothing at 153 oligos and costs a second pool and a second PCR1.</p>
+<p><strong>The oligo length itself stays a build input</strong>, so this is a method rule with one build
+number in it, not a method constant.</p>
+<p><strong>Rejected here, and recorded because the argument looked good:</strong> moving the filler outboard of
+P2, between P2 and P3, so PCR2 drops it with the P3 region and every digest stub falls to a
+constant 27 nt instead of up to 170 nt. What competes in a one-pot assembly is the number of cut
+ends, which is one stub per oligo either way; only the stub's length changes. No source measures
+a long stub behaving worse, and the method lists no clean-up between PCR2 and assembly for a
+stub length to matter to.</p>
+<h3 id="63-the-split-of-the-orthogonal-primer-set-across-its-three-roles-dad-gga-dmx">6.3 The split of the orthogonal primer set across its three roles — DAD-GGA-DMX<a class="headerlink" href="#63-the-split-of-the-orthogonal-primer-set-across-its-three-roles-dad-gga-dmx" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #258: 96 inner, 35 P1, 34 P3.</strong> Many outer pairs, few inner.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Primers</th>
+<th>What it indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P2, inner reverse</td>
+<td>96</td>
+<td>one gene inside a batch</td>
+</tr>
+<tr>
+<td>P1, shared forward</td>
+<td>35</td>
+<td>the batch, with P3</td>
+</tr>
+<tr>
+<td>P3, outer reverse</td>
+<td>34</td>
+<td>the batch, with P1</td>
+</tr>
+</tbody>
+</table>
+<p>96 inner primers makes one batch exactly one 96-well PCR2 plate, which is the Baker shape and
+the reason the number is 96 rather than any other. Capacity is 35 × 34 = 1,190 batches, far
+past any library this method reaches. An even three-way split was supported by nothing.</p>
+<p>A method constant, not a build choice: the plates are laid out once and a slot always means
+the same pair. The set is <strong>not yet ordered</strong>, so the split is an order specification — and P3
+is the cheapest role to under-order, since 12 and 12 still give 144 batches.</p>
+<p>The set's own size stays 165 or 166: the supplement keeps 165 rows, the abstract says 166. The
+split is over the rows held. A 166th, if it surfaces, is a spare and forces no re-split.</p>
+<h3 id="64-batch-size-dad-gga-dmx">6.4 Batch size — DAD-GGA-DMX<a class="headerlink" href="#64-batch-size-dad-gga-dmx" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #258: 96 genes a batch, divided equally.</strong> 96 is the method's cap and it is
+physical — one inner-primer plate, one PCR2 plate. Above 96 genes a library divides into equal
+batches rather than full batches plus a remainder, which is what Freschlin's evenness
+measurement argues for.</p>
+<p>The pieces-per-PCR1 budget is a <strong>build input</strong>. No source gives a number, and gene length is
+what a build rationally chooses it from. The method ships the band Baker's own two anchors
+derive — 96 genes at one to eight oligos a gene is 96 to 768 pieces a PCR1 — and a build
+chooses inside it.</p>
+<p>The cap and the piece rule do not compete: 96 binds for short genes, the budget for long ones.
+The band's floor sits under Baker's "hundreds of oligos to a well", which under-loads PCR1
+rather than overloading it, and no source names that as a failure.</p>
+<h3 id="65-the-barcode-sets-enzyme-site-freedom-igga">6.5 The barcode set's enzyme-site freedom — iGGA<a class="headerlink" href="#65-the-barcode-sets-enzyme-site-freedom-igga" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #260: on. The barcode is cargo, so it obeys the cargo's enzyme rule.</strong> One list, not
+two: the barcode is read against D6's five enzymes, in both orientations, with its flanking scar.
+A shorter list of its own would be a second rule to keep in step with the first.</p>
+<p>The measurement decides it. An 11-mer drawn to the distance rules alone carries one of the eight
+motifs 0.90% of the time, 1,798 of 200,000 draws — one library member in 112 cut apart in its own
+round — and Freschlin lost whole replicates to exactly that. The alternative was to screen
+afterwards, which is cheaper to state and needs a screen nobody has described.</p>
+<p><strong>The code already does this; the method page is what changes.</strong> <code>BarcodeRules</code> carries
+<code>forbidden</code>, <code>scar</code> and <code>phase</code>, <code>find_sites</code> searches both strands, and
+<code>library.parts.barcode_rules</code> passes the scheme's enzymes and the method's scar, naming a
+junction hit as one. The page listed three rules and not this one. The known limit stays: a site
+needing bases from two different barcodes is not found, because those are neighbours only once
+the block is built.</p>
+<p>Related and separable, and no longer open: the distance metric, the GC band and the homopolymer
+cap. A Hamming floor does not imply a Sequence-Levenshtein floor, so the metric is a decision of
+its own, and the page now states the three verdicts of <code>docs/research/barcode-design.md</code> —
+Sequence-Levenshtein 3 within a part list, no GC band, and a homopolymer run of 5. Neither a
+band of GC 3 to 7 of 11 nor a cap of 3 came from a source: both are the convention that note
+traces to one uncited sentence, and the published set meets neither. Section 4 carries the
+departure from the source that is left once they go.</p>
+<h3 id="66-the-pass-criterion-for-a-well-dad-gga-dmx">6.6 The pass criterion for a well — DAD-GGA-DMX<a class="headerlink" href="#66-the-pass-criterion-for-a-well-dad-gga-dmx" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #260, and it is two rules rather than one.</strong> A read is either good enough to call or
+it is not, and a call either matches the design or it does not. Neither route changes the second,
+so the judgement is shared and only the floor travels with the route.</p>
+<p><strong>The floor travels with the route, because the two numbers are not a strict and a lenient
+setting of one scale.</strong> Both came off SQK-LSK114 on a FLO-MIN114 flow cell, so the platform is
+not what separates them. Qian's consensus depth above 150 is where consensus calling starts: a
+pooled amplicon carrying four UMIs, ten cycles of a high-fidelity polymerase, counted over reads
+already filtered to Q15 and a length window. LevSeq's twenty wanted and ten tolerable are where
+a reader stops trusting a well: one 35-cycle Taq amplicon per well with the index on the primer,
+counted as alignments, and the ten from simulated data rather than from a run. Picking one of
+the two for both routes would read a consensus-calling parameter as a quality check, or the
+reverse. <code>docs/research/route-choice.md</code> section 4 works the comparison through.
+Each route's wanted depth is a default a build may raise; the tolerable
+one is the route's own and nothing overrides it. The wanted depth is exceeded; the tolerable one
+is reached, so a well at exactly ten reads warns rather than going unjudged.</p>
+<p><strong>Below the floor a well gets no verdict, not a fail.</strong> That is already <code>CONTEXT.md</code>'s rule for a
+<code>Check</code> — one no sourced threshold judges carries no verdict and says so — and here it reaches
+the bench, because reformatting compacts out the wells that failed. Compacting out a well nobody
+read throws away a design that may be clean. LevSeq's "low" is this state, and a low well is
+re-read or re-picked rather than discarded.</p>
+<p><strong>A pass is an exact match across the whole designed region</strong> — both entry overhangs, the
+fragment, the stuffer and the barcode. A well with more than one consensus, or more than one
+significant mutation, is mixed and fails. A silent mismatch is not a pass: it leaves the protein
+right and the barcode wrong, and a barcode that no longer names its member cannot be recovered by
+the linkage read, which is the only thing that reads the finished pool. This is Qian's exactness
+over LevSeq's statistics, and section 4 records it as a departure from LevSeq.</p>
+<p><strong>A barcode combination reaches a well by arithmetic, not by a recorded draw.</strong> The well's
+address factorises across the barcode axes, and one axis is the plate. Route B's is published:
+LevSeq uses 96 forward barcodes for the well and 96 reverse for the plate, 9,216 wells from 192
+primers. Route A's follows the same shape — three DMX groups address the well, 13,824
+combinations against the 1,536 needed, and group 4 is the plate, one barcode across a whole plate
+from a reservoir. That is what tells two plates apart on one flow cell, by construction rather
+than by a file, and it lets a demultiplexer check an address instead of trusting one. Qian
+generates the combinations randomly in a script and records them; section 4 carries the
+departure.</p>
+<p><strong>Colonies per design: four by default, and a build input.</strong> Lund's four gave 343 of 458 genes
+error-free and it is the only measured anchor, but it is not fixed anywhere. The same table runs
+100% clean at 2 fragments, 93.8% at 3, 84.6% at 5, 66.7% at 8, 40% at 12 and 0% at 16, so four is
+right for a short gene and thin for a long one. The protocol states each design's predicted chance
+from that curve and that design's own fragment count, so a build raising the number reads the
+reason rather than guessing it. A design with no passing well is re-picked from the same archive
+spot before it is re-synthesised.</p>
+<p>Underneath all of it is the route to clonal wells itself, which section 4 marks as invention.
+That stands: this decision judges wells, it does not source the spot-and-regrow step that fills
+them.</p>
+<h3 id="67-how-donor-pools-are-built-igga">6.7 How donor pools are built — iGGA<a class="headerlink" href="#67-how-donor-pools-are-built-igga" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #259: one pool per position, pooled equimolar from individually prepped plasmids,
+once.</strong> This is the paper's own structure, read from METHOD DETAILS p. e4: "For each TF family,
+individual plasmids were combined into equimolar pools of 'N', 'DBD' (bZIP, Forkhead, or ETS)
+and 'C' domain sequences or of full-length gene sequences."</p>
+<p>The up-front-or-per-round fork dissolves. A pool belongs to a position, not to a round: N is the
+round-1 destination, DBD donates once, C donates once. Both options name the same three pools.</p>
+<p>Pooling is by DNA mass from one prep per part, not by culture volume. Every part sits in the
+same backbone and differs only by insert, so pooling equal volumes of culture is equimolar in
+cells rather than in plasmid — and a prep per part leaves a reusable part collection rather than
+a cost.</p>
+<p><strong>The constraint either option inherited stands:</strong> our donor carries no release sites of its
+own, so unlike the paper's it cannot be a PCR product or a gene fragment. It must be cloned
+first.</p>
+<p><strong>Whether a pool's members were read first is not an iGGA question.</strong> An iGGA round consumes a
+pool of plasmids and asks nothing about their provenance. How a part reaches that pool, and
+whether it is validated on the way, belongs to cargo synthesis and the DMX read-out — 6.6 and
+6.12.</p>
+<h3 id="68-clean-up-ratios-igga">6.8 Clean-up ratios — iGGA<a class="headerlink" href="#68-clean-up-ratios-igga" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #259: the paper's two ratios — 2X after each digest, 1X after the ligation.</strong> Read
+from METHOD DETAILS pp. e4-e5: "Digestion products were SPRI-purified at a 2X volume ratio and
+eluted in H2O", then "Ligation products were SPRI-purified at a 1X volume ratio and eluted in
+H2O."</p>
+<p>The two do different jobs, and the departures note rests the whole PmeI argument on the 2X step
+removing the 17 bp and 13 bp stubs. One ratio throughout is supported by nothing read.</p>
+<p>Both are constants in <code>synbio.igga.bench</code>, landed by #280.
+<code>synthesis-and-assembly-materials.md</code> now carries them beside the beads, which is the half of
+this decision that was missing.</p>
+<h3 id="69-the-per-round-bound-igga">6.9 The per-round bound — iGGA<a class="headerlink" href="#69-the-per-round-bound-igga" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #259: mass in, a titre plate out, and no inherited coverage multiple.</strong></p>
+<p><strong>In — the paper's masses, and nothing to choose.</strong> 1 µg of plasmid pool per digest, 20 ng of
+digested destination per 200 µL ligation, up to 100 ng of purified ligation product
+electroporated. All three are constants in <code>synbio.igga.bench</code>.</p>
+<p><strong>Out — a departure, recorded as one.</strong> The paper plates nothing. Digest, SPRI, ligate, SPRI,
+electroporate, recover, grow, prep, next round: no colony count appears anywhere in it, and no
+round is gated on one. Ours plates a dilution of each round's recovery, and a no-donor control
+carried through the ligation from the same digest, and gates the round on net colonies. Both
+plates grow during the 12-16 hour outgrowth, so the cost is two plates and no extra day.</p>
+<p>Why depart. The design argues parental background away — BbsI cuts twice, SrfI cuts whatever
+BbsI missed, T7 refuses the resulting blunt ends, and the 2X SPRI takes the stubs — and the
+control plate is what measures that argument rather than trusting it. Residual parental is not
+noise: it is the previous round's library, one position short, and it rides into the linkage
+read as truncated members. A round that collapsed cannot be repaired by a later one.</p>
+<p><strong>The 300x multiple is dropped, and a completeness replaces it — decided in #297.</strong> 300x is
+Qian's, measured at a single transformation whose purpose was pickable clones for an arrayed
+collection. iGGA yields a pool that goes to a pooled screen; no member is ever picked or
+re-identified, so the gate does not transfer. A multiple does not transfer between rounds
+either: one ratio against each round's own products is a different risk every round. What holds
+across rounds is the completeness — the chance no member of that round is missing — so that is
+what a build states, and <code>mbio.bench.coverage</code> computes each round's floor from it by
+Clarke &amp; Carbon's rule. It refuses a default, and reports the multiple the floor works out at
+beside the chance a named product is missing. It is a floor rather than a sufficiency claim: it
+assumes every member equally represented, and synthesis skew breaks that.</p>
+<p><strong>What judges the library is the read, not the plate.</strong> The paper's own quality claim is barcode
+sequencing of the plasmid library for representation, and a long-read amplicon spanning the gene
+and its barcodes for linkage: about 95% of reads carried three valid barcodes, nearly 90% of the
+library was correctly linked, and over 90% of it held above 80% fidelity. Those are the method
+page's steps 7 and 8. The titre plate gates a round; the reads judge the library.</p>
+<p><strong>How many electroporations a round takes is not predicted.</strong> One takes up to 100 ng, and the
+paper names no count. No source read gives a ligation-product efficiency for Endura, and the 30 °C
+recovery the method uses has no vendor figure at all — <code>bench-numbers.md</code> already records that
+gap. So the protocol states the round's colony target and says to pool electroporations until the
+measured titre reaches it, and the package predicts no number. A lab that measures its own
+efficiency holds it the way it holds a ligase matrix or a price record.</p>
+<p><strong>D16 is answered by the paper.</strong> "The sequences of a sample of individual clones from both
+libraries were confirmed by whole plasmid next-generation sequencing (Plasmidsaurus)" — a sample
+of a finished library, not a per-round product check and not every member. The departures note
+and the method page were describing different objects.</p>
+<h3 id="610-the-primers-for-the-library-reads-igga">6.10 The primers for the library reads — iGGA<a class="headerlink" href="#610-the-primers-for-the-library-reads-igga" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #258: two pairs, each against sequence that is already constant.</strong> Nothing is
+added to the oligo — 350 nt is the top of its price band, so a fourth primer role is a tier
+change, not a rounding error.</p>
+<table>
+<thead>
+<tr>
+<th>Read</th>
+<th>Forward</th>
+<th>Reverse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Representation, across the barcode block</td>
+<td>the retained 34 bp stuffer — a method constant</td>
+<td>the vector past the final <code>TTCC</code> — per build</td>
+</tr>
+<tr>
+<td>Linkage, design to barcodes</td>
+<td>the vector, before the first <code>AGGA</code> — per build</td>
+<td>the vector, past the final <code>TTCC</code> — per build</td>
+</tr>
+</tbody>
+</table>
+<p>The stuffer is constant across every member because the last round keeps it: the C position
+needs its barcode and a capping block carries none. The vector anchors are per build because
+the working vector is the user's own — mbio designs a pair against a record, synbio asks for it
+with the method's constraints.</p>
+<p>Both pairs are designed by the package against the simulated finished record, and are not
+written here. Reuse of <code>dmx0</code>/<code>dmx7</code> was the other option and is not needed; their sequences
+are now identified, and they read a barcoded DMX amplicon, not an assembled library.</p>
+<h3 id="611-what-the-part-carrier-brings-into-the-assembly-neither-the-working-vector">6.11 What the part carrier brings into the assembly — neither; the working vector<a class="headerlink" href="#611-what-the-part-carrier-brings-into-the-assembly-neither-the-working-vector" title="Permanent link">&para;</a></h3>
+<p>Measured: the part carrier has no BsmBI site and <strong>one BsaI site</strong>, and its own selection is the
+counter-selection cassette. A part that fits its default overhang pair enters the
+working-cassette reaction as the whole carrier plasmid, so both of those enter with it. Only the
+marker separates the two outcomes — the carrier is KanR, the working vector AmpR or CarbR.</p>
+<p>The seated plasmid itself is no longer unsimulated. The carrier is supplied opened at one blunt
+point: <code>dmx/addgene/pCR-Blunt II-TOPO.dna</code> carries a single head-to-head <code>GCCCTT</code>/<code>AAGGGC</code> run,
+and the Zero Blunt TOPO user guide (<code>bench/thermo/zeroblunttopo_man.pdf</code>) says topoisomerase I
+cleaves after 5'-CCCTT on each strand, which puts the blunt point at <strong>offset 336</strong> of the
+3,519 bp circle, between the EcoRI sites at 324 and 342. <code>synbio.dmx.carrier.seat</code> inserts a
+part there and hands back the carrier plasmid: a 52 bp part gives a circular record of 3,571 bp
+keeping all 12 features, with two BsmBI sites and a digest that releases the part on its own
+overhang pair, backbone whole. The carrier's one BsaI site is at <strong>797</strong>, inside <code>ccdB</code>
+<strong>585-888</strong>, so an edit removing it would fall in the counter-selection cassette's own coding
+sequence. What is still unmeasured is the reaction, not the record.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Leave it, and let the marker do the work</td>
+<td>The method page already adds a default-pair part as the carrier plasmid, with no digest and no PCR of its own, which is the whole saving of holding parts as plasmids. Nothing yet shows what the carrier's BsaI site and counter-selection cassette do once they are in that reaction.</td>
+</tr>
+<tr>
+<td>Amplify every part out of its carrier</td>
+<td>Only the part then enters, and the retailoring primer form already exists for exactly this shape. It costs a reaction per part, which is what entering as the plasmid was written to avoid.</td>
+</tr>
+<tr>
+<td>Domesticate the carrier once</td>
+<td>One edit to a lab resource built once removes the BsaI site for every part afterwards. The counter-selection cassette is the carrier's own selection and cannot be removed the same way.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="612-when-a-design-needs-validation-dad-gga-dmx">6.12 When a design needs validation — DAD-GGA-DMX<a class="headerlink" href="#612-when-a-design-needs-validation-dad-gga-dmx" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #295: polyclonal stands, and a build that wants a read names a fragment-count
+floor.</strong> The three options this section carried were never three choices. Whether a design is
+read back is already a build choice — <code>CONTEXT.md</code> says so — so what was open was the default
+and how the build states it.</p>
+<p><strong>Polyclonal by default, because the common case never reads a member.</strong> A library headed for a
+pooled screen takes its identity from that screen's own sequencing, so a per-design read buys a
+cleaner input rather than a verdict. The Baker lab skips validation for most of its libraries for
+exactly that reason, by correspondence with the group relayed to this repo. That is <strong>practice,
+not a rule</strong>, which is why it sets a default and constrains nothing: Lund read all 458 of their
+genes, and the AP-1 demo reads all 72 of its designs.</p>
+<p><strong>One fragment-count floor replaces the fork.</strong> A build states the fragment count at or above
+which a design is read. Omitted, nothing is read; <code>0</code> reads every design. The three options
+become its three settings, so none of them has to win.</p>
+<p><strong>The floor is the build's number, and none ships.</strong> Lund's curve gives a design's chance of a
+clean colony, not the chance worth paying to check. That second number needs what an error costs
+downstream, which is the screen, which the method cannot see — the same missing input that
+made #267 refuse a coverage multiple, and #299 a route threshold. A shipped floor would be an
+invented constant. The curve is what a build reads to pick the number, and the protocol prints
+it per design.</p>
+<p><strong>It is a per-design quantity, which is why the switch is not a boolean.</strong> The chance runs from
+certain to hopeless across one build's own designs, so a build-wide on-off would read every
+two-fragment design that never needs it, or skip every long one that does.</p>
+<p>The fragment-count table is Lund's, held in <code>long_fragment_GGA/README.md</code>, and
+<code>mbio.bench.readback.CLEAN_COLONY_CURVE</code> carries it.</p>
+<h3 id="613-the-pass-mark-for-the-library-reads-igga">6.13 The pass mark for the library reads — iGGA<a class="headerlink" href="#613-the-pass-mark-for-the-library-reads-igga" title="Permanent link">&para;</a></h3>
+<p><strong>Decided in #346. The representation read takes the pooled-screen bar; linkage fidelity stays
+open.</strong> Joung et al. 2017 set it for a plasmid library counted by a barcode amplicon before a
+screen — under 0.5% of members undetected, a 90th/10th percentile skew ratio under 10, judged at
+over 100 reads a member — and section 3.5 of <code>docs/research/vector-qc-panel.md</code> quotes it with
+its citation. Each is a default a build may tighten and may not loosen, as a read depth is in
+<code>synbio.dmx</code>.</p>
+<p><strong>It transfers because the counted amplicon is length-matched.</strong> The usual objection is that this
+library's members span about 0.5 to 2.3 kb where an sgRNA is 20 nt, so amplification bias differs.
+It does not apply: the representation read amplifies the barcode block alone, anchored on the
+retained internal stuffer, so every member's amplicon is the same length. The size skew lives in
+the library, and this read is what measures it.</p>
+<p><strong>The read depth is computed, not stated.</strong> At 100 reads a member, AP-1's 13,824 combinations
+take about 1.4 M reads — a fraction of one run. Imkeller's Table 2 then prices the skew in screen
+coverage downstream: p90/p10 2.5 wants 200-fold, 5 wants 300-fold, 10 wants 400-fold.</p>
+<p><strong>Linkage fidelity keeps no mark.</strong> Joung's "&gt;70% perfectly matching guides" measures a guide's
+synthesis fidelity, not whether a barcode still names its part, so it does not transfer.
+Takacsi-Nagy's Figures 1D and 1E stay attribution: what one library reached, not a bar. H28 keeps
+that one quantity and loses the other two.</p>
+<h3 id="also-open-and-smaller">Also open, and smaller<a class="headerlink" href="#also-open-and-smaller" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The design order</strong> — DAD-GGA-DMX. For iGGA cargo the barcode and the 34 bp stuffer sit
+  inside the synthesised block, so both have to exist before the gene is split; the page
+  splits first.
+  Which step moves depends on 6.1, since the Type IIS sites carry the same constraint.</li>
+<li><strong>The read-out route</strong> — DAD-GGA-DMX. <strong>Decided in #260: the toolkit models both</strong>, as two
+  marking steps behind one judgement, and in #299: nothing picks between them, so a build
+  names its route. The capacity ceiling once attributed to the
+  primer set is wrong: forward and reverse barcodes combine freely and no dual index is needed,
+  so Route B reaches 9,216 wells on 192 owned primers and Route A 24⁴ on the kit, and what binds
+  either is the flow cell and one reaction per well.</li>
+<li><strong>Which vector parent</strong> to rebuild — both, since both run in the DMX vector. The two
+  differ only in which strand carries the cassette and release the same cargo, so the rule
+  as written does not discriminate.</li>
+<li><strong>The colony picker model</strong> — DAD-GGA-DMX. The QPix 420 or the QPix FLEX, a purchase
+  decision rather than a design one. The method page names neither, only that the choice is
+  open.</li>
+<li><strong>Whether acronyms are expanded on first use</strong> — neither; the page itself, now published
+  in the site navigation rather than kept as a working file.</li>
+</ul>
+<p><strong>Where the added PmeI sites go is closed.</strong> It recorded that there is no free space on one
+parent without sacrificing an annotated tag. Measured on the rebuilt DMX0001, the windows a
+blunt site may sit in — each bounded by a releasing cut and the primer that reads a well — are
+<strong>277..363 and 416..503</strong>. <code>6xHis</code> ends at 432, so 433..503 is free of every annotation and a
+site at 437 sacrifices nothing. The worry came from inserting immediately outboard of the BsaI
+site; the rule only asks for a site between that cut and the primer's footprint.
+<code>docs/research/dmx-destination.md</code> carries the rebuild and what it measures.</p>
+<h2 id="7-provenance-of-downloaded-files">7. Provenance of downloaded files<a class="headerlink" href="#7-provenance-of-downloaded-files" title="Permanent link">&para;</a></h2>
+<p>Every file below is under <code>reference_docs/synthesis_and_assembly/</code> and is git-ignored, except
+the two marked <strong>tracked</strong>, which the destination's rebuild reads and which therefore ship
+converted to GenBank. For the rest, this table is what survives the file. Retrieved dates are
+the local copies' timestamps; a window is given where a publisher's own date survived the
+download.</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Source</th>
+<th>Retrieved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dmx/paper/</code> article and supplementary PDFs, with their text dumps</td>
+<td>Qian et al. 2026, doi:10.1038/s41467-026-76740-9</td>
+<td>2026-10-01 to 2026-10-03</td>
+</tr>
+<tr>
+<td><code>dmx/dmx-barcodes.tsv</code></td>
+<td>Extracted from the same paper's Supplementary Table 3</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>dmx/addgene/addgene-plasmid-247434-*.dna</code>, <strong>tracked</strong> as <code>tests/data/dmx0001.gb</code></td>
+<td>Addgene 247434, depositor's map, first vector parent</td>
+<td>2026-10-04</td>
+</tr>
+<tr>
+<td><code>dmx/addgene/addgene-plasmid-247435-*.dna</code></td>
+<td>Addgene 247435, depositor's map, second vector parent</td>
+<td>2026-10-04</td>
+</tr>
+<tr>
+<td><code>dmx/addgene/addgene-plasmid-255161-*.dna</code> and <code>.dna.seq</code></td>
+<td>Addgene 255161, barcode kit group 1 index 1</td>
+<td>2026-10-02</td>
+</tr>
+<tr>
+<td><code>dmx/addgene/addgene-plasmid-255185-*.dna</code></td>
+<td>Addgene 255185, barcode kit group 2 index 1</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>dmx/addgene/addgene-plasmid-255209-*.dna</code></td>
+<td>Addgene 255209, barcode kit group 3 index 1</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>dmx/addgene/addgene-plasmid-255256-*.dna</code> and <code>.dna.seq</code></td>
+<td>Addgene 255256, barcode kit group 4 index 24</td>
+<td>2026-10-02</td>
+</tr>
+<tr>
+<td><code>dmx/addgene/pCR-Blunt II-TOPO.dna</code>, <strong>tracked</strong> as <code>tests/data/pcr-blunt-ii-topo.gb</code></td>
+<td>The part carrier's published map: Thermo Fisher / Invitrogen catalogue map, Zero Blunt TOPO kit</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>dmx/jason_email.md</code></td>
+<td>Correspondence with the Baker lab, quoted with permission; not redistributable</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>prot-assembly/</code> article, supplemental figures, Table S1 and its sheet dumps</td>
+<td>Takacsi-Nagy et al. 2026, doi:10.1016/j.cell.2026.07.054, CC BY 4.0</td>
+<td>2026-09-14</td>
+</tr>
+<tr>
+<td><code>long_fragment_GGA/Lund2024/</code> article, supporting information and four supplementary workbooks</td>
+<td>Lund et al. 2024, doi:10.1021/acssynbio.3c00694</td>
+<td>2026-10-01</td>
+</tr>
+<tr>
+<td><code>long_fragment_GGA/Lund2024/sb3c00694_suppl-data/*.dat</code></td>
+<td>The same paper's supplementary vector records; the files carry the publisher's 2025-03-24 date</td>
+<td>2026-10-01</td>
+</tr>
+<tr>
+<td><code>long_fragment_GGA/Lund2024/primer set paper*.pdf</code> and <code>*.xlsx</code></td>
+<td>Subramanian et al. 2018, doi:10.1093/synbio/ysx008</td>
+<td>2026-10-01</td>
+</tr>
+<tr>
+<td><code>long_fragment_GGA/Baker Lab Strategy.png</code></td>
+<td>Sent by the Baker lab; the only description of the three-primer scheme we hold</td>
+<td>2026-10-01</td>
+</tr>
+<tr>
+<td><code>LevSeq/papers/</code> article and supporting information</td>
+<td>Long et al. 2025, doi:10.1021/acssynbio.4c00625</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>Freschlin2026/</code> article, supplement and Data S1</td>
+<td>Freschlin et al. 2026, doi:10.1126/sciadv.ady2279; the workbook carries the publisher's 2026-04-20 date</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>Romanowicz2026/</code> preprint and supplementary figures</td>
+<td>Romanowicz et al. 2026, doi:10.64898/2026.05.29.728538, version posted 2026-06-01</td>
+<td>2026-10-05</td>
+</tr>
+<tr>
+<td><code>twist/oligo_pool/*.png</code>, <code>twist/GeneFragments/*.png</code></td>
+<td>Screenshots of Twist's own product and pricing pages</td>
+<td>2026-09-14 to 2026-09-17</td>
+</tr>
+<tr>
+<td><code>twist/GeneFragments/MultiplexedGeneFragments/</code> price sheet, product sheet and order form</td>
+<td>Twist product material</td>
+<td>2026-09-14 to 2026-09-17</td>
+</tr>
+<tr>
+<td><code>twist/protocol/</code> four guides, with their text dumps</td>
+<td>Twist documents DOC-001498, DOC-001499, DOC4057 and DOC_4045</td>
+<td>2026-09-14 to 2026-09-17</td>
+</tr>
+<tr>
+<td><code>moleculardevices/</code> two QPix brochures</td>
+<td>Molecular Devices product material</td>
+<td>2026-10-03</td>
+</tr>
+</tbody>
+</table>
+<p>Every <code>*.txt</code> beside a PDF is a <code>pdftotext -layout</code> dump of it, made so the text can be
+searched; every <code>dump/</code> and <code>form_dump/</code> is derived the same way. None of these files may be
+redistributed except the two CC BY papers and their supplements.</p>
+<p>The two tracked files were converted once with <code>build_dmx_vector.write_genbank</code>, which writes
+each feature as <code>/label=</code> and its colour as <code>/note="color: #rrggbb"</code>. They carry the bases, the
+topology, the features and each feature's colour — 14 of 14 on the parent and 12 of 12 on the
+carrier, each the depositor's own; they drop SnapGene's enzyme set, its auto-matched primer
+library, the vendor notes, and each segment's own name and colour. Each record was renamed for
+the LOCUS line, which takes neither a space nor <code>®</code>. Redo one by reading the <code>.dna</code> with
+<code>mbio.io.read_record</code> and writing it back through that function; the bases, the topology,
+the colours and the one coding sequence the rebuild reads are what must survive, and
+<code>tests/scripts/test_build_dmx_vector.py</code> holds the rest to it.</p>
+<p>A colour carries because <code>color: #rrggbb</code> is one line — the note SnapGene itself exports for a
+feature of one segment, which <code>mbio.io</code> already reads. A segment's own name and colour do
+not, and the names dropped are <code>AmpR</code>'s <code>signal sequence</code> on the parent and <code>lac promoter</code>'s
+<code>-35</code> and <code>-10</code> on the carrier. The writer names each one on stderr rather than losing it
+silently, and the loss is in the writer alone: <code>Segment</code> holds the name, SnapGene's reader reads
+it, and <code>mbio.io</code> reads it back out of the note SnapGene exports for a feature of several
+segments. That note spells one segment a line, and only the line breaks tell a last segment's
+name from the prose SnapGene adds after the list, so a reader cannot be made to take the note
+whole. Biopython's
+GenBank writer wraps a qualifier at a fixed width and does not honour a line break: fed
+SnapGene's own export, it writes a note that no longer reads back. Carrying the name therefore
+means laying out a GenBank qualifier by hand, which is a GenBank writer of our own for a
+conversion that runs once. #391 weighed that and kept the loss, named.</p>
+<p>One file in that tree is ours rather than downloaded: a short script that rebuilds the sheet
+dumps of one supplementary workbook. It stays beside the workbook, because the workbook is what
+it reads and the workbook is not redistributable. Every other document the lab wrote for this
+method is tracked, as the three documents named at the top of this note.</p>
+<p>Twist prices move. The screenshots are dated and any figure taken from them carries that date.</p>
+<h2 id="8-two-things-the-review-got-wrong-and-one-inherited-claim">8. Two things the review got wrong, and one inherited claim<a class="headerlink" href="#8-two-things-the-review-got-wrong-and-one-inherited-claim" title="Permanent link">&para;</a></h2>
+<p>Recorded so they are not acted on.</p>
+<ul>
+<li><strong>A missing equipment row is not a defect.</strong> One lens compared the equipment table against a
+  five-row version that had been superseded; the instruction afterwards was that an
+  electroporator is basic equipment and should not be listed. The page is right.</li>
+<li><strong>The strain claim is inherited, not a transcription error.</strong> The source states that target
+  plasmids must be propagated in a strain resistant to the counter-selection cassette and names
+  one. That strain's published genotype carries no resistance allele. The resolution is not a
+  resistance question at all: the cassette is transcribed from a T7 promoter under a <em>lac</em>
+  operator with the repressor on the plasmid, so a strain without T7 polymerase never
+  transcribes it. The consequence the method page does not state is that the strain
+  <strong>receiving</strong> cargo must carry T7 polymerase, or there is no counter-selection.</li>
+<li><strong>Two lenses disagreed about which supplementary table holds the index-PCR primers.</strong> They do
+  not conflict: the raw barcodes are in the first two tables, the full-length barcode-linked
+  primers in the next two, and the plate maps in the eight after that. The method page pointed
+  at the plate maps, which is wrong either way, and the source's own main text makes the same
+  mistake.</li>
+</ul>
+<h2 id="open-gaps">Open gaps<a class="headerlink" href="#open-gaps" title="Permanent link">&para;</a></h2>
+<p>Nothing here should become a package default.</p>
+<ul>
+<li><strong>No source documents the three-primer scheme in text.</strong> One diagram and one email are all we
+  hold; everything downstream of the second PCR is ours.</li>
+<li><strong>The split tool is unresolved.</strong> The method it names is not the tool its own source ran, and
+  neither is pointed at.</li>
+<li><strong>No source states a per-kb cost.</strong> The figure in the method page is ours and is synthesis
+  only.</li>
+<li><strong>The accession formula for the barcode kit is inferred from four points</strong> and is unconfirmed
+  against the depositor's own kit listing. The sequences do not rest on it.</li>
+<li><strong>The two universal flanking primers' sequences are ours by derivation</strong>, not the source's.
+  The names are the paper's; it publishes no sequence, and the two unmatched constant regions of
+  the barcode kit are the only candidates. A wrong call shows as a failed amplification.</li>
+<li><strong>No vendor or catalogue number is recorded for any reagent</strong>, and one strain is named only
+  by a property. Identity matters for the branded ligase buffer, the cloning kit and the
+  competent cells.</li>
+<li><strong>No polymerase is named anywhere</strong>, for either amplification, the amplicon reactions or the
+  colony PCR, although every source treats the choice as load-bearing.</li>
+<li><strong>The protein cost of the assembly junction is never stated</strong> on the page. Three rounds is 45
+  bp, fifteen residues, translated inside every library member, and no rule fits a fragment's
+  boundary codons to the entry overhang.</li>
+<li><strong>Nothing lyses a culture and nothing is purified before the amplicon reactions.</strong> Qian
+  heat-lyses at 98 °C for 30 minutes as its own step, then minipreps the pooled plate and puts
+  20 ng of purified DNA into each of the three reactions. The page goes from growth to an
+  acoustic transfer to a crude-lysate reaction. Bench detail, owned by the detail protocol.</li>
+<li><strong>Route B pools per plate and then consumes one pool.</strong> Nothing combines or normalises the
+  per-plate pools, and nothing tells two plates apart on one flow cell. LevSeq carries plate
+  identity in the reverse barcode and combines each plate's pool in equimolar amounts.</li>
+<li><strong>The compacted plate's status is unstated</strong> — whether it is frozen, becomes the archive, or
+  supersedes the one cargo synthesis makes.</li>
+<li><strong>Two length conventions are in use for the same kind of block</strong>, one counting the 5'
+  overhang only and one counting through both. They agree in effect; applying the wrong one
+  builds a capping block one base short.</li>
+</ul>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>Read dates are in section 2 and provenance in section 7.</p>
+<ul>
+<li>Qian, Z. et al. (2026) Accelerating protein design by scaling experimental characterization.
+  <em>Nat. Commun.</em> <a href="https://doi.org/10.1038/s41467-026-76740-9">doi:10.1038/s41467-026-76740-9</a>,
+  with its supplementary information, Supplementary Table 3 (the barcode payloads) and
+  Supplementary Table 4 (the primers).</li>
+<li>Takacsi-Nagy, O. et al. (2026) Synthetic transcription factors designed by domain
+  recombination enhance CAR T cell antitumor function. <em>Cell</em> 189, 1-20.
+  <a href="https://doi.org/10.1016/j.cell.2026.07.054">doi:10.1016/j.cell.2026.07.054</a>. CC BY 4.0.
+  Read in full for <code>docs/research/protein-library-assembly.md</code>, which is the account of it.</li>
+<li>Lund, S., Potapov, V., Johnson, S. R., Buss, J. and Tanner, N. A. (2024) Highly parallelized
+  construction of DNA from low-cost oligonucleotide mixtures using Data-optimized Assembly
+  Design and Golden Gate. <em>ACS Synth. Biol.</em> 13, 745-751.
+  <a href="https://doi.org/10.1021/acssynbio.3c00694">doi:10.1021/acssynbio.3c00694</a>. All authors were
+  employed by the enzyme vendor, which funded the work.</li>
+<li>Subramanian, S. K., Russ, W. P. and Ranganathan, R. (2018) A set of experimentally validated,
+  mutually orthogonal primers for combinatorially specifying genetic components. <em>Synth. Biol.</em>
+  3, ysx008. <a href="https://doi.org/10.1093/synbio/ysx008">doi:10.1093/synbio/ysx008</a>, with
+  Supplementary Table 1 (the primers and their keep or drop calls) and Supplementary Table 2
+  (the cross-talk matrix).</li>
+<li>Long, Y., Mora, A., Li, F.-Z., Gürsoy, E., Johnston, K. E. and Arnold, F. H. (2025) LevSeq:
+  rapid generation of sequence-function data for directed evolution and machine learning.
+  <em>ACS Synth. Biol.</em> <a href="https://doi.org/10.1021/acssynbio.4c00625">doi:10.1021/acssynbio.4c00625</a>,
+  with its supporting information. Preprint:
+  <a href="https://doi.org/10.1101/2024.09.04.611255">doi:10.1101/2024.09.04.611255</a>.</li>
+<li>Freschlin, C. R., Yang, K. K. and Romero, P. A. (2026) Scalable and cost-efficient custom gene
+  library assembly from oligopools. <em>Sci. Adv.</em> 12, eady2279.
+  <a href="https://doi.org/10.1126/sciadv.ady2279">doi:10.1126/sciadv.ady2279</a>. Read, not drawn from.</li>
+<li>Romanowicz, K. J., Hinton, S. R., Villegas, N. and Plesa, C. (2026) DropSynth-Gold: Golden
+  Gate assembly in emulsions extends multiplexed gene libraries to greater lengths. <em>bioRxiv</em>
+  <a href="https://doi.org/10.64898/2026.05.29.728538">doi:10.64898/2026.05.29.728538</a>. Read, not drawn
+  from.</li>
+<li>Twist Bioscience product pages, price sheets, the multiplexed gene fragment order form, and
+  the four protocol guides DOC-001498, DOC-001499, DOC4057 and DOC_4045. Vendor material, not
+  redistributable.</li>
+<li>Molecular Devices QPix colony picker brochures. Vendor material, not redistributable.</li>
+<li>The Baker lab's three-primer diagram and the correspondence that came with it. Shared
+  directly, not published.</li>
+<li>Addgene depositor maps for the two vector parents, four barcode plasmids and the part
+  carrier, by plasmid number.</li>
+</ul>
+<h2 id="the-ap-1-demo-planned-and-compared-against-the-source">The AP-1 demo, planned and compared against the source<a class="headerlink" href="#the-ap-1-demo-planned-and-compared-against-the-source" title="Permanent link">&para;</a></h2>
+<p>Run on <strong>2026-10-06</strong> for issue #220, over the 72 AP-1 proteins of
+<code>docs/research/ap1-demo-project.md</code> — 24 N, 24 DBD, 24 C — with the inputs in
+<code>docs/examples/ap1-library</code>. The design was frozen and written to disk before the source's own
+parts were opened, so the comparison below is a check and not an input. The source is
+Takacsi-Nagy et al. 2026, Table S1, CC BY 4.0.</p>
+<h3 id="what-the-input-was-and-what-it-was-not">What the input was, and what it was not<a class="headerlink" href="#what-the-input-was-and-what-it-was-not" title="Permanent link">&para;</a></h3>
+<p>Amino acid sequences and a position each, and nothing else. The wild-type protein of every
+domain was recovered from the full-length natural TF sheet of Table S1 — the sheet that carries
+no design choice — and cross-checked against the two wild-type residue columns on the N and C
+sheets. They agree on all 48. No overhang, stuffer, barcode or codon was given to the planner.</p>
+<h3 id="what-the-pipeline-chose">What the pipeline chose<a class="headerlink" href="#what-the-pipeline-chose" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Planned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entry overhangs</td>
+<td><code>AGGA</code> into N, <code>AGAT</code> into DBD, <code>GCAT</code> into C</td>
+</tr>
+<tr>
+<td>Cloning scar</td>
+<td><code>TTCC</code></td>
+</tr>
+<tr>
+<td>Internal stuffer</td>
+<td>34 bp at every position</td>
+</tr>
+<tr>
+<td>Barcodes</td>
+<td>72 distinct 11-mers, minimum Hamming 4 in each pool, longest run 4, GC 18-82%</td>
+</tr>
+<tr>
+<td>Residues moved</td>
+<td>27, over 26 of 48 junction termini</td>
+</tr>
+<tr>
+<td>Synonymous codons moved by domestication</td>
+<td>55</td>
+</tr>
+<tr>
+<td>Coding bases over the 72 parts</td>
+<td>23,103</td>
+</tr>
+<tr>
+<td>Blocks</td>
+<td>133 to 1,149 bp, 30,519 bp in all</td>
+</tr>
+<tr>
+<td>Product</td>
+<td>2,276 bp, 13,824 distinct constructs, every check passing</td>
+</tr>
+<tr>
+<td>Colonies for 0.99 completeness</td>
+<td>183, then 6,306, then 195,386 — the floor 6.9 settled on, in place of 300x</td>
+</tr>
+</tbody>
+</table>
+<p>23,103 bp is the source's own published total, to the base. The retained tail reads 75 bases,
+25 codons, no stop, opening <code>RKVFSPGRRQF</code> — the specification's section 3.2 derived both.</p>
+<h3 id="the-comparison-difference-by-difference">The comparison, difference by difference<a class="headerlink" href="#the-comparison-difference-by-difference" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Theirs</th>
+<th>Ours</th>
+<th>Classification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overhang count</td>
+<td>four: <code>CTCC</code>, <code>GGAG</code>, <code>CCGA</code>, scar <code>AGCG</code></td>
+<td>four: <code>AGGA</code>, <code>AGAT</code>, <code>GCAT</code>, scar <code>TTCC</code></td>
+<td><strong>our defect</strong> — the method asks for one pair at every position (D3) and the planner cannot express it</td>
+</tr>
+<tr>
+<td>Which overhangs</td>
+<td>fixed by their own standard</td>
+<td><code>AGGA</code> pinned by the destination, the rest chosen for fewest residues moved</td>
+<td>two valid designs</td>
+</tr>
+<tr>
+<td>Internal stuffer</td>
+<td>56 bp, 58 bp terminal</td>
+<td>34 bp throughout</td>
+<td>recorded departure D2</td>
+</tr>
+<tr>
+<td>External stuffers</td>
+<td>29 bp each end, on the block</td>
+<td>29 bp each end, on the block</td>
+<td><strong>our defect</strong> — D4 puts them in the carrier, and the planner has no way to say so</td>
+</tr>
+<tr>
+<td>Barcode length</td>
+<td>11</td>
+<td>11</td>
+<td>agreement</td>
+</tr>
+<tr>
+<td>Barcode distance</td>
+<td>minimum Hamming 3, 4, 4 per pool</td>
+<td>4, 4, 4</td>
+<td>two valid designs</td>
+</tr>
+<tr>
+<td>Barcode set</td>
+<td>their 72</td>
+<td>72 others, none shared</td>
+<td>two valid designs; both sets are stop-free at our frame</td>
+</tr>
+<tr>
+<td>Residues at the N junction</td>
+<td>15 of 24 changed</td>
+<td>15 of 24 changed, 6 of them the same part</td>
+<td>two valid designs</td>
+</tr>
+<tr>
+<td>Residues at the middle junction</td>
+<td>not recorded on their sheet</td>
+<td>11 of 24 changed</td>
+<td>two valid designs</td>
+</tr>
+<tr>
+<td>Residues at the C junction</td>
+<td>19 of 24 first residues changed, all to R</td>
+<td>none — our terminal position is charged nothing</td>
+<td>two valid designs</td>
+</tr>
+<tr>
+<td>Reserved enzymes</td>
+<td>their blocks carry 2 BsaI, 2 BbsI, 1 SrfI, 2 PmeI by design</td>
+<td>the same, and no BsmBI</td>
+<td><strong>our defect, fixed</strong> — see below</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-residue-rule-and-its-prediction">The residue rule, and its prediction<a class="headerlink" href="#the-residue-rule-and-its-prediction" title="Permanent link">&para;</a></h3>
+<p>The specification predicted the rule and its exclusion set. Both hold, measured.</p>
+<p>A 4-base overhang donates its first base to close the upstream part's last codon and spells one
+whole codon with the other three. So the last residue of every fragment must have a codon ending
+in the donated base, and the residue the overhang spells overwrites what follows. At <code>AGAT</code> the
+donated base is <code>A</code>, and the residues no codon of which ends in <code>A</code> are <strong>C, D, F, H, M, N, W,
+Y</strong> — the specification's eight, derived independently. The prediction that a part is changed
+exactly when its last residue is one of those is <strong>right on 24 of 24 N parts</strong>, and the same
+test at the C junction, where <code>GCAT</code> donates <code>G</code> and the excluded set is <strong>C, D, F, H, I, N, Y</strong>,
+is right on 24 of 24 DBD parts.</p>
+<p>This is the equivalent of the source's own residue changes, and it is reached the same way:
+both designs overwrite a boundary residue rather than insert one. The specification's section
+3.1 prefers inserting a Gly and keeping every native residue; the planner has no such option,
+which is recorded below.</p>
+<h3 id="two-things-the-specification-says-that-this-run-does-not-reproduce">Two things the specification says that this run does not reproduce<a class="headerlink" href="#two-things-the-specification-says-that-this-run-does-not-reproduce" title="Permanent link">&para;</a></h3>
+<p>Both were taken up by #224 on the same day. One correction landed; one turned out to be larger
+than it read.</p>
+<ul>
+<li><strong>Section 9.5 says six of the source's 72 barcodes carry a stop at our frame offset.</strong>
+  Measured here: <strong>none</strong> do, at the retained stuffer's phase of 1, with our scar or theirs, in
+  a bare barcode-plus-scar unit and in a whole 41-base block alike. The reason for drawing a
+  fresh set stands on the distance rule and the site screen; this one measurement does not.
+  #224 measured it a third time, reading the frame off <code>product.dna</code> rather than off the
+  specification, and found none again: six is what the same 72 give one base out of frame.
+  Section 9.5 now says so.</li>
+<li><strong>Section 6 says three positions is two iGGA rounds.</strong> The planner reports three. This run read
+  the difference as wording; #224 measured it and it is not. The planner's first round opens the
+  destination with the internal enzyme, ligates the N part list released by the external enzyme,
+  transforms it and sizes it for 24 products — the same reaction as rounds 2 and 3, and a
+  24-member library at the end of it. The method's carrier step is a different reaction: BsmBI,
+  one well a part, 72 parts into a carrier, and no library made. <strong>One round a position is what
+  the pipeline models</strong>, and the method's accounting needs a carrier the pipeline has none of.
+  That is a design question: <code>synbio.dmx.carrier</code> models the reaction, and no plan
+  assembles it into a run.</li>
+</ul>
+<h3 id="what-the-planner-could-not-do">What the planner could not do<a class="headerlink" href="#what-the-planner-could-not-do" title="Permanent link">&para;</a></h3>
+<p>Five gaps, each measured on this run. The first is fixed; the rest are open.</p>
+<ol>
+<li><strong>An enzyme reserved by a step outside the rounds had nowhere to be named.</strong> The scheme took
+   one internal enzyme, one external and the blunt choppers, so BsmBI — which seats a part in
+   the DMX carrier — reached neither domestication nor the barcode rules. Measured: <strong>four BsmBI
+   sites survived in the 72 designed coding regions</strong>, one of which a later cut would have
+   destroyed. Fixed in #220: a scheme now takes a <code>reserved</code> list, held clear everywhere in a
+   block and refused in the scheme's own stuffers.</li>
+<li><strong>One overhang pair cannot serve every position.</strong> The standard holds every junction's
+   overhang to a pairwise distance rule, which is right for one pot and not for rounds: each
+   round's tube holds one entry overhang and the scar, and no other pair ever meets.</li>
+<li><strong>The external stuffers cannot move to the carrier.</strong> D4 leaves our cargo with none, and the
+   scheme requires both. The order sheet therefore carries 58 bp a part that this design would
+   not buy.</li>
+<li><strong>A junction cannot add a residue.</strong> Its codons are always charged to a neighbouring part, so
+   the designed protein never grows.</li>
+<li><strong>A destination may not carry the external enzyme's sites.</strong> The DMX backbone does, because
+   the same plasmid is a donor in another tube. The demo therefore runs on a minimal destination
+   rather than a DMX build.</li>
+</ol>
+<p>Domestication still takes an enzyme list and not a motif list, so the polyadenylation screen of
+section 3.3 was not run. That gap was already open.</p>
+<h2 id="the-method-as-specified">The method as specified<a class="headerlink" href="#the-method-as-specified" title="Permanent link">&para;</a></h2>
+<p>The specification this note is the evidence for, moved here whole when the published page it
+used to be was split for a bench reader. <code>docs/projects/igga.md</code> and <code>docs/projects/dmx.md</code>
+carry the reader-facing halves; the molecule tables, the step tables, the reagent lists and
+every item still undecided are below, unchanged.</p>
+<p><strong>This specification covers two experiments.</strong> <strong>DAD-GGA-DMX</strong> builds cargo from an oligo pool
+and reads each well back, so one design can be named at a time. <strong>iGGA</strong> mixes those parts in
+rounds and gives a pool. Nobody picks a member of that pool, and nothing in it is read for
+identity again. Reads across the whole pool judge it. Keep the two apart: a rule that suits
+picked wells does not suit a pool. <code>CONTEXT.md</code> defines both.</p>
+<h3 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Synthesise fragments up to 2.5 kb, at a scale of 10³ to 10⁴ designs, from the cheapest oligo
+   pool a vendor sells.</li>
+<li>A working vector that turns one cargo into any application, in a single Golden Gate reaction.</li>
+<li>Iterative Golden Gate (iGGA) that chains cargo with a barcode at every junction, in a planned
+   or a random order.</li>
+</ol>
+<h3 id="vectors-and-parts">Vectors and parts<a class="headerlink" href="#vectors-and-parts" title="Permanent link">&para;</a></h3>
+<p>What each molecule is. What is done with it is in <code>### Experiment sections</code>.</p>
+<h4 id="vectors-and-parts-summary">Vectors and parts summary<a class="headerlink" href="#vectors-and-parts-summary" title="Permanent link">&para;</a></h4>
+<p>Two tables, one row per molecule. <code>Sites to remove</code> means sites outside that molecule's own
+designed cassettes. <code>Cut by</code> names the enzyme that acts on the molecule and what the cut does,
+wherever the site itself sits.</p>
+<h5 id="what-each-molecule-is">What each molecule is<a class="headerlink" href="#what-each-molecule-is" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Source and purpose</th>
+<th>Selection</th>
+<th>Common overhangs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Part carrier vector</td>
+<td>pCR-Blunt II-TOPO; stores each part</td>
+<td>KanR</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Parts</td>
+<td>reusable in-frame elements: tag, linker, signal peptide, localization signal, degron</td>
+<td>—</td>
+<td>N-term pair TATG/AGGA; C-term pair TTCC/CTAA</td>
+</tr>
+<tr>
+<td>DMX vector</td>
+<td>holds cargo</td>
+<td>KanR</td>
+<td>AGGA, TTCC</td>
+</tr>
+<tr>
+<td>DMX barcode kit</td>
+<td>96 barcodes in four groups of 24; one from each group marks a well for ONT sequencing</td>
+<td>AmpR</td>
+<td>chain AGGA→GTTC→CCTT→TCAG→TTCC, group 1 to 4</td>
+</tr>
+<tr>
+<td>Cargo</td>
+<td>Twist oligo pool fragments, via DAD and DMX</td>
+<td>—</td>
+<td>AGGA, TTCC</td>
+</tr>
+<tr>
+<td>iGGA cargo</td>
+<td>cargo built for iterative random assembly</td>
+<td>—</td>
+<td>AGGA, TTCC</td>
+</tr>
+<tr>
+<td>Working vector</td>
+<td>chosen backbone plus working cassette; gives cargo its application</td>
+<td>AmpR/CarbR</td>
+<td>TATG, CTAA (cassette); AGGA, TTCC (cargo)</td>
+</tr>
+<tr>
+<td>Final vector</td>
+<td>working vector with cargo installed</td>
+<td>AmpR/CarbR</td>
+<td>AGGA, TTCC (cargo junction)</td>
+</tr>
+</tbody>
+</table>
+<h5 id="what-cuts-each-molecule">What cuts each molecule<a class="headerlink" href="#what-cuts-each-molecule" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Sites to remove</th>
+<th>Cut by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Part carrier vector</td>
+<td>BsmBI</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Parts</td>
+<td>BsaI, BsmBI, the cargo enzyme</td>
+<td>BsmBI (release the part)</td>
+</tr>
+<tr>
+<td>DMX vector</td>
+<td>BsaI, BsmBI, BbsI</td>
+<td>BsmBI (insert cargo), BsaI (add a plate barcode, release cargo, release the iGGA donor), PmeI (blunt the donor backbone)</td>
+</tr>
+<tr>
+<td>DMX barcode kit</td>
+<td>—</td>
+<td>BsaI (release a barcode)</td>
+</tr>
+<tr>
+<td>Cargo</td>
+<td>BsaI, BsmBI, the cargo enzyme</td>
+<td>BsmBI (insert into the DMX vector)</td>
+</tr>
+<tr>
+<td>iGGA cargo</td>
+<td>BsaI, BsmBI, BbsI, SrfI, PmeI, the cargo enzyme</td>
+<td>BsmBI (insert into the DMX vector), BsaI (release as the donor), BbsI (open the destination), SrfI (cut a destination BbsI missed)</td>
+</tr>
+<tr>
+<td>Working vector</td>
+<td>BsmBI, and the cargo enzyme</td>
+<td>BsmBI (insert the working cassette), the cargo enzyme (insert cargo)</td>
+</tr>
+<tr>
+<td>Final vector</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><code>docs/research/synthesis-and-assembly-barcode-kit.md</code> has all 96 barcodes.</p>
+<h5 id="the-cargo-enzyme-is-chosen-per-working-vector">The cargo enzyme is chosen per working vector<a class="headerlink" href="#the-cargo-enzyme-is-chosen-per-working-vector" title="Permanent link">&para;</a></h5>
+<p>Every other enzyme above is fixed by something physical: parts carry BsmBI flanks, the DMX
+vector carries BsaI outboard of BsmBI, the barcode kit releases with BsaI. The working vector
+is the user's own, so its cargo enzyme is not fixed and is searched for per vector. The search
+reads the working vector alone and runs before any block is designed, because every block has to
+be free of what it returns.</p>
+<p>What binds the choice:</p>
+<ul>
+<li>Distinct from BsmBI, so inserting cargo does not re-open the cassette</li>
+<li>A 4 nt 5' overhang, so <code>TATG</code>/<code>AGGA</code>/<code>TTCC</code>/<code>CTAA</code> are unchanged</li>
+<li><strong>No site in any molecule sharing its reaction, outside what it is meant to cut</strong> — the
+  reaction-scoped rule, which the gate reads</li>
+<li>A reaction and cycling protocol the package ships</li>
+</ul>
+<p>Three other molecules share the final-assembly pot and so inherit the choice: cargo, iGGA cargo,
+and any part in the working cassette. A 7 bp cutter costs them little — PaqCI's site is about
+four times rarer than the 6 bp sites already on their lists.</p>
+<p>The ccdB cassette's inner sites are whichever enzyme this returns, by synthesis or by the same
+re-tailoring PCR a part uses. Where the search returns nothing, the sites that blocked each
+candidate are the finding; see <code>docs/research/lentiviral-tolerance.md</code> for one vector class
+where the answer is already known.</p>
+<h4 id="parts">Parts<a class="headerlink" href="#parts" title="Permanent link">&para;</a></h4>
+<h5 id="form-and-carrier">Form and carrier<a class="headerlink" href="#form-and-carrier" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Synthesis or proofreading PCR, flanked by inward-facing BsmBI sites and a default overhang: <code>[BsmBI.&lt;5' overhang&gt;]─part─[&lt;3' overhang&gt;.BsmBI]</code></li>
+<li>Three cassette junctions: <code>TATG</code>/<code>AGGA</code> N-term part, <code>AGGA</code>/<code>TTCC</code> ccdB cassette and cargo, <code>TTCC</code>/<code>CTAA</code> C-term part</li>
+<li>Each part holds one pair, either the N-term or the C-term</li>
+<li>No part carries a BsaI or BsmBI site outside its own designed cassette</li>
+<li>Carrier: pCR-Blunt II-TOPO, whose backbone carries no BsmBI site</li>
+<li>A part has two usable forms: the carrier plasmid, and a PCR product carrying a different BsmBI flank, <code>5'-[spacer]-CGTCTC-N-[new overhang]-[annealing]-3'</code></li>
+</ul>
+<h5 id="rules-a-part-obeys">Rules a part obeys<a class="headerlink" href="#rules-a-part-obeys" title="Permanent link">&para;</a></h5>
+<ul>
+<li>In frame, a multiple of 3 bp long, counted including its 4 bp overhang at 5'</li>
+<li>No stop codon</li>
+<li>Every overhang reads as one base closing a codon plus one codon: <code>T|ATG</code>, <code>A|GGA</code>, <code>T|TCC</code>, <code>C|TAA</code></li>
+<li>The junction adds two amino acids</li>
+</ul>
+<h4 id="working-vector">Working vector<a class="headerlink" href="#working-vector" title="Permanent link">&para;</a></h4>
+<h5 id="input-working-vector">Input working vector<a class="headerlink" href="#input-working-vector" title="Permanent link">&para;</a></h5>
+<ul>
+<li>A backbone with no BsmBI and no cargo-enzyme site, AmpR/CarbR, carrying <code>[TATG.BsmBI]─[stuffer cassette]─[BsmBI.CTAA]</code> at the cassette site</li>
+<li>Any other enzyme's sites are counted and recorded, not removed. A site only has to go where its enzyme shares a reaction with this vector</li>
+<li>Stuffer cassette: RFP</li>
+<li>The <code>ATG</code> of <code>TATG</code> is the start codon where the backbone carries a promoter and RBS before it. Otherwise the start sits in an N-terminal part</li>
+</ul>
+<h5 id="working-cassette">Working cassette<a class="headerlink" href="#working-cassette" title="Permanent link">&para;</a></h5>
+<ul>
+<li><code>[TATG]─[N-terminal parts]─[ccdB cassette]─[C-terminal parts]─[CTAA]</code></li>
+<li>Either side is optional, and the ccdB cassette comes in a version to match each case</li>
+<li>ccdB cassette (for later cargo insertion), supplied as a part in four versions, where <code>CE</code> is
+  the cargo enzyme chosen for this working vector:</li>
+<li>N and C parts: <code>[BsmBI.AGGA.CE]─[promoter+ccdB]─[CE.TTCC.BsmBI]</code></li>
+<li>no N part: <code>[BsmBI.TATG]─GG─[AGGA.CE]─[promoter+ccdB]─[CE.TTCC.BsmBI]</code></li>
+<li>no C part: <code>[BsmBI.AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]</code></li>
+<li>neither: <code>[BsmBI.TATG]─GG─[AGGA.CE]─[promoter+ccdB]─[CE.TTCC]─GG─[CTAA.BsmBI]</code></li>
+<li>All four expose <code>AGGA</code>/<code>TTCC</code> for the cargo; a skipped side adds one Gly</li>
+<li>The cassette's promoter is <code>J23119</code> with a <code>B0034</code> RBS, so it counter-selects in any
+  ccdB-sensitive strain. The DMX cassette's T7 arrangement below does not</li>
+</ul>
+<h4 id="dmx-vector">DMX vector<a class="headerlink" href="#dmx-vector" title="Permanent link">&para;</a></h4>
+<ul>
+<li>The modified DMX vector has no BsaI, BsmBI, BbsI or SrfI outside the ccdB cassette, carries one PmeI site outboard of each BsaI site, uses KanR</li>
+<li>The PmeI site blunts the donor backbone in iGGA; the DMX pipeline does not use it</li>
+<li>DMX ccdB cassette: <code>[PmeI]─[BsaI.AGGA.BsmBI]─[promoter+ccdB]─[BsmBI.TTCC.BsaI]─[PmeI]</code></li>
+<li>The ccdB cassette reads from a T7 promoter under a <em>lac</em> operator, with the repressor on the
+  plasmid. Only a strain carrying T7 polymerase counter-selects</li>
+<li>So a DMX stock grows in an ordinary strain because its toxin is silent there, not because the
+  strain resists ccdB. Those are two different things, and only the first one holds here</li>
+</ul>
+<h4 id="final-vector">Final vector<a class="headerlink" href="#final-vector" title="Permanent link">&para;</a></h4>
+<ul>
+<li>A working vector whose ccdB cassette has been replaced by cargo, joined at <code>AGGA</code>/<code>TTCC</code></li>
+<li>AmpR/CarbR, where the DMX backbone it was released from is KanR</li>
+</ul>
+<h4 id="igga-cargo">iGGA cargo<a class="headerlink" href="#igga-cargo" title="Permanent link">&para;</a></h4>
+<p>Runs in the DMX vector; the working vector takes only the finished cargo.</p>
+<ul>
+<li>iGGA cargo: <code>[AGGA]─[fragment]─[internal stuffer]─[11 bp barcode]─[TTCC]</code></li>
+<li>Each fragment, counted from the first base of its <code>AGGA</code>, is a multiple of 3</li>
+<li>Internal stuffer <code>[AGGA.BbsI]─[SrfI]─[BbsI.TTCC]</code>, 34 bp: <code>AGGAAAGTCTTCAGCCCGGGCAGAAGACAATTCC</code></li>
+<li>Barcode: 11 bp, minimum Sequence-Levenshtein distance 3 within a part list, no in-frame stop codon, no homopolymer run over 5, and no site of the five cargo enzymes on either strand, read with the scar either side of it</li>
+<li>The stuffer is retained every round</li>
+<li>A capping block is any <code>AGGA</code>/<code>TTCC</code> block that is 1 mod 3 counted from its <code>AGGA</code>, such as T2A. It ends the chain</li>
+</ul>
+<p><code>docs/research/barcode-design.md</code> is the evidence for each barcode rule.</p>
+<h3 id="experiment-sections">Experiment sections<a class="headerlink" href="#experiment-sections" title="Permanent link">&para;</a></h3>
+<p>Major steps, the decisions attached to them, and anything designed that must be followed
+exactly. Volumes, temperatures, times, catalogue numbers and anything a person follows
+without deciding belong to the detail protocol.</p>
+<p>Every plasmid is confirmed by whole-plasmid sequencing before it becomes a stock. Only a
+pooled screen skips it.</p>
+<h4 id="lab-resources-build-once">Lab resources (build once)<a class="headerlink" href="#lab-resources-build-once" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Clone each part into the carrier</td>
+<td>BsmBI-flanked part</td>
+<td>part plasmid</td>
+<td>which overhang pair the part gets</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Rebuild the DMX vector backbone</td>
+<td>DMX0001 or DMX0002</td>
+<td>KanR DMX vector, BbsI-free, PmeI added</td>
+<td>which parent</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Build the input working vector</td>
+<td>chosen backbone</td>
+<td>backbone carrying the stuffer cassette</td>
+<td>the backbone; where the cassette goes; where promoter and RBS sit</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Sequence each candidate whole</td>
+<td>candidates from steps 1 to 3</td>
+<td>verified stocks</td>
+<td>which clone becomes the stock</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Lay out the primer plates</td>
+<td>orthogonal primer set</td>
+<td>source plates, then pre-made combination plates</td>
+<td>which primer fills which slot</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Stock the DMX barcode kit</td>
+<td>DMX barcode kit</td>
+<td>96 plasmids in four groups</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Step 5.</strong> A slot always means the same primer pair. A gene whose own sequence contains its
+slot's primer site moves slot.</p>
+<h4 id="working-vector-per-application">Working vector (per application)<a class="headerlink" href="#working-vector-per-application" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Choose the cassette's parts</td>
+<td>part collection</td>
+<td>N-terminal and C-terminal parts, or neither</td>
+<td>what each side carries, and whether either is skipped</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Take the matching ccdB cassette</td>
+<td>four versions</td>
+<td>the one fitting which sides are used</td>
+<td>the cargo enzyme, and so which cassette set</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Retailor an overhang</td>
+<td>part plasmid</td>
+<td>BsmBI-tailed PCR product</td>
+<td>whether a part's default pair fits this cassette</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Assemble</td>
+<td>input working vector, parts</td>
+<td>working vector</td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Screen and pick</td>
+<td>transformants</td>
+<td>candidate clones</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Sequence each candidate whole</td>
+<td>candidate clones</td>
+<td>working vector stock</td>
+<td>which clone becomes the stock</td>
+</tr>
+</tbody>
+</table>
+<p>Check total length and part compatibility before assembling, and check that the two amino
+acids each junction adds do no harm in this construct. A part that fits its default pair is
+added as the carrier plasmid, with no digest and no PCR of its own.</p>
+<p><strong>Undecided:</strong> what the carrier's own BsaI site and ccdB do to a part added that way — one BsaI
+site, inside the counter-selection cassette. Section 6.11 holds this open.</p>
+<h4 id="cargo-synthesis">Cargo synthesis<a class="headerlink" href="#cargo-synthesis" title="Permanent link">&para;</a></h4>
+<p>Builds full-length cargo from an oligo pool and puts it in the DMX vector. From PCR2 onward,
+identity is held by well position.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Collect input sequences</td>
+<td>protein or DNA sequences</td>
+<td>the design list</td>
+<td>which genes, and how long</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Check compatibility</td>
+<td>design list</td>
+<td>cleared list</td>
+<td>whether to recode or drop a gene carrying a restriction or primer site</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Split each gene with DAD</td>
+<td>cleared list</td>
+<td>fragments, internal overhangs</td>
+<td>oligo product and length</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Draw the barcode set — iGGA cargo only</td>
+<td>part lists</td>
+<td>one barcode per fragment</td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Assign primer slots</td>
+<td>fragments</td>
+<td>oligo layout</td>
+<td>batch size</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Order the pool</td>
+<td>oligo layout</td>
+<td>oligo pool</td>
+<td>pool size</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Run PCR1, per batch</td>
+<td>pool</td>
+<td>one batch's pieces</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Run PCR2, per gene</td>
+<td>batch</td>
+<td>one gene's pieces</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Assemble into the DMX vector</td>
+<td>pieces, vector</td>
+<td>cargo in vector</td>
+<td>—</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Transform and archive as cells</td>
+<td>assembly product</td>
+<td>glycerol archive, one design per well</td>
+<td>polyclonal, or go on to validation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Step 3.</strong> <code>AGGA</code> and <code>TTCC</code> are held out of the overhang set DAD may choose.</p>
+<p><strong>Steps 3 and 5, the three-primer scheme.</strong> Every oligo is
+<code>[P1][BsmBI][span][BsmBI][pad][P2][P3]</code>. PCR1 uses the pair (P1, P3) shared by a whole batch of
+genes and pulls that batch out of the pool. PCR2 uses (P1, P2) to pull one gene out of the batch
+and drops the P3 region.</p>
+<p><strong>Steps 3 and 5, the two BsmBI sites.</strong> Both face inward and are part of the ordered sequence.
+The two outermost cuts across a part give <code>AGGA</code> and <code>TTCC</code>; every internal cut gives the
+overhang the split chose. They cannot move onto the primers: all of a gene's fragments share one
+P1 and P2, so a primer would give every fragment the same overhang.</p>
+<p><strong>Steps 3 and 5, the budget.</strong> The span between the two cuts carries its own overhang at each
+end, and each internal overhang belongs to two fragments at once. A gene of <code>L</code> bases needs:</p>
+<div class="highlight"><pre><span></span><code>span  ≤ oligo length − 60 (three primer sites) − 14 (two recognition sites and spacers)
+pieces = ceil((L − 4) / (span − 4))
+</code></pre></div>
+<p>At 350 nt the span is 276 bases and holds 268 between its overhangs. <strong>Both numbers are
+computed, never typed:</strong> count the overhangs once and a 1,149 base part needs five pieces, not
+six.</p>
+<p><strong>Step 5, padding.</strong> Every oligo is padded to the same length, which the build sets. Filler
+goes between the second BsmBI site and P2, outside the cut, so it never reaches the product. It
+is screened for the reserved enzyme sites, for the primer sites, and at both of its joins.</p>
+<p><strong>Step 4.</strong> The set is drawn fresh, to the rules in <code>### iGGA cargo</code>.</p>
+<p><strong>Step 5, batch size.</strong> At most 96 genes a batch — one inner-primer plate, one PCR2 plate — and
+a larger library divides into equal batches, never full batches plus a remainder. Hold pieces
+per PCR1 tube roughly constant and let batch size fall as genes lengthen; the budget is a
+build input, inside the 96 to 768 pieces the Baker anchors derive.</p>
+<p><strong>Step 10.</strong> Polyclonal by default.</p>
+<p><strong>The archive.</strong> Cells, not DNA, in duplicate plates. DNA is prepared when a set is drawn, one
+prep for the set. No per-well normalisation.</p>
+<h4 id="cargo-validation-optional">Cargo validation (optional)<a class="headerlink" href="#cargo-validation-optional" title="Permanent link">&para;</a></h4>
+<p>The cargo sits in the DMX vector either way; this section only reads each well. Identity stays
+with well position throughout. Choose the route per build. Each route states its own capacity
+below, and a build that reads designs back names one.</p>
+<p><strong>Which designs are read.</strong> None, unless the build asks. A library headed for a pooled screen
+takes its identity from that screen, so most libraries are never read back one design at a time.
+A build that wants the read names a fragment count. Every design in that many pieces or more
+is read, and the rest stay polyclonal. Set the count to zero to read every design. The chance of
+a clean colony falls as a gene is cut into more pieces, so this is the line the build is really
+drawing. The protocol prints each design's own chance beside it.</p>
+<h5 id="getting-to-clonal-wells">Getting to clonal wells<a class="headerlink" href="#getting-to-clonal-wells" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Spot the archive as an array</td>
+<td>archive plate</td>
+<td>one spot per design</td>
+<td>spots per tray</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Grow</td>
+<td>tray</td>
+<td>colonies per spot</td>
+<td>—</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Pick into 384-well plates</td>
+<td>tray</td>
+<td>clonal cultures, position kept</td>
+<td>colonies per design</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Grow</td>
+<td>384-well plates</td>
+<td>cultures ready to sample</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>The picked plate is where the shared section ends, on both routes. Each route's own first step is
+the move out of it: barcode ligation takes four of these plates into one 1536-well plate, index
+PCR takes one into 96-well plates. Neither route amplifies or lyses in the plate the colonies were picked into.</p>
+<p><strong>Step 3, colonies per design.</strong> Four by default, which is Lund's anchor and the only measured
+one, and a build may pick more. Four colonies gave a clean copy of 343 of 458 genes. The same
+work shows why four is not always right: a gene in two pieces came out clean every time, one in
+five pieces 84.6% of the time, one in twelve 40%, and one in sixteen never. The protocol prints
+each design's own chance from that table, so a build that needs more picks knows it before the
+plates are poured.</p>
+<h5 id="barcode-ligation">Barcode ligation<a class="headerlink" href="#barcode-ligation" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5</td>
+<td>Compress four 384-well plates into one 1536-well plate</td>
+<td>cultures</td>
+<td>cell lysate per well</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Add one barcode from each of the four groups</td>
+<td>DMX barcode kit</td>
+<td>a combination per well</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Barcode in lysate</td>
+<td>lysate, barcodes</td>
+<td>barcoded construct per well</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Pool, then amplify the three primer pairs separately</td>
+<td>barcoded pool</td>
+<td>three amplicon pools</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Sequence</td>
+<td>amplicons</td>
+<td>reads</td>
+<td>—</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Basecall and demultiplex</td>
+<td>reads</td>
+<td>a sequence per well</td>
+<td>the depth floor</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Reformat</td>
+<td>per-well calls</td>
+<td>compacted plate</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h5 id="index-pcr">Index PCR<a class="headerlink" href="#index-pcr" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5</td>
+<td>Sample one picked plate into 96-well plates</td>
+<td>picked plate</td>
+<td>a plate of reactions per 96 wells</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Amplify each well with one barcoded primer pair</td>
+<td>reactions, prepared primer plate</td>
+<td>barcoded amplicon per well</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Pool per plate and clean up</td>
+<td>amplicons</td>
+<td>one pool per plate</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Sequence</td>
+<td>pool</td>
+<td>reads</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Demultiplex</td>
+<td>reads</td>
+<td>a sequence per well</td>
+<td>the depth floor</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Reformat</td>
+<td>per-well calls</td>
+<td>compacted plate</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Step 5.</strong> One quarter of the picked plate goes to one 96-well plate. A 384-well plate's wells
+sit at half a 96-well plate's spacing, so one well in four lines up under a standard multichannel
+head, and the plate is covered in four passes. Picking fills one quarter at a time for the same
+reason: a part-filled picked plate then gives full 96-well plates, no reverse barcode is spent on a
+plate that is mostly empty, and a design's colonies stay together on one plate. An acoustic handler
+does the same move where one is already booked, which is how barcode ligation moves out of the
+same plate.</p>
+<p><strong>Step 6, the primer plate.</strong> The barcoded pairs are built once and kept as lab stock, by their
+own preparation protocol. A run calls for a prepared plate and does not build one.</p>
+<h5 id="which-barcodes-mark-a-well">Which barcodes mark a well<a class="headerlink" href="#which-barcodes-mark-a-well" title="Permanent link">&para;</a></h5>
+<p>The well's address is split across the barcode sets, and one set carries the plate. Index PCR
+uses 96 forward barcodes for the well and 96 reverse for the plate, which reaches 9,216 wells on
+the 192 primers already held. Barcode ligation uses three DMX groups for the well and the fourth
+for the plate, so one barcode goes across a whole plate from a reservoir.</p>
+<p>Two plates on one flow cell are told apart this way. The combination is worked out from the
+well, not looked up in a file, so a demultiplexer can check an address instead of trusting one.</p>
+<h5 id="what-counts-as-a-pass">What counts as a pass<a class="headerlink" href="#what-counts-as-a-pass" title="Permanent link">&para;</a></h5>
+<p>Two questions, in order.</p>
+<p>Is the read deep enough to call? If not, the well has <strong>no verdict</strong>. It is read again or picked
+again, and it is not a failure. The floor comes with the route. The two floors are not a strict
+and a lenient setting of one scale. One is where consensus calling starts; the other is where a
+reader stops trusting a well, over different amplification and different read filters. Barcode
+ligation wants more than 150 reads. Index PCR wants more than twenty, and a well at ten reads or
+more is still called, with a warning. The wanted depth is one to pass; the tolerable one is a
+depth to reach. A build may raise the wanted depth. It cannot move the tolerable one, which
+comes with the route.</p>
+<p>Does the call match the design exactly — both entry overhangs, the fragment, the stuffer and the
+barcode? Anything less fails, a silent change included, because a barcode that no longer names
+its member cannot be put right later. A well with more than one consensus is mixed, and mixed
+fails.</p>
+<h5 id="after-either-route">After either route<a class="headerlink" href="#after-either-route" title="Permanent link">&para;</a></h5>
+<p>Reformatting compacts out the wells that failed. A well with no verdict is not compacted out.
+A design with no passing well is picked again from the same archive spot before anyone
+re-synthesises it. The polyclonal route skips this section.</p>
+<h4 id="igga-pipeline">iGGA pipeline<a class="headerlink" href="#igga-pipeline" title="Permanent link">&para;</a></h4>
+<p>Runs in the DMX vector. iGGA cargo is one kind of cargo and may be polyclonal or validated like
+any other.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Choose the pools and their order</td>
+<td>one part list per round</td>
+<td>a round plan</td>
+<td>which list goes first</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Digest the destination and the donor apart</td>
+<td>destination pool, donor pool</td>
+<td>opened destination, released donor</td>
+<td>—</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Ligate</td>
+<td>cut ends</td>
+<td>circular product</td>
+<td>—</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Electroporate, recover and grow</td>
+<td>ligation</td>
+<td>the round's pool</td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Plate a dilution, and a no-donor control</td>
+<td>the recovery</td>
+<td>the round's colony count</td>
+<td>run the round again, or carry it on</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Prep the pool</td>
+<td>the round's pool</td>
+<td>next round's destination</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Repeat steps 2 to 6</td>
+<td>—</td>
+<td>finished library</td>
+<td>whether a last round swaps the stuffer for a capping block</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Read linkage</td>
+<td>finished library</td>
+<td>barcode combination → cargo table</td>
+<td>carry it forward, or rebuild a round</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Read representation</td>
+<td>finished library</td>
+<td>combinations seen, and how evenly</td>
+<td>at least 99.5% seen, skew under 10</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Step 1.</strong> A pool is one position's parts. Each part is prepped on its own, then mixed in equal
+amounts of DNA. A pool is built once, and cut again each round it supplies.</p>
+<p><strong>Step 2.</strong> Destination BbsI + SrfI, donor BsaI + PmeI, in separate tubes.</p>
+<p><strong>Step 3.</strong> 20 ng of cut destination per 200 µL, with donor at a 1:1 molar ratio.</p>
+<p><strong>Step 4.</strong> Up to 100 ng of the cleaned ligation goes into the cells.</p>
+<p><strong>Step 5.</strong> The control is the cut destination taken through the ligation with no donor added.
+Subtract its colonies from the count. Both plates grow while the pool does, so they cost no
+extra day. How many colonies a round needs is set by the build, not here: it follows from how
+well the work downstream has to see each member. The source plates nothing at all, and
+Section 6.9 says why this specification does.</p>
+<p><strong>Step 8.</strong> The amplicon spans the whole cargo, so linkage is a long read: a barcode and the
+coding bases it names have to arrive in one molecule. The plan designs the pair.</p>
+<p><strong>Step 9.</strong> Representation is read again after every later bottleneck. The amplicon spans the
+barcode block alone, so it is a short read and cheap to repeat; the plan designs that pair too.</p>
+<h4 id="final-assembly">Final assembly<a class="headerlink" href="#final-assembly" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>In</th>
+<th>Out</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Pick the working vector</td>
+<td>working vector stock</td>
+<td>—</td>
+<td>which application</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Pick the cargo</td>
+<td>DMX library or chosen wells</td>
+<td>—</td>
+<td>which cargo, and how it is pooled</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Assemble with the cargo enzyme</td>
+<td>both</td>
+<td>final vector</td>
+<td>whether the cargo is released in its own tube first</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Clean up and electroporate</td>
+<td>reaction</td>
+<td>the library</td>
+<td>how many colonies</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Read representation</td>
+<td>the library</td>
+<td>what survived the transfer</td>
+<td>at least 99.5% seen, skew under 10: screen it, or transfer again</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Step 3.</strong> One pot where the cargo enzyme is also what releases cargo from the DMX backbone.
+Otherwise two stages in one tube: release with BsaI and PmeI, heat-kill, then add the working
+vector, the cargo enzyme and ligase. A Gibson link or a re-tailoring PCR does the same job at a
+different price. This is the one reaction where the working vector meets DMX-derived material,
+because the iGGA rounds all finish first.</p>
+<p>Neither by-product needs a check.</p>
+<h3 id="reagents-and-equipment">Reagents and equipment<a class="headerlink" href="#reagents-and-equipment" title="Permanent link">&para;</a></h3>
+<h4 id="equipment-list">Equipment list<a class="headerlink" href="#equipment-list" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Equipment</th>
+<th>Needed for</th>
+<th>Model</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Acoustic liquid handler</td>
+<td>DMX barcoding; primer combination plates</td>
+<td>Echo 525</td>
+<td>HTS core</td>
+</tr>
+<tr>
+<td>Automated liquid handler</td>
+<td>combination plates, reformatting</td>
+<td>Biomek i7</td>
+<td>planned purchase</td>
+</tr>
+<tr>
+<td>Nanopore sequencer</td>
+<td>validation read-out, library reads</td>
+<td>MinION Mk1D</td>
+<td>to buy</td>
+</tr>
+<tr>
+<td>Colony picker</td>
+<td>picking into 384-well plates, validation route only</td>
+<td>—</td>
+<td>undecided</td>
+</tr>
+</tbody>
+</table>
+<h4 id="plasmid-list">Plasmid list<a class="headerlink" href="#plasmid-list" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Plasmid</th>
+<th>Role</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pCR-Blunt II-TOPO</td>
+<td>part carrier</td>
+<td>Zero Blunt TOPO kit</td>
+</tr>
+<tr>
+<td>DMX0001</td>
+<td>DMX vector parent</td>
+<td>Addgene 247434</td>
+</tr>
+<tr>
+<td>DMX0002</td>
+<td>alternative parent, cassette on the opposite strand</td>
+<td>Addgene 247435</td>
+</tr>
+<tr>
+<td>DMX barcode kit</td>
+<td>96 plasmids, four groups of 24; one barcode per group marks a well</td>
+<td>Addgene; accession range in <code>docs/research/synthesis-and-assembly-barcode-kit.md</code></td>
+</tr>
+<tr>
+<td>ccdB cassette, four versions</td>
+<td>N and C, no N, no C, neither</td>
+<td>synthesised, held as parts</td>
+</tr>
+<tr>
+<td>Working vector backbone</td>
+<td>per application</td>
+<td>the user's own</td>
+</tr>
+</tbody>
+</table>
+<h4 id="primer-list">Primer list<a class="headerlink" href="#primer-list" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>What it is</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Part retailoring primers</td>
+<td><code>5'-[spacer]-CGTCTC-N-[new overhang]-[annealing]-3'</code></td>
+<td>designed per part</td>
+</tr>
+<tr>
+<td>Orthogonal set, roles P1 / P2 / P3</td>
+<td>165 twenty-mers of a tested 185, split 96 inner P2 / 35 P1 / 34 P3</td>
+<td>Subramanian 2018, Supplementary Table 1</td>
+</tr>
+<tr>
+<td>DMX library pair</td>
+<td>carries the BsmBI sites giving <code>AGGA</code>/<code>TTCC</code></td>
+<td>Qian 2026, Supplementary Table 4</td>
+</tr>
+<tr>
+<td>DMX1–DMX6</td>
+<td>three pairs for the barcoded amplicon</td>
+<td>Qian 2026, Supplementary Table 4</td>
+</tr>
+<tr>
+<td>dmx0 / dmx7</td>
+<td>universal primers flanking the design</td>
+<td>named by Qian 2026, sequences derived in <code>docs/research/synthesis-and-assembly-barcode-kit.md</code></td>
+</tr>
+<tr>
+<td>Library read pairs</td>
+<td>representation and linkage, across the barcode block</td>
+<td>designed per library</td>
+</tr>
+<tr>
+<td>Index PCR plate</td>
+<td>one pair per well, ordered as published</td>
+<td>Long 2025, Tables S3 and S4</td>
+</tr>
+</tbody>
+</table>
+<h4 id="reagent-list">Reagent list<a class="headerlink" href="#reagent-list" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Items</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type IIS enzymes</td>
+<td>BsaI-HFv2, BsmBI, BbsI, and the cargo enzyme chosen for the working vector (PaqCI needs its activator oligo)</td>
+</tr>
+<tr>
+<td>Blunt cutters</td>
+<td>SrfI, PmeI</td>
+</tr>
+<tr>
+<td>Ligases</td>
+<td>T4 DNA ligase; T7 DNA ligase with StickTogether buffer</td>
+</tr>
+<tr>
+<td>Clean-up</td>
+<td>SPRI beads; a column clean-up kit; a plasmid prep kit</td>
+</tr>
+<tr>
+<td>Cloning kit</td>
+<td>Zero Blunt TOPO</td>
+</tr>
+<tr>
+<td>Strains</td>
+<td>DB3.1 or ccdB Survival 2 T1R (growing a stock whose ccdB is expressed); NEB Stable (a DMX stock, whose ccdB is T7-silent); a ccdB-sensitive strain carrying T7 polymerase (receiving cargo); electrocompetent BL21(DE3) (libraries); Endura (iGGA rounds)</td>
+</tr>
+<tr>
+<td>Media and selection</td>
+<td>low-salt LB; carbenicillin, kanamycin; glycerol for the archive</td>
+</tr>
+</tbody>
+</table>
+<p><strong>NEB Stable and Endura are ccdB-sensitive.</strong> Neither published genotype carries a resistance
+allele. That sensitivity is the point: it is why the ccdB cassette kills every vector that keeps
+it after assembly. So a stock whose ccdB is expressed has to be grown in DB3.1 or ccdB Survival
+2 T1R instead. Neither vendor names the allele those two are sold on.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "name": "AP-1 DESynR",
+  "positions": [
+    "N",
+    "DBD",
+    "C"
+  ],
+  "parts": "parts.fasta",
+  "vector": "vector.gb",
+  "working_vector": "working-vector.gb",
+  "carrier": "carrier.gb",
+  "host": "human",
+  "oligo_length": 350,
+  "primers": "primers.tsv",
+  "primer_plates": {
+    "nanomoles": 25,
+    "stock_um": 100,
+    "working_ul": 100
+  },
+  "bands": {
+    "count": [
+      "1-100",
+      "101-500",
+      "501-"
+    ],
+    "length": [
+      "1-250",
+      "251-300",
+      "301-350"
+    ]
+  },
+  "batch_size": 96,
+  "completeness": 0.99,
+  "validate_from": 0,
+  "routes": [
+    "barcode ligation",
+    "index PCR"
+  ],
+  "seed": 0,
+  "reserved_extra": [],
+  "linkage_fidelity": 0.9,
+  "final_assembly": {
+    "vector_ng": 75
+  },
+  "barcode": {
+    "length": 11,
+    "min_distance": 3
+  }
+}

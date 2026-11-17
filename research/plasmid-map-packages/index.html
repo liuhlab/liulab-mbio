@@ -1,0 +1,2010 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/plasmid-map-packages/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>Plasmid map packages: which Python libraries draw a map, and how close do they get to SnapGene? - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#plasmid-map-packages-which-python-libraries-draw-a-map-and-how-close-do-they-get-to-snapgene" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Plasmid map packages: which Python libraries draw a map, and how close do they get to SnapGene?
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-how-this-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. How this was measured
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-map-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. The map views
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. The map views">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-how-each-one-looks-against-the-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 How each one looks against the reference
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-labels-who-keeps-them-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Labels: who keeps them apart
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-across-the-origin-and-joined-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Across the origin, and joined features
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-html-output-as-far-as-each-package-offers-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. HTML output, as far as each package offers it
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-the-sequence-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. The sequence view
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-licence-maintenance-and-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Licence, maintenance and install
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-also-found-and-why-each-is-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Also found, and why each is out
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-what-80-should-prototype" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. What #80 should prototype
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="plasmid-map-packages-which-python-libraries-draw-a-map-and-how-close-do-they-get-to-snapgene">Plasmid map packages: which Python libraries draw a map, and how close do they get to SnapGene?<a class="headerlink" href="#plasmid-map-packages-which-python-libraries-draw-a-map-and-how-close-do-they-get-to-snapgene" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #77. It surveys the Python packages that draw an annotated sequence
+as a circular or linear map, and asks how close each comes to the reference picture on map
+issue #76: arrows along the strand, a label on the arrow when it fits and outside with a leader
+line when it does not, enzyme sites outside as <code>name (position)</code>, primers outside as
+<code>name (start .. end)</code>, switches to show or hide each layer, PNG and PDF, and one HTML file that
+opens offline. It also asks which of them draws a base-by-base sequence view like SnapGene
+Viewer's Sequence tab.</p>
+<p>Everything below was read or measured on <strong>2026-09-16</strong>. Each section says which facts were
+<strong>measured</strong> — drawn, installed or counted — and which were <strong>read</strong> from a package's own
+source, docs or metadata.</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Draws</th>
+<th>Nearest to the reference in</th>
+<th>Leaves us to build</th>
+<th>Carry into #80?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>gbdraw</strong></td>
+<td>circular, linear, a linear region</td>
+<td>Closest picture out of the box: strand arrows, a label on the arc when it fits and outside with a leader line when it does not, name and length in the centre, an offline interactive SVG with popups</td>
+<td>Sites and primers passed in as features; overlap is not prevented; no show/hide in the file; not on PyPI; its Python API is still being renamed</td>
+<td><strong>Yes</strong>, as the benchmark picture</td>
+</tr>
+<tr>
+<td><strong>pyCirclize + pyGenomeViz</strong></td>
+<td>circular (pyCirclize), linear and region (pyGenomeViz)</td>
+<td>Lightest maintained pair on conda-forge and PyPI, MIT, one author, both on matplotlib; primitives that take our own spans; pyGenomeViz writes an offline HTML viewer</td>
+<td>The label rule on the circle, splitting a span at the origin, show/hide in HTML, any circular HTML</td>
+<td><strong>Yes</strong>, as the matplotlib route</td>
+</tr>
+<tr>
+<td>DNA Features Viewer</td>
+<td>circular, linear, a cropped region</td>
+<td>Label on the feature when it fits, otherwise outside; the one sequence view with a translation</td>
+<td>Circle labels stack in a column above the ring; segments collapse to one span; no commits in a year; bioconda only</td>
+<td>No — read its label and translation code</td>
+</tr>
+<tr>
+<td>Biotite</td>
+<td>circular, linear</td>
+<td>Curved labels on the arc; a feature across the origin drawn as one arc</td>
+<td>No outside labels at all: a label that does not fit is dropped</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Biopython GenomeDiagram</td>
+<td>circular, linear, a region</td>
+<td>Already inside Biopython</td>
+<td>No label placement; ReportLab adds 36 packages; untouched since 2024</td>
+<td>No</td>
+</tr>
+<tr>
+<td>QUEEN</td>
+<td>circular, linear</td>
+<td>The only package that draws both strands base by base</td>
+<td>The released version does not import on Python 3.13; PyPI only; no commits since 2024</td>
+<td>No — a reference for the sequence view</td>
+</tr>
+<tr>
+<td>pLannotate</td>
+<td>circular, in Bokeh</td>
+<td>Hover details, a legend by feature type</td>
+<td>GPL-3.0; takes its own BLAST hit table, not a record; installs BLAST, DIAMOND and Perl</td>
+<td>No</td>
+</tr>
+<tr>
+<td>DNAplotlib, plasmidcanvas, others</td>
+<td>see section 9</td>
+<td>—</td>
+<td>—</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong>No package keeps labels apart on a circle with a guarantee.</strong> Every circular candidate measured
+that places outside labels overlapped some on the crowded map (section 4). The rule is ours to write,
+which is issue #83's question.</p>
+<p><strong>No package's HTML has show/hide switches.</strong> The offline files that exist give hover details
+and zoom; none lets a reader hide a layer or a feature type (section 6). That is issue #78's.</p>
+<p><strong>No package draws SnapGene's Sequence tab.</strong> The pieces exist separately — one strand with a
+translation, both strands without one, enzyme names over both strands as text — but no package
+joins them (section 7). The sequence view is ours to build.</p>
+<p><strong>No package knows what an enzyme site or a primer is.</strong> Every candidate takes them as generic
+features or free-text annotations, so the <code>name (position)</code> and <code>name (start .. end)</code> labels,
+and the purple, are ours in any route.</p>
+<h2 id="2-how-this-was-measured">2. How this was measured<a class="headerlink" href="#2-how-this-was-measured" title="Permanent link">&para;</a></h2>
+<p><strong>The record.</strong> <code>docs/examples/pUC19-GFP/product.dna</code>, written to GenBank: 3,347 bp, circular,
+12 features, two of them joined from segments (lacZα and AmpR), 4 primers. Enzyme sites came
+from <code>sites.find_sites</code> over the shipped enzymes, keeping those that cut once: NcoI, BtgZI,
+BspQI and SapI.</p>
+<p><strong>Three variants of it.</strong></p>
+<ul>
+<li><em>plain</em> — the record as it is.</li>
+<li><em>crowded</em> — plain, plus pUC19's own 14 multiple-cloning-site enzymes packed into 60 bp, so
+  the map carries 30 labels, 14 of them within under 2% of the circle.</li>
+<li><em>rotated</em> — the record's origin moved 2,700 bp, so AmpR crosses the origin as
+  <code>complement(join(2934..3347,1..378,379..447))</code>.</li>
+</ul>
+<p>A fourth, <em>harsh</em>, added 24 more site labels in 48 bp near position 2,000, for gbdraw only.</p>
+<p><strong>The environment.</strong> Every conda candidate was installed together from conda-forge and bioconda
+on Python 3.13.15 and drew the variants; the PyPI-only candidates went into a second throwaway
+environment. Dependency weight was measured by solving each candidate beside the
+repository's own runtime set (Python 3.13, typer, biopython, primer3-py) for both platforms and
+counting the packages the lock gained.</p>
+<p><strong>Counting overlaps.</strong> For the matplotlib packages, the figure was drawn and every pair of label
+boxes compared in display coordinates — the text's own extent, or the rounded box around it where
+the package draws one. gbdraw writes SVG, so its overlaps were read off the rendering.</p>
+<h2 id="3-the-map-views">3. The map views<a class="headerlink" href="#3-the-map-views" title="Permanent link">&para;</a></h2>
+<p>Measured on the three variants unless marked <em>read</em>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Circular</th>
+<th>Linear</th>
+<th>Region</th>
+<th>Strand arrows</th>
+<th>Per-feature colour</th>
+<th>Show/hide</th>
+<th>Input it takes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>gbdraw</strong> 0.13.0</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes, <code>--region</code>, 1-based</td>
+<td>yes</td>
+<td>yes, TSV rules by qualifier</td>
+<td>at draw time: feature types, a visibility table, label whitelist</td>
+<td>GenBank, or GFF3 + FASTA</td>
+</tr>
+<tr>
+<td><strong>pyCirclize</strong> 1.10.1</td>
+<td>yes</td>
+<td>no</td>
+<td>a sector may cover part of a record, still circular</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+<td>its GenBank/GFF parsers, SeqFeatures, or plain coordinates</td>
+</tr>
+<tr>
+<td><strong>pyGenomeViz</strong> 1.7.0</td>
+<td>no</td>
+<td>yes</td>
+<td>yes, segments</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+<td>its GenBank/GFF parsers, SeqFeatures, or plain coordinates</td>
+</tr>
+<tr>
+<td>DNA Features Viewer 3.1.5</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes, <code>crop()</code></td>
+<td>yes</td>
+<td>yes</td>
+<td>by filtering features in a translator</td>
+<td>a Biopython record, a GenBank or GFF path, or plain features</td>
+</tr>
+<tr>
+<td>Biotite 1.7.1</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes, <code>loc_range</code></td>
+<td>yes</td>
+<td>yes, a formatter function</td>
+<td>no</td>
+<td>Biotite's own <code>Annotation</code></td>
+</tr>
+<tr>
+<td>GenomeDiagram (Biopython 1.88)</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes, <code>start</code>/<code>end</code></td>
+<td>yes, <code>ARROW</code>, <code>BIGARROW</code> sigils</td>
+<td>yes</td>
+<td>by what is added to a track</td>
+<td>SeqFeatures</td>
+</tr>
+<tr>
+<td>QUEEN 1.2.0 (unreleased)</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes, <code>start</code>/<code>end</code></td>
+<td>yes</td>
+<td>yes, by qualifier</td>
+<td>a feature list</td>
+<td>its own <code>QUEEN</code> object, read from GenBank</td>
+</tr>
+<tr>
+<td>pLannotate 2.0.0 (<em>read</em>)</td>
+<td>yes</td>
+<td>no — <code>linear=True</code> only marks a break</td>
+<td>no</td>
+<td>yes</td>
+<td>by feature type</td>
+<td>no</td>
+<td>its BLAST hit table</td>
+</tr>
+</tbody>
+</table>
+<p>Static formats: every matplotlib package writes PNG, PDF and SVG. GenomeDiagram writes PDF, SVG and
+EPS, and PNG through ReportLab's bitmap renderer
+(<a href="https://biopython.org/docs/latest/Tutorial/chapter_graphics.html">Biopython tutorial</a>). gbdraw
+writes SVG, and PNG, PDF, EPS and PS through CairoSVG
+(<a href="https://github.com/satoshikawato/gbdraw/blob/8675f33bb2f2ac8f174f65e9a36529df942c5333/README.md">gbdraw README</a>).
+All were produced in the measurement.</p>
+<h3 id="31-how-each-one-looks-against-the-reference">3.1 How each one looks against the reference<a class="headerlink" href="#31-how-each-one-looks-against-the-reference" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>gbdraw</strong> is the nearest out of the box. On the crowded map it drew each feature as an
+  arrow on its strand ring, put <code>lacZα</code>, <code>GFP</code>, <code>AmpR</code> and <code>ori</code> on their arcs, fanned the 18
+  site labels outside with leader lines, and wrote the name, length and GC content in the centre.
+  Its default feature types are <code>CDS</code>, <code>rRNA</code>, <code>tRNA</code>, <code>tmRNA</code>, <code>ncRNA</code>, <code>misc_RNA</code> and
+  <code>repeat_region</code>
+  (<a href="https://github.com/satoshikawato/gbdraw/blob/8675f33bb2f2ac8f174f65e9a36529df942c5333/docs/REFERENCE/python-api.md">Python API reference</a>),
+  so promoters, sites and primers appear only when named. It chose <code>/product</code> or <code>/note</code> over
+  <code>/label</code> until given a qualifier priority table, and drew primers as plain boxes; the shape is
+  set per feature type.</li>
+<li><strong>pyCirclize</strong> gives rings, arrows, ticks, centre text and <code>annotate</code>, a label with a leader
+  line. It draws what it is told, so the picture is as close as the calling code makes it.</li>
+<li><strong>pyGenomeViz</strong> gives the same primitives on a line, and stacks annotations upward until they
+  clear each other. On the region view, the axis counts from the region's start rather than the
+  record's.</li>
+<li><strong>DNA Features Viewer</strong> puts a label inside its feature when it fits and outside with a line
+  otherwise. On a circle the outside labels do not fan around the ring: they stack in a vertical
+  column above it, with leader lines running down to the features.</li>
+<li><strong>Biotite</strong> writes each label as curved text on its arc and drops the label when it is longer
+  than the arc
+  (<a href="https://www.biotite-python.org/latest/apidoc/biotite.sequence.graphics.plot_plasmid_map.html"><code>plot_plasmid_map</code></a>).
+  A site or primer, being short, got no label at all. Its linear map overlapped long labels.</li>
+<li><strong>GenomeDiagram</strong> places a label at a fixed position and angle per feature. The crowded site
+  labels piled into one black mass on both views.</li>
+<li><strong>QUEEN</strong> draws features on stacked rings inside the circle with radial labels, the reverse of
+  the reference's outside labels.</li>
+</ul>
+<h2 id="4-labels-who-keeps-them-apart">4. Labels: who keeps them apart<a class="headerlink" href="#4-labels-who-keeps-them-apart" title="Permanent link">&para;</a></h2>
+<p>One fact each — issue #83 goes deep.</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>What it does</th>
+<th>A guarantee?</th>
+<th>Measured on the crowded map</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gbdraw</td>
+<td>fans outside labels with leader lines; with <code>--labels both</code>, some go inside the ring</td>
+<td><strong>No.</strong> Its FAQ answers "My labels overlap" with: reduce the label size, filter the label set, or move the track (<a href="https://github.com/satoshikawato/gbdraw/blob/8675f33bb2f2ac8f174f65e9a36529df942c5333/docs/FAQ.md#L102-L108">FAQ</a>)</td>
+<td>the site labels clear each other; one primer label laid over the centre GC text. On <em>harsh</em>, at least four site-label pairs overlapped as well</td>
+</tr>
+<tr>
+<td>pyCirclize</td>
+<td>shifts each annotation along the circle, then outward, up to 1,000 steps, and skips adjustment past 200 annotations (<a href="https://github.com/moshi4/pyCirclize/blob/5a0f36111a4bbfab3e3d765e7365a1108f891dcb/src/pycirclize/annotation.py#L19"><code>adjust_annotation</code></a>, <a href="https://github.com/moshi4/pyCirclize/blob/5a0f36111a4bbfab3e3d765e7365a1108f891dcb/src/pycirclize/config.py#L54-L70">limits</a>)</td>
+<td><strong>No</strong> — capped iterations, and an open request for bent leader lines (<a href="https://github.com/moshi4/pyCirclize/issues/66">#66</a>)</td>
+<td><strong>18</strong> overlapping pairs among 28 labels</td>
+</tr>
+<tr>
+<td>pyGenomeViz</td>
+<td>moves each annotation up until its box clears every earlier one, with no iteration cap, up to 200 per track (<a href="https://github.com/moshi4/pyGenomeViz/blob/fb137ded78d56b1d55229309d500aa54c80e3abe/src/pygenomeviz/genomeviz.py#L732-L767"><code>_adjust_annotation</code></a>, <a href="https://github.com/moshi4/pyGenomeViz/blob/fb137ded78d56b1d55229309d500aa54c80e3abe/src/pygenomeviz/config.py#L4-L16">limit</a>)</td>
+<td><strong>Text boxes, yes, on a line</strong>; leader lines still cross other labels</td>
+<td>0 of 32</td>
+</tr>
+<tr>
+<td>DNA Features Viewer</td>
+<td>assigns labels to levels by graph colouring so overlapping spans never share one (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/049bbe4e3063e90ae9b0f88ac7e92f47b735d38a/dna_features_viewer/compute_features_levels.py#L30"><code>compute_features_levels</code></a>)</td>
+<td><strong>Linear, in practice; circular, no.</strong> Labels overlap when records share an axis (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/issues/64">#64</a>)</td>
+<td>linear 0 of 30 on all four maps; circular 1 on <em>crowded</em>, 1 on <em>rotated</em>, 5 on <em>rotated crowded</em></td>
+</tr>
+<tr>
+<td>Biotite</td>
+<td>drops a label that does not fit its arc (<a href="https://github.com/biotite-dev/biotite/blob/1aaf784a826a828fde989ada69e37e05013ac3fc/src/biotite/sequence/graphics/plasmid.py#L91-L96">source</a>)</td>
+<td><strong>Yes, by omission</strong>; a request to move labels outward instead is open since 2023 (<a href="https://github.com/biotite-dev/biotite/issues/459">#459</a>)</td>
+<td>no outside labels drawn</td>
+</tr>
+<tr>
+<td>GenomeDiagram</td>
+<td>none</td>
+<td><strong>No</strong></td>
+<td>labels piled on both views</td>
+</tr>
+<tr>
+<td>QUEEN</td>
+<td>README says labels are "automatically adjusted to prevent overlaps" (<a href="https://github.com/yachielab/QUEEN/blob/9798bf0a88f08c51f5327575d5f1707f9ce198ad/README.md#L1459-L1461">README</a>)</td>
+<td>not measured on <em>crowded</em></td>
+<td>—</td>
+</tr>
+<tr>
+<td>pLannotate</td>
+<td>a fixed offset per feature, by quadrant (<a href="https://github.com/mmcguffi/pLannotate/blob/eb043a4fbf16ddca9206451c490c9dbc38dcdb0e/plannotate/bokeh_plot.py#L275-L300">source</a>)</td>
+<td><strong>No</strong> (<em>read</em>)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>pyGenomeViz's loop is the one sufficient rule found, and it works because a line has a free
+direction.</strong> Stacking upward always ends. A circle has no such free direction without pushing
+labels arbitrarily far out, which is why the circular candidates cap their search and give up.</p>
+<h2 id="5-across-the-origin-and-joined-features">5. Across the origin, and joined features<a class="headerlink" href="#5-across-the-origin-and-joined-features" title="Permanent link">&para;</a></h2>
+<p>SnapGene files hold a feature as segments, and a circular record can carry one across the
+origin. Both matter to the reference picture, and the packages differ sharply. Measured on
+<em>plain</em> (lacZα and AmpR joined) and <em>rotated</em> (AmpR also across the origin).</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Joined feature</th>
+<th>Feature across the origin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gbdraw</td>
+<td>segments in place, joined by a thin grey arc</td>
+<td>correct, continuous through position 1</td>
+</tr>
+<tr>
+<td>Biotite</td>
+<td>each segment in place</td>
+<td>correct, continuous through position 1</td>
+</tr>
+<tr>
+<td>QUEEN</td>
+<td>one outer span</td>
+<td>correct, continuous through position 1</td>
+</tr>
+<tr>
+<td>GenomeDiagram</td>
+<td>each segment its own arrow</td>
+<td>correct place, but each piece gets its own arrowhead</td>
+</tr>
+<tr>
+<td>pyGenomeViz</td>
+<td>segments joined by an intron line</td>
+<td>the two ends joined by a line running the whole map</td>
+</tr>
+<tr>
+<td>DNA Features Viewer</td>
+<td>collapsed to one outer span, because its translator reads only <code>location.start</code> and <code>location.end</code> (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/049bbe4e3063e90ae9b0f88ac7e92f47b735d38a/dna_features_viewer/BiopythonTranslator/BiopythonTranslatorBase.py#L32-L55">source</a>)</td>
+<td><strong>a full ring</strong> — open as <a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/issues/29">#29</a></td>
+</tr>
+<tr>
+<td>pyCirclize <code>genomic_features</code></td>
+<td><strong>wrong on the reverse strand</strong>: it takes the first part's start and the last part's end (<a href="https://github.com/moshi4/pyCirclize/blob/5a0f36111a4bbfab3e3d765e7365a1108f891dcb/src/pycirclize/track.py#L1440-L1447">source</a>), but Biopython lists a reverse feature's parts in biological order, so AmpR drew with zero length and lacZα from the wrong ends</td>
+<td>a wrong arc</td>
+</tr>
+</tbody>
+</table>
+<p>For the matplotlib route this matters less than it looks: <code>mbio</code> already holds each
+feature as segments with the coordinate rule of ADR 0001, so a <code>plot</code> module would call
+pyCirclize's <code>arrow</code> and pyGenomeViz's <code>add_feature</code> per piece and split a span at the origin
+itself, never going through their SeqFeature readers.</p>
+<h2 id="6-html-output-as-far-as-each-package-offers-it">6. HTML output, as far as each package offers it<a class="headerlink" href="#6-html-output-as-far-as-each-package-offers-it" title="Permanent link">&para;</a></h2>
+<p>Issue #78 compares HTML routes in depth. Here, only what each package writes by itself.</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>File</th>
+<th>Opens offline</th>
+<th>Details</th>
+<th>Zoom</th>
+<th>Show/hide</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gbdraw</td>
+<td>interactive SVG</td>
+<td><strong>yes</strong> — self-contained style and script (<a href="https://github.com/satoshikawato/gbdraw/blob/8675f33bb2f2ac8f174f65e9a36529df942c5333/docs/REFERENCE/output-formats-and-export.md#L36-L48">docs</a>); measured: no external reference</td>
+<td>popups</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>pyGenomeViz</td>
+<td>HTML viewer, linear only (<a href="https://github.com/moshi4/pyGenomeViz/blob/fb137ded78d56b1d55229309d500aa54c80e3abe/src/pygenomeviz/genomeviz.py#L617"><code>savefig_html</code></a>)</td>
+<td><strong>yes</strong> — its JavaScript libraries are embedded; measured: no external reference</td>
+<td>a tooltip table on hover</td>
+<td>yes</td>
+<td>no — recolour, relabel, a filterable feature table, PNG/SVG download</td>
+</tr>
+<tr>
+<td>DNA Features Viewer</td>
+<td>Bokeh, <strong>linear only</strong>: the patches are straight arrows even for a circular record (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/049bbe4e3063e90ae9b0f88ac7e92f47b735d38a/dna_features_viewer/GraphicRecord/BokehPlottableMixin.py#L23-L59">source</a>); needs Bokeh and pandas, neither declared</td>
+<td><strong>yes</strong> with Bokeh's inline resources; measured: the one CDN address inside is a lazy MathJax loader used only for LaTeX labels</td>
+<td>the label on hover</td>
+<td>x-axis only</td>
+<td>no</td>
+</tr>
+<tr>
+<td>pLannotate</td>
+<td>Bokeh, circular</td>
+<td>only with <code>--htmlfull</code>; <code>--html</code> loads Bokeh from a CDN (<a href="https://github.com/mmcguffi/pLannotate/blob/eb043a4fbf16ddca9206451c490c9dbc38dcdb0e/plannotate/models.py#L477-L496">source</a>)</td>
+<td>name, type, identity on hover</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>pyCirclize</td>
+<td>none; tooltips only in a live Jupyter kernel (<a href="https://github.com/moshi4/pyCirclize/blob/5a0f36111a4bbfab3e3d765e7365a1108f891dcb/README.md#L268-L280">README</a>)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Biotite, GenomeDiagram, QUEEN</td>
+<td>none</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-the-sequence-view">7. The sequence view<a class="headerlink" href="#7-the-sequence-view" title="Permanent link">&para;</a></h2>
+<p>The reference is SnapGene Viewer's Sequence tab: both strands base by base, a position ruler,
+features as bars under the bases, primers, enzyme names above their cut, and the translation of
+an annotated CDS. <strong>No Python package draws it.</strong> Three draw a part.</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Both strands</th>
+<th>Ruler</th>
+<th>Features</th>
+<th>Primers</th>
+<th>Enzyme names at the cut</th>
+<th>Translation</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNA Features Viewer</td>
+<td><strong>top strand only</strong> (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/049bbe4e3063e90ae9b0f88ac7e92f47b735d38a/dna_features_viewer/GraphicRecord/SequenceAndTranslationMixin.py#L5"><code>plot_sequence</code></a>)</td>
+<td>yes</td>
+<td>arrows above the bases</td>
+<td>as features</td>
+<td>as features, a box over the site</td>
+<td><strong>yes</strong>, any range and strand (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/049bbe4e3063e90ae9b0f88ac7e92f47b735d38a/dna_features_viewer/GraphicRecord/SequenceAndTranslationMixin.py#L63"><code>plot_translation</code></a>)</td>
+<td>PNG, PDF, SVG; wrapped across pages of a PDF (<a href="https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer/blob/049bbe4e3063e90ae9b0f88ac7e92f47b735d38a/dna_features_viewer/GraphicRecord/MultilinePlottableMixin.py#L103"><code>plot_on_multiple_pages</code></a>)</td>
+</tr>
+<tr>
+<td>QUEEN</td>
+<td><strong>yes</strong>, as coloured letter cells, <code>seq</code> and <code>rcseq</code> (<a href="https://github.com/yachielab/QUEEN/blob/9798bf0a88f08c51f5327575d5f1707f9ce198ad/README.md#L1459-L1520">README</a>)</td>
+<td>yes</td>
+<td>arrows above the bases</td>
+<td>as features</td>
+<td>no</td>
+<td>no</td>
+<td>PNG, PDF, SVG, wrapped by <code>linebreak</code></td>
+</tr>
+<tr>
+<td>Biopython <code>Restriction</code></td>
+<td><strong>yes</strong>, as text</td>
+<td>start and end of each line</td>
+<td>no</td>
+<td>no</td>
+<td><strong>yes</strong>, name and position over the cut (<a href="https://github.com/biopython/biopython/blob/5bbc6c12c505301f2d681f932c30fdb8fcbe9a6e/Bio/Restriction/PrintFormat.py#L96-L106"><code>print_as("map")</code></a>)</td>
+<td>no</td>
+<td>plain text</td>
+</tr>
+</tbody>
+</table>
+<p>All three were measured on the pUC19 multiple cloning site. DNA Features Viewer and QUEEN put
+the features above the sequence rather than as bars under it. The sequence view's own ticket
+should take DNA Features Viewer's translation placement and Biopython's enzyme-name stacking as
+worked examples, not as dependencies.</p>
+<h2 id="8-licence-maintenance-and-install">8. Licence, maintenance and install<a class="headerlink" href="#8-licence-maintenance-and-install" title="Permanent link">&para;</a></h2>
+<p>Releases and activity read from PyPI, anaconda.org and the GitHub API; commit counts are for the
+12 months to 2026-09-16, on the file or folder named. "Added" is measured: packages the lock gains
+over the repository's runtime set, which is 39 on osx-arm64 and 42 on linux-64.</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Licence</th>
+<th>Last release</th>
+<th>Commits, 12 months</th>
+<th>Python 3.13</th>
+<th>conda</th>
+<th>PyPI</th>
+<th>Added (osx-arm64 / linux-64)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gbdraw</td>
+<td>MIT</td>
+<td>0.13.0, 2026-07-05; source at 0.14.0</td>
+<td><strong>1,439</strong></td>
+<td>measured</td>
+<td>bioconda, noarch</td>
+<td><strong>no</strong></td>
+<td>53 / 56: CairoSVG (LGPL-3.0), cairo, pandas, bcbio-gff, svgwrite</td>
+</tr>
+<tr>
+<td>pyCirclize</td>
+<td>MIT</td>
+<td>1.10.1, 2025-10-03</td>
+<td>19</td>
+<td>measured</td>
+<td>conda-forge, noarch</td>
+<td>yes</td>
+<td>53 / 58: matplotlib, pandas</td>
+</tr>
+<tr>
+<td>pyGenomeViz</td>
+<td>MIT</td>
+<td>1.7.0, 2026-06-13</td>
+<td>40</td>
+<td>measured</td>
+<td>conda-forge, noarch</td>
+<td>yes</td>
+<td>52 / 57: matplotlib</td>
+</tr>
+<tr>
+<td>DNA Features Viewer</td>
+<td>MIT</td>
+<td>3.1.5, 2025-05-09</td>
+<td><strong>0</strong></td>
+<td>measured</td>
+<td><strong>bioconda only</strong></td>
+<td>yes</td>
+<td>52 / 57: matplotlib</td>
+</tr>
+<tr>
+<td>Biotite</td>
+<td>BSD-3-Clause</td>
+<td>1.7.1, 2026-06-21</td>
+<td>4 in <code>sequence/graphics</code></td>
+<td>measured</td>
+<td>conda-forge</td>
+<td>yes</td>
+<td>67 / 72 with matplotlib: networkx, requests, biotraj</td>
+</tr>
+<tr>
+<td>GenomeDiagram</td>
+<td>Biopython licence</td>
+<td>Biopython 1.88, 2026-08-06</td>
+<td><strong>0</strong> in <code>GenomeDiagram</code>; newest 2024-06-26</td>
+<td>measured</td>
+<td>conda-forge</td>
+<td>yes</td>
+<td>36 / 39: ReportLab, pycairo, cairo</td>
+</tr>
+<tr>
+<td>QUEEN</td>
+<td>MIT</td>
+<td><code>python-queen</code> 1.1.0, 2022-08-09</td>
+<td><strong>0</strong>; newest 2024-10-09</td>
+<td><strong>1.1.0 fails</strong>: pins <code>requests~=2.23</code>, whose urllib3 does not import; unreleased 1.2.0 runs once current requests is forced</td>
+<td>no</td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td>pLannotate</td>
+<td><strong>GPL-3.0</strong></td>
+<td>2.0.0, 2026-07-05</td>
+<td>3 on <code>bokeh_plot.py</code></td>
+<td>not measured</td>
+<td>bioconda</td>
+<td>no</td>
+<td>76 / 76: BLAST, DIAMOND, Infernal, Perl, Bokeh, pandas</td>
+</tr>
+</tbody>
+</table>
+<p>Matplotlib alone adds 51 / 56 of those packages, so pyCirclize and pyGenomeViz together cost
+matplotlib plus pandas. Bokeh alone adds 27 / 26.</p>
+<p>Sources: <a href="https://pypi.org/project/pycirclize/">pyCirclize</a>,
+<a href="https://pypi.org/project/pygenomeviz/">pyGenomeViz</a>,
+<a href="https://pypi.org/project/dna-features-viewer/">DNA Features Viewer</a> and its
+<a href="https://anaconda.org/bioconda/dna_features_viewer">bioconda recipe</a>,
+<a href="https://anaconda.org/conda-forge/biotite">Biotite</a>,
+<a href="https://anaconda.org/bioconda/gbdraw">gbdraw on bioconda</a>,
+<a href="https://github.com/biopython/biopython/commits/master/Bio/Graphics/GenomeDiagram">GenomeDiagram's history</a>,
+<a href="https://github.com/yachielab/QUEEN/blob/9798bf0a88f08c51f5327575d5f1707f9ce198ad/setup.py#L15-L24">QUEEN's <code>setup.py</code></a>,
+<a href="https://github.com/mmcguffi/pLannotate/blob/eb043a4fbf16ddca9206451c490c9dbc38dcdb0e/LICENSE">pLannotate's licence</a>.</p>
+<p><strong>Three install facts bear on the choice.</strong></p>
+<ul>
+<li><strong>gbdraw is not on PyPI.</strong> <code>liulab-mbio</code> lists its runtime dependencies in <code>pyproject.toml</code>
+  for its wheel, so a bioconda-only library would be a pixi-only dependency, as <code>ipcr</code> is.</li>
+<li><strong>gbdraw's API is moving.</strong> 1,439 commits in a year, and its reference already rejects
+  "retired flat label names"
+  (<a href="https://github.com/satoshikawato/gbdraw/blob/8675f33bb2f2ac8f174f65e9a36529df942c5333/docs/REFERENCE/python-api.md#L130-L134">Python API</a>).
+  The package-root <code>draw_circular</code> in the 0.14.0 docs does not exist in the 0.13.0 build on
+  bioconda (measured).</li>
+<li><strong>pLannotate's licence rules it out as code or dependency.</strong> GPL-3.0 code cannot be copied into
+  an MIT package.</li>
+</ul>
+<h2 id="9-also-found-and-why-each-is-out">9. Also found, and why each is out<a class="headerlink" href="#9-also-found-and-why-each-is-out" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>What it is</th>
+<th>Why it is out</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/VoigtLab/dnaplotlib">DNAplotlib</a></td>
+<td>SBOL Visual diagrams of a genetic design: glyphs in order, not a position-scaled map; linear only</td>
+<td>No circular map; PyPI 1.0 from 2017; no commits since 2024-03; not on conda. Its README says OSL-3.0 while its <code>LICENSE.txt</code> says MIT (<a href="https://github.com/VoigtLab/dnaplotlib/blob/7bed9fac3f2ea495e44086c2defdf0fe91a1a376/README.md#L3">README</a>). Imports on 3.13 (measured)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/th0mr/plasmidcanvas">plasmidcanvas</a></td>
+<td>a matplotlib circular map; features added by hand; moves overlapping features inward</td>
+<td>No record input, no label collision handling (read), no linear view; 1.0.0 in 2024, 4 stars; PyPI only. Imports on 3.13 (measured)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Binomica-Labs/SpliceCraft">SpliceCraft</a></td>
+<td>a terminal plasmid workbench that exports PNG or SVG</td>
+<td>An application, not a library; pins <code>biopython&lt;1.87</code>, which conflicts with this repository's <code>&gt;=1.88</code> (<a href="https://pypi.org/project/splicecraft/">PyPI</a>)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ponnhide/plasmidviewer">plasmidviewer</a></td>
+<td>a circular GenBank map</td>
+<td>GPL-3.0; not on PyPI; last push 2021</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ponnhide/pyCircos">pyCircos</a></td>
+<td>circos plots</td>
+<td>GPL-3.0; last release 2022; superseded for this use by pyCirclize</td>
+</tr>
+<tr>
+<td><a href="https://github.com/art-egorov/lovis4u">LoVis4u</a></td>
+<td>linear comparisons of genomic loci</td>
+<td>Comparative, not a plasmid map; <a href="https://anaconda.org/bioconda/lovis4u">bioconda</a> lists its licence as BSD-3-Clause AND GPL-3.0 AND WTFPL</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Lattice-Automation/seqviz">SeqViz</a>, Open Vector Editor</td>
+<td>JavaScript viewers with a map and a sequence view</td>
+<td>Not Python; issue #78's to weigh as an HTML route</td>
+</tr>
+</tbody>
+</table>
+<h2 id="10-what-80-should-prototype">10. What #80 should prototype<a class="headerlink" href="#10-what-80-should-prototype" title="Permanent link">&para;</a></h2>
+<p><strong>Carry two routes.</strong></p>
+<ol>
+<li><strong>pyCirclize for the circle and pyGenomeViz for the line and the region.</strong> It is the lightest
+   maintained stack that reaches both views: matplotlib plus pandas, MIT, on conda-forge and PyPI,
+   written by one author to one style. The prototype has to supply what they do not: labels that
+   never overlap on the circle (#83), splitting a span at the origin, sites and primers as labelled
+   layers, and show/hide in HTML (#78). The sequence view could be drawn on the same matplotlib
+   figure, so one plotting library serves both views.</li>
+<li><strong>gbdraw, as the benchmark for the picture.</strong> It is the closest drawing out of the box, and the
+   prototype should put its crowded map beside the matplotlib route's. Adopting it would mean a
+   bioconda-only, pixi-only dependency whose API is still changing, CairoSVG for PNG and PDF, and
+   the same missing label guarantee and show/hide.</li>
+</ol>
+<p><strong>Drop the rest as dependencies.</strong> DNA Features Viewer has stalled and cannot draw a joined or
+origin-crossing feature; Biotite drops the outside labels the reference needs; GenomeDiagram has
+no label placement; QUEEN does not install as released; pLannotate is GPL. DNA Features Viewer's
+inline-or-outside rule and translation layout, and QUEEN's two-strand rows, are worth reading
+before the sequence view is designed.</p>
+<h2 id="open-gaps">Open gaps<a class="headerlink" href="#open-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>gbdraw's overlaps were read off a rendering, not counted.</strong> The count for the matplotlib
+  packages compared boxes in display coordinates; gbdraw's SVG was not measured that way.</li>
+<li><strong>QUEEN's label claim was not tested</strong> on the crowded map.</li>
+<li><strong>pLannotate's map was read, not drawn.</strong> Its environment pulls BLAST and DIAMOND, and its
+  input is a hit table rather than a record, so no like-for-like drawing was possible.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2191 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Molecular biology design and analysis tools for DNA sequences, enzymes, primers and cloning.">
+      
+      
+      
+        <link rel="canonical" href="https://liuhlab.github.io/liulab-mbio/research/dnachisel-evaluation/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.57">
+    
+    
+      
+        <title>DnaChisel and the Edinburgh Genome Foundry stack: what to adopt, and what not to - liulab-mbio</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.5da3a30f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#dnachisel-and-the-edinburgh-genome-foundry-stack-what-to-adopt-and-what-not-to" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="liulab-mbio" class="md-header__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            liulab-mbio
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              DnaChisel and the Edinburgh Genome Foundry stack: what to adopt, and what not to
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="liulab-mbio" class="md-nav__button md-logo" aria-label="liulab-mbio" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    liulab-mbio
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/liuhlab/liulab-mbio" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    liuhlab/liulab-mbio
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Home
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  liulab-mbio
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../two-packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Two commands
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Methods
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Methods
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Choosing a method
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/golden-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Golden Gate assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gibson/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gibson assembly
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/restriction-ligation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Restriction and ligation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Gateway cloning
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/primers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Primer design
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/barcodes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Barcode sets
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/codon-optimisation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Codon optimisation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/sequence-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Sequence verification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methods/maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Maps and figures
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Protocols
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Protocols
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How to read a protocol page
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../protocols/editing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Change a protocol
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Projects
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Projects
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/igga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  iGGA: a barcoded combinatorial library
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/dmx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  DMX: reading back many wells
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Reference
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Reference
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Command line
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Python reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ligation-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  How fidelity is predicted
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dmx-barcode-kit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  The DMX barcode kit
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  What ships with it
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-verdict-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The verdict, first
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-what-was-asked-and-the-short-answers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. What was asked, and the short answers
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-function-by-function-what-would-be-replaced" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Function by function: what would be replaced
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Function by function: what would be replaced">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-codons-replaced-in-form-not-in-substance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.1 <code>codons</code> — replaced in form, not in substance
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-translate-one-function-replaced-two-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.2 <code>translate</code> — one function replaced, two not
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-sites-nothing-is-replaced" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3.3 <code>sites</code> — nothing is replaced
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-whether-it-can-be-a-dependency-here-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Whether it can be a dependency here at all
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Whether it can be a dependency here at all">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-availability-yes-on-bioconda-noarch" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.1 Availability: yes, on bioconda, <code>noarch</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-transitive-weight-light-if-the-extras-are-left-alone" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.2 Transitive weight: light, if the extras are left alone
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-licence-mit-verified-from-the-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.3 Licence: MIT, verified from the file
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-maintenance-the-real-risk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4.4 Maintenance: the real risk
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-coordinate-hazard-there-isnt-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. The coordinate hazard: there isn't one
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-patterns-worth-taking-with-no-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Patterns worth taking, with no dependency
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Patterns worth taking, with no dependency">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-a-signed-score-with-a-known-best-so-passes-and-optimal-are-one-number" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 A signed score with a known best, so "passes" and "optimal" are one number
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-a-failure-carries-where-it-failed-not-just-that-it-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.2 A failure carries where it failed, not just that it failed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-constraint-against-objective-is-a-position-not-a-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.3 Constraint against objective is a position, not a type
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-the-rest-of-the-stack-and-the-answer-235-and-236-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. The rest of the stack, and the answer #235 and #236 need
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. The rest of the stack, and the answer #235 and #236 need">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-does-a-sibling-already-decompose-a-sequence-into-orderable-fragments" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7.1 Does a sibling already decompose a sequence into orderable fragments?
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7.1 Does a sibling already decompose a sequence into orderable fragments?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dnaweaver-the-right-shape-the-wrong-objective" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        DnaWeaver: the right shape, the wrong objective
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#goldenhinges-the-right-objective-and-effectively-uninstallable" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        GoldenHinges: the right objective, and effectively uninstallable
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#so-what-236-should-take" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        So what #236 should take
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-the-rest-briefly" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7.2 The rest, briefly
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-recommendation-and-the-trade" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Recommendation, and the trade
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-open-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Open gaps
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sources
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="dnachisel-and-the-edinburgh-genome-foundry-stack-what-to-adopt-and-what-not-to">DnaChisel and the Edinburgh Genome Foundry stack: what to adopt, and what not to<a class="headerlink" href="#dnachisel-and-the-edinburgh-genome-foundry-stack-what-to-adopt-and-what-not-to" title="Permanent link">&para;</a></h1>
+<p>Research note for issue #234, a sub-issue of #225. Everything below was retrieved on
+<strong>2026-10-06</strong> from the package indexes and the source repositories themselves. It records what
+DnaChisel would replace in this package function by function, what else the same group ships,
+whether any of it can be a pixi dependency here, what coordinate convention it uses, and the
+patterns worth taking without the dependency.</p>
+<p><strong>Nothing was installed and no dependency was added.</strong> DnaChisel 3.2.16 was read at <code>master</code>;
+the version read is named wherever a claim rests on code.</p>
+<h2 id="1-the-verdict-first">1. The verdict, first<a class="headerlink" href="#1-the-verdict-first" title="Permanent link">&para;</a></h2>
+<p><strong>Adopt nothing. Take three ideas.</strong></p>
+<p>DnaChisel is adoptable on the packaging merits — bioconda <code>noarch</code>, MIT, no <code>python</code> pin, every
+core dependency present for both platforms (§4). That is the part most evaluations stop at, and
+it is not the part that decides this.</p>
+<p>It fails on three counts that matter more:</p>
+<ol>
+<li><strong>Its codon data is the table this repo already rejected.</strong> DnaChisel reads
+   <code>python_codon_tables</code>, whose nine bundled tables are Kazusa's. <code>docs/research/codon-usage.md</code>
+   §3.2 rejected Kazusa for <em>E. coli</em> K-12 on the measurement: the entry is <strong>14 coding
+   sequences</strong> with a zero cell, against the 4,317 this package counts from the genome.
+   Adopting <code>CodonOptimize</code> means adopting that table, or passing our own and using DnaChisel
+   for arithmetic we already have.</li>
+<li><strong>It would replace one function and a half.</strong> <code>translate.optimize_protein</code> has a
+   counterpart. <code>translate.optimize_coding_sequence</code> and <code>sites.domesticate</code> do not, because
+   both are defined by a restraint DnaChisel has no way to express: <em>a sequence already coded is
+   checked, never written again</em>, and <em>a site outside a coding sequence is reported, not edited</em>
+   (§3).</li>
+<li><strong>It is not being released.</strong> No release and no commit on <code>master</code> since <strong>2025-05-10</strong>,
+   seventeen months. CI runs Python 3.12 on ubuntu only — no macOS runner, no 3.13 (§4.4).</li>
+</ol>
+<p>The three ideas worth taking are in §6. None of them needs the dependency.</p>
+<h2 id="2-what-was-asked-and-the-short-answers">2. What was asked, and the short answers<a class="headerlink" href="#2-what-was-asked-and-the-short-answers" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>The ticket's question</th>
+<th>The answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What would DnaChisel replace?</td>
+<td><code>reverse_translate</code> and about half of <code>optimize_protein</code>. Nothing in <code>sites</code> (§3)</td>
+</tr>
+<tr>
+<td>Can it be a pixi dependency at all?</td>
+<td>Yes. bioconda <code>noarch</code>, MIT, <code>python</code> unpinned, both platforms (§4)</td>
+</tr>
+<tr>
+<td>What coordinates?</td>
+<td><strong>0-based and half-open, and a span across a circular origin ends past the length — the same rule as ADR 0001</strong> (§5)</td>
+</tr>
+<tr>
+<td>Does a sibling already decompose a sequence into orderable fragments?</td>
+<td><strong>Yes, two do — and neither solves the DAD split, and neither is installable here.</strong> §7, which #236 is blocked on</td>
+</tr>
+<tr>
+<td>Patterns worth stealing?</td>
+<td>Three, in §6</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-function-by-function-what-would-be-replaced">3. Function by function: what would be replaced<a class="headerlink" href="#3-function-by-function-what-would-be-replaced" title="Permanent link">&para;</a></h2>
+<p>Read against <code>src/mbio/</code> at <code>818e4e1</code>.</p>
+<h3 id="31-codons-replaced-in-form-not-in-substance">3.1 <code>codons</code> — replaced in form, not in substance<a class="headerlink" href="#31-codons-replaced-in-form-not-in-substance" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>mbio</th>
+<th>DnaChisel's counterpart</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CodonUsage</code>, <code>codon_usage(name)</code>, <code>codon_tables()</code></td>
+<td><code>python_codon_tables.get_codons_table(name)</code></td>
+<td><strong>Do not replace.</strong> Different data, and ours is the one this repo chose</td>
+</tr>
+<tr>
+<td><code>amino_acid(codon)</code></td>
+<td>Biopython's <code>CodonTable</code></td>
+<td>Already shared; both call Biopython</td>
+</tr>
+<tr>
+<td><code>CodonUsage.fraction</code>, <code>.per_thousand</code>, <code>.synonymous</code></td>
+<td>internal to their optimiser, not public API</td>
+<td>Nothing to call</td>
+</tr>
+</tbody>
+</table>
+<p>The data is the whole story. <code>python_codon_tables</code> is CC0 and its README states plainly: <em>"All
+tables are from kazusa.or.jp"</em>, citing Nakamura, Gojobori and Ikemura (2000). It bundles nine
+organisms as CSV — <em>B. subtilis</em>, <em>C. elegans</em>, <em>D. melanogaster</em>, <em>E. coli</em>, <em>G. gallus</em>,
+<em>H. sapiens</em>, <em>M. musculus</em>, <em>M. musculus domesticus</em>, <em>S. cerevisiae</em>.</p>
+<p><code>docs/research/codon-usage.md</code> already read Kazusa and refused it, on a measurement rather than
+a licence: its <em>E. coli</em> K-12 entry is computed over 14 coding sequences. Every shipped table
+here is counted from a genome instead. Taking <code>CodonOptimize</code> at its default would silently
+reverse that decision.</p>
+<p>There is a second hazard in the same package. <code>get_codons_table</code> branches on its argument:</p>
+<div class="highlight"><pre><span></span><code><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">str</span><span class="o">.</span><span class="n">isdigit</span><span class="p">(</span><span class="n">table_name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">download_codons_table</span><span class="p">(</span><span class="n">taxid</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">web_timeout</span><span class="p">)</span>
+</code></pre></div>
+<p>A <strong>name</strong> reads a bundled CSV offline; an <strong>integer or digit-string TaxID</strong> fetches
+<code>http://www.kazusa.or.jp/codon/cgi-bin/showcodon.cgi</code> over plain HTTP at call time and scrapes
+the HTML. DnaChisel's own <code>CodonOptimize</code> docstring repeats the warning. A design package that
+reaches the network mid-design is not something to ship behind our CLI, and the test suite runs
+with <code>filterwarnings = ["error"]</code> and no network.</p>
+<h3 id="32-translate-one-function-replaced-two-not">3.2 <code>translate</code> — one function replaced, two not<a class="headerlink" href="#32-translate-one-function-replaced-two-not" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>mbio</th>
+<th>DnaChisel's counterpart</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>translate(dna)</code></td>
+<td><code>dnachisel.biotools.translate</code></td>
+<td>Both wrap Biopython. Nothing gained</td>
+</tr>
+<tr>
+<td><code>reverse_translate(protein, host=)</code></td>
+<td><code>dnachisel.biotools.reverse_translate</code></td>
+<td><strong>Genuine overlap.</strong> About 20 lines</td>
+</tr>
+<tr>
+<td><code>optimize_protein(...)</code></td>
+<td><code>CodonOptimize</code> + <code>EnforceTranslation</code> + <code>AvoidPattern</code></td>
+<td>Partial. See below</td>
+</tr>
+<tr>
+<td><code>optimize_coding_sequence(...)</code></td>
+<td>none</td>
+<td><strong>No counterpart</strong></td>
+</tr>
+<tr>
+<td><code>CodingSequence</code>, <code>Domestication</code></td>
+<td><code>SpecEvaluation.locations</code></td>
+<td>Ours names the codon that moved; theirs names a span</td>
+</tr>
+<tr>
+<td><code>SiteNotRemovableError</code></td>
+<td><code>NoSolutionError</code></td>
+<td>Theirs carries the whole failed-constraint summary. Worth reading (§6)</td>
+</tr>
+</tbody>
+</table>
+<p><code>optimize_protein</code> is the one real candidate. DnaChisel would express it as:</p>
+<div class="highlight"><pre><span></span><code><span class="n">DnaOptimizationProblem</span><span class="p">(</span>
+    <span class="n">sequence</span><span class="o">=</span><span class="n">reverse_translate</span><span class="p">(</span><span class="n">protein</span><span class="p">),</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">EnforceTranslation</span><span class="p">(),</span> <span class="n">AvoidPattern</span><span class="p">(</span><span class="s2">"BsaI_site"</span><span class="p">)],</span>
+    <span class="n">objectives</span><span class="o">=</span><span class="p">[</span><span class="n">CodonOptimize</span><span class="p">(</span><span class="n">species</span><span class="o">=</span><span class="s2">"e_coli"</span><span class="p">)],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>and its solver is better than ours at the hard case: <code>EnforceTranslation.restrict_nucleotides</code>
+builds a <code>MutationSpace</code> of per-codon synonymous variants, so every later search is
+<em>structurally</em> unable to change the protein, and site removal and codon choice happen in one
+space rather than one after the other. Where our <code>_synonymous</code> changes one codon and gives up if
+no synonym clears the site, theirs widens the window by 5 bp and tries again
+(<code>local_extensions = (0, 5)</code>). That is a real capability we do not have.</p>
+<p>It buys that at the cost of the two functions below it.</p>
+<p><strong><code>optimize_coding_sequence</code> has no DnaChisel shape.</strong> Its contract is the opposite of a
+solver's: <em>a codon spelling no forbidden site is left exactly as it stands</em>. DnaChisel's
+<code>CodonOptimize</code> is an <strong>objective</strong>, and an objective's job is to move every codon it can
+improve. <code>AvoidChanges</code> can freeze regions, but freezing everything except the codons under a
+site requires knowing the sites first — at which point the solver is doing nothing our code is
+not already doing.</p>
+<h3 id="33-sites-nothing-is-replaced">3.3 <code>sites</code> — nothing is replaced<a class="headerlink" href="#33-sites-nothing-is-replaced" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>mbio</th>
+<th>DnaChisel's counterpart</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>find_sites</code>, <code>has_site</code>, <code>site_counts</code>, <code>free_enzymes</code></td>
+<td><strong>None.</strong> <code>AvoidPattern</code> returns a score and spans, never a cut</td>
+</tr>
+<tr>
+<td><code>CutSite</code> with <code>top_cut</code>, <code>bottom_cut</code>, <code>overhang</code>, <code>certain</code></td>
+<td><strong>None</strong></td>
+</tr>
+<tr>
+<td><code>digest</code>, <code>Fragment</code> with its two overhangs</td>
+<td><strong>None</strong></td>
+</tr>
+<tr>
+<td><code>insert_site</code>, <code>primer_tail</code></td>
+<td><code>EnforcePatternOccurence</code> places a site; it designs no primer tail</td>
+</tr>
+<tr>
+<td><code>domesticate</code></td>
+<td><code>AvoidPattern</code> + <code>EnforceTranslation</code></td>
+</tr>
+<tr>
+<td><code>DomesticationReport.outside_cds</code></td>
+<td><strong>None</strong></td>
+</tr>
+</tbody>
+</table>
+<p>This is the decisive table. DnaChisel models a recognition site as <strong>a pattern to avoid</strong>. This
+package models it as <strong>an enzyme that cuts at an offset, leaving an overhang</strong> — which is what
+every cloning pipeline downstream of <code>sites</code> actually consumes. <code>digest</code> and <code>Fragment</code> have no
+counterpart anywhere in the stack, and <code>CutSite.overhang</code> is what <code>overhangs</code> and <code>ligase</code> score.</p>
+<p>Their enzyme data is Biopython's <code>Restriction_Dictionary</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">Bio.Restriction.Restriction_Dictionary</span><span class="w"> </span><span class="kn">import</span> <span class="n">rest_dict</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnzymeSitePattern</span><span class="p">(</span><span class="n">DnaNotationPattern</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enzyme_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enzyme_site</span> <span class="o">=</span> <span class="n">rest_dict</span><span class="p">[</span><span class="n">enzyme_name</span><span class="p">][</span><span class="s2">"site"</span><span class="p">]</span>
+</code></pre></div>
+<p>Recognition sequence only. No cut offset in the pattern, so the overhang cannot be derived from
+it. <code>docs/research/restriction-enzyme-data.md</code> records why this package carries REBASE offsets
+and supplier facts instead.</p>
+<p><code>domesticate</code>'s refusal is also not expressible. It reports a site lying in no coding sequence
+and <strong>does not edit it</strong>, because removing it would change what the record spells. A DnaChisel
+constraint edits wherever the mutation space allows; it has no notion of "I could fix this, and
+declining is the right answer."</p>
+<h2 id="4-whether-it-can-be-a-dependency-here-at-all">4. Whether it can be a dependency here at all<a class="headerlink" href="#4-whether-it-can-be-a-dependency-here-at-all" title="Permanent link">&para;</a></h2>
+<p>Verified from the indexes on 2026-10-06, not from memory.</p>
+<h3 id="41-availability-yes-on-bioconda-noarch">4.1 Availability: yes, on bioconda, <code>noarch</code><a class="headerlink" href="#41-availability-yes-on-bioconda-noarch" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>conda-forge?</td>
+<td><strong>No.</strong> <code>api.anaconda.org/package/conda-forge/dnachisel</code> returns 404; no feedstock; no staged-recipes PR, open or closed</td>
+<td>anaconda.org API, GitHub API</td>
+</tr>
+<tr>
+<td>bioconda?</td>
+<td><strong>Yes.</strong> 3.2.16, uploaded 2025-05-10</td>
+<td><code>api.anaconda.org/package/bioconda/dnachisel</code></td>
+</tr>
+<tr>
+<td>Which subdirs?</td>
+<td><strong><code>noarch</code> only</strong> — so osx-arm64 and linux-64 both resolve</td>
+<td>the same, <code>conda_platforms: ["noarch"]</code></td>
+</tr>
+<tr>
+<td>Python pin?</td>
+<td><strong>None.</strong> <code>depends</code> is <code>[biopython, docopt, flametree, numpy, proglog, python, python-codon-tables]</code>, <code>python</code> unversioned</td>
+<td>the per-file <code>attrs</code></td>
+</tr>
+<tr>
+<td>PyPI wheel</td>
+<td><code>dnachisel-3.2.16-py3-none-any.whl</code>, pure python, <code>requires_python: null</code></td>
+<td><code>pypi.org/pypi/dnachisel/json</code></td>
+</tr>
+</tbody>
+</table>
+<p>Nobody ever submitted a conda-forge recipe, so its absence is not a rejection. bioconda is
+already a channel here, for <code>ipcr</code>. <strong>A pip fallback is not forced and no platform fails.</strong></p>
+<h3 id="42-transitive-weight-light-if-the-extras-are-left-alone">4.2 Transitive weight: light, if the extras are left alone<a class="headerlink" href="#42-transitive-weight-light-if-the-extras-are-left-alone" title="Permanent link">&para;</a></h3>
+<p>Six core dependencies, all on conda-forge or bioconda for both platforms with Python 3.13
+builds: <code>numpy</code>, <code>biopython</code> (both already ours), <code>proglog</code>, <code>flametree</code>,
+<code>python-codon-tables</code>, <code>docopt</code>.</p>
+<p>Two notes on those. <code>docopt</code> is <strong>0.6.2, uploaded 2014-06-16</strong> and abandoned upstream; the
+conda-forge <code>noarch</code> build was re-rendered in 2024 with <code>python &gt;=3.9</code>, so the solver accepts it
+on 3.13, but it is a decade dead and DnaChisel uses it only for its own CLI. <code>flametree</code> and
+<code>python-codon-tables</code> were last built in 2021 and 2022.</p>
+<p>The <code>[reports]</code> extra is where the weight is, and the bioconda package does <strong>not</strong> pull it —
+its <code>run</code> list is core-only. It would drag <code>weasyprint</code>, and with it <code>pango</code>, <code>glib</code> and that
+whole native subtree, for PDF rendering this package does not need. Worse, <code>pdf-reports</code> pins
+<code>jinja2 &lt;3.1.0</code>, whose newest satisfying conda-forge build is <strong>3.0.3 from 2021-11-10</strong>. Taking
+the extra would hold a shared environment at a five-year-old jinja2. If DnaChisel is ever taken,
+the extra must not be.</p>
+<h3 id="43-licence-mit-verified-from-the-file">4.3 Licence: MIT, verified from the file<a class="headerlink" href="#43-licence-mit-verified-from-the-file" title="Permanent link">&para;</a></h3>
+<p><code>raw.githubusercontent.com/.../DnaChisel/master/LICENSE</code> reads <code>MIT License / Copyright (c) 2017
+Edinburgh Genome Foundry, University of Edinburgh</code>. <code>pyproject.toml</code>, PyPI and bioconda all
+agree. Compatible with this package's MIT.</p>
+<p><code>python-codon-tables</code> is <strong>CC0-1.0</strong> by its own <code>LICENSE</code> and <code>pyproject.toml</code>. bioconda's
+metadata says <code>NIST-PD</code>, which is wrong; the file is authoritative. Nothing blocks
+redistribution of either.</p>
+<h3 id="44-maintenance-the-real-risk">4.4 Maintenance: the real risk<a class="headerlink" href="#44-maintenance-the-real-risk" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Last release</td>
+<td><strong>v3.2.16, 2025-05-10</strong> — seventeen months ago</td>
+</tr>
+<tr>
+<td>Last commit on <code>master</code></td>
+<td><strong>2025-05-10</strong> (<code>68c0930</code>)</td>
+</tr>
+<tr>
+<td>Last commit on any branch</td>
+<td>2025-05-15 (<code>dev</code>)</td>
+</tr>
+<tr>
+<td>Open issues</td>
+<td>19, with five filed in 2026 and none closed by a release</td>
+</tr>
+<tr>
+<td>CI</td>
+<td><strong>Python 3.12 only, ubuntu-24.04 only.</strong> No macOS runner, no arm runner, no 3.13</td>
+</tr>
+<tr>
+<td>Stars</td>
+<td>281</td>
+</tr>
+</tbody>
+</table>
+<p>Its metadata permits Python 3.13 and it is pure Python, so it very probably works. <strong>Nobody has
+tested it there</strong>, and a search of its issues for "3.13" returns nothing — neither a breakage
+report nor a success. Taking it would make this repo the first to find out, on a platform
+(osx-arm64) its CI has never run on.</p>
+<p>That is survivable for a dependency that removes a lot of code. It is not worth it for one that
+removes a reverse-translation helper.</p>
+<h2 id="5-the-coordinate-hazard-there-isnt-one">5. The coordinate hazard: there isn't one<a class="headerlink" href="#5-the-coordinate-hazard-there-isnt-one" title="Permanent link">&para;</a></h2>
+<p><strong>DnaChisel is 0-based and half-open, and an origin-spanning location ends past the sequence
+length — the same rule as <code>docs/adr/0001-coordinates.md</code>.</strong> This was the question most likely to
+sink adoption, and it is the question that came back cleanest.</p>
+<p>The <code>Location</code> docstring says so outright:</p>
+<blockquote>
+<p>Warning: we use Python's splicing notation, so <code>Location(5, 10)</code> represents
+<code>sequence[5, 6, 7, 8, 9]</code> which corresponds to nucleotides number 6, 7, 8, 9, 10.</p>
+</blockquote>
+<p>Confirmed three more ways in the same file: <code>__len__</code> returns <code>self.end - self.start</code>,
+<code>extract_sequence</code> slices <code>sequence[self.start : self.end]</code>, and <code>indices</code> is
+<code>range(self.start, self.end)</code>. Overlap is half-open too.</p>
+<p>Their own circular example carries the origin rule:</p>
+<div class="highlight"><pre><span></span><code><span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">dc</span><span class="o">.</span><span class="n">AvoidPattern</span><span class="p">(</span><span class="s2">"BsmBI_site"</span><span class="p">),</span>
+    <span class="n">dc</span><span class="o">.</span><span class="n">EnforceGCContent</span><span class="p">(</span><span class="n">mini</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">maxi</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="p">(</span><span class="mi">1500</span><span class="p">,</span> <span class="mi">2500</span><span class="p">),</span> <span class="n">window</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">dc</span><span class="o">.</span><span class="n">CircularDnaOptimizationProblem</span><span class="p">(</span><span class="n">sequence</span><span class="o">=</span><span class="n">dna_sequence</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
+</code></pre></div>
+<p>with a sequence of about 2,006 bp. <code>location=(1500, 2500)</code> crosses the origin and ends past the
+length, exactly as <code>Segment(2683, 2689)</code> does on a 2,686 bp plasmid in ADR 0001. The file
+boundary is the same discipline as ours, too: <code>to_biopython_location</code> and
+<code>from_biopython_location</code> apply <strong>no offset at all</strong>, and the 1-based GenBank conversion is left
+entirely to Biopython's <code>SeqIO</code> — one boundary, one layer down.</p>
+<p>So the conversion cost the ticket asked about is <strong>zero</strong>. Three caveats to carry anyway:</p>
+<ul>
+<li><strong><code>Location</code> is origin-unaware.</strong> No modulo, no wrap, no length. There is no circular location
+  type; the whole of circularity lives in the problem class.</li>
+<li><strong>Circularity is implemented by triplication.</strong> <code>CircularDnaOptimizationProblem</code> builds a
+  problem on <code>3 * sequence</code>, shifts every spec into all three copies, solves, and takes the
+  middle third back — reconciling the copies by majority vote in a function named
+  <code>return_the_loony</code>. Its own docstring calls the class an "Attempt" and carries a standing
+  TODO. <code>location=(1500, 2500)</code> works only because index 2500 is real in the tripled view.</li>
+<li><strong>Plain <code>DnaOptimizationProblem</code> has no circular support.</strong> A cross-origin site is simply
+  invisible to it, which our <code>find_sites</code> is not.</li>
+</ul>
+<p>ADR 0001 needs no change. DnaChisel is usable as corroboration that the convention is the one a
+sibling project reached independently. Its <em>circular</em> implementation is the weaker design of the
+two and should not be copied.</p>
+<h2 id="6-patterns-worth-taking-with-no-dependency">6. Patterns worth taking, with no dependency<a class="headerlink" href="#6-patterns-worth-taking-with-no-dependency" title="Permanent link">&para;</a></h2>
+<p>The ticket asks for these as a suggestion. Reported, not proposed — none of them is a
+restructuring, and the first two bear on #227, which is deciding what a <code>Check</code> carries.</p>
+<h3 id="61-a-signed-score-with-a-known-best-so-passes-and-optimal-are-one-number">6.1 A signed score with a known best, so "passes" and "optimal" are one number<a class="headerlink" href="#61-a-signed-score-with-a-known-best-so-passes-and-optimal-are-one-number" title="Permanent link">&para;</a></h3>
+<p><code>SpecEvaluation.__init__</code> derives both flags from the score:</p>
+<div class="highlight"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">passes</span> <span class="o">=</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">is_optimal</span> <span class="o">=</span> <span class="n">score</span> <span class="o">==</span> <span class="n">specification</span><span class="o">.</span><span class="n">best_possible_score</span>
+</code></pre></div>
+<p>Every specification declares <code>best_possible_score</code> as a class attribute — for <code>AvoidPattern</code> it
+is <code>0</code>, and the score is <code>-len(locations)</code>. One number answers two questions, and it is what
+lets their solver know when to stop.</p>
+<p>Our <code>Check</code> carries <code>status</code> and <code>value</code>. It can say <em>pass</em>; it cannot say <em>passes, and is two
+short of the best achievable here</em>. Our thresholds come from sources rather than from a solver,
+so the fit is not automatic — but the distinction between "acceptable" and "best available" is
+exactly the one <code>primers/thresholds</code> has to draw by hand today.</p>
+<h3 id="62-a-failure-carries-where-it-failed-not-just-that-it-failed">6.2 A failure carries where it failed, not just that it failed<a class="headerlink" href="#62-a-failure-carries-where-it-failed-not-just-that-it-failed" title="Permanent link">&para;</a></h3>
+<p><code>SpecEvaluation</code> carries seven fields: the specification, the problem, the score, <code>passes</code>,
+<code>is_optimal</code>, <strong><code>locations</code></strong>, a message, and a free-form <code>data</code> dict. <code>locations</code> is the list of
+spans that breached.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return score=-number_of_occurences. And patterns locations."""</span>
+    <span class="n">locations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span><span class="o">.</span><span class="n">find_matches</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">sequence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">locations</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">score</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s2">"Passed. Pattern not found !"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s2">"Failed. Pattern found at positions </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">locations</span>
+    <span class="k">return</span> <span class="n">SpecEvaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">locations</span><span class="o">=</span><span class="n">locations</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">)</span>
+</code></pre></div>
+<p>That is what makes a failure <em>actionable</em> rather than merely reported: the solver localises its
+next search on those spans, and the report paints them onto the GenBank output as red
+<code>misc_feature</code>s. Our <code>Check</code> has <code>detail</code>, a string. A span would let a check point at a map.</p>
+<p>Three smaller touches in the same file worth noting. The rendered failure line identifies the
+specification by a reconstructable constructor-like label, not a free-form name:</p>
+<div class="highlight"><pre><span></span><code>FAIL ┍ UniquifyAllKmers[10-1000](k:9)
+     │ Score:        -2. Locations: [232-241, 233-242]
+</code></pre></div>
+<p>A long message is truncated <strong>in the middle</strong> — <code>message[:half] + " ... " + message[-half:]</code> —
+so a breach at 400 sites still shows its first and its last. And one renderer serves three
+outputs: <code>constraints_text_summary()</code> is the report, the console, and the body of the
+<code>NoSolutionError</code> that is raised when resolution fails. Our <code>SiteNotRemovableError</code> builds its
+message by hand in <code>_why</code>.</p>
+<h3 id="63-constraint-against-objective-is-a-position-not-a-type">6.3 Constraint against objective is a position, not a type<a class="headerlink" href="#63-constraint-against-objective-is-a-position-not-a-type" title="Permanent link">&para;</a></h3>
+<p>The same <code>Specification</code> subclass can sit in <code>constraints=[...]</code> or in <code>objectives=[...]</code>. What
+changes is whether a breach is fatal or merely costly, and the vocabulary it renders with —
+constraints print <code>✔PASS</code> / <code>FAIL</code>, objectives print <code>✔</code> for optimal.</p>
+<p>This package draws the same line in a different place, and <code>CONTEXT.md</code>'s rule that a check with
+no sourced threshold carries <code>None</code> rather than a pass is a third category theirs expresses as
+<code>enforced_by_nucleotide_restrictions</code>, which short-circuits to a pass with the message <em>"Enforced
+by nucleotides restrictions"</em>. Worth knowing the shape exists before #227 settles.</p>
+<p><strong>Not worth taking:</strong> the <code>@AvoidPattern(...)</code> / <code>~CodonOptimize(...)</code> GenBank label syntax, by
+which a whole problem is defined in a record's <code>misc_feature</code> labels. It is a neat idea, and
+their own <code>to_biopython_feature</code> docstring disowns the round trip: <em>"this is not the intended
+goal."</em> ADR 0002 already settled that an editable protocol JSON is where an agent intervenes.</p>
+<h2 id="7-the-rest-of-the-stack-and-the-answer-235-and-236-need">7. The rest of the stack, and the answer #235 and #236 need<a class="headerlink" href="#7-the-rest-of-the-stack-and-the-answer-235-and-236-need" title="Permanent link">&para;</a></h2>
+<h3 id="71-does-a-sibling-already-decompose-a-sequence-into-orderable-fragments">7.1 Does a sibling already decompose a sequence into orderable fragments?<a class="headerlink" href="#71-does-a-sibling-already-decompose-a-sequence-into-orderable-fragments" title="Permanent link">&para;</a></h3>
+<p><strong>Yes. Two of them do — DnaWeaver and GoldenHinges. Neither solves the DAD split, and neither
+is adoptable. #236 does not shrink to wiring.</strong></p>
+<p>Issue #236 is blocked on this note for exactly this question, so it is answered in full.</p>
+<h4 id="dnaweaver-the-right-shape-the-wrong-objective">DnaWeaver: the right shape, the wrong objective<a class="headerlink" href="#dnaweaver-the-right-shape-the-wrong-objective" title="Permanent link">&para;</a></h4>
+<p>DnaWeaver is "a route planner for DNA assembly". Its README:</p>
+<blockquote>
+<p>Given an arbitrary sequence, DNA Weaver will select the most adapted commercial DNA providers,
+cloning methods and parts repositories (depending on your preferences), and will design all
+necessary assembly fragments and assembly steps.</p>
+</blockquote>
+<p>The algorithm is worth knowing, because it is a good one. <code>SequenceDecomposer</code>:</p>
+<blockquote>
+<p>Find the sequence cuts which optimize the sum of segment scores. […] a Networkx DiGraph whose
+nodes are indices of locations in the sequence and the 'weight' of edge <code>[i][j]</code> is given by
+<code>segment_score_function(segment[i][j])</code>.</p>
+</blockquote>
+<p>A <strong>shortest path over a graph of candidate cut positions</strong>, solved by Dijkstra, or by A* with a
+heuristic its own docstring warns "yields suboptimal decompositions". A coarse pass then a local
+refinement around each coarse cut, which is what makes a long sequence tractable. An assembly
+station is itself a supplier, so stations nest and hierarchical plans fall out of one mechanism.</p>
+<p><strong>The edge weight is a price.</strong> In <code>DnaAssemblyStation.new_sequence_decomposer</code>, <code>segment_score</code>
+returns <code>quote.price</code>; lead time is a hard constraint that prunes quotes, not a second objective.
+The README's "price, duration, or assembly success probabilities" is reached by changing what the
+user's pricing function returns, not by a multi-objective solver.</p>
+<p>It is more junction-aware than that makes it sound, and the ticket deserves the correction:
+<code>GoldenGateAssemblyMethod</code> registers a <strong><code>cuts_set_constraints</code></strong> — a constraint on the whole
+chosen set, requiring every pair of overhangs to differ by <code>min_overhangs_differences</code> and to
+differ from each other's reverse complement. So it does reason about the set, not only about one
+junction.</p>
+<p><strong>What it does not have is the fidelity model.</strong> Its junction rule is Hamming distance on the
+four bases. Nothing from Potapov 2018 or Pryor 2020 — those live in separate EGF packages
+(<code>tatapov</code>, <code>Overhang</code>, <code>kappagate</code>) that DnaWeaver does not depend on. <code>src/mbio/overhangs.py</code>
+and <code>ligase.py</code> are strictly stronger here.</p>
+<p>That is the half #235 says is missing, restated: <em>"the scoring half exists; the search half does
+not."</em> DnaWeaver is a search over the wrong cost. Converting it would mean replacing the edge
+weight, which is the whole of what it does.</p>
+<h4 id="goldenhinges-the-right-objective-and-effectively-uninstallable">GoldenHinges: the right objective, and effectively uninstallable<a class="headerlink" href="#goldenhinges-the-right-objective-and-effectively-uninstallable" title="Permanent link">&para;</a></h4>
+<p>Closer prior art, and the ticket should see it. GoldenHinges will</p>
+<blockquote>
+<p>decompose a DNA sequence into fragments with compatible overhangs for scar-less DNA assembly.
+Can also suggest minimal edits in the sequence to allow such assembly.</p>
+</blockquote>
+<p><code>OverhangsSelector.cut_sequence(sequence, equal_segments=50, max_radius=20)</code> cuts a long sequence
+into size-balanced fragments whose 4 bp overhangs are mutually compatible, and writes out the
+sequences to order with the restriction sites already flanking them. Three features have no
+counterpart anywhere else read for this note:</p>
+<ul>
+<li><strong><code>allow_edits=True</code></strong> mutates the sequence to make a decomposition possible when none exists,
+  penalised so no base changes unless strictly necessary — and it honours DnaChisel annotations
+  (<code>@AvoidChanges</code>, <code>@EnforceTranslation</code>) to forbid an illegal edit. #236's question 3, <em>what
+  does it do when it cannot win</em>, has a published answer here.</li>
+<li>A <code>!cut</code> GenBank feature forces a cut in a named region.</li>
+<li>Its README documents feeding it <strong>tatapov</strong> (Potapov 2018) data to exclude weak-annealing
+  overhangs and high cross-talk pairs — as a user-assembled <code>forbidden_overhangs</code> and
+  <code>forbidden_pairs</code> list, not built in. The held-out set #235 needs for <code>AGGA</code> and <code>TTCC</code> is
+  exactly that shape.</li>
+</ul>
+<p><strong>And it cannot be taken.</strong> Last commit <strong>2022-06-08</strong>, four years. Not on bioconda, not on
+conda-forge, PyPI only. It depends on <strong>Numberjack</strong>, a SWIG-based constraint solver whose last
+release is <strong>1.2.0 from 2016</strong>, which is LGPL-2.1, and whose install instructions tell you to
+downgrade SWIG to v3 and build from an EGF fork. Under <code>CLAUDE.md</code>'s pixi-only rule on osx-arm64,
+that is the end of it.</p>
+<h4 id="so-what-236-should-take">So what #236 should take<a class="headerlink" href="#so-what-236-should-take" title="Permanent link">&para;</a></h4>
+<p>Not a dependency. Two framings, both MIT and free to read:</p>
+<ul>
+<li><strong>DnaWeaver's</strong>: decomposition as a shortest path over candidate cut positions, with a cost per
+  candidate fragment. Score the path on fidelity rather than on price — <code>overhangs</code> already holds
+  the scorer the path would call. The caveat is in #236's own brief: fidelity is a property of
+  the whole set in one pot, and a shortest path over independent edge costs cannot express a
+  pairwise constraint across junctions. DnaWeaver meets that with a set-level
+  <code>cuts_set_constraints</code> check; whether that is enough is what the prototype is for.</li>
+<li><strong>GoldenHinges'</strong>: overhang-set compatibility as constraint satisfaction, and the
+  edit-to-enable fallback when no clean cut set exists.</li>
+</ul>
+<p><strong>Neither answers #235's question 1</strong>, which is what SplitSet implements and whether it is the
+method Lund cites. Nothing in this stack is SplitSet.</p>
+<h3 id="72-the-rest-briefly">7.2 The rest, briefly<a class="headerlink" href="#72-the-rest-briefly" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>What it is</th>
+<th>State</th>
+<th>Bears on us?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DnaWeaver</strong></td>
+<td>decomposition over a supply network</td>
+<td>MIT, bioconda <code>noarch</code> <strong>v0.3.7, three releases behind PyPI</strong>, last commit 2025-05-12</td>
+<td>§7.1. The framing, not the package</td>
+</tr>
+<tr>
+<td><strong>GoldenHinges</strong></td>
+<td>overhang-compatible decomposition, with edits</td>
+<td>MIT, <strong>PyPI only</strong>, last commit 2022-06-08, needs Numberjack</td>
+<td>§7.1. Read it; cannot install it</td>
+</tr>
+<tr>
+<td><strong>DnaCauldron</strong></td>
+<td>cloning simulator, Golden Gate and Gibson</td>
+<td>MIT, bioconda <code>noarch</code> 2.0.12, last commit 2025-05-12</td>
+<td>Overlaps <code>cloning/</code>. See below</td>
+</tr>
+<tr>
+<td><strong>tatapov</strong></td>
+<td>the Potapov and Pryor fidelity matrices</td>
+<td>MIT code, <strong>CC BY-ND 4.0 data</strong></td>
+<td>See below — it corroborates our rule</td>
+</tr>
+<tr>
+<td><strong>Overhang</strong></td>
+<td>describes and scores an overhang set</td>
+<td>MIT, PyPI only, last commit 2025-05-15</td>
+<td><code>overhangs</code> covers it</td>
+</tr>
+<tr>
+<td><strong>kappagate</strong></td>
+<td>predicts the good-clone fraction for 4 bp overhangs</td>
+<td>MIT, <strong>last commit 2020-07-24</strong></td>
+<td>Adjacent to <code>library/coverage</code>. Dead</td>
+</tr>
+<tr>
+<td><strong>genedom</strong></td>
+<td>domestication to an assembly standard</td>
+<td>MIT, bioconda 0.2.2</td>
+<td>Adjacent to <code>sites.domesticate</code></td>
+</tr>
+<tr>
+<td><strong>GeneBlocks</strong></td>
+<td>common blocks and diffs between sequences</td>
+<td>MIT, PyPI only, last commit 2025-11-05</td>
+<td>Adjacent to <code>edits</code>. Not a splitter</td>
+</tr>
+<tr>
+<td><strong>DnaFeaturesViewer</strong></td>
+<td>map drawing, matplotlib</td>
+<td>MIT, 703 stars, PyPI only</td>
+<td><code>plot/</code> writes its own SVG. No</td>
+</tr>
+<tr>
+<td><strong>Primavera</strong>, <strong>BandWitch</strong>, <strong>BandWagon</strong></td>
+<td>verification primers, enzyme choice, gel bands</td>
+<td>MIT</td>
+<td>Adjacent to <code>bench/validation</code> and <code>bench/gels</code></td>
+</tr>
+<tr>
+<td><strong>Plateo</strong>, <strong>blabel</strong>, <strong>Caravagene</strong></td>
+<td>plates, labels, construct schematics</td>
+<td>MIT</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong>One finding worth carrying out of this note.</strong> <code>tatapov</code> reads the NEB fidelity data from a
+separate repository, <code>tatapov_data</code>, whose README states its licence is <strong>CC BY-ND 4.0</strong> — no
+derivatives — and <code>tatapov</code> downloads it at first use rather than vendoring it. <code>CLAUDE.md</code>'s
+rule, <em>"ship nothing whose licence forbids it — a ligase matrix is read from a copy the user
+holds"</em>, is the same wall, met independently, and ours is the better answer for a package that
+must work offline. <code>docs/research/ligation-fidelity.md</code> §8 can cite this.</p>
+<p><strong>Two gaps in the whole portfolio that this package already fills.</strong> There is <strong>no EGF barcode
+design</strong> of any kind — a repo search finds only a label printer. And <strong>nothing generates a bench
+protocol</strong>: their output idiom is a PDF report of what was computed, never numbered steps,
+rescaling reaction tables or a thermocycler program. <code>build-protocol</code> has no counterpart.</p>
+<p><strong>DnaCauldron deserves one extra line</strong>, as the closest thing to a duplicate of <code>cloning/</code>. It
+simulates Golden Gate, Gibson, BioBrick, BASIC and LCR assemblies by finding circular paths in a
+part homology graph, after Pereira et al. 2015. It does not design the primers, choose the
+method, score the overhang set against a ligase profile, or write a protocol — which is most of
+what a plan is here. It is the best-packaged of the stack, and the one worth remembering if we
+ever want to cross-check our simulation against an independent one.</p>
+<p><strong>The whole stack shares one release date, and it is not what it looks like.</strong> DnaWeaver,
+DnaCauldron, <code>genedom</code>, <code>easy_dna</code>, <code>BandWagon</code> and others were all last touched on 2025-05-12,
+with the same commit message — <code>"Include pkg data, exclude unwanted folders"</code>. That is one
+packaging sweep across a dozen repositories, not twelve healthy projects. Open bugs on DnaWeaver
+date from 2021 and are unanswered. Read the stack as <strong>prior art, not as dependencies that will
+receive fixes.</strong></p>
+<h2 id="8-recommendation-and-the-trade">8. Recommendation, and the trade<a class="headerlink" href="#8-recommendation-and-the-trade" title="Permanent link">&para;</a></h2>
+<p><strong>Adopt nothing. Take the three ideas in §6, which cost no dependency.</strong></p>
+<p>The trade, stated plainly:</p>
+<p><strong>What is given up.</strong> A better codon solver. DnaChisel's <code>MutationSpace</code> searches codon choice
+and site removal in one space and widens a stuck window by 5 bp, where <code>translate._cleaned</code>
+changes one codon and raises <code>SiteNotRemovableError</code> if no synonym clears the site. A construct
+that needs two codons moved together will fail here and succeed there. That is a real
+capability, and it is the honest cost of this recommendation.</p>
+<p><strong>What is kept.</strong> The codon tables this repo measured rather than copied, and the reason #10
+rejected Kazusa. A <code>domesticate</code> that declines to edit outside a coding sequence. A site model
+that carries a cut and an overhang rather than a pattern. No seventeen-month-stale dependency,
+no abandoned <code>docopt</code>, no package whose CI has never run on macOS or Python 3.13.</p>
+<p><strong>When to reopen this.</strong> If <code>SiteNotRemovableError</code> starts firing on real designs — a
+measurement, not a hypothesis — the answer is not necessarily DnaChisel. It is a multi-codon
+search in <code>translate</code>, which is perhaps 60 lines and is the part of their solver that earns its
+keep. <code>CLAUDE.md</code>: <em>generalizable, lightweight, uncustomized — in that order.</em> A dependency
+carrying nine Kazusa tables, a web scraper and a 2014 CLI parser, to supply 60 lines of search,
+is not lightweight.</p>
+<h2 id="9-open-gaps">9. Open gaps<a class="headerlink" href="#9-open-gaps" title="Permanent link">&para;</a></h2>
+<p>Not guessed above.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why it is missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Whether DnaChisel runs correctly on Python 3.13</td>
+<td>Nothing was installed, and upstream has never tested it. Metadata permits it; no one has confirmed it</td>
+</tr>
+<tr>
+<td>Whether it runs on osx-arm64</td>
+<td>Same. Pure Python, so very probably, but its CI is ubuntu-only</td>
+</tr>
+<tr>
+<td>How <code>CircularDnaOptimizationProblem</code>'s majority vote behaves on a real plasmid</td>
+<td>Read, not run</td>
+</tr>
+<tr>
+<td>Lund et al. 2024's actual DnaChisel invocation</td>
+<td>Named in the ticket; their parameters were not traced to a script in this note</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>All retrieved 2026-10-06.</p>
+<ul>
+<li>Zulko, <em>DnaChisel</em>, Edinburgh Genome Foundry, version 3.2.16 at <code>master</code>:
+  <a href="https://github.com/Edinburgh-Genome-Foundry/DnaChisel">github.com/Edinburgh-Genome-Foundry/DnaChisel</a>
+  (MIT, read from <code>LICENSE</code>). <code>dnachisel/Location.py</code>,
+  <code>dnachisel/DnaOptimizationProblem/CircularDnaOptimizationProblem.py</code>,
+  <code>dnachisel/DnaOptimizationProblem/mixins/ConstraintsSolverMixin.py</code>,
+  <code>dnachisel/Specification/SpecEvaluation/SpecEvaluation.py</code>,
+  <code>dnachisel/SequencePattern/EnzymeSitePattern.py</code>,
+  <code>dnachisel/builtin_specifications/</code>, <code>examples/common_scenarios/circular_sequence.py</code></li>
+<li><em>DnaChisel</em> documentation:
+  <a href="https://edinburgh-genome-foundry.github.io/DnaChisel/">edinburgh-genome-foundry.github.io/DnaChisel</a>
+  — the built-in specifications reference and the GenBank API page</li>
+<li>Zulko, <em>codon-usage-tables</em> (<code>python_codon_tables</code>):
+  <a href="https://github.com/Edinburgh-Genome-Foundry/codon-usage-tables">github.com/Edinburgh-Genome-Foundry/codon-usage-tables</a>
+  (CC0-1.0, read from <code>LICENSE</code>), for the bundled organisms and the TaxID download path</li>
+<li>Nakamura, Y., Gojobori, T. and Ikemura, T. (2000) Codon usage tabulated from international DNA
+  sequence databases. <em>Nucleic Acids Res.</em> 28, 292 — the source <code>python_codon_tables</code> cites</li>
+<li>anaconda.org API: <code>api.anaconda.org/package/bioconda/dnachisel</code> and <code>/files</code>, and the
+  conda-forge 404, for availability, subdirs, <code>depends</code> and upload dates</li>
+<li>bioconda-recipes, <code>recipes/dnachisel/meta.yaml</code>, for <code>noarch: python</code> and the run list</li>
+<li>PyPI JSON API: <code>pypi.org/pypi/dnachisel/json</code>, for the wheel tag, <code>requires_python</code> and
+  <code>requires_dist</code></li>
+<li>GitHub API: <code>api.github.com/repos/Edinburgh-Genome-Foundry/DnaChisel</code> and its <code>/releases</code>,
+  <code>/commits</code> and <code>/branches</code>, for the maintenance signals; <code>.github/workflows/build.yml</code> for
+  what CI runs</li>
+<li><code>docs/research/codon-usage.md</code> (issue #10), for the Kazusa decision this note holds to, and
+  <code>docs/research/restriction-enzyme-data.md</code> (issue #7), for why the enzyme data here carries
+  cut offsets</li>
+<li>Zulko, <em>DnaWeaver</em>:
+  <a href="https://github.com/Edinburgh-Genome-Foundry/DnaWeaver">github.com/Edinburgh-Genome-Foundry/DnaWeaver</a>
+  (MIT, read from <code>LICENSE</code>), its <code>README.rst</code>,
+  <code>dnaweaver/DnaSupplier/builtin_suppliers/DnaAssemblyStation/SequenceDecomposer.py</code>,
+  <code>dnaweaver/DnaAssemblyMethod/GoldenGateAssemblyMethod.py</code> and <code>dnaweaver/SegmentSelector/</code></li>
+<li>Zulko, <em>GoldenHinges</em>:
+  <a href="https://github.com/Edinburgh-Genome-Foundry/GoldenHinges">github.com/Edinburgh-Genome-Foundry/GoldenHinges</a>
+  (MIT, read from <code>LICENCE.txt</code>), its <code>README.rst</code>, for <code>cut_sequence</code>, <code>allow_edits</code> and the
+  tatapov-fed forbidden lists; and Numberjack's PyPI record for the 2016 release that blocks it</li>
+<li>Zulko, <em>DnaCauldron</em>:
+  <a href="https://github.com/Edinburgh-Genome-Foundry/DnaCauldron">github.com/Edinburgh-Genome-Foundry/DnaCauldron</a>
+  (MIT), its <code>README.rst</code> and <code>dnacauldron/Assembly/builtin_assembly_classes/</code></li>
+<li>Pereira, F. et al. (2015) <em>BMC Bioinformatics</em> 16:90, the circular-path method DnaCauldron
+  names: <a href="https://doi.org/10.1186/s12859-015-0544-x">doi:10.1186/s12859-015-0544-x</a></li>
+<li><em>tatapov</em> and <em>tatapov_data</em>:
+  <a href="https://github.com/Edinburgh-Genome-Foundry/tatapov_data">github.com/Edinburgh-Genome-Foundry/tatapov_data</a>
+  — its README states <strong>CC BY-ND 4.0</strong>, which §7.2 reads against <code>CLAUDE.md</code>'s ligase-matrix rule</li>
+<li>The Edinburgh Genome Foundry organisation listing (76 public repositories) and its portfolio
+  page source, for which libraries exist and which are not relevant</li>
+<li><code>docs/adr/0001-coordinates.md</code>, the rule §5 compares against</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":[],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.49251538.min.js"></script>
+      
+    
+  </body>
+</html>
